@@ -8,15 +8,18 @@ Archive: [UVW signature.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%
 Severity: Critical
 Status: Confirmed
 Layer: Implementation
-Affected: Reference implementation, all three parameter sets
+Affected: Reference and optimized implementations, all three parameter sets (six wrappers)
 Discovery: Trivial
 Exploitation: Trivial
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-09-21
+Follow-up source: [LittleQ's PKC Forum post, 2026-09-23](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/VT73TSZCRZVPPQDP3B4NBVVRRF36XVJ6/)
 
 The internal `uvw_verify` routine computes the intended verification predicate. The API wrapper converts that result to `0` or `-1`, stores it in a local variable, and then unconditionally returns `0`.
 
-Consequently, invalid signatures, modified messages, and arbitrary full-length signature buffers are reported as valid by all three submitted reference instances. No cryptanalysis or signing query is required.
+Consequently, invalid signatures and modified messages that reach the final return are reported as valid. The modified-message witness reproduces on the 128- and 256-bit reference instances; some malformed signatures instead crash as described in `sign-32-2`. No cryptanalysis or signing query is required.
+
+Follow-up analysis: [LittleQ reported on 2026-09-23](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/VT73TSZCRZVPPQDP3B4NBVVRRF36XVJ6/) that all six submitted wrappers discard `uvw_verify`'s result. We source-checked the three optimized variants: each also computes `result` and unconditionally returns `0`. This extends the source-confirmed scope to both implementation families; the local runtime witness still uses reference builds, and 512-bit key generation was too slow for that witness.
 
 This permits universal forgery through the submitted API and directly violates the claimed EUF-CMA security.
 

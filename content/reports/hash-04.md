@@ -10,13 +10,15 @@ Status: Confirmed
 Layer: Design
 Affected: CHAMP-512 and CHAMP-1024 construction and reference implementation
 Discovery: Non-trivial
-Exploitation: Generic birthday scales at most approximately 2^192 and 2^384 if the walk mixes
+Exploitation: At most 2^192 and 2^384 hash evaluations and stored records for greater-than-0.39 collision probability
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-09-21
 
 CHAMP hashes a bit string by multiplying two public `2 x 2` matrices. Both generators have determinant 2, so every message of a fixed bit length `n` has determinant `2^n`. All fixed-length outputs therefore lie in one determinant fiber of size exactly `p(p^2-1)`, approximately `p^3`, rather than the full approximately `p^4` matrix space.
 
-An invertible output encoding cannot enlarge that image. The nominal 512- and 1024-bit outputs consequently have at most approximately 384 and 768 bits of fixed-length image entropy, with generic birthday scales no greater than approximately `2^192` and `2^384` if the walk mixes. This does not contradict the specification's explicit unequal-length theorem, but it probably contradicts a natural 256/512-bit same-length collision-strength interpretation.
+An invertible output encoding cannot enlarge that image. The nominal 512- and 1024-bit outputs consequently have at most approximately 384 and 768 bits of fixed-length image entropy. For any output distribution on these bounded supports, sampling `2^192` random 512-bit messages for CHAMP-512 or `2^384` random 1024-bit messages for CHAMP-1024 finds a collision with probability greater than 0.39; no mixing assumption is needed. This does not contradict the specification's explicit unequal-length theorem, but it contradicts a natural 256/512-bit same-length collision-strength interpretation. No full-parameter collision has been computed.
+
+Follow-up analysis: [Yufei Yuan, Ruichen Wu, Shanpeng Wei, Junxu Shen, Jinpeng Liu, and Yixin Zhang, *Structural Analysis of Seven Hash Functions Submitted to the NGCC*](https://eprint.iacr.org/2026/2152), Sections 2.2 and 6 (2026-09-23), prove the stated success probability for both variants, including the correction for repeated sampled inputs.
 
 ## hash-04-2: Projective positive-word collision lead for CHAMP-512
 

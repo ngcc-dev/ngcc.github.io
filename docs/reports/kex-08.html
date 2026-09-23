@@ -42,7 +42,8 @@
 <pre><code class="language-sh">make -C kex-08
 sage -python kex-08/reproduce_raw_key_distinguisher.py
 </code></pre>
-<p>The witness prints <code>ATTACK kex-08-1 NIIKE-lv128 CONFIRMED</code> when the honest key is supersingular and all controls are ordinary.</p>
+<p>The witness prints <code>ATTACK kex-08-1 NIIKE-lv128 CONFIRMED</code> when the honest key is supersingular and all controls are ordinary.
+If the local <code>sage</code> launcher does not support <code>-python</code>, use a Python with <code>sage.all</code> importable, for example <code>mamba run -n sage python kex-08/reproduce_raw_key_distinguisher.py</code>.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

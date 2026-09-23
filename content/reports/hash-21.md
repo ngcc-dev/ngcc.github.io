@@ -19,6 +19,8 @@ For a register module whose only nonzero word is its discarded first stage, the 
 
 The reporters give equal-length fixed-IV messages `00^d || BE32(x) || 00^60`, with `d=56,88,120` bytes for the three instances and `x` chosen from the colliding pair. The submitted Neulaser-512 implementation maps both 120-byte messages to `f899bf50663e6e04fa5374baf28886153ea332bf25443817eb2abbca88072458dbd7a077712aae99fb112b7672c85a705700e027b348516cc45f8fff537713d3`; full-round collisions reproduce for all three instances.
 
+Further analysis: [Yufei Yuan et al., *Structural Analysis of Seven Hash Functions Submitted to the NGCC*](https://eprint.iacr.org/2026/2152), Section 4 (2026-09-23), derives this local-feedback collision and its fixed-IV message pairs. It does not address the separate `hash-21-2` mechanism below.
+
 ## hash-21-2: Reduction modulo 2^32-5 creates reachable state mergers
 
 Severity: Critical

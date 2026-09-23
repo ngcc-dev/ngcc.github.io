@@ -84,6 +84,25 @@ overwrites, and requires the byte-distinct signature to verify.</p>
 <p>Reproduce the exact cardinality and source check with:</p>
 <pre><code class="language-sh">python3 security/design_parameter_audit.py
 </code></pre>
+<h2 class="issue-heading" id="sign-15-4-repeated-masking-coefficients-expose-the-signing-key">sign-15-4: Repeated masking coefficients expose the signing key</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Classification</th><td><span class="sev sev-critical">Critical / implementation</span></td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>ATLAS-128, ATLAS-192, and ATLAS-256 reference and optimized implementations; ATLAS-512 is unaffected</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Two valid signatures recover <code>s1</code> in polynomial time and enable new-message forgery</td></tr>
+<tr><th>Credit</th><td>Xianhui Lu and Yijian Liu, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-23</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/L5UNKA72RZ2TBTCKZYIVJ5KFDU6XTWFB/">Yijian Liu's NGCC PKC Forum post on behalf of Xianhui Lu</a></p>
+<p>In <code>rej_gamma1m1()</code>, the second 20-bit decode overwrites <code>t</code> before either accepted coefficient is stored. Every masking polynomial therefore has <code>y[2i] = y[2i+1]</code>. Since the signature contains <code>z = y + c*s1</code> modulo <code>q</code>, subtracting each adjacent response pair cancels the mask and gives a noiseless linear equation in the secret <code>s1</code>. Two signatures supply a full-rank system for each secret polynomial in all three affected profiles. ATLAS-512 uses a separate three-byte sampler branch.</p>
+<p>The local witness solves those equations using only two public, officially verified signatures, recovers every <code>s1</code> coefficient, and checks zero residuals on two further signatures. It then reconstructs the remaining signing-key fields from <code>s1</code> and the public key, chooses a fresh signing-randomness key, and produces a new-message signature accepted by the submitted verifier. It never uses the original secret key in the recovery or forgery stage.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sage -python sign-15/reproduce_mask_key_recovery.py
+</code></pre>
+<p>Use a Python with <code>sage.all</code> importable. If Sage is installed as a mamba environment rather than a launcher supporting <code>-python</code>, run <code>mamba run -n sage python sign-15/reproduce_mask_key_recovery.py</code> instead. The witness compiles only the archived reference and optimized C sources in a temporary directory. It prints six <code>CONFIRMED sign-15-4</code> lines, one for each affected implementation/profile combination. The optimized builds require AVX2.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

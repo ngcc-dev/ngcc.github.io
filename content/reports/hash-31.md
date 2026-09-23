@@ -19,6 +19,8 @@ The two instances share the same 1536-bit permutation and zero initial state, wh
 
 The official 512- and 768-bit `CryptHash` libraries return the same first eight digest bytes, `7a07b396b47dfec4`, for the constructed messages. A one-bit control differs. This is a cross-profile distinguisher (ideal probability `2^-64`), **not** a same-instance or full-digest collision.
 
+Follow-up analysis: the [Iphe Algorithm Group's cross-rate note, posted by 崔灏睿 on 2026-09-23](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/BWXG6OPAIQL32FMWWYJ3C4D6QMRGHGP4/) gives an independent three-block ZC-DMC witness. The [ZC-DMC team's response on 2026-09-23](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/R4Y2U6SYSDUPFSVPGYIYSXGWVGQKVIDJ/) acknowledges the relation and proposes distinct three-bit IV tags; this report concerns the archived zero-IV submission.
+
 ### Reproducing
 
 From the repository root, run `make -C hash-31 exploit`. The witness uses only the two official archived hash libraries for its verdict and prints `CONFIRMED hash-31-1`.

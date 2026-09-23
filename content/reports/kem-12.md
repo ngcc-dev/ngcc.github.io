@@ -37,6 +37,7 @@ Discovery: Trivial
 Exploitation: Capacity/conformance defect; no IND-CCA attack demonstrated
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-09-21
+Follow-up source: [CTL submitters' 2026-09-23 response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/H47RU2HKEEAZQOJNKMUFWNEJEHHSLPQQ/)
 
 The CTL-512 adapter returns a 48-byte shared secret and instantiates the ciphertext hash component `c2` at 48 bytes. The specification assigns 64 bytes to CTL-512 `c2`.
 
@@ -50,3 +51,5 @@ python3 security/design_parameter_audit.py
 
 The `kem-12-2` check verifies the CTL-512 output table and the corresponding
 reference constants.
+
+The [CTL submitters' response on 2026-09-23](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/H47RU2HKEEAZQOJNKMUFWNEJEHHSLPQQ/) acknowledges both findings and describes intended corrections; these reports remain scoped to the archived submission.

@@ -21,6 +21,8 @@ For CHIME-512, a `2^240`-message family remains in the subspace through ordinary
 
 The submission team subsequently published an [erratum](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/HLW3FPCIRT2UIR3YMYJJ5YW7SCGZENUL/) changing the repeated round constants to word-dependent constants. That acknowledges and removes this particular invariant in a revised design; the archived Round 1 submission remains affected.
 
+Further analysis: [Yufei Yuan et al., *Structural Analysis of Seven Hash Functions Submitted to the NGCC*](https://eprint.iacr.org/2026/2152), Section 5 (2026-09-23), gives a greater-than-0.39 collision probability within `2^64` evaluations for CHIME-512. The paper does not cover this report's CHIME-1024 extension.
+
 ### Reproducing
 
 The local check reproduces the reporters' 126-byte CHIME-512 invariant-state witness and digest and recomputes both dimension bounds:

@@ -79,3 +79,27 @@ Reproduce the exact cardinality and source check with:
 ```sh
 python3 security/design_parameter_audit.py
 ```
+
+## sign-15-4: Repeated masking coefficients expose the signing key
+
+Severity: Critical
+Status: Confirmed
+Layer: Implementation
+Affected: ATLAS-128, ATLAS-192, and ATLAS-256 reference and optimized implementations; ATLAS-512 is unaffected
+Discovery: Moderate
+Exploitation: Two valid signatures recover `s1` in polynomial time and enable new-message forgery
+Credit: Xianhui Lu and Yijian Liu, with AI assistance
+Date: 2026-09-23
+Original source: [Yijian Liu's NGCC PKC Forum post on behalf of Xianhui Lu](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/L5UNKA72RZ2TBTCKZYIVJ5KFDU6XTWFB/)
+
+In `rej_gamma1m1()`, the second 20-bit decode overwrites `t` before either accepted coefficient is stored. Every masking polynomial therefore has `y[2i] = y[2i+1]`. Since the signature contains `z = y + c*s1` modulo `q`, subtracting each adjacent response pair cancels the mask and gives a noiseless linear equation in the secret `s1`. Two signatures supply a full-rank system for each secret polynomial in all three affected profiles. ATLAS-512 uses a separate three-byte sampler branch.
+
+The local witness solves those equations using only two public, officially verified signatures, recovers every `s1` coefficient, and checks zero residuals on two further signatures. It then reconstructs the remaining signing-key fields from `s1` and the public key, chooses a fresh signing-randomness key, and produces a new-message signature accepted by the submitted verifier. It never uses the original secret key in the recovery or forgery stage.
+
+### Reproducing
+
+```sh
+sage -python sign-15/reproduce_mask_key_recovery.py
+```
+
+Use a Python with `sage.all` importable. If Sage is installed as a mamba environment rather than a launcher supporting `-python`, run `mamba run -n sage python sign-15/reproduce_mask_key_recovery.py` instead. The witness compiles only the archived reference and optimized C sources in a temporary directory. It prints six `CONFIRMED sign-15-4` lines, one for each affected implementation/profile combination. The optimized builds require AVX2.

@@ -66,7 +66,8 @@ witnesses and their controls. See <code>tools/README.md</code>.</p>
 <pre><code class="language-sh">LATTICE_ESTIMATOR_PATH=/path/to/lattice-estimator \
   sage -python kem-09/reproduce_quotient_estimate.py
 </code></pre>
-<p>The script checks the factorization and quotient homomorphism, then instantiates the estimator with the folded secret, error, and compression distributions.</p>
+<p>The script checks the factorization and quotient homomorphism, then instantiates the estimator with the folded secret, error, and compression distributions.
+If the local <code>sage</code> launcher does not support <code>-python</code>, use a Python with <code>sage.all</code> importable, for example <code>LATTICE_ESTIMATOR_PATH=/path/to/lattice-estimator mamba run -n sage python kem-09/reproduce_quotient_estimate.py</code>.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

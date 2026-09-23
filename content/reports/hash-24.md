@@ -19,6 +19,8 @@ As [reported on the CryptHash mailing list](https://list.niccs.org.cn/archives/l
 
 This is a structural distinguisher on the independently specified core permutation, not a collision, preimage, or distinguisher through the QSH hash interface. The fixed IV and compression-function injection do not give an attacker a chosen full-state permutation input, and no whole-hash attack is presently known.
 
+Further analysis: [Yufei Yuan et al., *Structural Analysis of Seven Hash Functions Submitted to the NGCC*](https://eprint.iacr.org/2026/2152), Section 7 (2026-09-23), proves the invariant and likewise does not claim a whole-hash attack.
+
 ### Reproducing
 
 The witness calls the submitted QSH-512 permutation on the mailing-list input, checks all 48 defining equalities, and also checks the published exact output:

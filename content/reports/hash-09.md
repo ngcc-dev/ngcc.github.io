@@ -57,4 +57,13 @@ Original source: [CryptHashForum report](https://list.niccs.org.cn/archives/list
 
 The three instances use the same 2048-bit permutation and zero initial state, with only the rate and capacity-feed-forward boundary changing. The reporters constructed three-block message pairs whose outputs obey a predictable cross-instance suffix relation, succeeding on 8/8 trials for every pair of instances. This distinguishes the family from independent random functions, but is not a same-instance collision or a direct break of an individual instance's collision resistance.
 
-The [Eijen Algorithm Group independently confirmed the issue](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/LZYIEYXZWH7LADLHM64NH2G4MDTOQ6DK/) and revised finalization to inject the digest length. The public message does not include the concrete witnesses, so this report records the confirmed construction-level result without claiming a local executable reproduction.
+The [Eijen Algorithm Group independently confirmed the issue](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/LZYIEYXZWH7LADLHM64NH2G4MDTOQ6DK/) and revised finalization to inject the digest length. The original public message does not include its concrete three-block witnesses, so that particular construction has not been locally replayed.
+
+Follow-up analysis: the [Iphe Algorithm Group's cross-rate note, posted by 崔灏睿 on 2026-09-23](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/BWXG6OPAIQL32FMWWYJ3C4D6QMRGHGP4/), identifies a simpler one-block relation in the archived implementation. For the same message shorter than 960 bits, the Eijen-512 digest is the final 512 bits of both Eijen-768 and Eijen-1024. The submitted libraries confirm this for the empty message, `abc`, and a 119-byte test message, with changed-message controls differing. This is still a cross-instance relation, not a same-instance collision.
+
+### Reproducing
+
+```sh
+make -C hash-09 lib/libEijen-512.so lib/libEijen-768.so lib/libEijen-1024.so
+python3 hash-09/reproduce_cross_instance_suffix.py
+```

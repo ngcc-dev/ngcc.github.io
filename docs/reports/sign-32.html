@@ -26,15 +26,16 @@
 <div class="table-wrap"><table class="meta issue-meta">
 <tr><th>Classification</th><td><span class="sev sev-critical">Critical / implementation</span></td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
-<tr><th>Affected</th><td>Reference implementation, all three parameter sets</td></tr>
+<tr><th>Affected</th><td>Reference and optimized implementations, all three parameter sets (six wrappers)</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
 <tr><th>Exploitation</th><td>Trivial</td></tr>
 <tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
 <tr><th>Date</th><td>2026-09-21</td></tr>
 </table></div>
-
+<p>Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/VT73TSZCRZVPPQDP3B4NBVVRRF36XVJ6/">LittleQ's PKC Forum post, 2026-09-23</a></p>
 <p>The internal <code>uvw_verify</code> routine computes the intended verification predicate. The API wrapper converts that result to <code>0</code> or <code>-1</code>, stores it in a local variable, and then unconditionally returns <code>0</code>.</p>
-<p>Consequently, invalid signatures, modified messages, and arbitrary full-length signature buffers are reported as valid by all three submitted reference instances. No cryptanalysis or signing query is required.</p>
+<p>Consequently, invalid signatures and modified messages that reach the final return are reported as valid. The modified-message witness reproduces on the 128- and 256-bit reference instances; some malformed signatures instead crash as described in <code>sign-32-2</code>. No cryptanalysis or signing query is required.</p>
+<p>Follow-up analysis: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/VT73TSZCRZVPPQDP3B4NBVVRRF36XVJ6/">LittleQ reported on 2026-09-23</a> that all six submitted wrappers discard <code>uvw_verify</code>'s result. We source-checked the three optimized variants: each also computes <code>result</code> and unconditionally returns <code>0</code>. This extends the source-confirmed scope to both implementation families; the local runtime witness still uses reference builds, and 512-bit key generation was too slow for that witness.</p>
 <p>This permits universal forgery through the submitted API and directly violates the claimed EUF-CMA security.</p>
 <p>The wrapper must return the computed verification result rather than an unconditional success value. Tests must include invalid signatures and modified messages, not only valid KAT signatures.</p>
 <h3 id="reproducing">Reproducing</h3>

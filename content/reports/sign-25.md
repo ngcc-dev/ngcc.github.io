@@ -61,3 +61,21 @@ The check verifies one all-zero signature twice, once after a genuine verificati
 once after overwriting the stack, and reports the two verdicts. The compressed instance
 is run as a control and rejects both. `tools/reproduce.sh` runs this together with the
 other supported runtime witnesses and their controls. See `tools/README.md`.
+
+## sign-25-2: Isogeny prime sizing relies on the former square-root attack cost
+
+Severity: Medium
+Status: Lead
+Layer: Design
+Affected: All eight SQIsign2D2 parameter sets' prime-sizing rationale
+Discovery: Moderate
+Exploitation: Asymptotic result; concrete key-recovery cost unresolved
+Credit: Further extension to Yintong Luo's analysis (GitHub @yintong16); underlying algorithm by Benjamin Wesolowski
+Date: 2026-09-23
+Original source: [Related SQIsign parameter issue #10](https://github.com/ngcc-dev/ngcc-harness/issues/10)
+
+Further extension to Yintong Luo's analysis: SQIsign2D2 §4.1 also chooses `log2 p ≈ 2λ` because it prices generic classical attacks at `p^1/2`. [Wesolowski, ePrint 2026/1486](https://eprint.iacr.org/2026/1486) improves the underlying supersingular-isogeny problem to heuristic `p^(1/3+o(1))` time and memory. The archived Level3-eff prime is even identical to SQIsign2D-push1/2's Level-3 prime. This supersedes the square-root sizing premise for **all** submitted levels, including Level1 and Level2; the bare `p^1/3` exponent for Level1-eff is about 84.9 against a 128-bit claim. The paper cautions that superpolynomial overhead and memory may dominate at concrete sizes, particularly for the smaller levels. No particular set is asserted to have a concrete below-claim attack, and no full-size key recovery or forgery is claimed here.
+
+### Reproducing
+
+Compare §4.1 and §4.2 of `sign-25-spec.pdf` with the cited attack paper, including the Level1, Level2, Level3, and Level5 primes.

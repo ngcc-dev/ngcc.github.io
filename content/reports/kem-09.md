@@ -62,3 +62,4 @@ LATTICE_ESTIMATOR_PATH=/path/to/lattice-estimator \
 ```
 
 The script checks the factorization and quotient homomorphism, then instantiates the estimator with the folded secret, error, and compression distributions.
+If the local `sage` launcher does not support `-python`, use a Python with `sage.all` importable, for example `LATTICE_ESTIMATOR_PATH=/path/to/lattice-estimator mamba run -n sage python kem-09/reproduce_quotient_estimate.py`.

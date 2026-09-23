@@ -32,12 +32,33 @@
 <tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
 <tr><th>Date</th><td>2026-09-23</td></tr>
 </table></div>
-
+<p>Follow-up source: <a href="https://github.com/ngcc-dev/ngcc-harness/issues/11">Mounir IDRASSI's issue #11</a>, <a href="https://github.com/ngcc-dev/ngcc-harness/issues/13">issue #13</a></p>
 <p>Section 4.2 requires <code>H</code> to have only λ/2-bit collision resistance for a λ-bit security level. Both signing and verification reduce the message to <code>mu = H(tr, message)</code>; a collision for two messages under the same public <code>tr</code> transfers one valid signature to the other. Thus λ/2-bit collision resistance is insufficient to justify λ-bit EUF-CMA security. This is a requirement/proof gap, not a demonstrated forgery against an instantiation using a sufficiently collision-resistant hash.</p>
 <p>The specification also chooses the contest's SM3-based <code>pseudoXOF</code> for its canonical 512-bit implementation over SHAKE256, reasoning that SHAKE256's 512-bit capacity limits its collision security to 256 bits. But <code>api/auxfunc.h</code> explicitly says <code>pseudoXOF</code> is for correctness verification and does not guarantee security. The reference pseudoXOF's 256-bit chaining state permits a generic ≈2^128-work message collision, but that observation concerns the evaluation primitive; it is not a break of the separate SHA3/SHAKE implementation or a secure replacement. A production hash choice needs an explicit collision-security argument at the claimed level.</p>
+<p>Follow-up analysis: <a href="https://github.com/ngcc-dev/ngcc-harness/issues/11">Mounir IDRASSI's GitHub issue #11, 2026-09-23</a> details the state-collision signature-transfer mechanism and demonstrates it in a reduced-state model. It explicitly does <strong>not</strong> produce a collision or forgery with the unmodified SM3 implementation. <a href="https://github.com/ngcc-dev/ngcc-harness/issues/13">Issue #13</a> gives a separate 344-bit descriptor for the correctness-only SM3 secret expansion; it is not treated here as a break of a secure hash instantiation.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>Inspect §4.2 of <code>sign-16-spec.pdf</code> for the λ/2 requirement and the canonical hash choice. In <code>sign.c</code> and <code>hash_domain.h</code>, both signing and verification bind the message only through <code>mu</code>; <code>api/auxfunc.h</code> states the contest primitive's security limitation. No full-size collision search was attempted.</p>
+<h2 class="issue-heading" id="sign-16-2-polynomial-solutions-of-the-relaxed-octarine-512-sis-estimates">sign-16-2: Polynomial solutions of the relaxed Octarine-512 SIS estimates</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Classification</th><td><span class="sev sev-medium">Medium / design</span></td></tr>
+<tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr>
+<tr><th>Affected</th><td>Octarine-512 Appendix A estimator instances, both hash families</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Polynomial time for the relaxed random-matrix problem; no signature forgery</td></tr>
+<tr><th>Credit</th><td>Mounir IDRASSI <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#111;&#117;&#110;&#105;&#114;&#64;&#97;&#109;&#99;&#114;&#121;&#112;&#116;&#111;&#46;&#106;&#112;">&#109;&#111;&#117;&#110;&#105;&#114;&#64;&#97;&#109;&#99;&#114;&#121;&#112;&#116;&#111;&#46;&#106;&#112;</a></td></tr>
+<tr><th>Date</th><td>2026-09-23</td></tr>
+</table></div>
+<p>Original source: <a href="https://github.com/ngcc-dev/ngcc-harness/issues/12">GitHub issue #12</a></p>
+<p>Appendix A estimates ordinary homogeneous SIS at modulus <code>q=2^24</code>, with 5,120 rows and either 10,240 or 15,360 columns. Its 512-level infinity-norm bounds are 4,194,306 (SUF) and 4,947,969 (EUF). Split the first 10,240 columns into square blocks <code>B,C</code>. If both blocks are invertible modulo 2, two binary linear solves produce a nonzero <code>w</code> with <code>[B C]w=0 mod 4</code>; then <code>X=(q/4)w</code> solves the full-modulus SIS equation with norm exactly 4,194,304, below both estimated bounds. For independent random blocks, the invertibility condition has constant probability, about 0.0834.</p>
+<p>I independently verified the submitter's complete 5,120-row certificate: all residuals vanish modulo 4, the vector has 7,683 nonzero coordinates and the stated norm, and a modified-vector control fails. This invalidates the hardness estimate for those <em>relaxed</em> SIS instances. It does <strong>not</strong> forge a signature: the actual SUF extraction requires the response difference to have norm strictly below 4,193,956, which this certificate violates; the EUF challenge also has structural constraints erased by the estimator.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>The script downloads the hash-pinned <a href="https://github.com/amcrypto-jp/octarine-cryptanalysis/blob/v1.0.1/data/sis_witness_5120.npz">published certificate</a> and requires NumPy:</p>
+<pre><code class="language-sh">python3 sign-16/reproduce_relaxed_sis.py
+</code></pre>
+<p>Use a Python with NumPy installed; on a system where only a mamba Sage environment provides it, run <code>mamba run -n sage python sign-16/reproduce_relaxed_sis.py</code>.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

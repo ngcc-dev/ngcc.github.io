@@ -52,7 +52,7 @@
 <tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
 <tr><th>Date</th><td>2026-09-21</td></tr>
 </table></div>
-
+<p>Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/H47RU2HKEEAZQOJNKMUFWNEJEHHSLPQQ/">CTL submitters' 2026-09-23 response</a></p>
 <p>The CTL-512 adapter returns a 48-byte shared secret and instantiates the ciphertext hash component <code>c2</code> at 48 bytes. The specification assigns 64 bytes to CTL-512 <code>c2</code>.</p>
 <p>The returned key therefore has at most 384 bits of delivered-key capacity and the ciphertext format contradicts the PDF. Output length alone is not an IND-CCA attack, so this second issue is classified as an implementation/specification conformance break rather than a complete KEM confidentiality attack.</p>
 <h3 id="reproducing_1">Reproducing</h3>
@@ -61,6 +61,7 @@
 </code></pre>
 <p>The <code>kem-12-2</code> check verifies the CTL-512 output table and the corresponding
 reference constants.</p>
+<p>The <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/H47RU2HKEEAZQOJNKMUFWNEJEHHSLPQQ/">CTL submitters' response on 2026-09-23</a> acknowledges both findings and describes intended corrections; these reports remain scoped to the archived submission.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -30,3 +30,4 @@ sage -python kex-08/reproduce_raw_key_distinguisher.py
 ```
 
 The witness prints `ATTACK kex-08-1 NIIKE-lv128 CONFIRMED` when the honest key is supersingular and all controls are ordinary.
+If the local `sage` launcher does not support `-python`, use a Python with `sage.all` importable, for example `mamba run -n sage python kex-08/reproduce_raw_key_distinguisher.py`.
