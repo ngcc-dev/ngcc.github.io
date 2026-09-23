@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CheetahKEM (kem-09) · ngcc.dev</title>
-<link rel="stylesheet" href="../assets/style.css?v=8c137f6d">
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
 </head>
 <body>
 <header class="site-header">
 <a class="brand" href="../index.html">ngcc.dev</a>
-<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a></nav>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
 </header>
 <main>
-<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>kem-09</code></p>
+<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>kem-09</code> · <a href="../constant-time/kem-09.html">Constant-time review</a></p>
 
 <h1 id="cheetahkem-kem-09">CheetahKEM (kem-09)</h1>
 <div class="table-wrap"><table class="meta">
@@ -64,10 +64,10 @@ witnesses and their controls. See <code>tools/README.md</code>.</p>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>Install Martin Albrecht's <a href="https://github.com/malb/lattice-estimator">lattice-estimator</a>, then run the script with Sage's Python and point it at that checkout:</p>
 <pre><code class="language-sh">LATTICE_ESTIMATOR_PATH=/path/to/lattice-estimator \
-  sage -python kem-09/reproduce_quotient_estimate.py
+  mamba run -n sage python kem-09/reproduce_quotient_estimate.py
 </code></pre>
 <p>The script checks the factorization and quotient homomorphism, then instantiates the estimator with the folded secret, error, and compression distributions.
-If the local <code>sage</code> launcher does not support <code>-python</code>, use a Python with <code>sage.all</code> importable, for example <code>LATTICE_ESTIMATOR_PATH=/path/to/lattice-estimator mamba run -n sage python kem-09/reproduce_quotient_estimate.py</code>.</p>
+The command uses this host's Sage environment; elsewhere, any Python with <code>sage.all</code> importable can run the script with <code>LATTICE_ESTIMATOR_PATH</code> set.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

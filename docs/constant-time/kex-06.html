@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MAMBA-NIKE constant-time review · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../constant-time/index.html">Constant-time review</a> › <code>kex-06</code> · <a href="../reports/kex-06.html">Report</a></p>
+
+<!-- synchronized report: kex-06/constant_time.md -->
+<h1 id="mamba-nike-constant-time-review">MAMBA-NIKE constant-time review</h1>
+<p>Scope: MAMBA-NIKE-128 representative reference implementation; other levels share a similar layout but were not exhaustively compiled. The local long-term NIKE secret/noise, private reconciliation vector and derived shared key are secret. Public keys, their fixed lengths, and public matrix seeds are public.</p>
+<ul>
+<li><code>MAMBA-NIKE-128/KEX_AlgorithmInstance.c:312-352</code> derives shared material using the local secret and peer public key. <code>MAMBA-NIKE-128/error_correction.c:61-95,103-120</code> processes secret-derived reconciliation values with fixed loop bounds, shifts and masks. Its <code>f/g/LDDecode</code> arithmetic at lines 12-57 uses no division instruction or data-indexed table; divisions by powers of two are explicit shifts.</li>
+<li><code>MAMBA-NIKE-128/poly.c:57-100</code> contains a rejection branch (<code>val &lt; PARAM_Q</code>) for generating a polynomial from an XOF. Trace the seed before calling this a leak: the matrix seed is public in the NIKE protocol. In the power-of-two-Q path, the loop accepts all 13-bit words.</li>
+<li><code>MAMBA-NIKE-128/toom.c:194,215,220</code> divides secret-derived multiplication intermediates by public compile-time constants 12, 18, and 15. This is a compiler/platform review point, not automatically a variable-time divisor: the divisor is fixed. No secret-dependent <code>idiv</code> or timing witness was established in this pass.</li>
+</ul>
+<p>No new report was filed. This source review is limited to the cited reference paths and does not certify the whole implementation constant-time.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

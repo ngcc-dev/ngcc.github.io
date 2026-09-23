@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Octarine (sign-16) · ngcc.dev</title>
-<link rel="stylesheet" href="../assets/style.css?v=8c137f6d">
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
 </head>
 <body>
 <header class="site-header">
 <a class="brand" href="../index.html">ngcc.dev</a>
-<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a></nav>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
 </header>
 <main>
-<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>sign-16</code></p>
+<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>sign-16</code> · <a href="../constant-time/sign-16.html">Constant-time review</a></p>
 
 <h1 id="octarine-sign-16">Octarine (sign-16)</h1>
 <div class="table-wrap"><table class="meta">
@@ -34,11 +34,11 @@
 </table></div>
 <p>Follow-up source: <a href="https://github.com/ngcc-dev/ngcc-harness/issues/11">Mounir IDRASSI's issue #11</a>, <a href="https://github.com/ngcc-dev/ngcc-harness/issues/13">issue #13</a></p>
 <p>Section 4.2 requires <code>H</code> to have only λ/2-bit collision resistance for a λ-bit security level. Both signing and verification reduce the message to <code>mu = H(tr, message)</code>; a collision for two messages under the same public <code>tr</code> transfers one valid signature to the other. Thus λ/2-bit collision resistance is insufficient to justify λ-bit EUF-CMA security. This is a requirement/proof gap, not a demonstrated forgery against an instantiation using a sufficiently collision-resistant hash.</p>
-<p>The specification also chooses the contest's SM3-based <code>pseudoXOF</code> for its canonical 512-bit implementation over SHAKE256, reasoning that SHAKE256's 512-bit capacity limits its collision security to 256 bits. But <code>api/auxfunc.h</code> explicitly says <code>pseudoXOF</code> is for correctness verification and does not guarantee security. The reference pseudoXOF's 256-bit chaining state permits a generic ≈2^128-work message collision, but that observation concerns the evaluation primitive; it is not a break of the separate SHA3/SHAKE implementation or a secure replacement. A production hash choice needs an explicit collision-security argument at the claimed level.</p>
-<p>Follow-up analysis: <a href="https://github.com/ngcc-dev/ngcc-harness/issues/11">Mounir IDRASSI's GitHub issue #11, 2026-09-23</a> details the state-collision signature-transfer mechanism and demonstrates it in a reduced-state model. It explicitly does <strong>not</strong> produce a collision or forgery with the unmodified SM3 implementation. <a href="https://github.com/ngcc-dev/ngcc-harness/issues/13">Issue #13</a> gives a separate 344-bit descriptor for the correctness-only SM3 secret expansion; it is not treated here as a break of a secure hash instantiation.</p>
+<p>An ideal replacement with the same specified input/output dimensions does not repair the weak <em>stated requirement</em>: the security argument must require collision resistance commensurate with the claimed EUF-CMA level. Attacks on the contest's correctness-only SM3 <code>pseudoXOF</code> internals are outside this finding.</p>
+<p>Follow-up analysis: <a href="https://github.com/ngcc-dev/ngcc-harness/issues/11">Mounir IDRASSI's GitHub issue #11, 2026-09-23</a> demonstrates state-collision signature transfer in a reduced-state evaluation model, not a full-size forgery. <a href="https://github.com/ngcc-dev/ngcc-harness/issues/13">Issue #13</a> concerns correctness-only SM3 secret expansion; neither issue establishes a break of an ideal replacement.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
-<p>Inspect §4.2 of <code>sign-16-spec.pdf</code> for the λ/2 requirement and the canonical hash choice. In <code>sign.c</code> and <code>hash_domain.h</code>, both signing and verification bind the message only through <code>mu</code>; <code>api/auxfunc.h</code> states the contest primitive's security limitation. No full-size collision search was attempted.</p>
+<p>Inspect §4.2 of <code>sign-16-spec.pdf</code> for the λ/2 requirement. In <code>sign.c</code> and <code>hash_domain.h</code>, both signing and verification bind the message only through <code>mu</code>. No full-size collision search was attempted.</p>
 <h2 class="issue-heading" id="sign-16-2-polynomial-solutions-of-the-relaxed-octarine-512-sis-estimates">sign-16-2: Polynomial solutions of the relaxed Octarine-512 SIS estimates</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
@@ -56,9 +56,9 @@
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>The script downloads the hash-pinned <a href="https://github.com/amcrypto-jp/octarine-cryptanalysis/blob/v1.0.1/data/sis_witness_5120.npz">published certificate</a> and requires NumPy:</p>
-<pre><code class="language-sh">python3 sign-16/reproduce_relaxed_sis.py
+<pre><code class="language-sh">mamba run -n sage python sign-16/reproduce_relaxed_sis.py
 </code></pre>
-<p>Use a Python with NumPy installed; on a system where only a mamba Sage environment provides it, run <code>mamba run -n sage python sign-16/reproduce_relaxed_sis.py</code>.</p>
+<p>The command uses this host's NumPy-equipped Sage environment; elsewhere, any Python with NumPy installed can run the script.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

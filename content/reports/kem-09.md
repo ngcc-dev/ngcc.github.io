@@ -58,8 +58,8 @@ Install Martin Albrecht's [lattice-estimator](https://github.com/malb/lattice-es
 
 ```sh
 LATTICE_ESTIMATOR_PATH=/path/to/lattice-estimator \
-  sage -python kem-09/reproduce_quotient_estimate.py
+  mamba run -n sage python kem-09/reproduce_quotient_estimate.py
 ```
 
 The script checks the factorization and quotient homomorphism, then instantiates the estimator with the folded secret, error, and compression distributions.
-If the local `sage` launcher does not support `-python`, use a Python with `sage.all` importable, for example `LATTICE_ESTIMATOR_PATH=/path/to/lattice-estimator mamba run -n sage python kem-09/reproduce_quotient_estimate.py`.
+The command uses this host's Sage environment; elsewhere, any Python with `sage.all` importable can run the script with `LATTICE_ESTIMATOR_PATH` set.

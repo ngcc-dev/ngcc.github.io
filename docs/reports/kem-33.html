@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QUBE (kem-33) · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>kem-33</code> · <a href="../constant-time/kem-33.html">Constant-time review</a></p>
+
+<h1 id="qube-kem-33">QUBE (kem-33)</h1>
+<div class="table-wrap"><table class="meta">
+<tr><th>Candidate</th><td>QUBE</td></tr>
+<tr><th>Family</th><td>Code-based</td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/QUBE.zip">QUBE.zip</a></td></tr>
+</table></div>
+
+<h2 class="issue-heading issue-heading-first" id="kem-33-1-decapsulation-re-expands-the-private-seed-with-a-variable-length-sampler">kem-33-1: Decapsulation re-expands the private seed with a variable-length sampler</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Classification</th><td><span class="sev sev-medium">Medium / implementation</span></td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>QUBE reference KEM decapsulation; demonstrated on QUBE-256</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Secret-seed-dependent execution trace; key recovery not demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-23</td></tr>
+</table></div>
+
+<p><code>crypto_kem_dec</code> calls <code>qube_pke_decrypt</code>, which regenerates the private support from the persistent PKE seed on every decapsulation. <code>vect_sample_fixed_weight</code> draws until it has enough distinct positions and branches on rejected or duplicate positions (<code>src/ref/vector.c:89-108</code>). Its work therefore depends on the secret seed even for a fixed public ciphertext. The final FO comparison does not remove this timing dependence. No key-recovery attack from the trace is claimed; see <code>constant_time.md</code>.</p>
+<p>Follow-up analysis: FO re-encryption also samples from coins derived from recovered <code>m_prime</code> (<code>src/common/kem.c:155-160</code>, <code>src/ref/qube.c:124-136</code>). This resembles the setting of <a href="https://eprint.iacr.org/2021/1485.pdf">Guo et al.</a>, but their HQC/BIKE recovery attack has not been established for QUBE.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>The witness instruments only the submitted sampler's draw call, without changing its decisions. From the repository root:</p>
+<pre><code class="language-sh">ct_dir=$(mktemp -d)
+ref=kem-33/Implementations/Reference_Implementation/qube-256
+cc -std=c99 -O2 -ffunction-sections -fdata-sections -Wl,--gc-sections \
+  -I &quot;$ref/src/common&quot; -I &quot;$ref/src/common/qube-256&quot; \
+  -I &quot;$ref/src/ref&quot; -I &quot;$ref/src/ref/qube-256&quot; \
+  -I &quot;$ref/lib/api_pkc&quot; -I &quot;$ref&quot; \
+  -o &quot;$ct_dir/repro&quot; kem-33/reproduce_ct_sampler.c \
+  &quot;$ref/src/common/symmetric.c&quot; &quot;$ref/src/common/crypto_memset.c&quot; \
+  &quot;$ref/lib/api_pkc/auxfunc.c&quot;
+&quot;$ct_dir/repro&quot;
+</code></pre>
+<p>It confirms different draw counts for two private seeds (254 versus 231 on this build). The source call chain is <code>src/common/kem.c:155</code> → <code>src/ref/qube.c:182-195</code> → <code>src/ref/vector.c:89-108</code>.</p>
+<h2 class="issue-heading" id="kem-33-2-decryption-multiplication-traverses-secret-support-positions">kem-33-2: Decryption multiplication traverses secret support positions</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Classification</th><td><span class="sev sev-medium">Medium / implementation</span></td></tr>
+<tr><th>Status</th><td><span class="issue-status status-probable">Probable</span></td></tr>
+<tr><th>Affected</th><td>QUBE reference decapsulation; demonstrated in QUBE-256 source</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Local branch/address trace tied to private support; full shared-secret recovery not demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-23</td></tr>
+</table></div>
+
+<p>QUBE re-expands the private seed into <code>y_support</code>, then multiplies the public ciphertext polynomial by that support during every decapsulation (<code>src/ref/qube.c:182-192</code>). <code>ring_mul_by_support</code> passes each private position as a shift (<code>src/ref/gf2x.c:59-63</code>); the shift controls branches and output addresses in <code>xor_shifted</code>/<code>xor_linear_word</code> (<code>:14-25,44-57</code>). A fine-grained local trace can therefore depend on private support positions, beyond the public ciphertext. Recovering the entire support would enable PKE decryption and, for a valid ciphertext, shared-secret derivation, but no physical trace or full recovery is demonstrated; see <code>constant_time.md</code>.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>Inspect <code>src/common/kem.c:155</code>, <code>src/ref/qube.c:182-192</code>, and <code>src/ref/gf2x.c:14-25,44-63</code> under <code>Implementations/Reference_Implementation/qube-256/</code>. This source-level witness identifies the secret-to-address path, not a measured cache attack.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

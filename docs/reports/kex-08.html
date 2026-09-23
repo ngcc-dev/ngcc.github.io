@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>NIIKE (kex-08) · ngcc.dev</title>
-<link rel="stylesheet" href="../assets/style.css?v=8c137f6d">
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
 </head>
 <body>
 <header class="site-header">
 <a class="brand" href="../index.html">ngcc.dev</a>
-<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a></nav>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
 </header>
 <main>
-<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>kex-08</code></p>
+<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>kex-08</code> · <a href="../constant-time/kex-08.html">Constant-time review</a></p>
 
 <h1 id="niike-kex-08">NIIKE (kex-08)</h1>
 <div class="table-wrap"><table class="meta">
@@ -40,10 +40,39 @@
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>Build the reference library and run the witness with Sage's Python:</p>
 <pre><code class="language-sh">make -C kex-08
-sage -python kex-08/reproduce_raw_key_distinguisher.py
+mamba run -n sage python kex-08/reproduce_raw_key_distinguisher.py
 </code></pre>
 <p>The witness prints <code>ATTACK kex-08-1 NIIKE-lv128 CONFIRMED</code> when the honest key is supersingular and all controls are ordinary.
-If the local <code>sage</code> launcher does not support <code>-python</code>, use a Python with <code>sage.all</code> importable, for example <code>mamba run -n sage python kex-08/reproduce_raw_key_distinguisher.py</code>.</p>
+The command uses this host's Sage environment; elsewhere, any Python with <code>sage.all</code> importable can run the script.</p>
+<h2 class="issue-heading" id="kex-08-2-niike-lv512-key-generation-cycles-between-two-hard-coded-secret-keys">kex-08-2: NIIKE-lv512 key generation cycles between two hard-coded secret keys</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Classification</th><td><span class="sev sev-critical">Critical / implementation</span></td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>NIIKE-lv512 reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>At most two candidate private keys per party; shared-secret recovery from a public key requires at most two public-key comparisons and one agreement</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-23</td></tr>
+</table></div>
+
+<p>The lv512 <code>make_SecretKey</code> ignores its DRNG argument and copies one of two literal 759-entry secret vectors, selected by a global Boolean that toggles after each call (<code>NIIKE-lv512/protocols/bundleprotocols_internal.c:53-79</code>). The optimized helper is byte-identical. Both public-key entry points call this function (<code>ngccapi/KEX_AlgorithmInstance.c:59-80</code>). An attacker can precompute the two corresponding public keys and identify the private vector from any honest public key, then run the public agreement algorithm to obtain its shared secret. This is a complete key-space collapse in the submitted lv512 code, not a timing finding; lv128/lv256 use different key-generation helpers. The normal Makefile omits lv512 unless <code>NGCC_NIIKE_LV512=1</code>. Full lv512 public-key computation was not run here because the reference implementation estimates roughly a day per KAT record; the witness verifies the exact two-key cycle in the original helper.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>From the repository root, compile the original lv512 helper with section garbage collection so its unrelated, slow isogeny functions need not be linked:</p>
+<pre><code class="language-sh">ref='kex-08/Implementations and Test_Vectors/Implementations/Reference_Implementation'
+tmp=$(mktemp -d)
+cc -w -Wno-error=implicit-function-declaration -Wno-error=incompatible-pointer-types \
+  -O2 -DRADIX_64 -ffunction-sections -fdata-sections -Wl,--gc-sections \
+  -I&quot;$ref/NIIKE-lv512/ngccapi/include&quot; -I&quot;$ref/common/include&quot; \
+  -I&quot;$ref/gf/include&quot; -I&quot;$ref/NIIKE-lv512/precomp/include&quot; \
+  -I&quot;$ref/NIIKE-lv512/ec/include&quot; -I&quot;$ref/ec/include&quot; \
+  -I&quot;$ref/NIIKE-lv512/protocols/include&quot; -I&quot;$ref/protocols/include&quot; \
+  kex-08/reproduce_lv512_two_keys.c \
+  &quot;$ref/NIIKE-lv512/protocols/bundleprotocols_internal.c&quot; -o &quot;$tmp/check_two_keys&quot;
+&quot;$tmp/check_two_keys&quot;
+</code></pre>
+<p>The witness prints <code>ATTACK kex-08-2 NIIKE-lv512 CONFIRMED: two-key cycle</code>.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

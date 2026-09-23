@@ -83,3 +83,20 @@ The guarded check runs as part of either command for `hash-04-3`:
 ```sh
 make -C hash-04 reproduce
 ```
+
+## hash-04-5: Message bytes index a large precomputed matrix table
+
+Severity: Medium
+Status: Confirmed
+Layer: Implementation
+Affected: Reference CHAMP-512 and CHAMP-1024
+Discovery: Trivial
+Exploitation: Cache side-channel dependent
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-09-23
+
+The absorption loop selects `byte_table[(unsigned char)msg[i]]` directly from each message byte (`CryptHash_AlgorithmInstance.c:279` in CHAMP-512; `:308` in CHAMP-1024). Entries contain four field elements and occupy distinct cache lines. The memory-address trace therefore reveals every absorbed byte to an observer able to distinguish table lines. Field reduction and inverse dispatch also branch on secret-dependent state. No end-to-end cache-extraction experiment was run. See [constant_time.md](../constant-time/hash-04.md).
+
+### Reproducing
+
+Inspect the cited table access. For equal-length first-byte choices `0x00` and `0x80`, the first table addresses differ by 128 entries; the two inputs differ only in secret content.

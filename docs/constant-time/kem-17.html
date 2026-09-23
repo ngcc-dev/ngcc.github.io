@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Constant-time review: HEP-QC · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../constant-time/index.html">Constant-time review</a> › <code>kem-17</code> · <a href="../reports/kem-17.html">Report</a></p>
+
+<!-- synchronized report: kem-17/constant_time.md -->
+<h1 id="constant-time-review-hep-qc">Constant-time review: HEP-QC</h1>
+<p>The long-term secret seed expands into private vector <code>y</code>, mixing matrix <code>t</code>, and column permutation <code>p</code>; recovered plaintext, fallback <code>sigma</code>, and shared secret are secret. The public key and ciphertext are public. This traces <code>Implementations/Implementations/ref</code> plus its shared <code>common</code> sources; the x86_64 PKE file calls the same shared permutation/inversion routines.</p>
+<p><code>ref/KEM_HEP_QC.c:165-212</code> decapsulates through <code>hep_qc_pke_decrypt</code>. <code>ref/PKE_HEP_QC.c:185-220</code> recovers <code>y,t,p</code> from the secret seed, computes <code>v-u*y</code>, applies private <code>p</code>, decodes, and inverts private <code>t</code>. In <code>common/vector.c:498-503</code>, <code>P[old_col]</code> is the index passed to <code>vect_set_bit</code>; <code>vector.c:477-485</code> branches on the corresponding bit and writes <code>out[col &gt;&gt; 6]</code>. Thus memory addresses expose the private permutation. Separately, <code>vector.c:369-408</code> pivots and branches on entries of the private mixing matrix during every decapsulation. These are direct secret-dependent memory/control-flow operations, not public-value branches.</p>
+<p>No remote measurement or complete secret-key recovery has been demonstrated; <code>report.md</code> contains the bounded implementation finding. The witness is a direct source call-chain trace, not a timing benchmark.</p>
+<p>Additional re-expansion trace: each decapsulation calls <code>common/parsing.c:23-31</code>, whose private-seed XOF drives the rejection loop in <code>common/vector.c:64-76</code>, retry-until-invertible matrix generation at <code>:343-357</code>, and Fisher–Yates selection at <code>:416-423</code>. The latter computes <code>x % bound</code> and GCC <code>-O2</code> emits hardware division even though <code>bound</code> is public. These reinforce the bounded side-channel finding <code>kem-17-5</code>; they are not separate demonstrated extraction paths. Independently, <code>kem-17-1</code> already recovers the full key without timing because key generation is publicly reproducible.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

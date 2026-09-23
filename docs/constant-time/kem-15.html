@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Constant-time review: FLIT · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../constant-time/index.html">Constant-time review</a> › <code>kem-15</code></p>
+
+<!-- synchronized report: kem-15/constant_time.md -->
+<h1 id="constant-time-review-flit">Constant-time review: FLIT</h1>
+<p>The CPA secret polynomial/vector, decrypted prekey, fallback secret, and final shared secret are secret. The ciphertext, public key, and fixed lengths are public. This follows FLIT128 reference C; 256/512 and compiler output are not independently certified.</p>
+<p><code>kem.c:95-128</code> decrypts with <code>indcpa_dec</code>, re-encrypts, calls fixed-length <code>verify</code>, applies <code>cmov</code> to the prekey, and derives the final key. <code>indcpa.c:117-132</code> multiplies the secret polynomial by the ciphertext and decodes the result without an explicit branch in that routine. Early <code>if (r1 == 0)</code>/<code>if (r2 != 0)</code> decisions in <code>indcpa.c:39-45</code> are in key generation, not this decapsulation path; their effect on key-generation entropy/timing would require separate measurement. No secret-indexed lookup or variable-divisor operation was established in the traced decapsulation chain.</p>
+<p>Status: representative source-level screen only; no new report from this review.</p>
+<p>Size-build correction: <code>poly_compress_and_pack</code> (<code>poly.c:215,220-227</code>) runs on FO re-encryption of the secret-derived message, and GCC <code>-Os</code> emits hardware division there (including FLIT512). The source modulus is public, but the numerator is not necessarily public; a timing oracle and attack transfer remain untested. Thus the earlier absence statement applies only to the narrow default-build trace, not to size-optimized builds.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

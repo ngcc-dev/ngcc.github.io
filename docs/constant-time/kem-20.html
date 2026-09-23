@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Constant-time review: MAMBA-Frost · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../constant-time/index.html">Constant-time review</a> › <code>kem-20</code></p>
+
+<!-- synchronized report: kem-20/constant_time.md -->
+<h1 id="constant-time-review-mamba-frost">Constant-time review: MAMBA-Frost</h1>
+<p>The packed private matrix/vector <code>S</code>, recovered message, rejection key material, and shared secret are secret. The public key, ciphertext, salt, and dimensions are public. This traces the MAMBA-Frost-128 reference source; 192/256, optimized builds, and emitted machine code remain unreviewed.</p>
+<p><code>Frost/src/kem.c:444-503</code> loads the private <code>S</code> and sign-extends every coefficient. At line 493 a C <code>if</code> tests the sign bit of each private coefficient before the main matrix multiplication; if compiled as a branch, its trace directly reveals the sign pattern of <code>S</code>. The subsequent error returns around lines 503,545,552,562 are driven by reconstruction/quantization status and need separate taint and timing checks. <code>%</code>/division inside rounding helpers is not promoted without checking the runtime divisor and compiled instruction sequence.</p>
+<p>Status: source-level concern, not yet a confirmed machine-level side channel. No report is filed until an emitted-code or controlled trace witness shows the secret-bit branch survives compilation.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

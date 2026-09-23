@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Constant-time review: Aigis-Enc+ · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../constant-time/index.html">Constant-time review</a> › <code>kem-01</code> · <a href="../reports/kem-01.html">Report</a></p>
+
+<!-- synchronized report: kem-01/constant_time.md -->
+<h1 id="constant-time-review-aigis-enc">Constant-time review: Aigis-Enc+</h1>
+<p>Secret inputs are the long-term PKE key in <code>sk</code>, the decrypted prekey, the rejection seed, and the shared secret. <code>pk</code>, <code>ct</code>, encoded lengths, and parameter constants are public. The trace below is for reference Aigis-Enc+-I; II/III use the same KEM structure. This is a source-level review, not a machine-code proof across compilers.</p>
+<p><code>kem.c:65</code> calls <code>owcpa_dec</code> on the secret key; <code>kem.c:72</code> re-encrypts the resulting secret prekey before the <code>verify</code>/<code>cmov</code> path at <code>:74-80</code>. <code>verify.c:15-27,41-54</code> uses fixed-length accumulation and a byte mask. The candidate already has a separate functional rejection failure in <code>report.md</code>; it must not be confused with a timing result. <code>pack.c:19-22</code> reaches <code>poly_compress</code> on the <em>re-encrypted</em>, secret-derived ciphertext, whose divisions by compile-time <code>PARAM_Q</code> occur at <code>poly.c:72,84-85,94</code>; the public input-ciphertext path is not the only caller. GCC <code>-Os</code> with the reference definitions emits <code>div</code> in <code>poly_compress</code> (two sites for Aigis-Enc+-I); GCC <code>-O2</code> did not in the reviewed build. Fixed divisors therefore cannot be cleared by source inspection alone. A timing oracle and key-recovery transfer have not been demonstrated.</p>
+<p>Status: size-optimized secret-operand divide lead, not a demonstrated side-channel attack. Optimized variants and other compilers are not certified constant-time.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

@@ -44,3 +44,20 @@ The witness verifies both published collision families, including the exact full
 ```sh
 make -C hash-21 reproduce
 ```
+
+## hash-21-3: Secret state indexes a 256-byte S-box
+
+Severity: Medium
+Status: Confirmed
+Layer: Implementation
+Affected: Reference Neulaser-512/768/1024
+Discovery: Trivial
+Exploitation: Cache side-channel dependent
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-09-23
+
+`nl_sbox_word` reads `NL_SBOX` at four indices derived from an evolving 32-bit state word (`CryptHash_AlgorithmInstance.c:85-90`). The 256-byte table spans cache lines, so the lookup address depends on secret message content. The source also computes state-derived `x % (2^32-5)` (`:60-63`), whose timing requires target-specific code inspection; the report does not rely on it. No preimage-recovery exploit is claimed. See [constant_time.md](../constant-time/hash-21.md).
+
+### Reproducing
+
+Inspect the four `NL_SBOX` accesses in any reference variant and compare indices for unequal state words; they select different table lines.

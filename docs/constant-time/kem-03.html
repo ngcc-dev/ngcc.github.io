@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Constant-time review: BAG-Loong · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../constant-time/index.html">Constant-time review</a> › <code>kem-03</code> · <a href="../reports/kem-03.html">Report</a></p>
+
+<!-- synchronized report: kem-03/constant_time.md -->
+<h1 id="constant-time-review-bag-loong">Constant-time review: BAG-Loong</h1>
+<p>The recipient's long-term secret is the <code>x</code> component decoded from <code>sk_prime</code>; the PKE plaintext and KEM prekey are secret until encapsulation. The ciphertext, public key, encoded lengths, and salt are public. This review follows the submitted Loong-Block-ms-128 reference path; the other parameter directories have the same decoder structure. It is a source-level audit, not a measured remote attack.</p>
+<p>Decapsulation parses public encodings in <code>src/loong_kem.c:194-213</code>, then calls secret-key PKE decryption at <code>src/loong_kem.c:217-218</code>. In <code>src/loong_pke.c:1003-1014</code>, the secret <code>x</code> is multiplied by ciphertext <code>c1</code> and added to <code>c2</code> to form the decoded word. <code>src/gabidulin.c:213-227</code> searches for a nonzero discrepancy with a data-dependent loop and swaps at data-dependent index <code>j</code>; <code>src/gabidulin.c:230-279</code> branches on discrepancy values and selects distinct update paths. These are secret-dependent control flow and memory accesses during decapsulation. Public length checks and allocation-failure branches are not findings.</p>
+<p>No constant-time claim is made for the decoder. A cache/timing observer may learn pivot and discrepancy information tied to the recipient key and chosen ciphertext. No complete key-recovery experiment is established; see <code>report.md</code> for the bounded finding. Reproduction of the source trace: inspect <code>loong_kem.c:217-218</code>, <code>loong_pke.c:1003-1014</code>, and <code>gabidulin.c:213-279</code> in the reference directory.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

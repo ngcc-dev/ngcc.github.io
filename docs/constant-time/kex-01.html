@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ADKEX constant-time review · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../constant-time/index.html">Constant-time review</a> › <code>kex-01</code></p>
+
+<!-- synchronized report: kex-01/constant_time.md -->
+<h1 id="adkex-constant-time-review">ADKEX constant-time review</h1>
+<p>Scope: ADKEX-128 representative reference implementation; 256/512 share the same protocol structure but were not machine-code audited. Persistent responder KEM <code>sk_B</code>, initiator ephemeral decapsulation key, provisional KEM messages, PRNG coins and final shared secret are secret. Public keys, <code>m1/m2</code> ciphertexts, their fixed lengths and transcript labels are public.</p>
+<ul>
+<li><code>ADKEX-128/KEX_AlgorithmInstance.c:55-68,76-92</code> generates secret long-term and ephemeral coins, then calls the deterministic core. <code>ADKEX-128/adkex_derand.c:68-99</code> passes secret keys through decapsulation and the KDF.</li>
+<li><code>ADKEX-128/dkecca.c:95-114</code> decrypts and re-encrypts, then uses <code>DKE_verify</code> and <code>DKE_cmov</code> for implicit rejection. Both are fixed-length, mask-based loops in <code>ADKEX-128/verify.c:16-37</code>; no secret-dependent early-exit comparison was found in that path.</li>
+<li><code>ADKEX-128/dke_utils.c:85-92</code> converts private random bits with <code>DKE_cmov_int16</code>, avoiding secret-bit table indices. Hash-length conditions in <code>ADKEX-128/dke_hash.c:96,120,137</code> are public configuration/length tests.</li>
+</ul>
+<p>No new secret-dependent branch, lookup, or variable-divisor site was confirmed in these traced paths. This is not a proof of constant time: AVX2/AArch64 implementations and all compiler output remain outside this review.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

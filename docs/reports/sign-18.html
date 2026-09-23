@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Origami (sign-18) · ngcc.dev</title>
-<link rel="stylesheet" href="../assets/style.css?v=8c137f6d">
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
 </head>
 <body>
 <header class="site-header">
 <a class="brand" href="../index.html">ngcc.dev</a>
-<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a></nav>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
 </header>
 <main>
-<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>sign-18</code></p>
+<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>sign-18</code> · <a href="../constant-time/sign-18.html">Constant-time review</a></p>
 
 <h1 id="origami-sign-18">Origami (sign-18)</h1>
 <div class="table-wrap"><table class="meta">
@@ -62,6 +62,38 @@
 python3 sign-18/reproduce_signature_subspace.py
 </code></pre>
 <p>The witness verifies every collected signature with the official verifier before measuring its rank over <code>GF(16)</code>.</p>
+<h2 class="issue-heading" id="sign-18-3-variable-time-hidden-zone-linear-solving">sign-18-3: Variable-time hidden-zone linear solving</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Classification</th><td><span class="sev sev-medium">Medium / implementation</span></td></tr>
+<tr><th>Status</th><td><span class="issue-status status-probable">Probable</span></td></tr>
+<tr><th>Affected</th><td>Origami reference signer, all four parameter sets</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Local timing/cache side channel; no key recovery demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-23</td></tr>
+</table></div>
+
+<p>Signing builds a linear system from the expanded secret zone structure and sampled hidden variables, then solves it with first-nonzero pivot search and data-dependent row skips. The reference <code>origami_ref.c</code> branches on matrix entries at lines 636 and 659, and on the solve result at line 798. Thus a local trace can distinguish properties of intermediate private systems. This does not by itself establish recovery of the master seed or a forgery; see <code>constant_time.md</code> for the secret/public classification.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>In each reference instance, follow <code>sign</code> → <code>build_zone_system</code> → <code>solve_rect_random</code> in <code>origami_ref.c</code>; inspect the pivot test and early break at lines 633–640, row skip at 659, and attempt retry at 794–811. This is a source/dataflow witness, not a measured remote timing exploit.</p>
+<h2 class="issue-heading" id="sign-18-4-signing-indexes-field-tables-and-signature-state-with-private-values">sign-18-4: Signing indexes field tables and signature state with private values</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Classification</th><td><span class="sev sev-medium">Medium / implementation</span></td></tr>
+<tr><th>Status</th><td><span class="issue-status status-probable">Probable</span></td></tr>
+<tr><th>Affected</th><td>Origami reference signer, all four parameter sets</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Local cache/address trace of secret intermediates; forgery not demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-23</td></tr>
+</table></div>
+
+<p>Origami's <code>gf_mult</code> and <code>gf_inv</code> index 256-byte and 16-byte tables by field operands (<code>origami_gf.h:25,32-37</code>), including private central-map and solver values during signing (<code>origami_ref.c:400,599-601,653-661</code>). The signer also derives <code>w_vars</code> from private permutation <code>rho</code> and writes <code>secret_y[w_vars[i]]</code> (<code>origami_ref.c:421-426,798-800</code>). These addresses can depend on private values even for the same public message. No measured cache channel or EUF-CMA forgery is established; see <code>constant_time.md</code>.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>Inspect the cited lookup definitions and signer call sites in <code>Implementations and Test_Vectors/Implementations/Reference_Implementation/Origami-256/</code>; the same pattern is present in the other reference parameter sets. This is a source/dataflow witness, not a measured extraction.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

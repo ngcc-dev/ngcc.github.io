@@ -99,7 +99,7 @@ The local witness solves those equations using only two public, officially verif
 ### Reproducing
 
 ```sh
-sage -python sign-15/reproduce_mask_key_recovery.py
+mamba run -n sage python sign-15/reproduce_mask_key_recovery.py
 ```
 
-Use a Python with `sage.all` importable. If Sage is installed as a mamba environment rather than a launcher supporting `-python`, run `mamba run -n sage python sign-15/reproduce_mask_key_recovery.py` instead. The witness compiles only the archived reference and optimized C sources in a temporary directory. It prints six `CONFIRMED sign-15-4` lines, one for each affected implementation/profile combination. The optimized builds require AVX2.
+The command uses this host's Sage environment; elsewhere, use any Python with `sage.all` importable. The witness compiles only the archived reference and optimized C sources in a temporary directory. It prints six `CONFIRMED sign-15-4` lines, one for each affected implementation/profile combination. The optimized builds require AVX2.

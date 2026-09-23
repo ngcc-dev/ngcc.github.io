@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Constant-time review — kem-31 QIMEN-PIKE · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../constant-time/index.html">Constant-time review</a> › <code>kem-31</code> · <a href="../reports/kem-31.html">Report</a></p>
+
+<!-- synchronized report: kem-31/constant_time.md -->
+<h1 id="constant-time-review-kem-31-qimen-pike">Constant-time review — kem-31 QIMEN-PIKE</h1>
+<p>Scope: representative reference instance <code>Implementations/Implementations/src/ngcc/common/KEM_AlgorithmInstance.c</code>; other levels, optimized copies and compiled machine code are not certified by this source review.</p>
+<p>Secret-bearing values: private decapsulation key, recovered message/error state, rejection secret and shared secret. Public values: public key, ciphertext and encoded lengths. A decoder result is not automatically public merely because its ciphertext input is public.</p>
+<ul>
+<li>Source trace: <code>Implementations/Implementations/src/ngcc/common/KEM_AlgorithmInstance.c:227</code> — The decapsulation wrapper branches on the result of private-key decryption and later on <code>is_valid</code> at line 250. Existing <code>kem-31-1</code> already records a stronger invalid-ciphertext abort.</li>
+<li>Branches, indexed accesses and division/remainder: this first pass classifies only the traced operand above. Public-seed rejection and fixed-divisor arithmetic are not treated as leaks; absence of other leaks has not been proved.</li>
+</ul>
+<p>Assessment: No new side-channel report is promoted from this representative path. Lower-level decoding, sampling and compiler output remain open audit work.</p>
+<p>Reproduction is source/dataflow inspection at the cited location. A remote timing claim needs repeated same-public-input tests with changed secret state and an independent public-value control.</p>
+<p>Arithmetic follow-up: the <code>decrypt</code> routine in <code>src/pike/ref/pikex_compressed/pike_compressed.c:832-875</code> loads long-term private <code>deg</code>, <code>alpha</code>, <code>beta</code>, and <code>iota</code>, then calls <code>ibz_invmod</code>/<code>ibz_mod</code> on products of those values. The reference <code>intbig</code> backend delegates to GMP <code>mpz_invert</code>/<code>mpz_mod</code> (<code>src/intbig/ref/generic/intbig.c:317,928</code>). These are not constant-time operations on secret operands. Their work may be swamped by isogeny computations, and no recoverable timing predicate or shared-secret extraction is shown; this remains an unpromoted lead, separate from the already reported invalid-ciphertext assertion.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

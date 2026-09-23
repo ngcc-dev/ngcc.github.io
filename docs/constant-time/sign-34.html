@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Constant-time review — 34 YuanYang.DSA · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../constant-time/index.html">Constant-time review</a> › <code>sign-34</code> · <a href="../reports/sign-34.html">Report</a></p>
+
+<!-- synchronized report: sign-34/constant_time.md -->
+<h1 id="constant-time-review-34-yuanyangdsa">Constant-time review — 34 YuanYang.DSA</h1>
+<p>Scope: reference implementation, representative instance only: <code>Implementations/Reference_Implementation/yuanyang-512/sign.c</code>. Other instances and optimized implementations have not been proven source-equivalent. This is a source-level triage, not a constant-time certification.</p>
+<p>Secret: signing-key polynomials/basis, per-signature masks and sampler state. Public: verification key, algorithm parameters, message and serialized signature.</p>
+<ul>
+<li>Branch/loop trace: <code>Implementations/Reference_Implementation/yuanyang-512/sign.c:511</code> — Sampler acceptance and retry depend on private lattice-point state; this expected rejection path needs a distinguishability test before claiming key leakage.</li>
+<li>Table lookups and division/remainder: this source triage does not certify their absence or constant-time compilation. Only the explicitly traced operands above are classified. Public lengths, fixed parameters and verifier checks are not findings.</li>
+</ul>
+<p>Assessment: No new vulnerability report is promoted from this representative source triage. A compiler/architecture-specific timing and cache test is still needed before claiming constant-time behavior or exploitable leakage.</p>
+<p>Recheck the cited source line and its caller before reusing this result. A timing claim requires controlled same-public-input tests with changed secret state and a public-value control.</p>
+<p>Key-generation division follow-up: <code>keygen/keygen.c:42</code> inverts secret <code>f_q</code> via <code>poly_inv_xn1_q</code>, reaching extended-Euclid <code>mod_inv</code> at <code>poly_inv_ntt.c:111-139</code>. GCC <code>-O2</code> emits two <code>idiv</code> instructions in <code>mod_inv</code> (other divides in the object may have public operands). This is a single key-generation trace; without a measured channel and an extraction argument it does not establish a forgery or justify a new Critical report.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

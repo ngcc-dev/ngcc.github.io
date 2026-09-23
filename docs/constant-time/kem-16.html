@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Constant-time review: HARE · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../constant-time/index.html">Constant-time review</a> › <code>kem-16</code></p>
+
+<!-- synchronized report: kem-16/constant_time.md -->
+<h1 id="constant-time-review-hare">Constant-time review: HARE</h1>
+<p>The private HQC seed/secret vector, recovered message, fallback <code>sigma</code>, and shared secret are secret. Ciphertext, public key, salt, and loop dimensions are public. This traces the shared <code>hare_core/ref</code> decoder used by the reference builds; x86/SVE backends and emitted code are not certified.</p>
+<p><code>common/kem.c:166-251</code> decrypts under the private seed, re-encrypts, compares the ciphertext, and selects the fallback through byte masks. The Reed–Solomon decoder is explicitly written with fixed public loop bounds and masked Berlekamp–Massey/erasure selection (<code>ref/reed_solomon.c:205-267</code>); <code>gf_pow_alpha</code> at <code>ref/reed_solomon.c:33-37</code> has a loop and table index, but its call arguments at lines 115,136,159,351 are public loop positions, not decoded secret symbols. <code>ref/gf.c:156-195</code> uses a fixed multiplication/inversion chain. The KEM API returns a decapsulation-validity status at <code>common/kem.c:252</code>; no separate secret-coefficient leakage follows from that alone.</p>
+<p>Status: no source-confirmed secret-indexed lookup or branch in this representative decoder; no report from this review. Whole-program compiler/CPU CT analysis remains open.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

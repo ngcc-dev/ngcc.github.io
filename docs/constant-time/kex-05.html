@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loom constant-time review · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../constant-time/index.html">Constant-time review</a> › <code>kex-05</code> · <a href="../reports/kex-05.html">Report</a></p>
+
+<!-- synchronized report: kex-05/constant_time.md -->
+<h1 id="loom-constant-time-review">Loom constant-time review</h1>
+<p>Scope: LoomKEX-128 representative reference implementation; 256/512 and alternative compiled modes were not exhaustively compared. Secrets include KEM decapsulation keys, recovered messages, ephemeral KEM coins, signature keys and derived AKE secret; transcript bytes and wire lengths are public.</p>
+<ul>
+<li><code>LoomKEX-128/kem/kem_cpaf.c:151-168</code> decrypts with the private key, recomputes a ciphertext tag, and explicitly returns <code>-1</code> on mismatch. The branch is not a <em>new timing-only</em> finding: this rigid API already exposes the same validity bit as its return value. Its broader protocol significance should be assessed with the existing Loom reports, not relabelled as a separate constant-time leak without an additional secret-value witness.</li>
+<li><code>LoomKEX-128/kem/indcpa.c:171-201</code> has rejection tests when expanding a matrix from a public seed. Those branches concern public-derived coefficients. <code>LoomKEX-128/loom/state_serialize.c:149-174,254-281</code> tests public buffer sizes, role/stage and header fields; the state structure itself contains secrets, but these cited predicates do not inspect secret key bytes.</li>
+</ul>
+<p>No separate constant-time report was established in the traced reference path. The embedded signature and alternate Loom modes still need a deeper compiled-code audit; this note does not certify them.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

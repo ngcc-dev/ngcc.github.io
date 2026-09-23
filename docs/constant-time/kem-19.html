@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Constant-time review: Lore · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../constant-time/index.html">Constant-time review</a> › <code>kem-19</code></p>
+
+<!-- synchronized report: kem-19/constant_time.md -->
+<h1 id="constant-time-review-lore">Constant-time review: Lore</h1>
+<p>The CPA secret polynomial, recovered message <code>mu</code>, fallback seed <code>z</code>, and shared secret are secret. The ciphertext and public key are public. This traces Lore-SHAKE/Lore-L2 reference C; Lore-SM3 and other levels are not independently certified.</p>
+<p><code>kem.c:184-236</code> decrypts under the CPA secret, re-encrypts, computes both candidate/fallback shared secrets, and selects with <code>cmov</code>. In the re-encryption path, <code>indcpa.c:240-252</code> branches while packing overflow bits of the regenerated ciphertext. On a valid ciphertext those bits match public ciphertext encoding; on an invalid ciphertext they may be derived from private-key decryption. The unpacking branch at <code>indcpa.c:302</code> reads the public ciphertext and is not a secret leak. The trace warrants follow-up, but no controlled leakage measurement or secret-distinguishing witness was established. Fixed public modulus arithmetic is not treated as a hardware divide without code-generation evidence.</p>
+<p>Status: potential secret-derived branch in re-encryption, not promoted to a report without a differential witness.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

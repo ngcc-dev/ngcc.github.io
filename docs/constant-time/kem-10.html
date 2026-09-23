@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Constant-time review: C-Multi-UR-AG · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../constant-time/index.html">Constant-time review</a> › <code>kem-10</code> · <a href="../reports/kem-10.html">Report</a></p>
+
+<!-- synchronized report: kem-10/constant_time.md -->
+<h1 id="constant-time-review-c-multi-ur-ag">Constant-time review: C-Multi-UR-AG</h1>
+<p>The PKE secret reconstructed from <code>sk</code>, decoded message <code>m</code>, fallback <code>sigma</code>, and shared secret are secret. Ciphertext matrices, salt, and embedded public key are public. This review follows the 128-bit reference path; the decoder structure is present in the 256/512-bit sources. It is a source-level audit, not a remote attack measurement.</p>
+<p><code>src/kem.c:209-213</code> decapsulates with <code>sk</code>; <code>src/cmultiurag.c:248-257</code> computes a word using the secret PKE matrix and calls augmented-Gabidulin decoding. <code>src/augmented_gabidulin.c:185-201</code> chooses pivot <code>next</code> from discrepancies and uses it as the address in <code>u0[next]</code> and <code>u1[next]</code> loads/stores. <code>src/qpoly.c:509,580</code> contains degree-dependent decoder loops. These are secret-derived control-flow/memory-access candidates. The final re-encryption comparison and masked fallback selection are distinct from the decoder leakage; malformed-ciphertext crashes are separately reported in <code>report.md</code>.</p>
+<p>No key-recovery path or remote channel is demonstrated. The source-level witness is the chain <code>kem.c:209-213</code> → <code>cmultiurag.c:248-257</code> → <code>augmented_gabidulin.c:185-201</code>.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

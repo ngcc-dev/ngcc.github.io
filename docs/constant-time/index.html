@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Constant-time source reviews · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<h1 id="constant-time-source-reviews">Constant-time source reviews</h1>
+<p>These 119 notes inspect representative reference paths for branches, variable
+work, and memory accesses controlled by secret data. Each note states its
+scope and evidence. A note with no finding is a limited review, not a
+constant-time certification. A source trace alone does not establish a remote
+timing attack or key recovery; see the linked <a href="../reports/index.html">reports</a>
+for finding-specific impact and status.</p>
+<h2 id="sign">Signatures</h2>
+<p class="audit-links">
+<a href="../constant-time/sign-01.html"><code>sign-01</code></a> 
+<a href="../constant-time/sign-02.html"><code>sign-02</code></a> 
+<a href="../constant-time/sign-03.html"><code>sign-03</code></a> 
+<a href="../constant-time/sign-04.html"><code>sign-04</code></a> 
+<a href="../constant-time/sign-05.html"><code>sign-05</code></a> 
+<a href="../constant-time/sign-06.html"><code>sign-06</code></a> 
+<a href="../constant-time/sign-07.html"><code>sign-07</code></a> 
+<a href="../constant-time/sign-08.html"><code>sign-08</code></a> 
+<a href="../constant-time/sign-09.html"><code>sign-09</code></a> 
+<a href="../constant-time/sign-10.html"><code>sign-10</code></a> 
+<a href="../constant-time/sign-11.html"><code>sign-11</code></a> 
+<a href="../constant-time/sign-12.html"><code>sign-12</code></a> 
+<a href="../constant-time/sign-13.html"><code>sign-13</code></a> 
+<a href="../constant-time/sign-14.html"><code>sign-14</code></a> 
+<a href="../constant-time/sign-15.html"><code>sign-15</code></a> 
+<a href="../constant-time/sign-16.html"><code>sign-16</code></a> 
+<a href="../constant-time/sign-17.html"><code>sign-17</code></a> 
+<a href="../constant-time/sign-18.html"><code>sign-18</code></a> 
+<a href="../constant-time/sign-19.html"><code>sign-19</code></a> 
+<a href="../constant-time/sign-20.html"><code>sign-20</code></a> 
+<a href="../constant-time/sign-21.html"><code>sign-21</code></a> 
+<a href="../constant-time/sign-22.html"><code>sign-22</code></a> 
+<a href="../constant-time/sign-23.html"><code>sign-23</code></a> 
+<a href="../constant-time/sign-24.html"><code>sign-24</code></a> 
+<a href="../constant-time/sign-25.html"><code>sign-25</code></a> 
+<a href="../constant-time/sign-26.html"><code>sign-26</code></a> 
+<a href="../constant-time/sign-27.html"><code>sign-27</code></a> 
+<a href="../constant-time/sign-28.html"><code>sign-28</code></a> 
+<a href="../constant-time/sign-29.html"><code>sign-29</code></a> 
+<a href="../constant-time/sign-30.html"><code>sign-30</code></a> 
+<a href="../constant-time/sign-31.html"><code>sign-31</code></a> 
+<a href="../constant-time/sign-32.html"><code>sign-32</code></a> 
+<a href="../constant-time/sign-33.html"><code>sign-33</code></a> 
+<a href="../constant-time/sign-34.html"><code>sign-34</code></a> 
+</p>
+<h2 id="kem">KEMs</h2>
+<p class="audit-links">
+<a href="../constant-time/kem-01.html"><code>kem-01</code></a> 
+<a href="../constant-time/kem-02.html"><code>kem-02</code></a> 
+<a href="../constant-time/kem-03.html"><code>kem-03</code></a> 
+<a href="../constant-time/kem-04.html"><code>kem-04</code></a> 
+<a href="../constant-time/kem-05.html"><code>kem-05</code></a> 
+<a href="../constant-time/kem-06.html"><code>kem-06</code></a> 
+<a href="../constant-time/kem-07.html"><code>kem-07</code></a> 
+<a href="../constant-time/kem-08.html"><code>kem-08</code></a> 
+<a href="../constant-time/kem-09.html"><code>kem-09</code></a> 
+<a href="../constant-time/kem-10.html"><code>kem-10</code></a> 
+<a href="../constant-time/kem-11.html"><code>kem-11</code></a> 
+<a href="../constant-time/kem-12.html"><code>kem-12</code></a> 
+<a href="../constant-time/kem-13.html"><code>kem-13</code></a> 
+<a href="../constant-time/kem-14.html"><code>kem-14</code></a> 
+<a href="../constant-time/kem-15.html"><code>kem-15</code></a> 
+<a href="../constant-time/kem-16.html"><code>kem-16</code></a> 
+<a href="../constant-time/kem-17.html"><code>kem-17</code></a> 
+<a href="../constant-time/kem-18.html"><code>kem-18</code></a> 
+<a href="../constant-time/kem-19.html"><code>kem-19</code></a> 
+<a href="../constant-time/kem-20.html"><code>kem-20</code></a> 
+<a href="../constant-time/kem-21.html"><code>kem-21</code></a> 
+<a href="../constant-time/kem-22.html"><code>kem-22</code></a> 
+<a href="../constant-time/kem-23.html"><code>kem-23</code></a> 
+<a href="../constant-time/kem-24.html"><code>kem-24</code></a> 
+<a href="../constant-time/kem-25.html"><code>kem-25</code></a> 
+<a href="../constant-time/kem-26.html"><code>kem-26</code></a> 
+<a href="../constant-time/kem-27.html"><code>kem-27</code></a> 
+<a href="../constant-time/kem-28.html"><code>kem-28</code></a> 
+<a href="../constant-time/kem-29.html"><code>kem-29</code></a> 
+<a href="../constant-time/kem-30.html"><code>kem-30</code></a> 
+<a href="../constant-time/kem-31.html"><code>kem-31</code></a> 
+<a href="../constant-time/kem-32.html"><code>kem-32</code></a> 
+<a href="../constant-time/kem-33.html"><code>kem-33</code></a> 
+<a href="../constant-time/kem-34.html"><code>kem-34</code></a> 
+<a href="../constant-time/kem-35.html"><code>kem-35</code></a> 
+<a href="../constant-time/kem-36.html"><code>kem-36</code></a> 
+<a href="../constant-time/kem-37.html"><code>kem-37</code></a> 
+<a href="../constant-time/kem-38.html"><code>kem-38</code></a> 
+<a href="../constant-time/kem-39.html"><code>kem-39</code></a> 
+<a href="../constant-time/kem-40.html"><code>kem-40</code></a> 
+<a href="../constant-time/kem-41.html"><code>kem-41</code></a> 
+</p>
+<h2 id="kex">Key exchange</h2>
+<p class="audit-links">
+<a href="../constant-time/kex-01.html"><code>kex-01</code></a> 
+<a href="../constant-time/kex-02.html"><code>kex-02</code></a> 
+<a href="../constant-time/kex-03.html"><code>kex-03</code></a> 
+<a href="../constant-time/kex-04.html"><code>kex-04</code></a> 
+<a href="../constant-time/kex-05.html"><code>kex-05</code></a> 
+<a href="../constant-time/kex-06.html"><code>kex-06</code></a> 
+<a href="../constant-time/kex-07.html"><code>kex-07</code></a> 
+<a href="../constant-time/kex-08.html"><code>kex-08</code></a> 
+<a href="../constant-time/kex-09.html"><code>kex-09</code></a> 
+</p>
+<h2 id="hash">Hash functions</h2>
+<p class="audit-links">
+<a href="../constant-time/hash-01.html"><code>hash-01</code></a> 
+<a href="../constant-time/hash-02.html"><code>hash-02</code></a> 
+<a href="../constant-time/hash-03.html"><code>hash-03</code></a> 
+<a href="../constant-time/hash-04.html"><code>hash-04</code></a> 
+<a href="../constant-time/hash-05.html"><code>hash-05</code></a> 
+<a href="../constant-time/hash-06.html"><code>hash-06</code></a> 
+<a href="../constant-time/hash-07.html"><code>hash-07</code></a> 
+<a href="../constant-time/hash-08.html"><code>hash-08</code></a> 
+<a href="../constant-time/hash-09.html"><code>hash-09</code></a> 
+<a href="../constant-time/hash-10.html"><code>hash-10</code></a> 
+<a href="../constant-time/hash-11.html"><code>hash-11</code></a> 
+<a href="../constant-time/hash-12.html"><code>hash-12</code></a> 
+<a href="../constant-time/hash-13.html"><code>hash-13</code></a> 
+<a href="../constant-time/hash-14.html"><code>hash-14</code></a> 
+<a href="../constant-time/hash-15.html"><code>hash-15</code></a> 
+<a href="../constant-time/hash-16.html"><code>hash-16</code></a> 
+<a href="../constant-time/hash-17.html"><code>hash-17</code></a> 
+<a href="../constant-time/hash-18.html"><code>hash-18</code></a> 
+<a href="../constant-time/hash-19.html"><code>hash-19</code></a> 
+<a href="../constant-time/hash-20.html"><code>hash-20</code></a> 
+<a href="../constant-time/hash-21.html"><code>hash-21</code></a> 
+<a href="../constant-time/hash-22.html"><code>hash-22</code></a> 
+<a href="../constant-time/hash-23.html"><code>hash-23</code></a> 
+<a href="../constant-time/hash-24.html"><code>hash-24</code></a> 
+<a href="../constant-time/hash-25.html"><code>hash-25</code></a> 
+<a href="../constant-time/hash-26.html"><code>hash-26</code></a> 
+<a href="../constant-time/hash-27.html"><code>hash-27</code></a> 
+<a href="../constant-time/hash-28.html"><code>hash-28</code></a> 
+<a href="../constant-time/hash-29.html"><code>hash-29</code></a> 
+<a href="../constant-time/hash-30.html"><code>hash-30</code></a> 
+<a href="../constant-time/hash-31.html"><code>hash-31</code></a> 
+<a href="../constant-time/hash-32.html"><code>hash-32</code></a> 
+<a href="../constant-time/hash-33.html"><code>hash-33</code></a> 
+<a href="../constant-time/hash-34.html"><code>hash-34</code></a> 
+<a href="../constant-time/hash-35.html"><code>hash-35</code></a> 
+</p>
+</main>
+<footer class="site-footer">
+<p>Updated 2026-09-23 15:34:50 UTC · Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

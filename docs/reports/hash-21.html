@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Neulaser (hash-21) · ngcc.dev</title>
-<link rel="stylesheet" href="../assets/style.css?v=8c137f6d">
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
 </head>
 <body>
 <header class="site-header">
 <a class="brand" href="../index.html">ngcc.dev</a>
-<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a></nav>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
 </header>
 <main>
-<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>hash-21</code></p>
+<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>hash-21</code> · <a href="../constant-time/hash-21.html">Constant-time review</a></p>
 
 <h1 id="neulaser-hash-21">Neulaser (hash-21)</h1>
 <div class="table-wrap"><table class="meta">
@@ -55,6 +55,22 @@
 <p>The witness verifies both published collision families, including the exact full digests, against all three submitted libraries:</p>
 <pre><code class="language-sh">make -C hash-21 reproduce
 </code></pre>
+<h2 class="issue-heading" id="hash-21-3-secret-state-indexes-a-256-byte-s-box">hash-21-3: Secret state indexes a 256-byte S-box</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Classification</th><td><span class="sev sev-medium">Medium / implementation</span></td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Reference Neulaser-512/768/1024</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Cache side-channel dependent</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-23</td></tr>
+</table></div>
+
+<p><code>nl_sbox_word</code> reads <code>NL_SBOX</code> at four indices derived from an evolving 32-bit state word (<code>CryptHash_AlgorithmInstance.c:85-90</code>). The 256-byte table spans cache lines, so the lookup address depends on secret message content. The source also computes state-derived <code>x % (2^32-5)</code> (<code>:60-63</code>), whose timing requires target-specific code inspection; the report does not rely on it. No preimage-recovery exploit is claimed. See <a href="../constant-time/hash-21.html">constant_time.md</a>.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>Inspect the four <code>NL_SBOX</code> accesses in any reference variant and compare indices for unequal state words; they select different table lines.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

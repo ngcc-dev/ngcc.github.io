@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>YuanYang.KEM (kem-40) · ngcc.dev</title>
-<link rel="stylesheet" href="../assets/style.css?v=8c137f6d">
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
 </head>
 <body>
 <header class="site-header">
 <a class="brand" href="../index.html">ngcc.dev</a>
-<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a></nav>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
 </header>
 <main>
-<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>kem-40</code></p>
+<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>kem-40</code> · <a href="../constant-time/kem-40.html">Constant-time review</a></p>
 
 <h1 id="yuanyangkem-kem-40">YuanYang.KEM (kem-40)</h1>
 <div class="table-wrap"><table class="meta">
@@ -40,6 +40,22 @@
 <pre><code class="language-sh">python3 kem-40/reproduce_unused_error.py
 </code></pre>
 <p>The static witness checks all three independent implementation copies and fails unless <code>e</code> is sampled and then absent from the remainder of <code>yy_encrypt</code>.</p>
+<h2 class="issue-heading" id="kem-40-2-decapsulation-addresses-a-private-array-with-a-secret-derived-index">kem-40-2: Decapsulation addresses a private array with a secret-derived index</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Classification</th><td><span class="sev sev-medium">Medium / implementation</span></td></tr>
+<tr><th>Status</th><td><span class="issue-status status-probable">Probable</span></td></tr>
+<tr><th>Affected</th><td>Reference decapsulation, all three parameter sets</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Local cache/address-trace leak of an internal decryption value; no key recovery demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-23</td></tr>
+</table></div>
+
+<p>During decapsulation, <code>yy_decrypt_ciphertext</code> computes <code>hamming</code> and <code>overflow</code> from the ciphertext multiplied by the private key (<code>kem.c:181-220</code>). It then reads the private inverse polynomial at <code>sk-&gt;finvint[(i-overflow+h)%h]</code> for each <code>i</code> (<code>kem.c:224</code>). The address pattern rotates with the secret-derived <code>overflow</code>, creating a cache/address side channel even though the surrounding loops have fixed bounds. No full secret-key or shared-secret recovery is claimed; see <code>constant_time.md</code>.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>The same source path occurs in <code>yuanyang-512</code>, <code>yuanyang-1024</code>, and <code>yuanyang-2048</code> reference <code>kem.c</code> files. Inspect lines 181–224 and the call from <code>yy_decapsulate_API</code> at line 249. This is a source/dataflow witness; a measured cache attack remains open.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

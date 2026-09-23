@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Constant-time review: BW-KEM · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../constant-time/index.html">Constant-time review</a> › <code>kem-08</code> · <a href="../reports/kem-08.html">Report</a></p>
+
+<!-- synchronized report: kem-08/constant_time.md -->
+<h1 id="constant-time-review-bw-kem">Constant-time review: BW-KEM</h1>
+<p>The long-term CPA key, decrypted prekey, fallback secret, and shared secret are secret. Ciphertext, public key, and public matrix seed are public. This follows the BW_KEM_C128 reference path; the other parameter directories use the same wrapper pattern.</p>
+<p><code>kem.c:155-170</code> decrypts, re-encrypts, calls <code>verify</code>, and selects the result with <code>cmov</code>. <code>verify.c:16-25,40-59</code> accumulates all ciphertext differences and masks the selected secret without short-circuiting. The rejection sampler in <code>indcpa.c:124-145</code> expands the public matrix seed, so that path does not leak a KEM secret. However, <code>indcpa.c:321-331</code> computes <code>mp = v - sᵀu</code> and passes it to <code>poly_tomsg</code>; <code>poly.c:174-193</code> branches on the sign of each centered coefficient. GCC <code>-O2</code> retains a <code>jns</code> in <code>bwkem128_poly_tomsg</code>. This is the same code pattern already filed for AFS-KEX C128 as <code>kex-02-2</code>. Fixed public divisors are not automatically safe: the numerator can be secret-derived, and a size-optimized build may emit hardware division.</p>
+<p>Status: source-and-assembly-confirmed secret-dependent branch (<code>kem-08-1</code>); no timing oracle or key recovery established. This is not a compiler/CPU constant-time certification; other parameter sets and transitive arithmetic have not been exhaustively proved.</p>
+<p>Size-build lead: GCC <code>-Os</code> emits division in C128 <code>polyvec_compress</code> (<code>polyvec.c:57</code>), C256/C512 <code>polyvec_compress</code> (<code>:27</code>), and C512 <code>poly_compress</code> (<code>poly.c:75</code>). FO re-encryption can feed secret-derived values to these sites. This was not promoted as a separate exploit without a timing or key-recovery argument.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

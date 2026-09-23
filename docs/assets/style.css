@@ -82,6 +82,8 @@ table.summary td:not(:first-child) { text-align: right; }
   color: var(--fg); font-size: 0.78rem; font-weight: 600; white-space: nowrap; }
 .status-probable, .status-lead { background: var(--warn-bg); color: var(--warn-fg); }
 .status-proof-gap { background: var(--muted-bg); color: var(--muted); }
+.status-withdrawn { background: var(--muted-bg); color: var(--muted); }
+.audit-links { display: flex; flex-wrap: wrap; gap: 0.5rem 0.8rem; }
 table.reports td.date { white-space: nowrap; font-variant-numeric: tabular-nums; }
 table.reports td:last-child { min-width: 18rem; }
 table.meta { margin: 1rem 0; font-size: 0.9rem; }

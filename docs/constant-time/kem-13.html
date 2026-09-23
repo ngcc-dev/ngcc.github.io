@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Constant-time review: DKEM · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../constant-time/index.html">Constant-time review</a> › <code>kem-13</code></p>
+
+<!-- synchronized report: kem-13/constant_time.md -->
+<h1 id="constant-time-review-dkem">Constant-time review: DKEM</h1>
+<p>The private CPA vector <code>sA</code>, recovered CPA secret, rejection <code>z</code>, and shared secret are secret. The ciphertext, public key, tag, and dimensions are public. This follows DKEM-128 reference C; other parameter sets and assembly paths are outside this note.</p>
+<p><code>dkecca.c:78-114</code> calls <code>DKE_CPA_dec</code>, re-encapsulates, compares the full ciphertext, derives the fallback, then uses <code>DKE_cmov</code>. <code>dkecpa.c:189-207</code> computes the private-vector/ciphertext product with fixed-size NTT and polynomial routines; it has no source-level conditional on the resulting secret. Public/compile-time <code>#if</code> branches select implementation variants, not secret values. No secret-indexed lookup, branch, or variable-divisor operation was established in this representative chain.</p>
+<p>Status: source-level screen, not a compiler or transitive-arithmetic proof. No report from this review.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

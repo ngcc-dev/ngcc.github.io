@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Constant-time review: CTL · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../constant-time/index.html">Constant-time review</a> › <code>kem-12</code> · <a href="../reports/kem-12.html">Report</a></p>
+
+<!-- synchronized report: kem-12/constant_time.md -->
+<h1 id="constant-time-review-ctl">Constant-time review: CTL</h1>
+<p>The private NTRU polynomials <code>f,g,F,G,w</code>, rejection seed <code>rr</code>, decrypted polynomial <code>s</code>, and shared secret are secret. Ciphertext, public key, dimensions, and <code>Q</code> are public. This traces the CTL-257-512 reference C path; the 769/3329 and optimized x86 paths are not certified by it.</p>
+<p>In <code>crypto_kem/Implementations/CTL-257-512/api.c:716-789</code>, decapsulation decrypts with the private polynomials, re-encrypts, OR-accumulates all discrepancies, derives both good/bad key material, and selects with a mask. The code explicitly avoids branching on the comparison result (<code>api.c:767-789</code>). The visible <code>if (!mq_poly_inv_ntt(...))</code> and coefficient-bound branch in <code>kem257.c:605-622</code> occur in private-key reconstruction/key-generation support, not the cited decapsulation comparison. No secret-derived table index or variable-divisor operation was established in the representative decapsulation wrapper.</p>
+<p>Status: wrapper-level source screen only. The transitive NTRU arithmetic, alternate parameter sets, and emitted machine code still require targeted analysis; no vulnerability report from this limited trace.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

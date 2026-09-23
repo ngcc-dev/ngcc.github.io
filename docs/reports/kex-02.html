@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AFS-KEX (kex-02) · ngcc.dev</title>
-<link rel="stylesheet" href="../assets/style.css?v=8c137f6d">
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
 </head>
 <body>
 <header class="site-header">
 <a class="brand" href="../index.html">ngcc.dev</a>
-<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a></nav>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
 </header>
 <main>
-<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>kex-02</code></p>
+<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>kex-02</code> · <a href="../constant-time/kex-02.html">Constant-time review</a></p>
 
 <h1 id="afs-kex-kex-02">AFS-KEX (kex-02)</h1>
 <div class="table-wrap"><table class="meta">
@@ -49,6 +49,26 @@ kex-02/reproduce_pfs_break_c512
 ATTACK kex-pfs-recovery AFS_KEX_C256 CONFIRMED recorded m1/m2 plus later API long-term-key compromise recovered erased session key 40076703841413297c9105f888a439d48f6015ab23774c9539b3ce6e19eeff5e (static-only control differs)
 ATTACK kex-pfs-recovery AFS_KEX_C512 CONFIRMED recorded m1/m2 plus later API long-term-key compromise recovered erased session key 12033302a024a20f0d4498daafdc87c3c91d7c9b7479be51280d1cacf286a0b9eab8d3593771c3260f60eaf02cdc4101b3828a0e4d9ebc3bbe742aee77830a1f (static-only control differs)
 </code></pre>
+<h2 class="issue-heading" id="kex-02-2-secret-derived-decryption-coefficients-take-a-sign-branch">kex-02-2: Secret-derived decryption coefficients take a sign branch</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Classification</th><td><span class="sev sev-medium">Medium / implementation</span></td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>AFS_KEX_C128 reference implementation</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Secret-dependent decapsulation control flow; key recovery not demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-23</td></tr>
+</table></div>
+
+<p>The C128 KEM decapsulator decrypts the ciphertext using the secret polynomial, forming <code>mp = v - skpv*b</code> (<code>indcpa.c:354-364</code>). Message conversion then branches on the sign of each secret-derived centered coefficient (<code>poly.c:174-193</code>). This exposes a key- and ciphertext-dependent branch pattern on repeated decapsulation. C256/C512 use different conversion code and are not included in this finding. A KyberSlash-style full-key attack would also need an observable per-coefficient oracle and a chosen-ciphertext recovery argument; neither has been demonstrated here, so this is not rated Critical. See <code>constant_time.md</code> for the data-flow trace.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>The reference Makefile uses <code>-O2</code>. On x86-64 GCC, the following prints the conditional <code>jns</code> in the compiled C128 <code>poly_tomsg</code> path:</p>
+<pre><code class="language-sh">cd 'kex-02/Implementations and Test_Vectors/Implementations/Reference_Implementation/AFS_KEX_C128'
+gcc -O2 -std=c99 -I. -DBWKEM128_INTERNAL_COMPAT -DBWKEM_C128_USE_ICCS_AUXFUNC -S -o - poly.c | sed -n '/bwkem128_poly_tomsg:/,/\.size[[:space:]]*bwkem128_poly_tomsg/p' | grep -E '\bjns\b'
+</code></pre>
+<p>The source-level secret dependency is the <code>indcpa_dec</code> → <code>poly_tomsg</code> chain above; the assembly check confirms that this particular compiler/build does not erase the branch. No timing-based key recovery is claimed.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

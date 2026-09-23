@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NIIKE constant-time review · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../constant-time/index.html">Constant-time review</a> › <code>kex-08</code> · <a href="../reports/kex-08.html">Report</a></p>
+
+<!-- synchronized report: kex-08/constant_time.md -->
+<h1 id="niike-constant-time-review">NIIKE constant-time review</h1>
+<p>Scope: NIIKE-lv128 representative reference, plus comparison of the lv256/lv512 key-generation helpers. The long-term secret is the integer vector <code>secretkey_t</code>; shared isogeny/j-invariant before output is secret. Public keys, peer encodings and fixed torsion/strategy parameters are public.</p>
+<ul>
+<li><code>ngccapi/KEX_AlgorithmInstance.c:59-80,133-159</code> applies a secret vector to make public keys or shared values. <code>protocols/bundleprotocols.c:47-59</code> selects secret-dependent isogeny directions through <code>compare_gt</code> and <code>bundleswap_*</code> masks while keeping public loop bounds. Strategy checks at lines 60-70 depend on fixed traversal counters, not on <code>s[i]</code>.</li>
+<li><code>NIIKE-lv128/protocols/bundleprotocols_internal.c:53-62</code> rejects random candidate key-vector entries above public bounds. This is variable key-generation work; rejected candidates are not the returned key. It was not promoted as a leakage of the retained secret vector. The lv512 helper (<code>NIIKE-lv512/protocols/bundleprotocols_internal.c:53-79</code>) has a byte-identical optimized copy and a separate fixed-two-key defect, <code>kex-08-2</code>.</li>
+<li><code>protocols/bundleprotocols.c:193-213</code> has a debug-only curve-equality assertion/abort. The check is an invariant of the internal two-branch computation, not a demonstrated key-recovery oracle. Length-driven polynomial-recursion branches in <code>ec/bundle_poly-mul.c:26-45,127-166</code> use public/fixed polynomial lengths.</li>
+</ul>
+<p>No new constant-time report was confirmed here. The raw shared-key distinguisher already tracked as <code>kex-08-1</code> is a design/output-distribution issue, not a timing leak. The lv512 fixed two-key cycle is independently tracked as <code>kex-08-2</code>; it is a direct key-generation defect, not a timing leak. This review is not a complete machine-code or malicious-peer-key analysis.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

@@ -108,3 +108,20 @@ tools/reproduce.sh sign-33
 ```
 
 It reports identical signing-key and encoded-salt digests. Source inspection shows that the continued same generator stream supplies the vinegar and diagonal randomness as well.
+
+## sign-33-5: Signing branches directly on private central-map coefficients
+
+Severity: Medium
+Status: Probable
+Layer: Implementation
+Affected: VDOO reference signer, all three parameter sets
+Discovery: Trivial
+Exploitation: Local timing/power side channel; no independent full-key extraction demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-09-23
+
+`vdoo_sign.c` reads coefficients from the private central map `sk->F` and branches on whether each is zero (lines 21–35 and 85–103). Secret-derived diagonal and Gaussian pivots also control retries. Consequently the instruction/power trace depends directly on private key values. This is separate from the already stronger predictable-key defect `sign-33-1`; it matters if that RNG defect is repaired without making signing constant-time. No side-channel key-recovery experiment is claimed.
+
+### Reproducing
+
+Inspect `vdoo_sign.c` lines 7–35, 82–105, and 127–159 in any reference parameter set. The `coeff` and `c` branch operands are obtained directly from `gfv_get_ele(sk->F, …)`. See `constant_time.md` for the secret/public review. This is a source/dataflow witness, not a measured remote timing exploit.

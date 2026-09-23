@@ -38,3 +38,27 @@ ATTACK kex-pfs-recovery AFS_KEX_C128 CONFIRMED recorded m1/m2 plus later API lon
 ATTACK kex-pfs-recovery AFS_KEX_C256 CONFIRMED recorded m1/m2 plus later API long-term-key compromise recovered erased session key 40076703841413297c9105f888a439d48f6015ab23774c9539b3ce6e19eeff5e (static-only control differs)
 ATTACK kex-pfs-recovery AFS_KEX_C512 CONFIRMED recorded m1/m2 plus later API long-term-key compromise recovered erased session key 12033302a024a20f0d4498daafdc87c3c91d7c9b7479be51280d1cacf286a0b9eab8d3593771c3260f60eaf02cdc4101b3828a0e4d9ebc3bbe742aee77830a1f (static-only control differs)
 ```
+
+## kex-02-2: Secret-derived decryption coefficients take a sign branch
+
+Severity: Medium
+Status: Confirmed
+Layer: Implementation
+Affected: AFS_KEX_C128 reference implementation
+Discovery: Trivial
+Exploitation: Secret-dependent decapsulation control flow; key recovery not demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-09-23
+
+The C128 KEM decapsulator decrypts the ciphertext using the secret polynomial, forming `mp = v - skpv*b` (`indcpa.c:354-364`). Message conversion then branches on the sign of each secret-derived centered coefficient (`poly.c:174-193`). This exposes a key- and ciphertext-dependent branch pattern on repeated decapsulation. C256/C512 use different conversion code and are not included in this finding. A KyberSlash-style full-key attack would also need an observable per-coefficient oracle and a chosen-ciphertext recovery argument; neither has been demonstrated here, so this is not rated Critical. See `constant_time.md` for the data-flow trace.
+
+### Reproducing
+
+The reference Makefile uses `-O2`. On x86-64 GCC, the following prints the conditional `jns` in the compiled C128 `poly_tomsg` path:
+
+```sh
+cd 'kex-02/Implementations and Test_Vectors/Implementations/Reference_Implementation/AFS_KEX_C128'
+gcc -O2 -std=c99 -I. -DBWKEM128_INTERNAL_COMPAT -DBWKEM_C128_USE_ICCS_AUXFUNC -S -o - poly.c | sed -n '/bwkem128_poly_tomsg:/,/\.size[[:space:]]*bwkem128_poly_tomsg/p' | grep -E '\bjns\b'
+```
+
+The source-level secret dependency is the `indcpa_dec` → `poly_tomsg` chain above; the assembly check confirms that this particular compiler/build does not erase the branch. No timing-based key recovery is claimed.

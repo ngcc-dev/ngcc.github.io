@@ -26,3 +26,20 @@ python3 kem-40/reproduce_unused_error.py
 ```
 
 The static witness checks all three independent implementation copies and fails unless `e` is sampled and then absent from the remainder of `yy_encrypt`.
+
+## kem-40-2: Decapsulation addresses a private array with a secret-derived index
+
+Severity: Medium
+Status: Probable
+Layer: Implementation
+Affected: Reference decapsulation, all three parameter sets
+Discovery: Trivial
+Exploitation: Local cache/address-trace leak of an internal decryption value; no key recovery demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-09-23
+
+During decapsulation, `yy_decrypt_ciphertext` computes `hamming` and `overflow` from the ciphertext multiplied by the private key (`kem.c:181-220`). It then reads the private inverse polynomial at `sk->finvint[(i-overflow+h)%h]` for each `i` (`kem.c:224`). The address pattern rotates with the secret-derived `overflow`, creating a cache/address side channel even though the surrounding loops have fixed bounds. No full secret-key or shared-secret recovery is claimed; see `constant_time.md`.
+
+### Reproducing
+
+The same source path occurs in `yuanyang-512`, `yuanyang-1024`, and `yuanyang-2048` reference `kem.c` files. Inspect lines 181–224 and the call from `yy_decapsulate_API` at line 249. This is a source/dataflow witness; a measured cache attack remains open.

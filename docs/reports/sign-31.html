@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TSUOV (sign-31) · ngcc.dev</title>
-<link rel="stylesheet" href="../assets/style.css?v=8c137f6d">
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
 </head>
 <body>
 <header class="site-header">
 <a class="brand" href="../index.html">ngcc.dev</a>
-<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a></nav>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
 </header>
 <main>
-<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>sign-31</code></p>
+<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>sign-31</code> · <a href="../constant-time/sign-31.html">Constant-time review</a></p>
 
 <h1 id="tsuov-sign-31">TSUOV (sign-31)</h1>
 <div class="table-wrap"><table class="meta">
@@ -41,6 +41,22 @@
 <pre><code class="language-sh">python3 security/design_parameter_audit.py
 </code></pre>
 <p>The check verifies the TSUOV-512 construction on physical PDF pages 18–21 and 27–29 and the submitted 64-byte <code>mu</code> constant.</p>
+<h2 class="issue-heading" id="sign-31-2-secret-dependent-echelon-pivots-during-signing">sign-31-2: Secret-dependent echelon pivots during signing</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Classification</th><td><span class="sev sev-medium">Medium / implementation</span></td></tr>
+<tr><th>Status</th><td><span class="issue-status status-probable">Probable</span></td></tr>
+<tr><th>Affected</th><td>TSUOV reference signer, all three parameter sets</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Local timing side channel; no key recovery demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-23</td></tr>
+</table></div>
+
+<p>The signing trapdoor builds a linear system from the private central map and fresh vinegar state. In <code>tsuov_core.c</code>, echelon reduction advances <code>j</code> until <code>EQN(j,c)</code> is nonzero (line 695), branches on rank (753, 785), and retries until consistency (984). These predicates contain secret intermediate values and control the signing execution trace. No full-key extraction or forgery from that trace is claimed; see <code>constant_time.md</code>.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>Inspect <code>TSUOV_128/tsuov_core.c</code> lines 680–790 and 960–985 and trace the matrix construction from <code>TSUOV_Sign</code>. The same source pattern occurs in the other two reference parameter sets. This confirms secret-dependent control flow, not a measured remote timing exploit.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

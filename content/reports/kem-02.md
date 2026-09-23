@@ -38,3 +38,20 @@ make -C kem-02 exploit-key-recovery PYTHON=/path/to/sage/bin/python
 ```
 
 The attack-only library is linked from the same submitted Amoeba-576 object files as the normal harness library, but additionally exports the public CPA encryption and hash helpers needed to make chosen valid ciphertexts. It does not patch the candidate's comparison or decoder. The original secret key is supplied only to the decapsulation oracle and to score the recovered coefficients; the reconstructed key and fresh shared-secret checks do not copy it. A checked-byte mutation is a negative control.
+
+## kem-02-2: Secret-derived ECC decoding indexes a syndrome table
+
+Severity: Medium
+Status: Confirmed
+Layer: Implementation
+Affected: Reference implementations, all five parameter sets
+Discovery: Moderate
+Exploitation: Local cache/control-flow observation; no separate extraction demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-09-23
+
+The Amoeba decapsulator decrypts under the private key and ECC-decodes the resulting codeword. Its Hamming decoder branches on each codeword bit and on the syndrome, then loads `syndrome_map[s_h_key]` (`src/backend/hamming.c:131,157-183`). Both the branch decisions and the table address derive from secret-key decryption of the ciphertext. This is a local control-flow/cache side channel independent of `kem-02-1`'s faulty ciphertext comparison. The code also returns an explicit decoder-failure bit (`ccakem.c:61-62`), but neither that bit nor this trace has been turned into a second demonstrated key-recovery oracle. A candidate-specific chosen-ciphertext recovery argument is still needed; that is why this finding remains Medium.
+
+### Reproducing
+
+Follow `src/backend/ccakem.c:60-80` → `src/backend/cpapke.c:438-447` → `src/backend/hamming.c:131,157-183` under `Implementations/Reference_Implementation/Amoeba-576/`; the same decoder pattern appears in the other reference sets. This is a source-level witness, not a measured timing benchmark. See `constant_time.md` for the secret/public classification.

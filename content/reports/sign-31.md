@@ -27,3 +27,20 @@ python3 security/design_parameter_audit.py
 ```
 
 The check verifies the TSUOV-512 construction on physical PDF pages 18–21 and 27–29 and the submitted 64-byte `mu` constant.
+
+## sign-31-2: Secret-dependent echelon pivots during signing
+
+Severity: Medium
+Status: Probable
+Layer: Implementation
+Affected: TSUOV reference signer, all three parameter sets
+Discovery: Trivial
+Exploitation: Local timing side channel; no key recovery demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-09-23
+
+The signing trapdoor builds a linear system from the private central map and fresh vinegar state. In `tsuov_core.c`, echelon reduction advances `j` until `EQN(j,c)` is nonzero (line 695), branches on rank (753, 785), and retries until consistency (984). These predicates contain secret intermediate values and control the signing execution trace. No full-key extraction or forgery from that trace is claimed; see `constant_time.md`.
+
+### Reproducing
+
+Inspect `TSUOV_128/tsuov_core.c` lines 680–790 and 960–985 and trace the matrix construction from `TSUOV_Sign`. The same source pattern occurs in the other two reference parameter sets. This confirms secret-dependent control flow, not a measured remote timing exploit.

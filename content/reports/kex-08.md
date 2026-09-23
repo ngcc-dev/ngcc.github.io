@@ -26,8 +26,41 @@ Build the reference library and run the witness with Sage's Python:
 
 ```sh
 make -C kex-08
-sage -python kex-08/reproduce_raw_key_distinguisher.py
+mamba run -n sage python kex-08/reproduce_raw_key_distinguisher.py
 ```
 
 The witness prints `ATTACK kex-08-1 NIIKE-lv128 CONFIRMED` when the honest key is supersingular and all controls are ordinary.
-If the local `sage` launcher does not support `-python`, use a Python with `sage.all` importable, for example `mamba run -n sage python kex-08/reproduce_raw_key_distinguisher.py`.
+The command uses this host's Sage environment; elsewhere, any Python with `sage.all` importable can run the script.
+
+## kex-08-2: NIIKE-lv512 key generation cycles between two hard-coded secret keys
+
+Severity: Critical
+Status: Confirmed
+Layer: Implementation
+Affected: NIIKE-lv512 reference and optimized implementations
+Discovery: Trivial
+Exploitation: At most two candidate private keys per party; shared-secret recovery from a public key requires at most two public-key comparisons and one agreement
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-09-23
+
+The lv512 `make_SecretKey` ignores its DRNG argument and copies one of two literal 759-entry secret vectors, selected by a global Boolean that toggles after each call (`NIIKE-lv512/protocols/bundleprotocols_internal.c:53-79`). The optimized helper is byte-identical. Both public-key entry points call this function (`ngccapi/KEX_AlgorithmInstance.c:59-80`). An attacker can precompute the two corresponding public keys and identify the private vector from any honest public key, then run the public agreement algorithm to obtain its shared secret. This is a complete key-space collapse in the submitted lv512 code, not a timing finding; lv128/lv256 use different key-generation helpers. The normal Makefile omits lv512 unless `NGCC_NIIKE_LV512=1`. Full lv512 public-key computation was not run here because the reference implementation estimates roughly a day per KAT record; the witness verifies the exact two-key cycle in the original helper.
+
+### Reproducing
+
+From the repository root, compile the original lv512 helper with section garbage collection so its unrelated, slow isogeny functions need not be linked:
+
+```sh
+ref='kex-08/Implementations and Test_Vectors/Implementations/Reference_Implementation'
+tmp=$(mktemp -d)
+cc -w -Wno-error=implicit-function-declaration -Wno-error=incompatible-pointer-types \
+  -O2 -DRADIX_64 -ffunction-sections -fdata-sections -Wl,--gc-sections \
+  -I"$ref/NIIKE-lv512/ngccapi/include" -I"$ref/common/include" \
+  -I"$ref/gf/include" -I"$ref/NIIKE-lv512/precomp/include" \
+  -I"$ref/NIIKE-lv512/ec/include" -I"$ref/ec/include" \
+  -I"$ref/NIIKE-lv512/protocols/include" -I"$ref/protocols/include" \
+  kex-08/reproduce_lv512_two_keys.c \
+  "$ref/NIIKE-lv512/protocols/bundleprotocols_internal.c" -o "$tmp/check_two_keys"
+"$tmp/check_two_keys"
+```
+
+The witness prints `ATTACK kex-08-2 NIIKE-lv512 CONFIRMED: two-key cycle`.

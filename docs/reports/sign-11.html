@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FlexTree (sign-11) · ngcc.dev</title>
-<link rel="stylesheet" href="../assets/style.css?v=8c137f6d">
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
 </head>
 <body>
 <header class="site-header">
 <a class="brand" href="../index.html">ngcc.dev</a>
-<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a></nav>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
 </header>
 <main>
-<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>sign-11</code></p>
+<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>sign-11</code> · <a href="../constant-time/sign-11.html">Constant-time review</a></p>
 
 <h1 id="flextree-sign-11">FlexTree (sign-11)</h1>
 <div class="table-wrap"><table class="meta">
@@ -40,28 +40,25 @@
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 security/flextree_kudinov_validation.py
 </code></pre>
-<h2 class="issue-heading" id="sign-11-2-the-specified-deterministic-mode-is-length-extendable">sign-11-2: The specified deterministic mode is length-extendable</h2>
+<h2 class="issue-heading" id="sign-11-2-withdrawn-sm3-evaluation-mode-length-extension">sign-11-2: Withdrawn — SM3 evaluation-mode length extension</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-high">High / design</span></td></tr>
-<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
-<tr><th>Affected</th><td>Specified deterministic mode, all eight parameter sets; shipped hedged implementation is unaffected</td></tr>
+<tr><th>Classification</th><td><span class="sev sev-info">Info / evaluation</span></td></tr>
+<tr><th>Status</th><td><span class="issue-status status-withdrawn">Withdrawn</span></td></tr>
+<tr><th>Affected</th><td>Concrete SM3 evaluation instantiation of the deterministic option only</td></tr>
 <tr><th>Discovery</th><td>Moderate</td></tr>
-<tr><th>Exploitation</th><td>Approximately 2^74.5 to 2^96 work, depending on the parameter set</td></tr>
+<tr><th>Exploitation</th><td>None under the ideal-primitive model</td></tr>
 <tr><th>Credit</th><td>Mikhail Kudinov <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#105;&#115;&#104;&#101;&#108;&#46;&#107;&#117;&#100;&#105;&#110;&#111;&#118;&#64;&#103;&#109;&#97;&#105;&#108;&#46;&#99;&#111;&#109;">&#109;&#105;&#115;&#104;&#101;&#108;&#46;&#107;&#117;&#100;&#105;&#110;&#111;&#118;&#64;&#103;&#109;&#97;&#105;&#108;&#46;&#99;&#111;&#109;</a></td></tr>
 <tr><th>Date</th><td>2026-09-22</td></tr>
 </table></div>
 
-<p>The specification permits deterministic signing with <code>optRand = PK.seed</code> and defines <code>PRFMSG</code> as a raw secret-prefix SM3 construction rather than a PRF such as HMAC. For 160 and 256, <code>R</code> is a truncation of <code>SM3(SK.prf || PK.seed || M)</code>; for 384 and 512, its first block is <code>SM3(SK.prf || PK.seed || M || 1)</code>. Because SM3 is Merkle-Damgård, a signature reveals enough chaining state to predict the randomizer for suitable message extensions. The 160-bit sets require recovery of the 96 truncated state bits; the other sets disclose a full state.</p>
-<p>The predictable randomizer lets a chosen-message attacker determine the PORS/XMSS instance of an extension before requesting its signature, then combine chosen-instance accumulation with counter grinding. Kudinov estimates total costs between <code>2^74.5</code> and <code>2^79.4</code> for the 256-, 384-, and 512-bit sets and <code>2^96</code> for both 160-bit sets, all below their claims.</p>
-<p>The submitted code always draws fresh <code>optRand</code>, so this is a break of the normative deterministic option rather than the shipped hedged mode. <code>PRFMSG</code> should use HMAC-SM3 or another prefix-free PRF construction.</p>
+<p>Kudinov observed that the concrete secret-prefix SM3 evaluation function is length-extendable in deterministic mode. However, the FlexTree specification's page-45 warning explicitly treats the Section 1.3 SM3-derived functions as ideal stand-ins and excludes Merkle–Damgård flaws from its security claim. An ideal replacement with the same interface and output length does not reveal a chaining state, so the proposed predictable-randomizer attack does not apply. The shipped signer also uses fresh <code>optRand</code>. This ID is retained to record the withdrawal, not as an active vulnerability.</p>
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 security/flextree_kudinov_validation.py
 </code></pre>
-<p>This confirms the raw secret-prefix construction, the counter-mode XOF, and the
-shipped implementation's hedged-only path. It does not reproduce the optimized
-attack cost or the end-to-end witness, which is not part of this repository.</p>
+<p>The script checks the concrete evaluation construction and hedged-only code path;
+it is not a witness against an ideal replacement.</p>
 <h2 class="issue-heading" id="sign-11-3-the-specified-ots-verifier-omits-its-encoding-checks">sign-11-3: The specified OTS verifier omits its encoding checks</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
@@ -81,26 +78,25 @@ attack cost or the end-to-end witness, which is not part of this repository.</p>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 security/flextree_kudinov_validation.py
 </code></pre>
-<h2 class="issue-heading" id="sign-11-4-a-256-bit-sm3-state-caps-the-384-and-512-bit-sets">sign-11-4: A 256-bit SM3 state caps the 384- and 512-bit sets</h2>
+<h2 class="issue-heading" id="sign-11-4-withdrawn-sm3-evaluation-state-ceiling">sign-11-4: Withdrawn — SM3 evaluation-state ceiling</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-critical">Critical / design</span></td></tr>
-<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
-<tr><th>Affected</th><td>FlexTree-384s/f and FlexTree-512s/f</td></tr>
+<tr><th>Classification</th><td><span class="sev sev-info">Info / evaluation</span></td></tr>
+<tr><th>Status</th><td><span class="issue-status status-withdrawn">Withdrawn</span></td></tr>
+<tr><th>Affected</th><td>Concrete SM3 evaluation instantiations of FlexTree-384s/f and FlexTree-512s/f only</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
-<tr><th>Exploitation</th><td>At most 2^256 classical or 2^128 quantum preimage work</td></tr>
+<tr><th>Exploitation</th><td>None under the ideal-primitive model</td></tr>
 <tr><th>Credit</th><td>Mikhail Kudinov <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#105;&#115;&#104;&#101;&#108;&#46;&#107;&#117;&#100;&#105;&#110;&#111;&#118;&#64;&#103;&#109;&#97;&#105;&#108;&#46;&#99;&#111;&#109;">&#109;&#105;&#115;&#104;&#101;&#108;&#46;&#107;&#117;&#100;&#105;&#110;&#111;&#118;&#64;&#103;&#109;&#97;&#105;&#108;&#46;&#99;&#111;&#109;</a></td></tr>
 <tr><th>Date</th><td>2026-09-22</td></tr>
 </table></div>
 
-<p>The 384- and 512-bit parameter sets expand SM3's 256-bit state with a counter-mode XOF. Longer output does not increase the internal state: a state collision extends to every output block, and generic preimage security remains capped at 256 classical bits and 128 quantum bits. These sets therefore cannot provide the 384/192 and 512/256 classical/quantum strengths printed in Table 1.3.</p>
-<p>The specification acknowledges on page 45 that the SM3 instantiations may not reach their named levels, but still presents those levels as the parameter sets' security strengths. Meeting them requires a primitive with a sufficiently large internal state, not merely a longer XOF output.</p>
+<p>The concrete counter-mode SM3 evaluation XOF has a 256-bit internal state regardless of output length. But the specification's page-45 warning explicitly acknowledges this limitation and assumes ideal Section 1.3 functions with the specified external dimensions instead. The internal-state ceiling does not carry over to such a replacement. This ID is retained to record the withdrawal, not as an active vulnerability or a claim that fixed output dimensions alone meet every advertised security level.</p>
 <h3 id="reproducing_3">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 security/flextree_kudinov_validation.py
 </code></pre>
-<p>The script checks the submitted counter-mode SM3 construction and the affected
-parameter widths. This is a source/parameter check, not a brute-force attack.</p>
+<p>The script checks the concrete evaluation construction and parameter widths;
+it is not a witness against an ideal replacement.</p>
 <h2 class="issue-heading" id="sign-11-5-unchecked-pors-padding-makes-signatures-malleable">sign-11-5: Unchecked PORS padding makes signatures malleable</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Constant-time review: BIKE-MLThre · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../constant-time/index.html">Constant-time review</a> › <code>kem-05</code></p>
+
+<!-- synchronized report: kem-05/constant_time.md -->
+<h1 id="constant-time-review-bike-mlthre">Constant-time review: BIKE-MLThre</h1>
+<p>The sparse parity-check vectors and fallback <code>sigma</code> in <code>sk</code>, decoded error <code>e</code>, recovered message <code>m</code>, and shared secret are secret. The ciphertext and fixed parameter lengths are public. This follows the submitted <code>Implementations/reference</code> path only; optimized code and emitted assembly remain unreviewed.</p>
+<p><code>kem.c:247-260</code> derives a syndrome using the private key and enters <code>BGF_decoder</code>. <code>decode_ml.c:305-348</code> branches on syndrome bits (<code>if (s[bit])</code> and <code>if (prev_s[bit])</code>), while the threshold/state computation and black/gray-flip updates are driven by that secret-derived syndrome. <code>kem.c:276-289</code> also branches on the decoded-error comparison to select either <code>sigma</code> or <code>m_prime</code> for the shared-secret hash. These are variable-control-flow candidates; the comparison branch is not itself proof of key recovery. No secret-indexed table or variable-divisor instruction was established in the representative trace.</p>
+<p>Status: source-level CT concern; no controlled timing/cache measurement or complete extraction has been reproduced. The path should be hardened and retested before any constant-time claim. No separate report is filed here because the demonstrated observation is not yet narrowed beyond the decoded validity path.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

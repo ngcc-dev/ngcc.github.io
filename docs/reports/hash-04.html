@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CHAMP (hash-04) · ngcc.dev</title>
-<link rel="stylesheet" href="../assets/style.css?v=8c137f6d">
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
 </head>
 <body>
 <header class="site-header">
 <a class="brand" href="../index.html">ngcc.dev</a>
-<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a></nav>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
 </header>
 <main>
-<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>hash-04</code></p>
+<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>hash-04</code> · <a href="../constant-time/hash-04.html">Constant-time review</a></p>
 
 <h1 id="champ-hash-04">CHAMP (hash-04)</h1>
 <div class="table-wrap"><table class="meta">
@@ -89,6 +89,22 @@ make -C hash-04 reproduce-full
 <p>The guarded check runs as part of either command for <code>hash-04-3</code>:</p>
 <pre><code class="language-sh">make -C hash-04 reproduce
 </code></pre>
+<h2 class="issue-heading" id="hash-04-5-message-bytes-index-a-large-precomputed-matrix-table">hash-04-5: Message bytes index a large precomputed matrix table</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Classification</th><td><span class="sev sev-medium">Medium / implementation</span></td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Reference CHAMP-512 and CHAMP-1024</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Cache side-channel dependent</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-23</td></tr>
+</table></div>
+
+<p>The absorption loop selects <code>byte_table[(unsigned char)msg[i]]</code> directly from each message byte (<code>CryptHash_AlgorithmInstance.c:279</code> in CHAMP-512; <code>:308</code> in CHAMP-1024). Entries contain four field elements and occupy distinct cache lines. The memory-address trace therefore reveals every absorbed byte to an observer able to distinguish table lines. Field reduction and inverse dispatch also branch on secret-dependent state. No end-to-end cache-extraction experiment was run. See <a href="../constant-time/hash-04.html">constant_time.md</a>.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>Inspect the cited table access. For equal-length first-byte choices <code>0x00</code> and <code>0x80</code>, the first table addresses differ by 128 entries; the two inputs differ only in secret content.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NEV-AKE constant-time review · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../constant-time/index.html">Constant-time review</a> › <code>kex-07</code> · <a href="../reports/kex-07.html">Report</a></p>
+
+<!-- synchronized report: kex-07/constant_time.md -->
+<h1 id="nev-ake-constant-time-review">NEV-AKE constant-time review</h1>
+<p>Scope: <code>NEV-AKE-C1</code> representative reference implementation; other C/R and compressed variants were not exhaustively traced. Long-term PKE keys, rejection secrets, ephemeral KEM messages and derived session key are secret. Identities, public keys, ciphertexts and their fixed lengths are public.</p>
+<ul>
+<li><code>NEV-AKE-C1/ake.c:96-106,169-174,205-211</code> decrypts, re-encrypts and selects good/rejection session keys. <code>NEV-AKE-C1/verify.c:15-24,39-46</code> uses fixed-length XOR accumulation and masked conditional move; the secret-derived validity bit does not control an early return in the inspected AKE path.</li>
+<li><code>NEV-AKE-C1/ake.c:21-93</code> hashes fixed-sized transcript and secret components; the cited loops and input sizes are parameter-fixed. Public-message validation and fixed variant selection were not treated as secret leakage.</li>
+</ul>
+<p>No new secret-dependent branch, indexed lookup or variable-divisor site was confirmed on this path. The many other NEV-AKE variants and lower-level NTRU arithmetic require further review; this is not a whole-candidate constant-time proof.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

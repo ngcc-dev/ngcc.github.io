@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Constant-time review: Amoeba · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../constant-time/index.html">Constant-time review</a> › <code>kem-02</code> · <a href="../reports/kem-02.html">Report</a></p>
+
+<!-- synchronized report: kem-02/constant_time.md -->
+<h1 id="constant-time-review-amoeba">Constant-time review: Amoeba</h1>
+<p>Secret inputs are the PKE key in <code>sk</code>, recovered plaintext <code>m</code>, fallback seed, and shared secret. The public key and ciphertext are public. This traces the Amoeba-576 reference source; the Hamming decoder and KEM wrapper are duplicated across reference sets. It is a source-level finding without a measured timing or key-recovery experiment.</p>
+<p><code>src/backend/ccakem.c:60-80</code> decrypts with <code>sk</code>, returns early on decoder failure, and branches on the re-encryption comparison. Within the PKE decoder, <code>src/backend/cpapke.c:438-447</code> passes the secret-derived plaintext bits to <code>decode_ECC</code>; <code>src/backend/hamming.c:131</code> branches per decoded codeword bit, and <code>hamming.c:157-183</code> branches on the syndrome and indexes <code>syndrome_map[s_h_key]</code> at line 173. The syndrome is derived from the result of PKE secret-key decryption. Thus the lookup address and control flow are secret-dependent even before the KEM's validity branch. Public length and parameter decisions are not the finding.</p>
+<p>The existing <code>kem-02-1</code> report demonstrates a separate full-key-recovery bug in the faulty ciphertext comparison; this CT trace does not claim a second full extraction. See <code>report.md</code> for the bounded side-channel finding.</p>
+<p>Division follow-up: after secret-key decryption, <code>src/backend/ccakem.c:74</code> re-encrypts recovered <code>m</code>; <code>cpapke.c:303-319</code> applies <code>mod_down</code> to this secret-derived path. GCC <code>-O3 -march=native</code> emits <code>idiv</code> instructions in <code>mod_down</code> (five in a standalone Amoeba-576 build here). The divisor <code>q</code> is a function parameter, though public. This is not an attack on a public-only compression path. <code>ccakem.c:61-62</code> also exposes explicit decoder failure. Neither the extra timing predicate nor that failure bit has been shown here to yield a second key-recovery attack beyond <code>kem-02-1</code>.</p>
+<p>Recheck from the repository root: set <code>ref=kem-02/Implementations/Reference_Implementation/Amoeba-576/src</code>, then run <code>cc -O3 -march=native -fPIC -std=gnu11 -w -fwrapv -DSECURITY_LEVEL=128 -I"$ref/symmetric" -I"$ref/backend" -I"$ref/api" -Iapi -S "$ref/backend/cpapke.c" -o - | rg -c '\bidiv'</code>; this standalone build prints <code>5</code>. The review's count of 11 used a different compilation context; the presence of hardware division, not that count, is the security-relevant observation.</p>
+<p>Size-build leads: GCC <code>-Os</code> also emits division in <code>decode_MSB</code> (<code>cpapke.c:178-181</code>) on the decryption path and in <code>PolyMul</code>/<code>PolyMod</code> (<code>poly.c:60,89-95</code>) on secret-key products. These require separate observable-channel and attack analysis.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

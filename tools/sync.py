@@ -29,6 +29,7 @@ TOP = {}
 # per-candidate file -> content-relative destination template ({id} = candidate id)
 PER_CANDIDATE = {
     "report.md": "reports/{id}.md",
+    "constant_time.md": "constant-time/{id}.md",
 }
 # data files copied verbatim into content/data/, e.g. "sign.csv"
 DATA = ["sign.csv", "kem.csv", "kex.csv", "hash.csv", "downloads.csv"]

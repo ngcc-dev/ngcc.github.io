@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BAG-Loong (kem-03) · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>kem-03</code> · <a href="../constant-time/kem-03.html">Constant-time review</a></p>
+
+<h1 id="bag-loong-kem-03">BAG-Loong (kem-03)</h1>
+<div class="table-wrap"><table class="meta">
+<tr><th>Candidate</th><td>BAG-Loong</td></tr>
+<tr><th>Family</th><td>Code-based (rank metric)</td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/BAG-Loong.zip">BAG-Loong.zip</a></td></tr>
+</table></div>
+
+<h2 class="issue-heading issue-heading-first" id="kem-03-1-secret-dependent-pivoting-in-the-gabidulin-decoder">kem-03-1: Secret-dependent pivoting in the Gabidulin decoder</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Classification</th><td><span class="sev sev-medium">Medium / implementation</span></td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Reference implementations, all four parameter sets</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Local control-flow/cache observer; key recovery not demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-23</td></tr>
+</table></div>
+
+<p>Decapsulation forms a rank-code word by multiplying the public ciphertext component by secret <code>x</code> and adding the second ciphertext component (<code>src/loong_pke.c:1003-1014</code>). The Gabidulin decoder then searches for a pivot with a discrepancy-dependent <code>while</code> loop, swaps at the chosen index, and branches into different polynomial-update paths (<code>src/gabidulin.c:213-279</code>). The executed path and addresses thus depend on the recipient secret, not just public ciphertext. A co-resident timing/cache observer can learn information about the intermediate. No inversion from observed pivot sequences to the private vector, full key-recovery attack, or remote channel is shown; a key-dependent pivot is not by itself a Critical break.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>The source-level witness is the decapsulation call in <code>src/loong_kem.c:217-218</code>, the secret-key product in <code>src/loong_pke.c:1003-1014</code>, and the value-dependent pivot loop in <code>src/gabidulin.c:213-279</code> under <code>Implementations/Reference_Implementation/Loong-Block-ms-128/</code>. The same files occur in the other reference parameter directories. See <code>constant_time.md</code> for the secret/public classification.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

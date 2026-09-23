@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Constant-time review: LoongKEM · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../constant-time/index.html">Constant-time review</a> › <code>kem-18</code> · <a href="../reports/kem-18.html">Report</a></p>
+
+<!-- synchronized report: kem-18/constant_time.md -->
+<h1 id="constant-time-review-loongkem">Constant-time review: LoongKEM</h1>
+<p>The secret noise vector, recovered message, rejection seed, and shared secret are secret. The public key, ciphertext, lengths, and modulus constants are public. This follows Loong128 reference C; higher parameter sets and emitted code are not independently certified.</p>
+<p><code>KEM_Loong.c:187-224</code> decrypts by multiplying ciphertext data with the secret noise vector, then reduces and decodes. <code>KEM_Loong.c:264-304</code> re-encrypts and selects the fallback shared secret with a fixed-length XOR accumulator and byte mask. The inspected wrapper has no branch on a private coefficient or validity result. Modulo/rounding helpers require machine-code review to determine whether any variable-time divide remains; source syntax with compile-time modulus alone does not establish leakage.</p>
+<p>Status: representative-path source screen only; no report from this review.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

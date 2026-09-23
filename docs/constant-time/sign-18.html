@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Constant-time review — 18 Origami · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../constant-time/index.html">Constant-time review</a> › <code>sign-18</code> · <a href="../reports/sign-18.html">Report</a></p>
+
+<!-- synchronized report: sign-18/constant_time.md -->
+<h1 id="constant-time-review-18-origami">Constant-time review — 18 Origami</h1>
+<p>Scope: reference implementation, representative instance only: <code>Implementations and Test_Vectors/Implementations/Reference_Implementation/Origami-256/origami_ref.c</code>. Other instances and optimized implementations have not been proven source-equivalent. This is a source-level triage, not a constant-time certification.</p>
+<p>Secret: trapdoor/master seed, hidden central map and signing vinegar/solver state. Public: verification key, message and final signature.</p>
+<ul>
+<li>Branch/loop trace: <code>Implementations and Test_Vectors/Implementations/Reference_Implementation/Origami-256/origami_ref.c:636</code> — <code>solve_rect_random</code> chooses pivots by branching on hidden-zone matrix entries; row-skip at line 659 and retry at line 798 add further secret-dependent paths.</li>
+<li>Table lookups and division/remainder: this source triage does not certify their absence or constant-time compilation. Only the explicitly traced operands above are classified. Public lengths, fixed parameters and verifier checks are not findings.</li>
+</ul>
+<p>Assessment: Source-confirmed secret-dependent path; the implementation even has optional zone-attempt statistics. A full key-recovery or forgery side-channel is not demonstrated.</p>
+<p>Recheck the cited source line and its caller before reusing this result. A timing claim requires controlled same-public-input tests with changed secret state and a public-value control.</p>
+<p>Table/index follow-up: <code>origami_gf.h:25,32-37</code> implements GF multiplication and inversion with secret-indexed tables; signing uses <code>gf_mult</code> on secret central-map coefficients and solver values (for example <code>origami_ref.c:400,599-601,653-661</code>). Separately, <code>origami_ref.c:421-426</code> derives <code>w_vars</code> from private <code>rho</code>, and <code>:798-800</code> writes <code>secret_y[w_vars[i]]</code>. These accesses are not functions of the public message or final signature alone. Cache/address observation and an EUF-CMA forgery are not demonstrated; the distinct source-level finding is <code>sign-18-4</code>.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

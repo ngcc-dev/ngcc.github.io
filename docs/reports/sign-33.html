@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>VDOO (sign-33) · ngcc.dev</title>
-<link rel="stylesheet" href="../assets/style.css?v=8c137f6d">
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
 </head>
 <body>
 <header class="site-header">
 <a class="brand" href="../index.html">ngcc.dev</a>
-<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a></nav>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
 </header>
 <main>
-<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>sign-33</code></p>
+<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>sign-33</code> · <a href="../constant-time/sign-33.html">Constant-time review</a></p>
 
 <h1 id="vdoo-sign-33">VDOO (sign-33)</h1>
 <div class="table-wrap"><table class="meta">
@@ -106,6 +106,22 @@ term in the submitted EUF-CMA bound.</p>
 <pre><code class="language-sh">tools/reproduce.sh sign-33
 </code></pre>
 <p>It reports identical signing-key and encoded-salt digests. Source inspection shows that the continued same generator stream supplies the vinegar and diagonal randomness as well.</p>
+<h2 class="issue-heading" id="sign-33-5-signing-branches-directly-on-private-central-map-coefficients">sign-33-5: Signing branches directly on private central-map coefficients</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Classification</th><td><span class="sev sev-medium">Medium / implementation</span></td></tr>
+<tr><th>Status</th><td><span class="issue-status status-probable">Probable</span></td></tr>
+<tr><th>Affected</th><td>VDOO reference signer, all three parameter sets</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Local timing/power side channel; no independent full-key extraction demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-23</td></tr>
+</table></div>
+
+<p><code>vdoo_sign.c</code> reads coefficients from the private central map <code>sk-&gt;F</code> and branches on whether each is zero (lines 21–35 and 85–103). Secret-derived diagonal and Gaussian pivots also control retries. Consequently the instruction/power trace depends directly on private key values. This is separate from the already stronger predictable-key defect <code>sign-33-1</code>; it matters if that RNG defect is repaired without making signing constant-time. No side-channel key-recovery experiment is claimed.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>Inspect <code>vdoo_sign.c</code> lines 7–35, 82–105, and 127–159 in any reference parameter set. The <code>coeff</code> and <code>c</code> branch operands are obtained directly from <code>gfv_get_ele(sk-&gt;F, …)</code>. See <code>constant_time.md</code> for the secret/public review. This is a source/dataflow witness, not a measured remote timing exploit.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

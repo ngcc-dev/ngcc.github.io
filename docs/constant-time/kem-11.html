@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Constant-time review: COMPASS-KEM · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../constant-time/index.html">Constant-time review</a> › <code>kem-11</code> · <a href="../reports/kem-11.html">Report</a></p>
+
+<!-- synchronized report: kem-11/constant_time.md -->
+<h1 id="constant-time-review-compass-kem">Constant-time review: COMPASS-KEM</h1>
+<p>The CPA secret key, recovered prekey, rejection seed, and shared secret are secret. The public key, ciphertext, and matrix seed are public. This follows the COMPASS-KEM-128 reference implementation; higher parameter sets and generated machine code are not independently certified.</p>
+<p><code>kem.c:142-169</code> calls <code>indcpa_dec</code>, re-encrypts, and selects the rejection or candidate secret through fixed-length <code>verify</code> and <code>cmov</code>. The control decision is not a source-level <code>if</code>. Public-seed matrix rejection sampling is not a secret leak simply because it branches. Compression/modular reductions use compile-time constants in this path; source-level <code>/</code> or <code>%</code> by a constant should not be equated with a hardware division instruction. No additional secret-dependent branch or lookup was established in the representative decapsulation chain.</p>
+<p>Status: limited source-level screen; inspect optimized builds and emitted assembly before claiming end-to-end constant time. No report from this review.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

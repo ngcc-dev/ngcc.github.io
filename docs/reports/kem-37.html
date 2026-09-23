@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TriQ-KEM (kem-37) · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>kem-37</code> · <a href="../constant-time/kem-37.html">Constant-time review</a></p>
+
+<h1 id="triq-kem-kem-37">TriQ-KEM (kem-37)</h1>
+<div class="table-wrap"><table class="meta">
+<tr><th>Candidate</th><td>TriQ-KEM</td></tr>
+<tr><th>Family</th><td>Code-based</td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/TriQ-KEM.zip">TriQ-KEM.zip</a></td></tr>
+</table></div>
+
+<h2 class="issue-heading issue-heading-first" id="kem-37-1-decapsulation-re-expands-its-private-support-with-variable-work">kem-37-1: Decapsulation re-expands its private support with variable work</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Classification</th><td><span class="sev sev-medium">Medium / implementation</span></td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>TriQ-KEM reference implementations, 128/256/384/512</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Secret-seed-dependent execution trace; key recovery not demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-23</td></tr>
+</table></div>
+
+<p><code>crypto_kem_dec</code> decrypts with a persistent PKE seed. The decryption path calls <code>triq_dk_pke_from_string</code> on every decapsulation, which regenerates the private support using <code>vect_sample_fixed_weight1</code>. Its sampler rejects out-of-range or duplicate positions and fetches more XOF bytes when extra draws exhaust a block (<code>src/ref/vector.c:61-91</code>). Thus the same public ciphertext can take seed-dependent work. The FO validity selection remains masked, but does not hide this earlier trace. No key-recovery attack is claimed; see <code>constant_time.md</code>.</p>
+<p>Follow-up analysis: FO re-encryption also samples from coins derived from recovered <code>m_prime</code> (<code>src/common/kem.c:192-200</code>, <code>src/ref/triq_pke.c:113-115</code>). The <a href="https://eprint.iacr.org/2021/1485.pdf">Guo et al. HQC/BIKE attack</a> suggests a test, not a proven TriQ recovery.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">ct_dir=$(mktemp -d)
+ref=kem-37/Implementations/Reference_Implementation/TriQ-KEM-128
+cc -std=c99 -O3 -ffunction-sections -fdata-sections -Wl,--gc-sections \
+  -I &quot;$ref/src/common&quot; -I &quot;$ref/src/common/triq-128&quot; \
+  -I &quot;$ref/src/ref&quot; -I &quot;$ref/src/ref/triq-128&quot; -I &quot;$ref&quot; \
+  -o &quot;$ct_dir/repro&quot; kem-37/reproduce_ct_sampler.c \
+  &quot;$ref/src/common/symmetric.c&quot; &quot;$ref/auxfunc.c&quot;
+&quot;$ct_dir/repro&quot;
+</code></pre>
+<p>The witness observes one XOF fetch for seed byte 0 and multiple fetches for seed byte 11 on this build. The full source path is <code>src/common/kem.c:192</code> → <code>src/ref/triq_pke.c:176</code> → <code>src/ref/parsing.c:19-22</code> → <code>src/ref/vector.c:61-91</code>.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

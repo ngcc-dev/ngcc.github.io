@@ -54,3 +54,37 @@ python3 sign-18/reproduce_signature_subspace.py
 ```
 
 The witness verifies every collected signature with the official verifier before measuring its rank over `GF(16)`.
+
+## sign-18-3: Variable-time hidden-zone linear solving
+
+Severity: Medium
+Status: Probable
+Layer: Implementation
+Affected: Origami reference signer, all four parameter sets
+Discovery: Trivial
+Exploitation: Local timing/cache side channel; no key recovery demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-09-23
+
+Signing builds a linear system from the expanded secret zone structure and sampled hidden variables, then solves it with first-nonzero pivot search and data-dependent row skips. The reference `origami_ref.c` branches on matrix entries at lines 636 and 659, and on the solve result at line 798. Thus a local trace can distinguish properties of intermediate private systems. This does not by itself establish recovery of the master seed or a forgery; see `constant_time.md` for the secret/public classification.
+
+### Reproducing
+
+In each reference instance, follow `sign` → `build_zone_system` → `solve_rect_random` in `origami_ref.c`; inspect the pivot test and early break at lines 633–640, row skip at 659, and attempt retry at 794–811. This is a source/dataflow witness, not a measured remote timing exploit.
+
+## sign-18-4: Signing indexes field tables and signature state with private values
+
+Severity: Medium
+Status: Probable
+Layer: Implementation
+Affected: Origami reference signer, all four parameter sets
+Discovery: Trivial
+Exploitation: Local cache/address trace of secret intermediates; forgery not demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-09-23
+
+Origami's `gf_mult` and `gf_inv` index 256-byte and 16-byte tables by field operands (`origami_gf.h:25,32-37`), including private central-map and solver values during signing (`origami_ref.c:400,599-601,653-661`). The signer also derives `w_vars` from private permutation `rho` and writes `secret_y[w_vars[i]]` (`origami_ref.c:421-426,798-800`). These addresses can depend on private values even for the same public message. No measured cache channel or EUF-CMA forgery is established; see `constant_time.md`.
+
+### Reproducing
+
+Inspect the cited lookup definitions and signer call sites in `Implementations and Test_Vectors/Implementations/Reference_Implementation/Origami-256/`; the same pattern is present in the other reference parameter sets. This is a source/dataflow witness, not a measured extraction.

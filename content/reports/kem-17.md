@@ -112,3 +112,22 @@ python3 kem-17/reproduce_epcp_fingerprint.py
 ```
 
 On a freshly generated official HEP-QC-1 key, this prints `3^5888 + 1^64`; its uniform-matrix control prints `1^17728`.
+
+## kem-17-5: Secret permutation and mixing matrix drive memory and control flow
+
+Severity: Medium
+Status: Confirmed
+Layer: Implementation
+Affected: Reference and x86_64 implementations, all parameter sets
+Discovery: Moderate
+Exploitation: Local cache/control-flow observation; no full key recovery demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-09-23
+
+HEP-QC decapsulation regenerates private `y`, mixing matrix `t`, and column permutation `p` from the secret seed (`ref/PKE_HEP_QC.c:185-220`). The permutation indexes output memory by `P[old_col]` (`common/vector.c:498-503,477-485`). The code then inverts private `t` using a value-dependent pivot search and conditional row operations (`common/vector.c:369-408`). These addresses and branches disclose information about secret key material to a sufficiently close observer. No remote channel, complete key recovery, or shared-secret extraction is demonstrated.
+
+The same decapsulation key expansion also runs secret-seed rejection sampling, retry-until-invertible matrix generation, and a Fisher–Yates `x % bound` with hardware division in the reviewed GCC `-O2` build (`common/parsing.c:23-31`, `common/vector.c:64-76,343-357,416-423`). These are additional paths within this finding, not separate demonstrated key-recovery attacks.
+
+### Reproducing
+
+The source-level witness is `ref/KEM_HEP_QC.c:165-212` → `ref/PKE_HEP_QC.c:185-220` → `common/vector.c:369-408,477-503` under `Implementations/Implementations/`; the x86_64 PKE source calls the same shared routines. See `constant_time.md` for the secret/public mapping. This is not a measured timing benchmark.

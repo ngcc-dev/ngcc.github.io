@@ -34,13 +34,13 @@ MAINTAINER = "markku-juhani.saarinen@tuni.fi"
 UPDATED_UTC = datetime.datetime.now(datetime.UTC).replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S UTC")
 CATS = [("sign", "Signatures"), ("kem", "KEMs"), ("kex", "Key exchange"), ("hash", "Hash functions")]
 
-NAV = [("Home", "index.html"), ("Reports", "reports/index.html"), ("Candidates", "candidates/index.html"),
+NAV = [("Home", "index.html"), ("Reports", "reports/index.html"), ("Constant-time review", "constant-time/index.html"), ("Candidates", "candidates/index.html"),
        ("KAT results", "results.html"), ("Security survey", "security-survey.html"),
        ("Attack matrix", "attack-matrix.html"), ("Audit", "audit.html")]
 
 SEVERITIES = ["critical", "high", "medium", "low", "info"]   # index order = sort order
 # Status records how far the individual finding has been substantiated.
-STATUSES = ["confirmed", "probable", "lead", "proof gap"]
+STATUSES = ["confirmed", "probable", "lead", "proof gap", "withdrawn"]
 
 STATUS_CLASS = {
     "PASS": "ok", "FINDING": "bad", "MISMATCH": "bad", "CRYPTOFAIL": "bad", "OVERFLOW": "bad",
@@ -131,6 +131,8 @@ def candidate_pages(cid):
             out.append((label, f"candidates/{cid}/{name[:-3]}.html"))
     if (CONTENT / "reports" / f"{cid}.md").is_file():
         out.append(("report", f"reports/{cid}.html"))
+    if (CONTENT / "constant-time" / f"{cid}.md").is_file():
+        out.append(("CT review", f"constant-time/{cid}.html"))
     return out
 
 
@@ -237,8 +239,10 @@ def load_reports():
                 raise ValueError(f"invalid severity for {issue_id}: {issue_meta['Severity']}")
             if status not in STATUSES:
                 raise ValueError(f"invalid status for {issue_id}: {issue_meta['Status']}")
-            if layer not in {"design", "implementation"}:
+            if layer not in {"design", "implementation", "evaluation"}:
                 raise ValueError(f"invalid layer for {issue_id}: {issue_meta['Layer']}")
+            if status == "withdrawn" and severity != "info":
+                raise ValueError(f"withdrawn issue must have Info severity: {issue_id}")
             seen_issues.add(issue_id)
             numbers.append(number)
             parsed_issues.append({"id": issue_id, "title": title,
@@ -274,8 +278,12 @@ def recent_updates_html(reports, prefix):
     """One linked line per UTC publication date, newest first."""
     by_date = {}
     by_layer = {"implementation": 0, "design": 0}
+    withdrawn = 0
     for report in reports.values():
         for issue in report["issues"]:
+            if issue["status"] == "withdrawn":
+                withdrawn += 1
+                continue
             date = issue["meta"]["Date"]
             try:
                 datetime.date.fromisoformat(date)
@@ -297,8 +305,22 @@ def recent_updates_html(reports, prefix):
     total = sum(by_layer.values())
     lines.append(
         f'<p class="recent-total">Total {total}: implementation {by_layer["implementation"]}, '
-        f'design {by_layer["design"]}.</p>'
+        f'design {by_layer["design"]}; withdrawn records {withdrawn}.</p>'
     )
+    return "\n".join(lines)
+
+
+def constant_time_html(cands, prefix):
+    """Link every scoped candidate review without turning it into a vulnerability row."""
+    lines = []
+    for cat, label in CATS:
+        lines.append(f'<h2 id="{cat}">{label}</h2>')
+        lines.append('<p class="audit-links">')
+        for c in sorted((item for item in cands.values() if item["cat"] == cat), key=lambda item: item["no"]):
+            cid = c["id"]
+            if (CONTENT / "constant-time" / f"{cid}.md").is_file():
+                lines.append(f'<a href="{prefix}constant-time/{cid}.html"><code>{cid}</code></a> ')
+        lines.append('</p>')
     return "\n".join(lines)
 
 
@@ -351,7 +373,10 @@ def report_page(r, prefix):
         rows.append(f"<tr><th>{html.escape(k)}</th><td>{v}</td></tr>")
     meta_table = '<table class="meta">\n' + "\n".join(rows) + "\n</table>"
     title = f"{m.get('Candidate', r['cid'])} ({r['cid']})"
-    crumb = f'<p class="crumb"><a href="{prefix}reports/index.html">Reports</a> › <code>{r["cid"]}</code></p>'
+    crumb = f'<p class="crumb"><a href="{prefix}reports/index.html">Reports</a> › <code>{r["cid"]}</code>'
+    if (CONTENT / "constant-time" / f'{r["cid"]}.md').is_file():
+        crumb += f' · <a href="{prefix}constant-time/{r["cid"]}.html">Constant-time review</a>'
+    crumb += '</p>'
     note = (f"\n\nCommands below run in a checkout of the [ngcc-harness repository]({HARNESS}) "
             f"with the candidate built (see its README).")
     body = r["body"]
@@ -381,6 +406,7 @@ def expand_placeholders(text, cands, prefix, reports):
     text = re.sub(r"<!--\s*recent-additions\s*-->",
                   lambda m: recent_updates_html(reports, prefix), text)
     text = re.sub(r"<!--\s*reports\s*-->", lambda m: reports_html(reports, cands, prefix), text)
+    text = re.sub(r"<!--\s*constant-time\s*-->", lambda m: constant_time_html(cands, prefix), text)
 
     def repl(m):
         name = m.group(1)
@@ -433,6 +459,12 @@ def render(rel, cands, reports):
     title = page_title(text, rel)
     if rel.parts[0] == "reports" and rel.stem in reports:
         text, title = report_page(reports[rel.stem], prefix)
+    if rel.parts[0] == "constant-time" and rel.stem in cands:
+        cid = rel.stem
+        crumb = f'<p class="crumb"><a href="{prefix}constant-time/index.html">Constant-time review</a> › <code>{cid}</code>'
+        if cid in reports:
+            crumb += f' · <a href="{prefix}reports/{cid}.html">Report</a>'
+        text = crumb + '</p>\n\n' + text
     text = expand_placeholders(text, cands, prefix, reports)
     # candidate pages without an H1 get one, plus a breadcrumb back to the index
     if rel.parts[0] == "candidates" and len(rel.parts) == 3:

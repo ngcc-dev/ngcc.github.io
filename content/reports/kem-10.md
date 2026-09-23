@@ -31,3 +31,20 @@ security/ngcc_security kem-10/lib/libCMultiURAG-512.so kem-zero
 ```
 
 Each command runs in its own process because the attack input terminates that process. The 128-bit and 512-bit zero-ciphertext cases, and the 256-bit mutation, reproduced locally; `make -C kem-10 test` passed all three honest-input KAT sets.
+
+## kem-10-2: Secret-derived decoder pivots select memory addresses
+
+Severity: Medium
+Status: Confirmed
+Layer: Implementation
+Affected: Reference implementations, all three parameter sets
+Discovery: Moderate
+Exploitation: Local cache observer; key recovery not demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-09-23
+
+C-Multi-UR-AG decryption computes a rank-code word using the private matrix `Y` and the public ciphertext (`src/cmultiurag.c:248-257`). The augmented-Gabidulin decoder derives pivot `next` from discrepancies in that word and uses it directly to load and store `u0` and `u1` (`src/augmented_gabidulin.c:185-201`). This exposes a secret-key-dependent memory-access pattern even though final KEM fallback selection is masked. No complete key recovery or remote timing channel is demonstrated.
+
+### Reproducing
+
+Inspect `src/kem.c:209-213`, `src/cmultiurag.c:248-257`, and `src/augmented_gabidulin.c:185-201` under `Implementations/Reference_Implementation/CMultiURAG-128/`; the same pivot code is present in the other reference sets. See `constant_time.md` for the fuller trace.

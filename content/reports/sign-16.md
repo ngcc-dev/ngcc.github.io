@@ -17,13 +17,13 @@ Follow-up source: [Mounir IDRASSI's issue #11](https://github.com/ngcc-dev/ngcc-
 
 Section 4.2 requires `H` to have only λ/2-bit collision resistance for a λ-bit security level. Both signing and verification reduce the message to `mu = H(tr, message)`; a collision for two messages under the same public `tr` transfers one valid signature to the other. Thus λ/2-bit collision resistance is insufficient to justify λ-bit EUF-CMA security. This is a requirement/proof gap, not a demonstrated forgery against an instantiation using a sufficiently collision-resistant hash.
 
-The specification also chooses the contest's SM3-based `pseudoXOF` for its canonical 512-bit implementation over SHAKE256, reasoning that SHAKE256's 512-bit capacity limits its collision security to 256 bits. But `api/auxfunc.h` explicitly says `pseudoXOF` is for correctness verification and does not guarantee security. The reference pseudoXOF's 256-bit chaining state permits a generic ≈2^128-work message collision, but that observation concerns the evaluation primitive; it is not a break of the separate SHA3/SHAKE implementation or a secure replacement. A production hash choice needs an explicit collision-security argument at the claimed level.
+An ideal replacement with the same specified input/output dimensions does not repair the weak *stated requirement*: the security argument must require collision resistance commensurate with the claimed EUF-CMA level. Attacks on the contest's correctness-only SM3 `pseudoXOF` internals are outside this finding.
 
-Follow-up analysis: [Mounir IDRASSI's GitHub issue #11, 2026-09-23](https://github.com/ngcc-dev/ngcc-harness/issues/11) details the state-collision signature-transfer mechanism and demonstrates it in a reduced-state model. It explicitly does **not** produce a collision or forgery with the unmodified SM3 implementation. [Issue #13](https://github.com/ngcc-dev/ngcc-harness/issues/13) gives a separate 344-bit descriptor for the correctness-only SM3 secret expansion; it is not treated here as a break of a secure hash instantiation.
+Follow-up analysis: [Mounir IDRASSI's GitHub issue #11, 2026-09-23](https://github.com/ngcc-dev/ngcc-harness/issues/11) demonstrates state-collision signature transfer in a reduced-state evaluation model, not a full-size forgery. [Issue #13](https://github.com/ngcc-dev/ngcc-harness/issues/13) concerns correctness-only SM3 secret expansion; neither issue establishes a break of an ideal replacement.
 
 ### Reproducing
 
-Inspect §4.2 of `sign-16-spec.pdf` for the λ/2 requirement and the canonical hash choice. In `sign.c` and `hash_domain.h`, both signing and verification bind the message only through `mu`; `api/auxfunc.h` states the contest primitive's security limitation. No full-size collision search was attempted.
+Inspect §4.2 of `sign-16-spec.pdf` for the λ/2 requirement. In `sign.c` and `hash_domain.h`, both signing and verification bind the message only through `mu`. No full-size collision search was attempted.
 
 ## sign-16-2: Polynomial solutions of the relaxed Octarine-512 SIS estimates
 
@@ -46,7 +46,7 @@ I independently verified the submitter's complete 5,120-row certificate: all res
 The script downloads the hash-pinned [published certificate](https://github.com/amcrypto-jp/octarine-cryptanalysis/blob/v1.0.1/data/sis_witness_5120.npz) and requires NumPy:
 
 ```sh
-python3 sign-16/reproduce_relaxed_sis.py
+mamba run -n sage python sign-16/reproduce_relaxed_sis.py
 ```
 
-Use a Python with NumPy installed; on a system where only a mamba Sage environment provides it, run `mamba run -n sage python sign-16/reproduce_relaxed_sis.py`.
+The command uses this host's NumPy-equipped Sage environment; elsewhere, any Python with NumPy installed can run the script.

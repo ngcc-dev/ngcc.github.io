@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Constant-time audit — hash-13 · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../constant-time/index.html">Constant-time review</a> › <code>hash-13</code></p>
+
+<!-- synchronized report: hash-13/constant_time.md -->
+<h1 id="constant-time-audit-hash-13">Constant-time audit — hash-13</h1>
+<p>Scope: archived reference implementation, fixed digest parameters and fixed message length. Message contents and intermediate state are secret; length-dependent block count is documented but not treated as a candidate-specific vulnerability. Alternate optimized implementations and microarchitectural measurements remain outside this pass.</p>
+<p>Reference entry: <code>Juzi/Implementations/Implementation/Reference_Implementation/JuziHash-1024/CryptHash_AlgorithmInstance.c:312</code>.</p>
+<p>A fixed-length source pass finds <code>JUZI_S4[r0]</code>, <code>JUZI_S4[r1]</code>, and <code>JUZI_S4[r2]</code> in <code>juzi_sbox8</code> (<code>CryptHash_AlgorithmInstance.c:86,95-97</code>): all indices derive from secret state. This is the same small-table class as hash-03. A one-cache-line table is not automatically safe against sub-line observation, but no candidate-specific observation or message-recovery channel was established. Public-parameter and message-length dispatch is separate; this is a static review, not a proof of constant time across compilers or architectures.</p>
+<p>Status: small secret-indexed table lead, not a demonstrated attack. See the cited source lines; do not infer a full preimage attack from this result alone.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

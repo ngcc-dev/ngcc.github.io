@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>HEP-QC (kem-17) · ngcc.dev</title>
-<link rel="stylesheet" href="../assets/style.css?v=8c137f6d">
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
 </head>
 <body>
 <header class="site-header">
 <a class="brand" href="../index.html">ngcc.dev</a>
-<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a></nav>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
 </header>
 <main>
-<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>kem-17</code></p>
+<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>kem-17</code> · <a href="../constant-time/kem-17.html">Constant-time review</a></p>
 
 <h1 id="hep-qc-kem-17">HEP-QC (kem-17)</h1>
 <div class="table-wrap"><table class="meta">
@@ -107,6 +107,23 @@ witnesses and their controls. See <code>tools/README.md</code>.</p>
 python3 kem-17/reproduce_epcp_fingerprint.py
 </code></pre>
 <p>On a freshly generated official HEP-QC-1 key, this prints <code>3^5888 + 1^64</code>; its uniform-matrix control prints <code>1^17728</code>.</p>
+<h2 class="issue-heading" id="kem-17-5-secret-permutation-and-mixing-matrix-drive-memory-and-control-flow">kem-17-5: Secret permutation and mixing matrix drive memory and control flow</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Classification</th><td><span class="sev sev-medium">Medium / implementation</span></td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Reference and x86_64 implementations, all parameter sets</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Local cache/control-flow observation; no full key recovery demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-23</td></tr>
+</table></div>
+
+<p>HEP-QC decapsulation regenerates private <code>y</code>, mixing matrix <code>t</code>, and column permutation <code>p</code> from the secret seed (<code>ref/PKE_HEP_QC.c:185-220</code>). The permutation indexes output memory by <code>P[old_col]</code> (<code>common/vector.c:498-503,477-485</code>). The code then inverts private <code>t</code> using a value-dependent pivot search and conditional row operations (<code>common/vector.c:369-408</code>). These addresses and branches disclose information about secret key material to a sufficiently close observer. No remote channel, complete key recovery, or shared-secret extraction is demonstrated.</p>
+<p>The same decapsulation key expansion also runs secret-seed rejection sampling, retry-until-invertible matrix generation, and a Fisher–Yates <code>x % bound</code> with hardware division in the reviewed GCC <code>-O2</code> build (<code>common/parsing.c:23-31</code>, <code>common/vector.c:64-76,343-357,416-423</code>). These are additional paths within this finding, not separate demonstrated key-recovery attacks.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>The source-level witness is <code>ref/KEM_HEP_QC.c:165-212</code> → <code>ref/PKE_HEP_QC.c:185-220</code> → <code>common/vector.c:369-408,477-503</code> under <code>Implementations/Implementations/</code>; the x86_64 PKE source calls the same shared routines. See <code>constant_time.md</code> for the secret/public mapping. This is not a measured timing benchmark.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

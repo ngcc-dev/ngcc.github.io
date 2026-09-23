@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Constant-time review — 22 Rhyme · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../constant-time/index.html">Constant-time review</a> › <code>sign-22</code> · <a href="../reports/sign-22.html">Report</a></p>
+
+<!-- synchronized report: sign-22/constant_time.md -->
+<h1 id="constant-time-review-22-rhyme">Constant-time review — 22 Rhyme</h1>
+<p>Scope: reference implementation, representative instance only: <code>Implementations and Test_Vectors/Implementations/Reference_Implementation/Rhyme-SM3/Rhyme-SM3-128/src/sign.c</code>. Other instances and optimized implementations have not been proven source-equivalent. This is a source-level triage, not a constant-time certification.</p>
+<p>Secret: signing-key polynomials/basis, per-signature masks and sampler state. Public: verification key, algorithm parameters, message and serialized signature.</p>
+<ul>
+<li>Branch/loop trace: <code>Implementations and Test_Vectors/Implementations/Reference_Implementation/Rhyme-SM3/Rhyme-SM3-128/src/sign.c:352</code> — The loop <code>while (t &gt;= p) t -= p</code> has 0–6 iterations on a sum of NTT products involving the private signing basis and secret Gaussian masks.</li>
+<li>Table lookups and division/remainder: this source triage does not certify their absence or constant-time compilation. Only the explicitly traced operands above are classified. Public lengths, fixed parameters and verifier checks are not findings.</li>
+</ul>
+<p>Assessment: No new vulnerability report is promoted from this representative source triage. A compiler/architecture-specific timing and cache test is still needed before claiming constant-time behavior or exploitable leakage.</p>
+<p>Recheck the cited source line and its caller before reusing this result. A timing claim requires controlled same-public-input tests with changed secret state and a public-value control.</p>
+<p>Division follow-up: <code>src/sign.c:152-159</code> computes <code>a-&gt;coeffs[i] % zpntt_prime()</code>; calls at <code>:300-308</code> process the long-term short basis and <code>s_tail</code> on every signature. In the Rhyme-SM3-128 reference build, GCC <code>-O2</code> emits four <code>idiv</code> instructions in <code>sign.o</code>. These are secret-operand divides despite a public prime. The key-derived work is fixed across messages, so the source trace and instruction count alone do not show a chosen-message oracle, recoverable coefficient information, or a forgery. This is a high-priority measurement/cryptanalysis lead, not a proved EUF-CMA break.</p>
+<p>Recheck from the repository root: set <code>ref='sign-22/Implementations and Test_Vectors/Implementations/Reference_Implementation/Rhyme-SM3/Rhyme-SM3-128'</code>, then run <code>cc -O2 -std=gnu11 -w -fwrapv -DRHYME_NO_AES -DRHYME_MODE=128 -DOUTPUT_BLANK_TEST_VECTORS=0 '-DALGORITHM_INSTANCE="Rhyme-SM3-128"' -I"$ref" -I"$ref/include" -I"$ref/src" -I"$ref/src/keygen" -Iapi -S "$ref/src/sign.c" -o - | rg -c '\bidiv'</code>; this build prints <code>4</code>.</p>
+<p>Size-build lead: GCC <code>-Os</code> also emits division in <code>freeze</code>, <code>creduce</code>, and <code>freeze2q</code> (<code>src/reduce.h:20-35</code>) reached while computing signing intermediates. Distinguish their secret-derived invocations from public-only reduction before making a report.</p>
+<p>Table follow-up: <code>src/sampler.c:343-357</code> reads <code>exp_lut[abs(y1[i])]</code> and later <code>exp_lut[abs(z1[i]-c[i])]</code> from a table with hundreds of entries. <code>y1</code> is a secret one-time signing mask, while the accepted signature exposes <code>z1</code> but not <code>y1</code>. A fine-grained table trace could therefore reveal information not simulatable from the signature; whether the observed granularity suffices to recover the mask and forge is open. This is a stronger cryptanalytic lead than the fixed per-key <code>idiv</code> timing alone.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

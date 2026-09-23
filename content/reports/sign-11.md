@@ -26,22 +26,18 @@ The repair is to bind the counter into the hash that selects the PORS instance, 
 python3 security/flextree_kudinov_validation.py
 ```
 
-## sign-11-2: The specified deterministic mode is length-extendable
+## sign-11-2: Withdrawn — SM3 evaluation-mode length extension
 
-Severity: High
-Status: Confirmed
-Layer: Design
-Affected: Specified deterministic mode, all eight parameter sets; shipped hedged implementation is unaffected
+Severity: Info
+Status: Withdrawn
+Layer: Evaluation
+Affected: Concrete SM3 evaluation instantiation of the deterministic option only
 Discovery: Moderate
-Exploitation: Approximately 2^74.5 to 2^96 work, depending on the parameter set
+Exploitation: None under the ideal-primitive model
 Credit: Mikhail Kudinov <mishel.kudinov@gmail.com>
 Date: 2026-09-22
 
-The specification permits deterministic signing with `optRand = PK.seed` and defines `PRFMSG` as a raw secret-prefix SM3 construction rather than a PRF such as HMAC. For 160 and 256, `R` is a truncation of `SM3(SK.prf || PK.seed || M)`; for 384 and 512, its first block is `SM3(SK.prf || PK.seed || M || 1)`. Because SM3 is Merkle-Damgård, a signature reveals enough chaining state to predict the randomizer for suitable message extensions. The 160-bit sets require recovery of the 96 truncated state bits; the other sets disclose a full state.
-
-The predictable randomizer lets a chosen-message attacker determine the PORS/XMSS instance of an extension before requesting its signature, then combine chosen-instance accumulation with counter grinding. Kudinov estimates total costs between `2^74.5` and `2^79.4` for the 256-, 384-, and 512-bit sets and `2^96` for both 160-bit sets, all below their claims.
-
-The submitted code always draws fresh `optRand`, so this is a break of the normative deterministic option rather than the shipped hedged mode. `PRFMSG` should use HMAC-SM3 or another prefix-free PRF construction.
+Kudinov observed that the concrete secret-prefix SM3 evaluation function is length-extendable in deterministic mode. However, the FlexTree specification's page-45 warning explicitly treats the Section 1.3 SM3-derived functions as ideal stand-ins and excludes Merkle–Damgård flaws from its security claim. An ideal replacement with the same interface and output length does not reveal a chaining state, so the proposed predictable-randomizer attack does not apply. The shipped signer also uses fresh `optRand`. This ID is retained to record the withdrawal, not as an active vulnerability.
 
 ### Reproducing
 
@@ -49,9 +45,8 @@ The submitted code always draws fresh `optRand`, so this is a break of the norma
 python3 security/flextree_kudinov_validation.py
 ```
 
-This confirms the raw secret-prefix construction, the counter-mode XOF, and the
-shipped implementation's hedged-only path. It does not reproduce the optimized
-attack cost or the end-to-end witness, which is not part of this repository.
+The script checks the concrete evaluation construction and hedged-only code path;
+it is not a witness against an ideal replacement.
 
 ## sign-11-3: The specified OTS verifier omits its encoding checks
 
@@ -76,20 +71,18 @@ The submitted `wots_pk_from_sig` does perform both checks, so existing binaries 
 python3 security/flextree_kudinov_validation.py
 ```
 
-## sign-11-4: A 256-bit SM3 state caps the 384- and 512-bit sets
+## sign-11-4: Withdrawn — SM3 evaluation-state ceiling
 
-Severity: Critical
-Status: Confirmed
-Layer: Design
-Affected: FlexTree-384s/f and FlexTree-512s/f
+Severity: Info
+Status: Withdrawn
+Layer: Evaluation
+Affected: Concrete SM3 evaluation instantiations of FlexTree-384s/f and FlexTree-512s/f only
 Discovery: Trivial
-Exploitation: At most 2^256 classical or 2^128 quantum preimage work
+Exploitation: None under the ideal-primitive model
 Credit: Mikhail Kudinov <mishel.kudinov@gmail.com>
 Date: 2026-09-22
 
-The 384- and 512-bit parameter sets expand SM3's 256-bit state with a counter-mode XOF. Longer output does not increase the internal state: a state collision extends to every output block, and generic preimage security remains capped at 256 classical bits and 128 quantum bits. These sets therefore cannot provide the 384/192 and 512/256 classical/quantum strengths printed in Table 1.3.
-
-The specification acknowledges on page 45 that the SM3 instantiations may not reach their named levels, but still presents those levels as the parameter sets' security strengths. Meeting them requires a primitive with a sufficiently large internal state, not merely a longer XOF output.
+The concrete counter-mode SM3 evaluation XOF has a 256-bit internal state regardless of output length. But the specification's page-45 warning explicitly acknowledges this limitation and assumes ideal Section 1.3 functions with the specified external dimensions instead. The internal-state ceiling does not carry over to such a replacement. This ID is retained to record the withdrawal, not as an active vulnerability or a claim that fixed output dimensions alone meet every advertised security level.
 
 ### Reproducing
 
@@ -97,8 +90,8 @@ The specification acknowledges on page 45 that the SM3 instantiations may not re
 python3 security/flextree_kudinov_validation.py
 ```
 
-The script checks the submitted counter-mode SM3 construction and the affected
-parameter widths. This is a source/parameter check, not a brute-force attack.
+The script checks the concrete evaluation construction and parameter widths;
+it is not a witness against an ideal replacement.
 
 ## sign-11-5: Unchecked PORS padding makes signatures malleable
 

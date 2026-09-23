@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AXIS (hash-02) · ngcc.dev</title>
-<link rel="stylesheet" href="../assets/style.css?v=8c137f6d">
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
 </head>
 <body>
 <header class="site-header">
 <a class="brand" href="../index.html">ngcc.dev</a>
-<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a></nav>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
 </header>
 <main>
-<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>hash-02</code></p>
+<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>hash-02</code> · <a href="../constant-time/hash-02.html">Constant-time review</a></p>
 
 <h1 id="axis-hash-02">AXIS (hash-02)</h1>
 <div class="table-wrap"><table class="meta">
@@ -40,6 +40,22 @@
 <pre><code class="language-sh">make -C hash-02 exploit
 </code></pre>
 <p>The Linux witness preallocates the input, caps process virtual memory at its current use plus 4 MiB, checks two distinct messages, and enforces a short timeout if allocation unexpectedly succeeds.</p>
+<h2 class="issue-heading" id="hash-02-2-partial-bit-axis-update-branches-on-secret-state">hash-02-2: Partial-bit AXIS update branches on secret state</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Classification</th><td><span class="sev sev-medium">Medium / implementation</span></td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Reference AXIS-512/768/1024 on non-byte-aligned messages</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Branch side-channel dependent</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-23</td></tr>
+</table></div>
+
+<p>For non-byte-aligned input, <code>axis_core_hash_bits</code> leaves the bit-sliced byte-aligned fast path (<code>axis_core.c:1698-1704</code>). The scalar nonlinear update calls <code>axis_flip_bit</code> on state-derived bits (<code>:160,633-638,685-690</code>); its generic and finalization paths retain conditional jumps under GCC <code>-O2</code>. Equal-length secret bitstrings can therefore change the branch trace. This does not apply to the ordinary byte-aligned fast path, and no timing extraction was demonstrated. See <a href="../constant-time/hash-02.html">constant_time.md</a>.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>Compile <code>AXIS-768/axis_core.c</code> with <code>gcc -O2 -g -c</code>; <code>objdump -dSl</code> shows conditional jumps at <code>axis_flip_bit</code> in <code>axis_step_generic</code>.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

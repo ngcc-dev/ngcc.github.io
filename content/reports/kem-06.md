@@ -54,3 +54,20 @@ make -C kem-06 exploit-field
 ```
 
 The ordinary, unsanitized guard-page test confirms faults for GF(2^67) and GF(2^83), then confirms GF(2^127) as an in-bounds negative control.
+
+## kem-06-3: Secret-derived decoder pivots select memory addresses
+
+Severity: Medium
+Status: Confirmed
+Layer: Implementation
+Affected: Reference implementations, all three parameter sets
+Discovery: Moderate
+Exploitation: Local cache observer; key recovery not demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-09-23
+
+BRA decryption computes `v-u*y` using private `y` and the public ciphertext (`src/bra.c:277-288`). The augmented-Gabidulin decoder derives pivot `next` from discrepancies in that word and uses `next` directly to load and store `u0` and `u1` (`src/augmented_gabidulin.c:184-205`). A cache observer can therefore learn a secret-key-dependent intermediate. The final KEM ciphertext comparison and fallback selection are masked, but occur after the decoder. No complete key recovery or remote timing channel is demonstrated.
+
+### Reproducing
+
+Inspect `src/kem.c:214`, `src/bra.c:277-288`, and `src/augmented_gabidulin.c:184-205` under `Implementations/Reference_Implementation/BRA-128/`; the same pivot code is present in BRA-256/512. See `constant_time.md` for the fuller trace.

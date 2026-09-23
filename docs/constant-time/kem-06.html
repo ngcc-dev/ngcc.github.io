@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Constant-time review: BRA · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../constant-time/index.html">Constant-time review</a> › <code>kem-06</code> · <a href="../reports/kem-06.html">Report</a></p>
+
+<!-- synchronized report: kem-06/constant_time.md -->
+<h1 id="constant-time-review-bra">Constant-time review: BRA</h1>
+<p>The PKE secret <code>y</code> (recovered from <code>sk</code>), decoded message <code>m</code>, fallback <code>sigma</code>, and shared secret are secret. The ciphertext and embedded public key are public. This review follows BRA-128; the decoder is duplicated in BRA-256/512. The finding is a source-level leakage trace, not a demonstrated key-recovery attack.</p>
+<p><code>src/kem.c:214</code> decrypts the ciphertext with <code>sk</code>, and <code>src/bra.c:277-288</code> forms <code>v-u*y</code> before augmented-Gabidulin decoding. In <code>src/augmented_gabidulin.c:184-205</code>, the pivot <code>next</code> is computed from decoded-word discrepancies and then used directly in <code>u0[next]</code> and <code>u1[next]</code> loads and stores. The memory address can therefore depend on the recipient secret and chosen ciphertext. <code>src/qpoly.c:509,580</code> also has degree-dependent division loops on decoder intermediates. By contrast, the final ciphertext comparison and fallback selection at <code>src/kem.c:228-254</code> use a fixed-length OR accumulator and masks.</p>
+<p>This review does not claim that the pivot trace suffices for key recovery or that a network timing channel is exploitable. The source-level witness is the chain <code>kem.c:214</code> → <code>bra.c:277-288</code> → <code>augmented_gabidulin.c:184-205</code>; see <code>report.md</code> for the separate finding.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

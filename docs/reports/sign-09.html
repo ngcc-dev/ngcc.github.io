@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DOVE (sign-09) · ngcc.dev</title>
-<link rel="stylesheet" href="../assets/style.css?v=8c137f6d">
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
 </head>
 <body>
 <header class="site-header">
 <a class="brand" href="../index.html">ngcc.dev</a>
-<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a></nav>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
 </header>
 <main>
-<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>sign-09</code></p>
+<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>sign-09</code> · <a href="../constant-time/sign-09.html">Constant-time review</a></p>
 
 <h1 id="dove-sign-09">DOVE (sign-09)</h1>
 <div class="table-wrap"><table class="meta">
@@ -34,7 +34,7 @@
 </table></div>
 <p>Original source: <a href="https://github.com/ngcc-dev/ngcc-harness/issues/9">GitHub issue #9</a></p>
 <p>DOVE's specified Sign and Verify algorithms compute the target from <code>message || seed_pk</code>; Verify never reads the salt included in the signature. The submitted implementations follow this construction. Flipping any salt bit therefore gives a distinct accepted signature on the same message, and the specification's §6.1.1.1 analysis of a target <code>Hash(µ || salt)</code> does not apply to the submitted algorithm. This is a design-level transcript/proof mismatch independent of the hash selected.</p>
-<p>Dariia Porechna's original issue also gives an approximately 2^128-work <em>new-message</em> transfer for the submitted SM3 <code>pseudoXOF</code>. That extension is structurally correct for the evaluation backend, but <code>api/auxfunc.h</code> explicitly reserves <code>pseudoXOF</code> for correctness testing and disclaims security. The 2^128 cost must not be presented as DOVE's security against a proper replacement hash. Only EUF-CMA is claimed in the specification; salt malleability alone does not violate that claim.</p>
+<p>The original issue also analyzes the concrete SM3 <code>pseudoXOF</code>, but attacks relying on that correctness-only placeholder are outside this report. Only EUF-CMA is claimed in the specification; salt malleability alone does not violate that claim, and no hash-independent new-message forgery is demonstrated.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">make -C sign-09 exploit

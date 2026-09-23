@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>C-Multi-UR-AG (kem-10) · ngcc.dev</title>
-<link rel="stylesheet" href="../assets/style.css?v=8c137f6d">
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
 </head>
 <body>
 <header class="site-header">
 <a class="brand" href="../index.html">ngcc.dev</a>
-<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a></nav>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
 </header>
 <main>
-<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>kem-10</code></p>
+<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>kem-10</code> · <a href="../constant-time/kem-10.html">Constant-time review</a></p>
 
 <h1 id="c-multi-ur-ag-kem-10">C-Multi-UR-AG (kem-10)</h1>
 <div class="table-wrap"><table class="meta">
@@ -45,6 +45,22 @@ security/ngcc_security kem-10/lib/libCMultiURAG-256.so kem-ciphertext-flip
 security/ngcc_security kem-10/lib/libCMultiURAG-512.so kem-zero
 </code></pre>
 <p>Each command runs in its own process because the attack input terminates that process. The 128-bit and 512-bit zero-ciphertext cases, and the 256-bit mutation, reproduced locally; <code>make -C kem-10 test</code> passed all three honest-input KAT sets.</p>
+<h2 class="issue-heading" id="kem-10-2-secret-derived-decoder-pivots-select-memory-addresses">kem-10-2: Secret-derived decoder pivots select memory addresses</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Classification</th><td><span class="sev sev-medium">Medium / implementation</span></td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Reference implementations, all three parameter sets</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Local cache observer; key recovery not demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-23</td></tr>
+</table></div>
+
+<p>C-Multi-UR-AG decryption computes a rank-code word using the private matrix <code>Y</code> and the public ciphertext (<code>src/cmultiurag.c:248-257</code>). The augmented-Gabidulin decoder derives pivot <code>next</code> from discrepancies in that word and uses it directly to load and store <code>u0</code> and <code>u1</code> (<code>src/augmented_gabidulin.c:185-201</code>). This exposes a secret-key-dependent memory-access pattern even though final KEM fallback selection is masked. No complete key recovery or remote timing channel is demonstrated.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>Inspect <code>src/kem.c:209-213</code>, <code>src/cmultiurag.c:248-257</code>, and <code>src/augmented_gabidulin.c:185-201</code> under <code>Implementations/Reference_Implementation/CMultiURAG-128/</code>; the same pivot code is present in the other reference sets. See <code>constant_time.md</code> for the fuller trace.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

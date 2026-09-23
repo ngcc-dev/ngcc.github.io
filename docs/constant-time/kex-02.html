@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AFS-KEX constant-time review · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../constant-time/index.html">Constant-time review</a> › <code>kex-02</code> · <a href="../reports/kex-02.html">Report</a></p>
+
+<!-- synchronized report: kex-02/constant_time.md -->
+<h1 id="afs-kex-constant-time-review">AFS-KEX constant-time review</h1>
+<p>Scope: reference C128/C256/C512 implementations, with the C128 decapsulation path traced in detail. Secrets are the persistent KEM secret polynomial, recovered encapsulation message, ephemeral secrets, and final shared key. Public values include public keys, ciphertexts, protocol messages and fixed instance lengths. A ciphertext-dependent condition is not necessarily public when it is computed <em>after</em> secret-key decryption.</p>
+<ul>
+<li>Confirmed C128 leak (<code>kex-02-2</code>): <code>AFS_KEX_C128/kem.c:155</code> calls <code>indcpa_dec</code>; <code>indcpa.c:354-364</code> forms <code>mp = v - skpv*b</code> and passes it to <code>poly_tomsg</code>; <code>poly.c:174-193</code> branches on the sign of every centered coefficient before rounding. The coefficient depends jointly on attacker-supplied ciphertext and the secret polynomial. GCC at the submitted <code>-O2</code> build setting emits a conditional jump for this branch. The division denominator is the public constant <code>KYBER_Q</code>, so the <em>branch</em>, not a claim about variable divisor latency, supports the finding.</li>
+<li>Control: <code>AFS_KEX_C128/kem.c:164-170</code> uses a full comparison followed by a mask-based conditional move for the final shared key. <code>AFS_KEX_C128/indcpa.c:173-187</code> rejects XOF words when generating a matrix from a public seed; that loop does not reveal a private key. C256 and C512 use different branchless message-conversion code (<code>AFS_KEX_C256/poly.c:199-215</code>, <code>AFS_KEX_C512/poly.c:229-245</code>), so this finding is scoped to C128.</li>
+</ul>
+<p>Coverage limit: this was a source/data-flow review of the reference KEM and protocol paths, plus a GCC code-generation check for C128. It is not an exhaustive analysis of optimized AVX2 copies or every machine-code instruction.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

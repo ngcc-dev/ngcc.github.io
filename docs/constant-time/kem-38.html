@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Constant-time review — kem-38 UVW-KEM · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../constant-time/index.html">Constant-time review</a> › <code>kem-38</code> · <a href="../reports/kem-38.html">Report</a></p>
+
+<!-- synchronized report: kem-38/constant_time.md -->
+<h1 id="constant-time-review-kem-38-uvw-kem">Constant-time review — kem-38 UVW-KEM</h1>
+<p>Scope: representative reference instance <code>Implementations/Reference_Implementation/UVW-KEM-128/src/KEM_AlgorithmInstance.c</code>; other levels, optimized copies and compiled machine code are not certified by this source review.</p>
+<p>Secret-bearing values: private decapsulation key, recovered message/error state, rejection secret and shared secret. Public values: public key, ciphertext and encoded lengths. A decoder result is not automatically public merely because its ciphertext input is public.</p>
+<ul>
+<li>Source trace: <code>Implementations/Reference_Implementation/UVW-KEM-128/src/KEM_AlgorithmInstance.c:394</code> — The private-key list decoder returns early on failure; existing <code>kem-38-2</code> tracks the resulting explicit failure oracle. This is not a separate timing-only finding.</li>
+<li>Branches, indexed accesses and division/remainder: this first pass classifies only the traced operand above. Public-seed rejection and fixed-divisor arithmetic are not treated as leaks; absence of other leaks has not been proved.</li>
+</ul>
+<p>Assessment: No new side-channel report is promoted from this representative path. Lower-level decoding, sampling and compiler output remain open audit work.</p>
+<p>Reproduction is source/dataflow inspection at the cited location. A remote timing claim needs repeated same-public-input tests with changed secret state and an independent public-value control.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

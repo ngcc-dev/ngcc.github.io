@@ -17,7 +17,7 @@ Original source: [GitHub issue #9](https://github.com/ngcc-dev/ngcc-harness/issu
 
 DOVE's specified Sign and Verify algorithms compute the target from `message || seed_pk`; Verify never reads the salt included in the signature. The submitted implementations follow this construction. Flipping any salt bit therefore gives a distinct accepted signature on the same message, and the specification's §6.1.1.1 analysis of a target `Hash(µ || salt)` does not apply to the submitted algorithm. This is a design-level transcript/proof mismatch independent of the hash selected.
 
-Dariia Porechna's original issue also gives an approximately 2^128-work *new-message* transfer for the submitted SM3 `pseudoXOF`. That extension is structurally correct for the evaluation backend, but `api/auxfunc.h` explicitly reserves `pseudoXOF` for correctness testing and disclaims security. The 2^128 cost must not be presented as DOVE's security against a proper replacement hash. Only EUF-CMA is claimed in the specification; salt malleability alone does not violate that claim.
+The original issue also analyzes the concrete SM3 `pseudoXOF`, but attacks relying on that correctness-only placeholder are outside this report. Only EUF-CMA is claimed in the specification; salt malleability alone does not violate that claim, and no hash-independent new-message forgery is demonstrated.
 
 ### Reproducing
 

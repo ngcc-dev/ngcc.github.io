@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Constant-time review: DTRU · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../constant-time/index.html">Constant-time review</a> › <code>kem-14</code> · <a href="../reports/kem-14.html">Report</a></p>
+
+<!-- synchronized report: kem-14/constant_time.md -->
+<h1 id="constant-time-review-dtru">Constant-time review: DTRU</h1>
+<p>The NTRU private polynomial <code>fhat</code>, recovered message, rejection <code>z</code>, and shared secret are secret. Ciphertext, public key, lengths, and modulus are public. This traces the DTRU-Light reference implementation; 768/1536 and optimized code are not certified here.</p>
+<p><code>KEM_AlgorithmInstance.c:100-150</code> decrypts under <code>sk</code>, re-encrypts, OR-accumulates ciphertext differences, and selects the fallback secret with a bit mask. <code>dtru.c:52-70</code> performs private-polynomial multiplication before decoding. The KEM returns the failure bit at <code>KEM_AlgorithmInstance.c:150</code>; that is an explicit validity result, not by itself evidence that a private coefficient is exposed. The examined PKE body has no source-level branch on the secret polynomial. Arithmetic in <code>poly.c</code>, <code>ntt.c</code>, and <code>reduce.c</code> needs emitted-code review before ruling out divide/remainder timing.</p>
+<p>Status: no additional confirmed secret-dependent lookup or branch in the representative PKE/KEM chain; no report from this limited review. This note does not assess the separate length-handling finding in <code>report.md</code>.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>
