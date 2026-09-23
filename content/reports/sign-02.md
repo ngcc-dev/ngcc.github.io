@@ -5,7 +5,7 @@ Archive: [BiT.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptogr
 
 ## sign-02-1: A 512-bit unsalted message representative caps forgery security at 256 bits
 
-Severity: High
+Severity: Critical
 Status: Confirmed
 Layer: Design
 Affected: BiT-512 specification and reference implementation

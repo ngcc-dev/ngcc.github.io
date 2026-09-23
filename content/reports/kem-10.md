@@ -1,0 +1,33 @@
+<!-- synchronized report: kem-10/report.md -->
+Candidate: C-Multi-UR-AG
+Family: Code-based (rank metric)
+Archive: [C-Multi-UR-AG.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/C-Multi-UR-AG.zip)
+
+## kem-10-1: Malformed ciphertexts crash the reference decapsulator
+
+Severity: High
+Status: Confirmed
+Layer: Implementation
+Affected: All three reference parameter sets
+Discovery: Trivial
+Exploitation: Unauthenticated decapsulation request causes process termination; key recovery not demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-09-23
+
+The shipped C-Multi-UR-AG decapsulator does not safely reject malformed ciphertexts. With an honestly generated key, an all-zero ciphertext triggers stack-smash detection in CMultiURAG-128 and a segmentation fault in CMultiURAG-512. A sampled single-bit change to an honest ciphertext segfaults in CMultiURAG-256. All three unmodified reference libraries pass their honest KATs. These are attacker-controlled, fixed-length ciphertexts, not truncated buffers or corrupted secret keys.
+
+For the 128-bit instance, a debugger places the stack-smash in `rbc_elt_mul`, called from `rbc_qpoly_mul2` through `rbc_qpoly_left_div2` and the augmented-Gabidulin decoder. In `src/qpoly.c`, `rbc_qpoly_left_div2` decrements its signed iteration bound without checking exhaustion and passes that value as an unsigned degree to `rbc_qpoly_mul2`, whose loop uses it to index polynomial coefficients. This is a concrete unsafe decoder path; the observed effect is process termination. No secret disclosure, shared-secret recovery, or arbitrary-code execution is established.
+
+Decapsulation must validate decoder bounds and return a defined rejection result on malformed ciphertexts. Merely replacing a process crash with the same unchecked polynomial access is insufficient.
+
+### Reproducing
+
+```sh
+make -C security
+make -C kem-10 libs
+security/ngcc_security kem-10/lib/libCMultiURAG-128.so kem-zero
+security/ngcc_security kem-10/lib/libCMultiURAG-256.so kem-ciphertext-flip
+security/ngcc_security kem-10/lib/libCMultiURAG-512.so kem-zero
+```
+
+Each command runs in its own process because the attack input terminates that process. The 128-bit and 512-bit zero-ciphertext cases, and the 256-bit mutation, reproduced locally; `make -C kem-10 test` passed all three honest-input KAT sets.

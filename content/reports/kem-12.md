@@ -5,7 +5,7 @@ Archive: [CTL.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptogr
 
 ## kem-12-1: The specified CTL-512 public-key space has at most 256 bits of support
 
-Severity: High
+Severity: Critical
 Status: Confirmed
 Layer: Design
 Affected: CTL-512 specification and reference implementation

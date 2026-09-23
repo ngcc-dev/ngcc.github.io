@@ -11,8 +11,9 @@ Layer: Implementation
 Affected: Reference implementation, all three parameter sets
 Discovery: Trivial
 Exploitation: Trivial
-Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance; independent confirmation by LittleQ
 Date: 2026-09-21
+Original source: [LittleQ's original PKC Forum post on the independent confirmation](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/AK5EF3YMTS3ND3WAA4DH3VYX5OHQLFGT/)
 
 The submission's own shipped functions provide the complete attack. `polarkem_recover_message(pk, ct, mu)` and `polarkem_derive_valid_secret(mu, ct, ss)` are declared in `polarkem_ct.h` and implemented in the submitted reference source. They recover the encapsulated message and derive the exact shared secret using only public inputs.
 
@@ -21,6 +22,10 @@ The frozen specification does not have this defect: it defines the public key as
 Independent execution against the three built libraries called `polarkem_recover_message(pk, ct, mu)` followed by `polarkem_derive_valid_secret(mu, ct, ss)`. The result exactly matched the encapsulator's 16-, 32-, and 64-byte secrets for PolarKEM-128, PolarKEM-256, and PolarKEM-512 without supplying any secret-key bytes.
 
 Anyone observing a public key and ciphertext can therefore recover the session key by calling code shipped by the candidate. This is a total break of the submitted implementation at every level, but it is not an attack on the secret-isometry construction described by the specification.
+
+### Follow-up Analysis
+
+LittleQ's [2026-09-22 PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/AK5EF3YMTS3ND3WAA4DH3VYX5OHQLFGT/) independently reports 60/60 matching shared secrets across reference and optimized builds of all three parameter sets. Inspection of the optimized sources confirms that their recovery path also reads its transform seed from the public key.
 
 ### Reproducing
 

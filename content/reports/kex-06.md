@@ -5,7 +5,7 @@ Archive: [MAMBA-NIKE.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20C
 
 ## kex-06-1: MAMBA-NIKE-384 and -512 use only 256 secret-seed bits
 
-Severity: High
+Severity: Critical
 Status: Confirmed
 Layer: Implementation
 Affected: MAMBA-NIKE-384 and MAMBA-NIKE-512 reference implementations

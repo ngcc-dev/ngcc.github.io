@@ -5,7 +5,7 @@ Archive: [UVW-KEM.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryp
 
 ## kem-38-1: UVW-512 derives its encryption pair from only 256 bits
 
-Severity: High
+Severity: Critical
 Status: Confirmed
 Layer: Implementation
 Affected: UVW-KEM-512 reference and optimized implementations

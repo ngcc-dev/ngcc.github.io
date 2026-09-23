@@ -25,7 +25,7 @@
 
 <div class="table-wrap"><table class="meta issue-meta">
 <tr><th>Classification</th><td><span class="sev sev-medium">Medium / design</span></td></tr>
-<tr><th>Status</th><td><span class="issue-status status-lead">Lead</span></td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Specified ZC-DMC-1536-512 and ZC-DMC-1536-768 construction</td></tr>
 <tr><th>Discovery</th><td>Moderate</td></tr>
 <tr><th>Exploitation</th><td>Moderate</td></tr>
@@ -33,8 +33,11 @@
 <tr><th>Date</th><td>2026-09-22</td></tr>
 </table></div>
 <p>Original source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/CVL24T5A4ILSD6V2GACF73MENNFQC3JB/">CryptHashForum report</a></p>
-<p>The two instances share the same 1536-bit permutation and zero initial state, while moving the rate/capacity feed-forward boundary. A three-block synchronization construction in the specification makes the final states agree in their leading 704 bits; fixing a removable four-bit suffix accommodates the mandatory <code>M || 01 || 10*1</code> padding. Consequently the first 64-bit squeeze blocks are equal, an event with probability <code>2^-64</code> for independent random functions.</p>
-<p>This is a cross-profile distinguisher, not a same-instance collision. The message gives the construction and its probability but no concrete messages, and we have not yet generated an implementation-level witness; the report therefore remains a Lead.</p>
+<p>The two instances share the same 1536-bit permutation and zero initial state, while moving the rate/capacity feed-forward boundary. Further extension to Tsinghua Hash Lab's analysis: take a common first 704-bit block (zero-extended to 960 bits for the 512 profile), then a zero block. After these two absorptions the states differ only at bits 704–959, by <code>D = P(B1)[704:960]</code>. Putting <code>D</code> in that region of the 512 profile's third block makes both final permutation inputs equal. Feed-forward leaves their first 704 state bits equal, so the first 64-bit squeeze blocks agree. The first-block counter value 13 gives the four-bit suffix needed to make both final blocks valid under the mandatory <code>M || 01 || 10*1</code> padding.</p>
+<p>The official 512- and 768-bit <code>CryptHash</code> libraries return the same first eight digest bytes, <code>7a07b396b47dfec4</code>, for the constructed messages. A one-bit control differs. This is a cross-profile distinguisher (ideal probability <code>2^-64</code>), <strong>not</strong> a same-instance or full-digest collision.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>From the repository root, run <code>make -C hash-31 exploit</code>. The witness uses only the two official archived hash libraries for its verdict and prints <code>CONFIRMED hash-31-1</code>.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

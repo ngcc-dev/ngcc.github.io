@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SQIsignTriangle (sign-27) · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=8c137f6d">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>sign-27</code></p>
+
+<h1 id="sqisigntriangle-sign-27">SQIsignTriangle (sign-27)</h1>
+<div class="table-wrap"><table class="meta">
+<tr><th>Candidate</th><td>SQIsignTriangle</td></tr>
+<tr><th>Family</th><td>Isogeny/quaternion signature</td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/SQIsignTriangle.zip">SQIsignTriangle.zip</a></td></tr>
+</table></div>
+
+<h2 class="issue-heading issue-heading-first" id="sign-27-1-an-all-zero-signature-aborts-the-verifier-process">sign-27-1: An all-zero signature aborts the verifier process</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Classification</th><td><span class="sev sev-medium">Medium / implementation</span></td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All four submitted reference levels; independently rerun on SQIsignTriangle_lvl1</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Remote denial of service where untrusted signatures reach an unisolated verifier; no forgery or key recovery shown</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-23</td></tr>
+</table></div>
+
+<p>The submitted verifier passes attacker-controlled encoded signature data to <code>compressed_aux_basis_from_bytes</code>, which asserts that the decoded exponent <code>e_rsp</code> is in range. An all-zero signature fails that assertion and calls <code>abort()</code> instead of returning invalid-signature status. The existing bounded security sweep recorded the same assertion in all four levels. Rebuilding level 1 from source reproduced exit code 134; its honest KAT passes. This is a process-availability flaw only, and the result with assertions disabled has not been established.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C sign-27 lib/libSQIsignTriangle_lvl1.so
+make -C security ngcc_security
+security/ngcc_security sign-27/lib/libSQIsignTriangle_lvl1.so sig-zero
+</code></pre>
+<p>The last command intentionally aborts with <code>encode_verification.c:216</code> and exit status 134. <code>make -C sign-27 test-SQIsignTriangle_lvl1</code> is the passing honest-signature control.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

@@ -48,7 +48,7 @@ witnesses and their controls. See <code>tools/README.md</code>.</p>
 <h2 class="issue-heading" id="kem-17-2-hep-qc-7-has-at-most-256-bits-of-key-generation-support">kem-17-2: HEP-QC-7 has at most 256 bits of key-generation support</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-high">High / design</span></td></tr>
+<tr><th>Classification</th><td><span class="sev sev-critical">Critical / design</span></td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>HEP-QC-7 specification</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
@@ -100,6 +100,7 @@ witnesses and their controls. See <code>tools/README.md</code>.</p>
 <p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XQ3A3A3IGNRQDLEQ6BD73ENALBGSDEO6/">NGCC PKC Forum report</a></p>
 <p>HEP-QC repeats every column of its inner Reed–Muller generator <code>MULT = n2/128</code> times before applying row mixing and a column permutation. Those operations preserve equality. The public matrix <code>G'</code> therefore has exactly <code>n1*128</code> column classes of multiplicity <code>MULT</code> and 64 singleton columns, whereas a uniform matrix has no repeated columns except with negligible probability. This gives a public, linear-time distinguisher with advantage essentially one and directly falsifies the EPC-P assumption used by the specification's first security bound.</p>
 <p>Tianyuan Xie's <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XQ3A3A3IGNRQDLEQ6BD73ENALBGSDEO6/">mailing-list analysis</a> additionally reports recovery of the affine blocks and exact secret transformation <code>T</code> on 35/35 official keys. The remaining frame-label searches are estimated at <code>2^84.1</code>, <code>2^131.0</code>, and <code>2^198.7</code> for HEP-QC-1, -3, and -5, below their 128-, 192-, and 256-bit claims. The public attachment reproduces the distinguisher, but not the full transformation recovery, so those residual key-recovery costs are less independently reproducible than the confirmed EPC-P break.</p>
+<p>Xie also identifies an independent gap in Theorem 6.3.1's EPC-P-only IND-CPA bound: replacing <code>G'</code> by a uniform matrix in Game 2 does not make the challenge ciphertext independent of the selected message. For fixed public <code>s</code>, the noise <code>s*r2 + e</code> has at most <code>binomial(n,omega_r)*binomial(n,omega_e)</code> possible values before truncation. Its translates by two messages' codewords are therefore almost surely disjoint for a uniform <code>G'</code> (their expected overlap is bounded by the square of that support size divided by <code>2^(n1*n2)</code>). Thus the claimed <em>statistical</em> independence is false. This finite-support argument does not give an efficient ciphertext distinguisher; a computational assumption about the noise distribution is still needed. It is a proof gap, not a separate demonstrated KEM break.</p>
 <h3 id="reproducing_3">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">make -C kem-17 lib/libhep-qc-1.so

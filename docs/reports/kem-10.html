@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C-Multi-UR-AG (kem-10) · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=8c137f6d">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>kem-10</code></p>
+
+<h1 id="c-multi-ur-ag-kem-10">C-Multi-UR-AG (kem-10)</h1>
+<div class="table-wrap"><table class="meta">
+<tr><th>Candidate</th><td>C-Multi-UR-AG</td></tr>
+<tr><th>Family</th><td>Code-based (rank metric)</td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/C-Multi-UR-AG.zip">C-Multi-UR-AG.zip</a></td></tr>
+</table></div>
+
+<h2 class="issue-heading issue-heading-first" id="kem-10-1-malformed-ciphertexts-crash-the-reference-decapsulator">kem-10-1: Malformed ciphertexts crash the reference decapsulator</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Classification</th><td><span class="sev sev-high">High / implementation</span></td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All three reference parameter sets</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Unauthenticated decapsulation request causes process termination; key recovery not demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-23</td></tr>
+</table></div>
+
+<p>The shipped C-Multi-UR-AG decapsulator does not safely reject malformed ciphertexts. With an honestly generated key, an all-zero ciphertext triggers stack-smash detection in CMultiURAG-128 and a segmentation fault in CMultiURAG-512. A sampled single-bit change to an honest ciphertext segfaults in CMultiURAG-256. All three unmodified reference libraries pass their honest KATs. These are attacker-controlled, fixed-length ciphertexts, not truncated buffers or corrupted secret keys.</p>
+<p>For the 128-bit instance, a debugger places the stack-smash in <code>rbc_elt_mul</code>, called from <code>rbc_qpoly_mul2</code> through <code>rbc_qpoly_left_div2</code> and the augmented-Gabidulin decoder. In <code>src/qpoly.c</code>, <code>rbc_qpoly_left_div2</code> decrements its signed iteration bound without checking exhaustion and passes that value as an unsigned degree to <code>rbc_qpoly_mul2</code>, whose loop uses it to index polynomial coefficients. This is a concrete unsafe decoder path; the observed effect is process termination. No secret disclosure, shared-secret recovery, or arbitrary-code execution is established.</p>
+<p>Decapsulation must validate decoder bounds and return a defined rejection result on malformed ciphertexts. Merely replacing a process crash with the same unchecked polynomial access is insufficient.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C security
+make -C kem-10 libs
+security/ngcc_security kem-10/lib/libCMultiURAG-128.so kem-zero
+security/ngcc_security kem-10/lib/libCMultiURAG-256.so kem-ciphertext-flip
+security/ngcc_security kem-10/lib/libCMultiURAG-512.so kem-zero
+</code></pre>
+<p>Each command runs in its own process because the attack input terminates that process. The 128-bit and 512-bit zero-ciphertext cases, and the 256-bit mutation, reproduced locally; <code>make -C kem-10 test</code> passed all three honest-input KAT sets.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

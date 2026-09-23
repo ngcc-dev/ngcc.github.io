@@ -5,7 +5,7 @@ Archive: [DARTS.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Crypto
 
 ## sign-08-1: The implemented message representative caps forgery security at 256 bits
 
-Severity: High
+Severity: Critical
 Status: Confirmed
 Layer: Implementation
 Affected: DARTS-512 reference implementation and specification

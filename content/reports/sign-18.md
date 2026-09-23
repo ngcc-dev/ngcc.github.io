@@ -5,7 +5,7 @@ Archive: [Origami.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryp
 
 ## sign-18-1: A fixed 512-bit message prehash caps forgery security at 256 bits
 
-Severity: High
+Severity: Critical
 Status: Confirmed
 Layer: Design
 Affected: Origami-384 and Origami-512 specifications and reference implementations

@@ -21,26 +21,25 @@
 <tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/DOVE.zip">DOVE.zip</a> (SHA-256: <code>19169e545f6a6fd90b844b0deb72db81b5eb73c136873d1dae113c2c39d1c6e0</code>)</td></tr>
 </table></div>
 
-<h2 class="issue-heading issue-heading-first" id="sign-09-1-the-256-bit-sm3-state-caps-forgery-security-at-128-bits">sign-09-1: The 256-bit SM3 state caps forgery security at 128 bits</h2>
+<h2 class="issue-heading issue-heading-first" id="sign-09-1-the-unauthenticated-signature-salt-invalidates-the-salted-target-analysis">sign-09-1: The unauthenticated signature salt invalidates the salted-target analysis</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-critical">Critical / design</span></td></tr>
+<tr><th>Classification</th><td><span class="sev sev-medium">Medium / design</span></td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
-<tr><th>Affected</th><td>DOVE-256 and DOVE-512, both classic and pkc_skc variants</td></tr>
-<tr><th>Discovery</th><td>Moderate</td></tr>
-<tr><th>Exploitation</th><td>Approximately 2^128 SM3 compression evaluations and one signing query</td></tr>
+<tr><th>Affected</th><td>DOVE-128, -256 and -512, both classic and pkc_skc variants</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Trivial signature malleability; no hash-independent EUF-CMA forgery demonstrated</td></tr>
 <tr><th>Credit</th><td>Dariia Porechna (<a href="https://github.com/dariolina">dariolina</a>)</td></tr>
 <tr><th>Date</th><td>2026-09-22</td></tr>
 </table></div>
 <p>Original source: <a href="https://github.com/ngcc-dev/ngcc-harness/issues/9">GitHub issue #9</a></p>
-<p>Further extension to the existing analysis… Dariia Porechna observed in the <a href="https://github.com/ngcc-dev/ngcc-harness/issues/9">original submission, GitHub issue #9</a>, that the inert signature salt gives a new-message forgery, not only signature malleability. The specified and implemented verification target is <code>pseudoXOF(msg || seed_pk)</code>; the signature's salt is never read by the verifier. The XOF produces each output block as <code>SM3(msg || seed_pk || BE32(counter))</code> using SM3's 256-bit Merkle--Damgard state.</p>
-<p>Find two distinct 64-byte messages <code>B</code> and <code>B'</code> for which the first compression produces the same chaining state. This is a generic collision search with expected cost about <code>2^128</code>. For every XOF counter, both computations then continue from that same state with the identical <code>seed_pk</code>, counter, padding, and encoded length. Consequently all target bytes match, independent of whether DOVE requests 96 bytes or 216 bytes. A signature requested for <code>B</code> therefore verifies unchanged for the previously unsigned message <code>B'</code>, directly violating the EUF-CMA claim.</p>
-<p>The attack caps classical forgery security at 128 bits, far below the specification's Table 5 minima of 263 and 522 bits for DOVE-256 and DOVE-512. DOVE-128 is not below its claimed 128-bit classical target through this attack; generic quantum collision search also remains above its stated 80-bit quantum target. Appending the salt after the attacker-controlled message would not stop this fixed-prefix collision. Preventing this security cap for the larger sets requires a target hash construction with a sufficiently wider internal state.</p>
-<p>No <code>2^128</code> collision search was attempted. The structural validator checks all four submitted classic/pkc_skc source copies, confirms that signing and verification hash <code>msg || seed_pk</code>, confirms that verification ignores the salt, and traces every XOF block to the 256-bit SM3 state and big-endian counter.</p>
+<p>DOVE's specified Sign and Verify algorithms compute the target from <code>message || seed_pk</code>; Verify never reads the salt included in the signature. The submitted implementations follow this construction. Flipping any salt bit therefore gives a distinct accepted signature on the same message, and the specification's §6.1.1.1 analysis of a target <code>Hash(µ || salt)</code> does not apply to the submitted algorithm. This is a design-level transcript/proof mismatch independent of the hash selected.</p>
+<p>Dariia Porechna's original issue also gives an approximately 2^128-work <em>new-message</em> transfer for the submitted SM3 <code>pseudoXOF</code>. That extension is structurally correct for the evaluation backend, but <code>api/auxfunc.h</code> explicitly reserves <code>pseudoXOF</code> for correctness testing and disclaims security. The 2^128 cost must not be presented as DOVE's security against a proper replacement hash. Only EUF-CMA is claimed in the specification; salt malleability alone does not violate that claim.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">make -C sign-09 exploit
 </code></pre>
+<p>The static validator checks all four submitted classic/pkc_skc source copies for the absent salt binding. The runtime witness flips a salt bit in a genuine DOVE-128 signature: verification still accepts it, while a changed-message control rejects. No full-size collision search was attempted.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -5,7 +5,7 @@ Archive: [TSUOV.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Crypto
 
 ## sign-31-1: A 512-bit prehash caps forgery security at 256 bits
 
-Severity: High
+Severity: Critical
 Status: Confirmed
 Layer: Design
 Affected: TSUOV-512 specification and reference implementation

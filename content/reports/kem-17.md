@@ -36,7 +36,7 @@ witnesses and their controls. See `tools/README.md`.
 
 ## kem-17-2: HEP-QC-7 has at most 256 bits of key-generation support
 
-Severity: High
+Severity: Critical
 Status: Confirmed
 Layer: Design
 Affected: HEP-QC-7 specification
@@ -101,6 +101,8 @@ Original source: [NGCC PKC Forum report](https://list.niccs.org.cn/archives/list
 HEP-QC repeats every column of its inner Reed–Muller generator `MULT = n2/128` times before applying row mixing and a column permutation. Those operations preserve equality. The public matrix `G'` therefore has exactly `n1*128` column classes of multiplicity `MULT` and 64 singleton columns, whereas a uniform matrix has no repeated columns except with negligible probability. This gives a public, linear-time distinguisher with advantage essentially one and directly falsifies the EPC-P assumption used by the specification's first security bound.
 
 Tianyuan Xie's [mailing-list analysis](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XQ3A3A3IGNRQDLEQ6BD73ENALBGSDEO6/) additionally reports recovery of the affine blocks and exact secret transformation `T` on 35/35 official keys. The remaining frame-label searches are estimated at `2^84.1`, `2^131.0`, and `2^198.7` for HEP-QC-1, -3, and -5, below their 128-, 192-, and 256-bit claims. The public attachment reproduces the distinguisher, but not the full transformation recovery, so those residual key-recovery costs are less independently reproducible than the confirmed EPC-P break.
+
+Xie also identifies an independent gap in Theorem 6.3.1's EPC-P-only IND-CPA bound: replacing `G'` by a uniform matrix in Game 2 does not make the challenge ciphertext independent of the selected message. For fixed public `s`, the noise `s*r2 + e` has at most `binomial(n,omega_r)*binomial(n,omega_e)` possible values before truncation. Its translates by two messages' codewords are therefore almost surely disjoint for a uniform `G'` (their expected overlap is bounded by the square of that support size divided by `2^(n1*n2)`). Thus the claimed *statistical* independence is false. This finite-support argument does not give an efficient ciphertext distinguisher; a computational assumption about the noise distribution is still needed. It is a proof gap, not a separate demonstrated KEM break.
 
 ### Reproducing
 

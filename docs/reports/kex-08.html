@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NIIKE (kex-08) · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=8c137f6d">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>kex-08</code></p>
+
+<h1 id="niike-kex-08">NIIKE (kex-08)</h1>
+<div class="table-wrap"><table class="meta">
+<tr><th>Candidate</th><td>NIIKE</td></tr>
+<tr><th>Family</th><td>Isogeny-based non-interactive key exchange</td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/NIIKE.zip">NIIKE.zip</a></td></tr>
+</table></div>
+
+<h2 class="issue-heading issue-heading-first" id="kex-08-1-the-raw-shared-j-invariant-is-distinguishable-from-a-uniform-key">kex-08-1: The raw shared j-invariant is distinguishable from a uniform key</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Classification</th><td><span class="sev sev-high">High / design</span></td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>NIIKE-lv128, -lv256, and -lv512 specification and reference API</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Polynomial-time real-or-random distinguisher; no shared-key recovery</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-23</td></tr>
+</table></div>
+
+<p>The specified <code>NIIKE.KeyAgr</code> (Algorithm 5, §4.3) returns the <em>unhashed</em> j-invariant of the shared supersingular curve. The submitted <code>kex_derive_ss_a/b</code> API likewise calls <code>niike_SecretAgreement</code> and serializes that field element directly with <code>fp2_encode</code>. An adversary given a candidate shared-key byte string can decode it as an element of Fp², construct a curve with that j-invariant, and test supersingularity. Every honest output passes. Only O(p) of the p² field elements are supersingular j-invariants, so a uniformly random canonical Fp² control passes with negligible probability. Uniform random API-length bytes are also distinguishable, even before the supersingularity test, because many are not canonical field encodings.</p>
+<p>This is a real-or-random <em>key-distribution</em> break, not a method to compute the honest shared value from the public keys. It is a design error in the specified output, not an isogeny-path shortcut. The specification's §9.1.6 experiment samples its random branch from an abstract shared-key space <code>SK</code> without defining that space concretely. If <code>SK</code> were stipulated to be exactly the supersingular j-invariants with the honest distribution, this particular test would not distinguish that formal experiment. However, the proof of Theorem 9.1.7 explicitly analyzes a different construction that returns <code>H(K)</code> and compares it with a uniform hash output; Algorithm 5 and the shipped byte-key API perform no such hash. Therefore that proof does not establish uniform-byte key indistinguishability for the submitted construction.</p>
+<p>The lv128 witness runs the official reference key generation and agreement for two honest parties, checks matching shared keys, then applies Sage's supersingularity test to the result and to 16 independently sampled <em>canonical</em> Fp² controls. It confirms an algebraic distinguisher independent of byte-encoding slack. The same raw-output data flow appears in all three levels; lv256/lv512 were not rerun in this witness because their reference group actions are much slower.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>Build the reference library and run the witness with Sage's Python:</p>
+<pre><code class="language-sh">make -C kex-08
+sage -python kex-08/reproduce_raw_key_distinguisher.py
+</code></pre>
+<p>The witness prints <code>ATTACK kex-08-1 NIIKE-lv128 CONFIRMED</code> when the honest key is supersingular and all controls are ordinary.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

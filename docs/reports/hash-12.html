@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Iphe (hash-12) · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=8c137f6d">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>hash-12</code></p>
+
+<h1 id="iphe-hash-12">Iphe (hash-12)</h1>
+<div class="table-wrap"><table class="meta">
+<tr><th>Candidate</th><td>Iphe</td></tr>
+<tr><th>Family</th><td>Symmetric (Sponge-F hash)</td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/Iphe.zip">Iphe.zip</a> (SHA-256: <code>42ceda5aa3da2fc74c2b21abfaace3f5af208aab40ef00fcca6d18cdd7a0a844</code>)</td></tr>
+</table></div>
+
+<h2 class="issue-heading issue-heading-first" id="hash-12-1-cross-profile-512-bit-output-relation">hash-12-1: Cross-profile 512-bit output relation</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Classification</th><td><span class="sev sev-medium">Medium / design</span></td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Archived Iphe-512 and Iphe-1024 construction and reference implementations sharing the zero IV</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Trivial</td></tr>
+<tr><th>Credit</th><td>Iphe Algorithm Group <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#99;&#117;&#105;&#104;&#114;&#50;&#54;&#64;&#109;&#97;&#105;&#108;&#115;&#46;&#116;&#115;&#105;&#110;&#103;&#104;&#117;&#97;&#46;&#101;&#100;&#117;&#46;&#99;&#110;">&#99;&#117;&#105;&#104;&#114;&#50;&#54;&#64;&#109;&#97;&#105;&#108;&#115;&#46;&#116;&#115;&#105;&#110;&#103;&#104;&#117;&#97;&#46;&#101;&#100;&#117;&#46;&#99;&#110;</a></td></tr>
+<tr><th>Date</th><td>2026-09-23</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/4WP4A2LYRID7X3OA76SV4PLXVXW2LVHZ/">CryptHashForum report</a></p>
+<p>The Iphe Algorithm Group reported this relation on 2026-09-22. The archived profiles use the same permutation and zero initial state but have 960- and 1472-bit rates. In three-block transcripts, the first block can produce a common state, while the second creates a known difference only in the 512-bit rate/capacity boundary gap. Compensating for that difference in the third Iphe-512 message block makes the final permutation inputs equal. The capacity feed-forward then leaves output words 23–30 equal, giving a constructed pair with <code>suffix_512(Iphe-1024(M)) = Iphe-512(M')</code>.</p>
+<p>Further extension to the Iphe Algorithm Group's analysis: the local witness finds padding-compatible blocks after seven trials and confirms the relation through both submitted <code>CryptHash</code> libraries on 2878- and 4414-bit messages. A one-bit changed-message control does not satisfy it. This is a cross-profile distinguisher, <strong>not</strong> a collision or preimage attack against either profile alone.</p>
+<p>The <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/3NHT6MB6FTPF63JO7YXX3Y6HH422SQGC/">Iphe Algorithm Group subsequently revised the profiles</a> to use distinct IVs; this report applies to the archived, SHA-256-pinned submission, not the revised one.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C hash-12 lib/libIphe-512.so lib/libIphe-1024.so
+python3 hash-12/reproduce_cross_domain.py
+</code></pre>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

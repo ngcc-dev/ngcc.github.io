@@ -5,7 +5,7 @@ Archive: [COMPASS-KEM.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20
 
 ## kem-11-1: COMPASS-KEM-384 and -512 use a 256-bit key-generation root
 
-Severity: High
+Severity: Critical
 Status: Confirmed
 Layer: Implementation
 Affected: COMPASS-KEM-384 and COMPASS-KEM-512 reference implementations and specification

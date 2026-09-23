@@ -5,7 +5,7 @@ Archive: [COMPASS-SIG.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20
 
 ## sign-06-1: The implemented message representative caps forgery security at 256 bits
 
-Severity: High
+Severity: Critical
 Status: Confirmed
 Layer: Implementation
 Affected: COMPASS-SIG-384 and COMPASS-SIG-512 reference implementations; specification leaves the hash length undefined
@@ -29,7 +29,7 @@ The `sign-06-1` check verifies the construction on physical PDF pages 5 and
 
 ## sign-06-2: The implementation expands the entire key pair from a 256-bit root
 
-Severity: High
+Severity: Critical
 Status: Confirmed
 Layer: Implementation
 Affected: COMPASS-SIG-384 and COMPASS-SIG-512 reference implementations and specification

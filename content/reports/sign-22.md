@@ -5,7 +5,7 @@ Archive: [Rhyme.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Crypto
 
 ## sign-22-1: The implemented message representative caps forgery security at 256 bits
 
-Severity: High
+Severity: Critical
 Status: Confirmed
 Layer: Implementation
 Affected: Rhyme-SHAKE-384/-512 and Rhyme-SM3-384/-512 reference implementations; specification leaves the hash length undefined
@@ -29,7 +29,7 @@ physical PDF pages 29–32 and 50–51 and the source digest constant.
 
 ## sign-22-2: The implementation expands the complete key pair from a 256-bit root
 
-Severity: High
+Severity: Critical
 Status: Confirmed
 Layer: Implementation
 Affected: Rhyme-SHAKE-384/-512 and Rhyme-SM3-384/-512 reference implementations; specification leaves the root length undefined
