@@ -54,7 +54,9 @@ This remains a Lead because a complete IND-CCA attack on the KEM has not been co
 
 ### Reproducing
 
-Install Martin Albrecht's [lattice-estimator](https://github.com/malb/lattice-estimator), then run the script with Sage's Python and point it at that checkout:
+Install Martin Albrecht's [lattice-estimator](https://github.com/malb/lattice-estimator)
+at the audited commit `53da5982597709ba0fdf94ea37a84d822310fd84`, then run
+the script with Sage's Python and point it at that checkout:
 
 ```sh
 LATTICE_ESTIMATOR_PATH=/path/to/lattice-estimator \

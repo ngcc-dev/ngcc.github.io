@@ -19,3 +19,17 @@ When the `LOCALLY_QUASI_CYCLIC_TWISTED_MCELIECE_TRACE_DEC` environment variable 
 The logic is present in the compiled QCTM128, QCTM256, and QCTM512 reference sources. The retained error positions are secret per-encapsulation material and should be erased after ciphertext construction, not persisted for a later decoder trace.
 
 The static buffer has no exported accessor, so merely setting the environment variable does not reveal its contents to a remote KEM caller. Exploitation additionally requires stderr visibility, local/in-process memory access, or another disclosure primitive. This is a confirmed implementation-security and secret-lifetime defect, not a demonstrated remote key-recovery attack.
+
+### Reproducing
+
+This is a source-level secret-lifetime check, not a remote exploit. Fetch the
+official archive, then inspect the QCTM128 reference `kem.c` at lines 15–20
+(file-static buffer), 523–531 (trace use), and 641–645 (copy from the fresh
+encapsulation error). The QCTM256 and QCTM512 reference files have the same
+pattern.
+
+```sh
+IDS=kem-32 ./download.sh
+./extract.sh kem-32
+rg -n 'debug_last_error|TRACE_DEC' kem-32/Implementations/Reference_Implementation/QCTM*/kem.c
+```

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>QCTM (kem-32) · ngcc.dev</title>
-<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+<link rel="stylesheet" href="../assets/style.css?v=15e56c79">
 </head>
 <body>
 <header class="site-header">
@@ -24,7 +24,8 @@
 <h2 class="issue-heading issue-heading-first" id="kem-32-1-debug-path-retains-the-secret-error-vector">kem-32-1: Debug path retains the secret error vector</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-low">Low / implementation</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Reference implementation, all three parameter sets when tracing is enabled</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
@@ -36,6 +37,17 @@
 <p>When the <code>LOCALLY_QUASI_CYCLIC_TWISTED_MCELIECE_TRACE_DEC</code> environment variable is present, encapsulation copies the fixed-weight secret error positions into file-static process-global storage. The same opt-in trace path prints decoder stages, syndrome-difference counts, decoded weight, and failure-location diagnostics to standard error.</p>
 <p>The logic is present in the compiled QCTM128, QCTM256, and QCTM512 reference sources. The retained error positions are secret per-encapsulation material and should be erased after ciphertext construction, not persisted for a later decoder trace.</p>
 <p>The static buffer has no exported accessor, so merely setting the environment variable does not reveal its contents to a remote KEM caller. Exploitation additionally requires stderr visibility, local/in-process memory access, or another disclosure primitive. This is a confirmed implementation-security and secret-lifetime defect, not a demonstrated remote key-recovery attack.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>This is a source-level secret-lifetime check, not a remote exploit. Fetch the
+official archive, then inspect the QCTM128 reference <code>kem.c</code> at lines 15–20
+(file-static buffer), 523–531 (trace use), and 641–645 (copy from the fresh
+encapsulation error). The QCTM256 and QCTM512 reference files have the same
+pattern.</p>
+<pre><code class="language-sh">IDS=kem-32 ./download.sh
+./extract.sh kem-32
+rg -n 'debug_last_error|TRACE_DEC' kem-32/Implementations/Reference_Implementation/QCTM*/kem.c
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -1,13 +1,13 @@
 <!-- synchronized report: kem-04/report.md -->
 Candidate: BAG-Piglet
 Family: Code-based (rank metric)
-Archive: [BAG-Piglet.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/BAG-Piglet.zip)
+Archive: [BAG-Piglet.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/BAG-Piglet.zip) (SHA-256: `31afe1f2f4e97ad77929d7855c7d9011d69755049d155c09be9339bc99b1d405`)
 
 ## kem-04-1: Secret-dependent pivoting in the Gabidulin decoder
 
 Severity: Medium
 Status: Confirmed
-Layer: Implementation
+Layer: Side-channel
 Affected: Reference implementations, all four parameter sets
 Discovery: Moderate
 Exploitation: Local control-flow/cache observer; key recovery not demonstrated

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MORNING-ATLAS (sign-15) · ngcc.dev</title>
-<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+<link rel="stylesheet" href="../assets/style.css?v=15e56c79">
 </head>
 <body>
 <header class="site-header">
@@ -24,7 +24,8 @@
 <h2 class="issue-heading issue-heading-first" id="sign-15-1-returned-length-error-causes-an-out-of-bounds-heap-disclosure">sign-15-1: Returned-length error causes an out-of-bounds heap disclosure</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-high">High / implementation</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Reference API and supplied KAT, all four parameter sets</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
@@ -36,10 +37,23 @@
 <p><code>sig_get_sn_len_bytes()</code> advertises a <code>CRYPTO_BYTES</code>-byte output buffer. <code>sig_sign()</code> writes exactly that detached signature, but returns <code>CRYPTO_BYTES + message_length</code> as though it had also appended the message. A caller that allocates the advertised size and serializes the returned length reads beyond the allocation.</p>
 <p>The submitters' own KAT does exactly this. In its first records, the out-of-bounds <code>Sn</code> field contains allocator bytes followed by 41, 45, 40, and 41 bytes of the adjacent 64-byte KAT seed for the 128-, 192-, 256-, and 512-bit instances. From record 3 onward it includes all 64 seed bytes. That seed deterministically generates the KAT key material.</p>
 <p>The KAT format also prints <code>Seed</code> and <code>SK</code> as separate fields, so these published vectors do not newly expose an otherwise secret value. They nevertheless provide a concrete demonstration that trusting the candidate's returned length discloses adjacent heap data; in another caller the adjacent object may be private. This is a serious API/memory-disclosure defect, distinct from the cryptographic malleability below.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>Inspect the included reference <code>lwrdsa128/SIG_lwrdsa128.c</code> at lines 33–34
+(advertised buffer length) and 428 (returned length), then <code>lwrdsa128/KAT_SIG.c</code>
+at lines 97–100 and 136–144 (allocation and output). The other three levels
+have the same pattern. To check the quoted out-of-bounds <strong>bytes</strong> in the
+submitter's KAT text, download and extract the official archive; the bulky
+original KAT files are not retained in this harness.</p>
+<pre><code class="language-sh">rg -n 'return CRYPTO_BYTES|m_len_bytes \+ CRYPTO_BYTES|calloc\(sn_len_bytes|fprintstr\(file_output, &quot;Sn = &quot;' sign-15/Implementation/Reference_Implementation/lwrdsa128/{SIG_lwrdsa128,KAT_SIG}.c
+IDS=sign-15 ./download.sh
+./extract.sh sign-15
+</code></pre>
 <h2 class="issue-heading" id="sign-15-2-trivial-hint-padding-malleability-violates-suf-cma">sign-15-2: Trivial hint-padding malleability violates SUF-CMA</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-high">High / implementation</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Reference implementation, all four parameter sets</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
@@ -52,7 +66,7 @@
 <p>For each of <code>lwrdsa128</code>, <code>lwrdsa192</code>, <code>lwrdsa256</code>, and <code>lwrdsa512</code>, flipping the high bit of the final unused hint-index byte in a valid signature produced a different byte string that still verified for the same message and public key.</p>
 <p>The attack needs only one ordinary valid signature. It does not forge a new message and therefore does not by itself violate EUF-CMA, but it directly violates the specification's SUF-CMA claim.</p>
 <p>Verification must reject any noncanonical unused hint slot and enforce all stated hint-weight and ordering constraints. The separate heap over-read (<code>sign-15-1</code>) and ATLAS-192 parameter shortfall (<code>sign-15-3</code>) are reported on this page and are not needed for this attack.</p>
-<h3 id="reproducing">Reproducing</h3>
+<h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">make -C tools
 make -C sign-15
@@ -66,7 +80,8 @@ overwrites, and requires the byte-distinct signature to verify.</p>
 <h2 class="issue-heading" id="sign-15-3-the-atlas-192-challenge-space-is-below-192-bits">sign-15-3: The ATLAS-192 challenge space is below 192 bits</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-high">High / implementation</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>ATLAS-192 reference implementation and specification</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
@@ -79,7 +94,7 @@ overwrites, and requires the byte-distinct signature to verify.</p>
 <p><code>log2(binomial(128,64) * 2^64) = 188.17143</code></p>
 <p>bits, below the advertised 192-bit level. The specification instead selects <code>kappa=69</code>, which gives about 192.61 bits. This is an implementation-only parameter mismatch, not a defect in the specified parameter set.</p>
 <p>The submitted source acknowledges the mismatch directly: <code>params.h</code> comments that “KAPPA should be 69 not 64” and attributes the temporary value to an implementation limitation.</p>
-<h3 id="reproducing_1">Reproducing</h3>
+<h3 id="reproducing_2">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>Reproduce the exact cardinality and source check with:</p>
 <pre><code class="language-sh">python3 security/design_parameter_audit.py
@@ -87,7 +102,8 @@ overwrites, and requires the byte-distinct signature to verify.</p>
 <h2 class="issue-heading" id="sign-15-4-repeated-masking-coefficients-expose-the-signing-key">sign-15-4: Repeated masking coefficients expose the signing key</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-critical">Critical / implementation</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>ATLAS-128, ATLAS-192, and ATLAS-256 reference and optimized implementations; ATLAS-512 is unaffected</td></tr>
 <tr><th>Discovery</th><td>Moderate</td></tr>
@@ -98,7 +114,7 @@ overwrites, and requires the byte-distinct signature to verify.</p>
 <p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/L5UNKA72RZ2TBTCKZYIVJ5KFDU6XTWFB/">Yijian Liu's NGCC PKC Forum post on behalf of Xianhui Lu</a></p>
 <p>In <code>rej_gamma1m1()</code>, the second 20-bit decode overwrites <code>t</code> before either accepted coefficient is stored. Every masking polynomial therefore has <code>y[2i] = y[2i+1]</code>. Since the signature contains <code>z = y + c*s1</code> modulo <code>q</code>, subtracting each adjacent response pair cancels the mask and gives a noiseless linear equation in the secret <code>s1</code>. Two signatures supply a full-rank system for each secret polynomial in all three affected profiles. ATLAS-512 uses a separate three-byte sampler branch.</p>
 <p>The local witness solves those equations using only two public, officially verified signatures, recovers every <code>s1</code> coefficient, and checks zero residuals on two further signatures. It then reconstructs the remaining signing-key fields from <code>s1</code> and the public key, chooses a fresh signing-randomness key, and produces a new-message signature accepted by the submitted verifier. It never uses the original secret key in the recovery or forgery stage.</p>
-<h3 id="reproducing_2">Reproducing</h3>
+<h3 id="reproducing_3">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">mamba run -n sage python sign-15/reproduce_mask_key_recovery.py
 </code></pre>

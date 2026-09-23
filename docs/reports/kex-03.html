@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CreTAKE (kex-03) · ngcc.dev</title>
-<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+<link rel="stylesheet" href="../assets/style.css?v=15e56c79">
 </head>
 <body>
 <header class="site-header">
@@ -24,7 +24,8 @@
 <h2 class="issue-heading issue-heading-first" id="kex-03-1-bits-versus-bytes-error-reduces-the-ephemeral-secret-to-64-bits">kex-03-1: Bits-versus-bytes error reduces the ephemeral secret to 64 bits</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-critical">Critical / implementation</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Reference implementation, 23 source files including all six S2S instances</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
@@ -39,6 +40,16 @@
 <p><code>pseudoXOF((MSG_LEN_BYTES + SEED_BYTES) * 8, buf, SEED_BYTES, buf2)</code></p>
 <p>The third <code>pseudoXOF</code> argument is a bit count, but <code>SEED_BYTES</code> is 64. Only the first eight bytes of the 64-byte buffer are absorbed. The correct <code>SEED_BYTES * 8</code> form appears commented out immediately above related call sites. The erroneous pattern occurs in 23 reference source files and is preserved by every submitted test vector.</p>
 <p>In the six S2S instances, this 64-bit value is the only secret input to the session-key computation. A passive eavesdropper enumerates the <code>2^64</code> possible inputs, regenerates the deterministic encryption coins and candidate plaintext, and matches the observed ciphertext. This recovers the session key offline at every claimed 128-, 256-, and 512-bit level.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>This is a source and key-space review; a <code>2^64</code> search is not run. Fetch the
+official archive and inspect the responder call in, for example,
+<code>CreTAKE128/CreTAKE-S2S-BiT128-eZEN128/KEX_AlgorithmInstance.c</code> line 156. The
+second <code>pseudoXOF</code> length argument is 64 <strong>bits</strong>, not the intended 64 bytes.</p>
+<pre><code class="language-sh">IDS=kex-03 ./download.sh
+./extract.sh kex-03
+rg -n -F 'buf, SEED_BYTES, buf2' kex-03/Implementations/Reference_Implementation
+</code></pre>
 <p>The same defect reduces the claimed weak forward secrecy of K2S and S2K instances to <code>2^64</code> after compromise of the complementary long-term KEM key. This is an implementation error, not a cryptanalytic attack on the specified primitives.</p>
 <p>A related initiator-side call passes <code>SEED_BYTES * 8</code> as the requested output length but only <code>SEED_BYTES + SKI_LEN</code> as the <code>pseudohash</code> input bit count. In those instances <code>SKI_LEN/8 &gt; 56</code>, so all 64 random bytes are still absorbed and this second units error does not reduce entropy further. It confirms that the bits-versus-bytes confusion is systematic.</p>
 </main>

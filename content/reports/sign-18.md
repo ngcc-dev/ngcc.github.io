@@ -59,7 +59,7 @@ The witness verifies every collected signature with the official verifier before
 
 Severity: Medium
 Status: Probable
-Layer: Implementation
+Layer: Side-channel
 Affected: Origami reference signer, all four parameter sets
 Discovery: Trivial
 Exploitation: Local timing/cache side channel; no key recovery demonstrated
@@ -76,7 +76,7 @@ In each reference instance, follow `sign` → `build_zone_system` → `solve_rec
 
 Severity: Medium
 Status: Probable
-Layer: Implementation
+Layer: Side-channel
 Affected: Origami reference signer, all four parameter sets
 Discovery: Trivial
 Exploitation: Local cache/address trace of secret intermediates; forgery not demonstrated

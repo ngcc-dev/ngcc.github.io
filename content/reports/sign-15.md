@@ -20,6 +20,21 @@ The submitters' own KAT does exactly this. In its first records, the out-of-boun
 
 The KAT format also prints `Seed` and `SK` as separate fields, so these published vectors do not newly expose an otherwise secret value. They nevertheless provide a concrete demonstration that trusting the candidate's returned length discloses adjacent heap data; in another caller the adjacent object may be private. This is a serious API/memory-disclosure defect, distinct from the cryptographic malleability below.
 
+### Reproducing
+
+Inspect the included reference `lwrdsa128/SIG_lwrdsa128.c` at lines 33–34
+(advertised buffer length) and 428 (returned length), then `lwrdsa128/KAT_SIG.c`
+at lines 97–100 and 136–144 (allocation and output). The other three levels
+have the same pattern. To check the quoted out-of-bounds **bytes** in the
+submitter's KAT text, download and extract the official archive; the bulky
+original KAT files are not retained in this harness.
+
+```sh
+rg -n 'return CRYPTO_BYTES|m_len_bytes \+ CRYPTO_BYTES|calloc\(sn_len_bytes|fprintstr\(file_output, "Sn = "' sign-15/Implementation/Reference_Implementation/lwrdsa128/{SIG_lwrdsa128,KAT_SIG}.c
+IDS=sign-15 ./download.sh
+./extract.sh sign-15
+```
+
 ## sign-15-2: Trivial hint-padding malleability violates SUF-CMA
 
 Severity: High

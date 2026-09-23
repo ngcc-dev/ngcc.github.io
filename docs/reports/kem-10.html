@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>C-Multi-UR-AG (kem-10) · ngcc.dev</title>
-<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+<link rel="stylesheet" href="../assets/style.css?v=15e56c79">
 </head>
 <body>
 <header class="site-header">
@@ -18,13 +18,14 @@
 <div class="table-wrap"><table class="meta">
 <tr><th>Candidate</th><td>C-Multi-UR-AG</td></tr>
 <tr><th>Family</th><td>Code-based (rank metric)</td></tr>
-<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/C-Multi-UR-AG.zip">C-Multi-UR-AG.zip</a></td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/C-Multi-UR-AG.zip">C-Multi-UR-AG.zip</a> (SHA-256: <code>c41e372a55e1dd4aa0e30c6b53d9d7b4f9cd1d7ae431763535e1e61097445e2c</code>)</td></tr>
 </table></div>
 
 <h2 class="issue-heading issue-heading-first" id="kem-10-1-malformed-ciphertexts-crash-the-reference-decapsulator">kem-10-1: Malformed ciphertexts crash the reference decapsulator</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-high">High / implementation</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>All three reference parameter sets</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
@@ -48,7 +49,8 @@ security/ngcc_security kem-10/lib/libCMultiURAG-512.so kem-zero
 <h2 class="issue-heading" id="kem-10-2-secret-derived-decoder-pivots-select-memory-addresses">kem-10-2: Secret-derived decoder pivots select memory addresses</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-medium">Medium / implementation</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>side-channel</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Reference implementations, all three parameter sets</td></tr>
 <tr><th>Discovery</th><td>Moderate</td></tr>

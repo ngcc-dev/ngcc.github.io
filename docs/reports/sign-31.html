@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TSUOV (sign-31) · ngcc.dev</title>
-<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+<link rel="stylesheet" href="../assets/style.css?v=15e56c79">
 </head>
 <body>
 <header class="site-header">
@@ -24,7 +24,8 @@
 <h2 class="issue-heading issue-heading-first" id="sign-31-1-a-512-bit-prehash-caps-forgery-security-at-256-bits">sign-31-1: A 512-bit prehash caps forgery security at 256 bits</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-critical">Critical / design</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>TSUOV-512 specification and reference implementation</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
@@ -44,7 +45,8 @@
 <h2 class="issue-heading" id="sign-31-2-secret-dependent-echelon-pivots-during-signing">sign-31-2: Secret-dependent echelon pivots during signing</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-medium">Medium / implementation</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>side-channel</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-probable">Probable</span></td></tr>
 <tr><th>Affected</th><td>TSUOV reference signer, all three parameter sets</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
@@ -56,7 +58,12 @@
 <p>The signing trapdoor builds a linear system from the private central map and fresh vinegar state. In <code>tsuov_core.c</code>, echelon reduction advances <code>j</code> until <code>EQN(j,c)</code> is nonzero (line 695), branches on rank (753, 785), and retries until consistency (984). These predicates contain secret intermediate values and control the signing execution trace. No full-key extraction or forgery from that trace is claimed; see <code>constant_time.md</code>.</p>
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
-<p>Inspect <code>TSUOV_128/tsuov_core.c</code> lines 680–790 and 960–985 and trace the matrix construction from <code>TSUOV_Sign</code>. The same source pattern occurs in the other two reference parameter sets. This confirms secret-dependent control flow, not a measured remote timing exploit.</p>
+<p>Inspect the included reference source at
+<code>sign-31/Implementations/Digital_Signature-TSUOV-x86-Reference_Implementation/API_PKC/Implementations/Reference_Implementation/TSUOV_128/tsuov_core.c</code>,
+lines 680–790 and 960–985, and trace the matrix construction from
+<code>TSUOV_Sign</code>. The corresponding <code>tsuov_core.c</code> files for TSUOV_256 and
+TSUOV_512 are also included for comparison. This confirms secret-dependent
+control flow, not a measured remote timing exploit.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -1,13 +1,13 @@
 <!-- synchronized report: kem-07/report.md -->
 Candidate: BRQC
 Family: Code-based (rank metric)
-Archive: [BRQC.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/BRQC.zip)
+Archive: [BRQC.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/BRQC.zip) (SHA-256: `2c76bdd4e4df7829bf22fa4949a3c744b9af692425f6f2e5fae5317d41e366ae`)
 
 ## kem-07-1: Secret-derived decoder pivots select memory addresses
 
 Severity: Medium
 Status: Confirmed
-Layer: Implementation
+Layer: Side-channel
 Affected: Reference implementations, all three parameter sets
 Discovery: Moderate
 Exploitation: Local cache observer; key recovery not demonstrated

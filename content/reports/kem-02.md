@@ -43,7 +43,7 @@ The attack-only library is linked from the same submitted Amoeba-576 object file
 
 Severity: Medium
 Status: Confirmed
-Layer: Implementation
+Layer: Side-channel
 Affected: Reference implementations, all five parameter sets
 Discovery: Moderate
 Exploitation: Local cache/control-flow observation; no separate extraction demonstrated

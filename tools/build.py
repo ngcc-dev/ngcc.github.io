@@ -7,8 +7,8 @@
 Every content/**/*.md becomes docs/**/*.html. A page's title is its first H1
 (or one derived from its path). Placeholders of the form <!-- table:NAME -->
 are expanded before Markdown conversion, where NAME is one of
-summary | sign | kem | kex | hash | all, and <!-- reports --> expands to the
-issue list built from content/reports/<id>.md. A report is a "Field: value"
+summary | sign | kem | kex | hash | all; <!-- reports --> and
+<!-- report-totals --> expand from content/reports/<id>.md. A report is a "Field: value"
 header block followed by one "## " section per issue (a "## Reproduc…"
 section is a procedure, not an issue, and gets a link to the harness repo). All links are relative, so the site works at any base URL.
 """
@@ -239,10 +239,17 @@ def load_reports():
                 raise ValueError(f"invalid severity for {issue_id}: {issue_meta['Severity']}")
             if status not in STATUSES:
                 raise ValueError(f"invalid status for {issue_id}: {issue_meta['Status']}")
-            if layer not in {"design", "implementation", "evaluation"}:
+            if layer not in {"design", "implementation", "evaluation", "side-channel"}:
                 raise ValueError(f"invalid layer for {issue_id}: {issue_meta['Layer']}")
             if status == "withdrawn" and severity != "info":
                 raise ValueError(f"withdrawn issue must have Info severity: {issue_id}")
+            date = issue_meta["Date"]
+            try:
+                parsed_date = datetime.date.fromisoformat(date)
+            except ValueError as error:
+                raise ValueError(f"invalid Date for {issue_id}: {date}") from error
+            if parsed_date.isoformat() != date:
+                raise ValueError(f"Date must be YYYY-MM-DD for {issue_id}: {date}")
             seen_issues.add(issue_id)
             numbers.append(number)
             parsed_issues.append({"id": issue_id, "title": title,
@@ -254,9 +261,8 @@ def load_reports():
     return reports
 
 
-def sev_badge(sev, layer=""):
-    label = sev.capitalize() + (f" / {layer}" if layer else "")
-    return f'<span class="sev sev-{sev}">{html.escape(label)}</span>'
+def sev_badge(sev):
+    return f'<span class="sev sev-{sev}">{html.escape(sev.capitalize())}</span>'
 
 
 def status_badge(status):
@@ -274,42 +280,6 @@ def pdf_link(c):
     return f'<a class="pdf-link" href="{href}" title="Open the {cid} specification PDF">PDF</a>'
 
 
-def recent_updates_html(reports, prefix):
-    """One linked line per UTC publication date, newest first."""
-    by_date = {}
-    by_layer = {"implementation": 0, "design": 0}
-    withdrawn = 0
-    for report in reports.values():
-        for issue in report["issues"]:
-            if issue["status"] == "withdrawn":
-                withdrawn += 1
-                continue
-            date = issue["meta"]["Date"]
-            try:
-                datetime.date.fromisoformat(date)
-            except ValueError as error:
-                raise ValueError(f'invalid Date for {issue["id"]}: {date}') from error
-            by_date.setdefault(date, []).append((issue["id"], report["cid"], issue["anchor"]))
-            by_layer[issue["layer"]] += 1
-
-    lines = ['<h2 id="recent-additions">Recent additions</h2>']
-    for date in sorted(by_date, reverse=True):
-        links = []
-        for issue_id, cid, anchor in sorted(by_date[date]):
-            href = f'{prefix}reports/{cid}.html#{anchor}'
-            links.append(f'<a href="{href}"><code>{issue_id}</code></a>')
-        lines.append(
-            f'<p class="recent-update"><time datetime="{date}">{date}</time> '
-            f'({len(links)}): {" ".join(links)}</p>'
-        )
-    total = sum(by_layer.values())
-    lines.append(
-        f'<p class="recent-total">Total {total}: implementation {by_layer["implementation"]}, '
-        f'design {by_layer["design"]}; withdrawn records {withdrawn}.</p>'
-    )
-    return "\n".join(lines)
-
-
 def constant_time_html(cands, prefix):
     """Link every scoped candidate review without turning it into a vulnerability row."""
     lines = []
@@ -324,11 +294,23 @@ def constant_time_html(cands, prefix):
     return "\n".join(lines)
 
 
+def report_totals_html(reports):
+    active = [issue for report in reports.values() for issue in report["issues"]
+              if issue["status"] != "withdrawn"]
+    withdrawn = sum(issue["status"] == "withdrawn"
+                    for report in reports.values() for issue in report["issues"])
+    by_scope = {scope: sum(issue["layer"] == scope for issue in active)
+                for scope in ("implementation", "design", "side-channel", "evaluation")}
+    scope_text = ", ".join(f"{count} {scope}" for scope, count in by_scope.items() if count)
+    return (f'<p class="report-totals">{len(active)} active findings across '
+            f'{len(reports)} reports: {scope_text}; {withdrawn} withdrawn records.</p>')
+
+
 def reports_html(reports, cands, prefix):
     h = []
     for cat, label in CATS:
         h.extend([f'<h2 id="{cat}">{label}</h2>', '<table class="reports">',
-                  '<thead><tr><th>identifier</th><th>candidate / spec</th><th>family</th><th>classification</th><th>vulnerability</th></tr></thead><tbody>'])
+                  '<thead><tr><th>identifier</th><th>candidate / spec</th><th>family</th><th>severity</th><th>scope</th><th>updated</th><th>vulnerability</th></tr></thead><tbody>'])
         for c in sorted((c for c in cands.values() if c["cat"] == cat), key=lambda c: c["no"]):
             cid, r = c["id"], reports.get(c["id"])
             family = (r["meta"].get("Family", "") if r else "") or c.get("family", "")
@@ -339,13 +321,17 @@ def reports_html(reports, cands, prefix):
                 candidate += f' {pdf_link(c)}'
                 h.append(f'<tr>{id_cell(c)}<td>{candidate}</td>'
                          f'<td class="family">{html.escape(family)}</td>'
-                         f'<td class="st"><span class="sev sev-none">No report</span></td><td>—</td></tr>')
+                         f'<td class="severity"><span class="sev sev-none">No report</span></td>'
+                         f'<td class="scope">—</td><td class="updated">—</td><td>—</td></tr>')
                 continue
             for i, issue in enumerate(r["issues"]):
                 issue_href = f'{prefix}reports/{cid}.html#{issue["anchor"]}'
                 candidate = (f'<a href="{prefix}reports/{cid}.html">'
                              f'{html.escape(r["meta"].get("Candidate", c["algorithm"]))}</a> {pdf_link(c)}')
-                classification = f'<td class="st">{sev_badge(issue["severity"], issue["layer"])}</td>'
+                date = issue["meta"]["Date"]
+                issue_columns = (f'<td class="severity">{sev_badge(issue["severity"])}</td>'
+                                 f'<td class="scope">{html.escape(issue["layer"])}</td>'
+                                 f'<td class="updated"><time datetime="{date}">{date}</time></td>')
                 issue_cell = (f'<td>{status_badge(issue["status"])} '
                               f'<a href="{issue_href}"><code>{issue["id"]}</code> '
                               f'{html.escape(issue["title"])}</a></td>')
@@ -355,9 +341,9 @@ def reports_html(reports, cands, prefix):
                     h.append(f'<tr>{first_cell}'
                              f'<td rowspan="{span}">{candidate}</td>'
                              f'<td rowspan="{span}" class="family">{html.escape(family)}</td>'
-                             f'{classification}{issue_cell}</tr>')
+                             f'{issue_columns}{issue_cell}</tr>')
                 else:
-                    h.append(f'<tr>{classification}{issue_cell}</tr>')
+                    h.append(f'<tr>{issue_columns}{issue_cell}</tr>')
         h.append("</tbody></table>")
     return "\n".join(h)
 
@@ -388,7 +374,8 @@ def report_page(r, prefix):
             f'{html.escape(issue["id"])}: {html.escape(issue["title"])}</h2>'
         )
         source_meta = "\n".join(f'{field}: {issue["meta"][field]}' for field in ISSUE_FIELDS)
-        rows = [f'<tr><th>Classification</th><td>{sev_badge(issue["severity"], issue["layer"])}</td></tr>',
+        rows = [f'<tr><th>Severity</th><td>{sev_badge(issue["severity"])}</td></tr>',
+                f'<tr><th>Scope</th><td>{html.escape(issue["layer"])}</td></tr>',
                 f'<tr><th>Status</th><td>{status_badge(issue["status"])}</td></tr>']
         for field in ISSUE_FIELDS[3:]:
             value = markdown.markdown(issue["meta"][field])[3:-4]
@@ -403,9 +390,8 @@ def report_page(r, prefix):
 
 
 def expand_placeholders(text, cands, prefix, reports):
-    text = re.sub(r"<!--\s*recent-additions\s*-->",
-                  lambda m: recent_updates_html(reports, prefix), text)
     text = re.sub(r"<!--\s*reports\s*-->", lambda m: reports_html(reports, cands, prefix), text)
+    text = re.sub(r"<!--\s*report-totals\s*-->", lambda m: report_totals_html(reports), text)
     text = re.sub(r"<!--\s*constant-time\s*-->", lambda m: constant_time_html(cands, prefix), text)
 
     def repl(m):

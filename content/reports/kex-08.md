@@ -1,7 +1,7 @@
 <!-- synchronized report: kex-08/report.md -->
 Candidate: NIIKE
 Family: Isogeny-based non-interactive key exchange
-Archive: [NIIKE.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/NIIKE.zip)
+Archive: [NIIKE.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/NIIKE.zip) (SHA-256: `4f79f9a62aed06db83f2965abcc42ca98ce5cc2128cebd15b50a46cfbb633dbe`)
 
 ## kex-08-1: The raw shared j-invariant is distinguishable from a uniform key
 

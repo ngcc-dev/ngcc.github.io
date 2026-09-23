@@ -74,10 +74,7 @@ recovered_ephemeral_sk_digest=cac8fae173f31fe3063ac092df0acf7e90f71a4bc20ae5b6e0
 shared_secret=2acee149b895cace5f7ebf94aa6ea9e2c504c7411b6e2e15edb4ad8e40b541f7
 ```
 
-The reference run takes approximately 4.9 seconds on the development host. The submitted AVX2 tier independently completes in approximately 4.3 seconds:
-
-```sh
-cmake -S security/loom_optimized -B security/loom_optimized/build -DCMAKE_BUILD_TYPE=Release
-cmake --build security/loom_optimized/build --target loom_state_rollback_key_recovery_256 -j"$(nproc)"
-security/loom_optimized/build/bin/loom_state_rollback_key_recovery_256
-```
+The reference run takes approximately 4.9 seconds on the development host.
+The optimized implementation was independently cross-checked during analysis,
+but its separate witness build is not included in the public harness and is not
+needed to reproduce this finding.

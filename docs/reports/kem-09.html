@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CheetahKEM (kem-09) · ngcc.dev</title>
-<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+<link rel="stylesheet" href="../assets/style.css?v=15e56c79">
 </head>
 <body>
 <header class="site-header">
@@ -24,7 +24,8 @@
 <h2 class="issue-heading issue-heading-first" id="kem-09-1-partial-rejection-mask-leaks-the-candidate-shared-secret">kem-09-1: Partial rejection mask leaks the candidate shared secret</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-critical">Critical / implementation</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Reference implementation, all four parameter sets</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
@@ -48,7 +49,8 @@ witnesses and their controls. See <code>tools/README.md</code>.</p>
 <h2 class="issue-heading" id="kem-09-2-a-degree-128-quotient-defeats-the-full-dimension-mlwe-estimates">kem-09-2: A degree-128 quotient defeats the full-dimension MLWE estimates</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-high">High / design</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-lead">Lead</span></td></tr>
 <tr><th>Affected</th><td>All four parameter sets</td></tr>
 <tr><th>Discovery</th><td>Moderate</td></tr>
@@ -62,7 +64,9 @@ witnesses and their controls. See <code>tools/README.md</code>.</p>
 <p>This remains a Lead because a complete IND-CCA attack on the KEM has not been constructed. Full secret recovery also requires solving the residual degree-512 component; the post explicitly leaves that cost unresolved.</p>
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
-<p>Install Martin Albrecht's <a href="https://github.com/malb/lattice-estimator">lattice-estimator</a>, then run the script with Sage's Python and point it at that checkout:</p>
+<p>Install Martin Albrecht's <a href="https://github.com/malb/lattice-estimator">lattice-estimator</a>
+at the audited commit <code>53da5982597709ba0fdf94ea37a84d822310fd84</code>, then run
+the script with Sage's Python and point it at that checkout:</p>
 <pre><code class="language-sh">LATTICE_ESTIMATOR_PATH=/path/to/lattice-estimator \
   mamba run -n sage python kem-09/reproduce_quotient_estimate.py
 </code></pre>

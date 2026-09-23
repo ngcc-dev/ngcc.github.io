@@ -1,13 +1,13 @@
 <!-- synchronized report: kem-37/report.md -->
 Candidate: TriQ-KEM
 Family: Code-based
-Archive: [TriQ-KEM.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/TriQ-KEM.zip)
+Archive: [TriQ-KEM.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/TriQ-KEM.zip) (SHA-256: `1e4b96e7a849c95b4a6511c5739be9e0b4adf19b00195c2c0ce14f66be316876`)
 
 ## kem-37-1: Decapsulation re-expands its private support with variable work
 
 Severity: Medium
 Status: Confirmed
-Layer: Implementation
+Layer: Side-channel
 Affected: TriQ-KEM reference implementations, 128/256/384/512
 Discovery: Trivial
 Exploitation: Secret-seed-dependent execution trace; key recovery not demonstrated

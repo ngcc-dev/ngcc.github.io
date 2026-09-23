@@ -1,13 +1,13 @@
 <!-- synchronized report: hash-22/report.md -->
 Candidate: Pavelor
 Family: Symmetric (AES-derived sponge hash)
-Archive: [Pavelor.zip](https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/Pavelor.zip)
+Archive: [Pavelor.zip](https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/Pavelor.zip) (SHA-256: `0414e5f0039c2d352eb00c125554114931363dcea6b382052fdd20fbf25e0c31`)
 
 ## hash-22-1: Secret state indexes AES S-box; tail bits branch
 
 Severity: Medium
 Status: Confirmed
-Layer: Implementation
+Layer: Side-channel
 Affected: Reference Pavelor-512/768/1024
 Discovery: Trivial
 Exploitation: Cache or branch side-channel dependent

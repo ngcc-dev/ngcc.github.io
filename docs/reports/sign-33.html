@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>VDOO (sign-33) · ngcc.dev</title>
-<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+<link rel="stylesheet" href="../assets/style.css?v=15e56c79">
 </head>
 <body>
 <header class="site-header">
@@ -24,7 +24,8 @@
 <h2 class="issue-heading issue-heading-first" id="sign-33-1-publicly-reproducible-signing-keys">sign-33-1: Publicly reproducible signing keys</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-critical">Critical / implementation</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Reference implementation, all three parameter sets</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
@@ -49,7 +50,8 @@ witnesses and their controls. See <code>tools/README.md</code>.</p>
 <h2 class="issue-heading" id="sign-33-2-a-256-bit-implementation-prehash-limits-forgery-security-to-128-bits">sign-33-2: A 256-bit implementation prehash limits forgery security to 128 bits</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-critical">Critical / implementation</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>VDOO-256 and VDOO-512 reference wrappers; specification leaves the wrapper prehash undefined</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
@@ -68,7 +70,8 @@ witnesses and their controls. See <code>tools/README.md</code>.</p>
 <h2 class="issue-heading" id="sign-33-3-the-vdoo-256-and-512-proof-bound-contains-a-128-bit-salt-term">sign-33-3: The VDOO-256 and -512 proof bound contains a 128-bit salt term</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-medium">Medium / design</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr>
 <tr><th>Affected</th><td>VDOO-256 and VDOO-512 specification and proof</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
@@ -88,7 +91,8 @@ term in the submitted EUF-CMA bound.</p>
 <h2 class="issue-heading" id="sign-33-4-signing-reuses-a-publicly-predictable-randomness-stream">sign-33-4: Signing reuses a publicly predictable randomness stream</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-critical">Critical / implementation</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Reference implementation, all three parameter sets</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
@@ -109,7 +113,8 @@ term in the submitted EUF-CMA bound.</p>
 <h2 class="issue-heading" id="sign-33-5-signing-branches-directly-on-private-central-map-coefficients">sign-33-5: Signing branches directly on private central-map coefficients</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-medium">Medium / implementation</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>side-channel</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-probable">Probable</span></td></tr>
 <tr><th>Affected</th><td>VDOO reference signer, all three parameter sets</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>

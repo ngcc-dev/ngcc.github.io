@@ -1,13 +1,13 @@
 <!-- synchronized report: hash-01/report.md -->
 Candidate: AFS-TrEDM
 Family: Symmetric (sponge hash)
-Archive: [AFS-TrEDM.zip](https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/AFS-TrEDM.zip)
+Archive: [AFS-TrEDM.zip](https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/AFS-TrEDM.zip) (SHA-256: `6a4b3d3ca5c225ad7d8714878e12f10cbf92aa6e081a8b85f504b6eeb2f4188b`)
 
 ## hash-01-1: Partial-message bits control a machine branch
 
 Severity: Medium
 Status: Confirmed
-Layer: Implementation
+Layer: Side-channel
 Affected: Reference AFS-TrEDM-512/768/1024 on non-byte-aligned messages
 Discovery: Trivial
 Exploitation: Side-channel dependent
@@ -19,4 +19,3 @@ The final-bit framing loop passes each remaining message bit to `set_lane_bit_ms
 ### Reproducing
 
 Compile `afs_tredm.c` with `gcc -O2 -g -fPIC -c` and inspect `objdump -dSl` around `set_lane_bit_msb`; the message-bit path contains `bt`/`jae`.
-

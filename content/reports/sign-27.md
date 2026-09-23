@@ -1,7 +1,7 @@
 <!-- synchronized report: sign-27/report.md -->
 Candidate: SQIsignTriangle
 Family: Isogeny/quaternion signature
-Archive: [SQIsignTriangle.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/SQIsignTriangle.zip)
+Archive: [SQIsignTriangle.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/SQIsignTriangle.zip) (SHA-256: `f4afa484e450e2adf4b5f9c867fb199d0d0e22d66a3eafbc8c4738744fb62c58`)
 
 ## sign-27-1: An all-zero signature aborts the verifier process
 

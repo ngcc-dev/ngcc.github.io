@@ -84,7 +84,12 @@ table.summary td:not(:first-child) { text-align: right; }
 .status-proof-gap { background: var(--muted-bg); color: var(--muted); }
 .status-withdrawn { background: var(--muted-bg); color: var(--muted); }
 .audit-links { display: flex; flex-wrap: wrap; gap: 0.5rem 0.8rem; }
-table.reports td.date { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.report-totals { color: var(--muted); font-size: 0.9rem; }
+table.reports td.severity, table.reports td.scope, table.reports td.updated {
+  white-space: nowrap; padding-left: 0.4rem; padding-right: 0.4rem;
+}
+table.reports td.scope { font-size: 0.85rem; }
+table.reports td.updated { font-size: 0.85rem; font-variant-numeric: tabular-nums; }
 table.reports td:last-child { min-width: 18rem; }
 table.meta { margin: 1rem 0; font-size: 0.9rem; }
 table.meta th { width: 8rem; background: var(--head); font-weight: 600; white-space: nowrap; }

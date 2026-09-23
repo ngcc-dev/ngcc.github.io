@@ -1,13 +1,13 @@
 <!-- synchronized report: hash-05/report.md -->
 Candidate: uHash
 Family: Symmetric (block-cipher-based hash)
-Archive: [uHash.zip](https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/uHash.zip)
+Archive: [uHash.zip](https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/uHash.zip) (SHA-256: `c398e49530510c9aa1deffd617855f9b8db448b4e30a35953d88ea0373c7d8e5`)
 
 ## hash-05-1: Secret state indexes a 256-byte substitution table
 
 Severity: Medium
 Status: Confirmed
-Layer: Implementation
+Layer: Side-channel
 Affected: Reference uHash-512/768/1024
 Discovery: Trivial
 Exploitation: Cache side-channel dependent

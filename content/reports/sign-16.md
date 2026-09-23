@@ -1,7 +1,7 @@
 <!-- synchronized report: sign-16/report.md -->
 Candidate: Octarine
 Family: Lattice-based signature
-Archive: [Octarine.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/Octarine.zip)
+Archive: [Octarine.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/Octarine.zip) (SHA-256: `7044d22735d39f902df35dd7d8d77c850cd296c81517e8c19134a2f9d006655a`)
 
 ## sign-16-1: The stated hash requirement is too weak for the EUF-CMA target
 

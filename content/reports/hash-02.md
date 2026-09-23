@@ -1,7 +1,7 @@
 <!-- synchronized report: hash-02/report.md -->
 Candidate: AXIS
 Family: Symmetric (stream-cipher-style hash)
-Archive: [AXIS.zip](https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/AXIS.zip)
+Archive: [AXIS.zip](https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/AXIS.zip) (SHA-256: `a7c6aa6d30642cc05207acb4d2aa3701dd40945cb21f1bc0e51305ca8f57f81d`)
 
 ## hash-02-1: Allocation failure returns a successful all-zero digest
 
@@ -30,7 +30,7 @@ The Linux witness preallocates the input, caps process virtual memory at its cur
 
 Severity: Medium
 Status: Confirmed
-Layer: Implementation
+Layer: Side-channel
 Affected: Reference AXIS-512/768/1024 on non-byte-aligned messages
 Discovery: Moderate
 Exploitation: Branch side-channel dependent

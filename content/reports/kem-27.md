@@ -1,7 +1,7 @@
 <!-- synchronized report: kem-27/report.md -->
 Candidate: NTRE
 Family: Lattice-based (NTRU) KEM
-Archive: [NTRE.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/NTRE.zip)
+Archive: [NTRE.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/NTRE.zip) (SHA-256: `9c0bad4c4846998df1214ba562e1c3b8aece6b69f08234a9bb0d89e3a5a4ea9a`)
 
 ## kem-27-1: NTRE-512's 256-bit secret seed caps offline key-recovery work
 

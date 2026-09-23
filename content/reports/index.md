@@ -14,8 +14,11 @@ and reproduction steps.
   <span class="sev sev-medium">Medium</span>
   <span class="sev sev-low">Low</span>
   <span class="sev sev-info">Info</span>.
-  Classification also gives scope: **design** concerns the submitted construction
-  or specification; **implementation** concerns the submitted code, API, or integration.
+- Scope identifies where the issue lies: **design** concerns the submitted
+  construction or specification; **implementation** concerns the submitted
+  code, API, or integration; **side-channel** flags secret-dependent execution
+  or an observable failure/timing channel. It does not by itself claim a
+  practical remote attack. **Updated** is the issue's UTC report date.
 - The badge beside each vulnerability gives its evidential status:
   <span class="issue-status status-confirmed">Confirmed</span>,
   <span class="issue-status status-probable">Probable</span> (defect confirmed,
@@ -30,6 +33,6 @@ and reproduction steps.
 Separate [constant-time reviews](../constant-time/index.md) cover all candidates
 at source level; a review without a finding is not a security certification.
 
-<!-- recent-additions -->
+<!-- report-totals -->
 
 <!-- reports -->

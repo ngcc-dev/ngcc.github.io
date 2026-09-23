@@ -1,7 +1,7 @@
 <!-- synchronized report: hash-10/report.md -->
 Candidate: FEILIAN
 Family: Symmetric (matrix-based hash)
-Archive: [FEILIAN.zip](https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/FEILIAN.zip)
+Archive: [FEILIAN.zip](https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/FEILIAN.zip) (SHA-256: `876082a40ecf3b25d8b19478cbfeab4bd5f96ff7a293aacc5b57a9f73c2ff26c`)
 
 ## hash-10-1: Padding-allocation failure returns a successful all-zero digest
 

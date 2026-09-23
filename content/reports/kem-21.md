@@ -1,7 +1,7 @@
 <!-- synchronized report: kem-21/report.md -->
 Candidate: MAMBA-Viper
 Family: Lattice-based (Module-LWQ) KEM
-Archive: [MAMBA-Viper.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/MAMBA-Viper.zip)
+Archive: [MAMBA-Viper.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/MAMBA-Viper.zip) (SHA-256: `cdf52bb77066664f74eb44872d5ab1785c22df194e50c603120432a169c61f4c`)
 
 ## kem-21-1: Viper-384 and -512 restrict the secret to a 256-bit seed
 

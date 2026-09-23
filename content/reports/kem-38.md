@@ -30,7 +30,7 @@ The `kem-38-1` check verifies the 512-bit claim and `H1` type in the PDF and the
 
 Severity: Medium
 Status: Confirmed
-Layer: Implementation
+Layer: Side-channel
 Affected: UVW-KEM reference implementation, all parameter sets
 Discovery: Trivial
 Exploitation: Decryption-failure oracle; key recovery not demonstrated

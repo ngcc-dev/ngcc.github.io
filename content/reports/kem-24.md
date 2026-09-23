@@ -19,3 +19,19 @@ Algorithm 10 forms encryption component `u` by adding the constant `h` before th
 Re-encryption repeats the same altered operation, so functional KATs and the Fujisaki-Okamoto equality check remain internally consistent. Nevertheless, the ciphertext distribution and decryption-noise law differ from those used by the specification's correctness, decryption-failure, and IND-CPA analyses.
 
 This is a confirmed implementation/specification mismatch in two of three parameter sets. No concrete distinguisher or key-recovery attack has yet been derived from the changed distribution, so the report does not claim a complete confidentiality break.
+
+### Reproducing
+
+This is a source review, not a runnable attack. Fetch the official archive and
+compare the encryption-component `u` rounding in the three reference variants:
+
+```sh
+IDS=kem-24 ./download.sh
+./extract.sh kem-24
+for level in 128 256 512; do
+  sed -n '60,72p' "kem-24/Implementations/Reference_Implementation/scabbard${level}/indcpa.c"
+done
+```
+
+The `u` shift is at lines 69, 67, and 69 respectively; only scabbard512 adds
+`h1` first. Compare Algorithm 10 in `kem-24/kem-24-spec.pdf`.

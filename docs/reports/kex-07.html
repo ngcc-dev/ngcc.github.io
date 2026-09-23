@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>NEV-AKE (kex-07) · ngcc.dev</title>
-<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+<link rel="stylesheet" href="../assets/style.css?v=15e56c79">
 </head>
 <body>
 <header class="site-header">
@@ -24,7 +24,8 @@
 <h2 class="issue-heading issue-heading-first" id="kex-07-1-both-party-identities-are-hard-wired-to-zero">kex-07-1: Both party identities are hard-wired to zero</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-medium">Medium / implementation</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Uniform-API reference wrappers, all nine parameter sets</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
@@ -37,6 +38,17 @@
 <p>The official <code>KEX_AlgorithmInstance.h</code> API exposes no identity argument, so the wrapper had no channel through which an application could supply the modeled identities. A sound integration could instead derive stable identities from the parties' public keys; hard-wiring both to zero removes the binding entirely.</p>
 <p>The core <code>ake.c</code> code hashes both identities into the session-key computations, and the specification's CK+ model distinguishes the session holder and peer identities <code>i</code> and <code>j</code>. The wrapper therefore collapses every deployment and every pair of parties onto one fixed identity pair instead of instantiating the protocol's modeled identity binding.</p>
 <p>This is a confirmed integration security defect. The transcript still contains cryptographic public keys, and no complete unknown-key-share or impersonation attack was demonstrated through the fixed API, so this report does not claim a proved AKE break beyond the missing identity binding.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>Fetch the official archive and inspect the zero-initialized <code>idi</code> and <code>idj</code>
+arrays at lines 105–106 and 165–166 of
+<code>NEV-AKE-C1/kat_test/KEX_AlgorithmInstance.c</code>; the other eight reference
+wrappers have the same assignments. Compare the wrapper API header, which has
+no caller-supplied identity parameter, with the identity inputs to <code>ake.c</code>.</p>
+<pre><code class="language-sh">IDS=kex-07 ./download.sh
+./extract.sh kex-07
+rg -n 'unsigned char id[ij]\[SEED_BYTES\] = \{0\}' 'kex-07/Implementations and Test_Vectors/Implementations/Reference_Implementation' --glob KEX_AlgorithmInstance.c
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

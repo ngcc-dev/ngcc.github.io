@@ -1,7 +1,7 @@
 <!-- synchronized report: kem-14/report.md -->
 Candidate: DTRU
 Family: Lattice-based (NTRU)
-Archive: [DTRU.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/DTRU.zip)
+Archive: [DTRU.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/DTRU.zip) (SHA-256: `ed443d6a9e2e6c50e4956e9b30ce078ae0598a8846962d04b9894cac0816527b`)
 
 ## kem-14-1: Caller-declared ciphertext length overflows a decapsulation stack buffer
 

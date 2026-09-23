@@ -1,13 +1,13 @@
 <!-- synchronized report: kex-09/report.md -->
 Candidate: TriQ-KEX
 Family: Code-based authenticated key exchange
-Archive: [TriQ-KEX.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/TriQ-KEX.zip)
+Archive: [TriQ-KEX.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/TriQ-KEX.zip) (SHA-256: `dde9bf3e8d75fc3df53bcbcacaba4faed39272b8ef2f1ac199ae0128d327b505`)
 
 ## kex-09-1: Decapsulation re-expands its secret key with a variable-length sampler
 
 Severity: Medium
 Status: Confirmed
-Layer: Implementation
+Layer: Side-channel
 Affected: TriQ-KEX reference implementations (128, 256, 384, 512)
 Discovery: Trivial
 Exploitation: Secret-seed-dependent control flow and work on each decapsulation; key recovery not demonstrated

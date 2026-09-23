@@ -1,13 +1,13 @@
 <!-- synchronized report: kem-08/report.md -->
 Candidate: BW-KEM
 Family: Lattice-based KEM
-Archive: [BW-KEM.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/BW-KEM.zip)
+Archive: [BW-KEM.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/BW-KEM.zip) (SHA-256: `a1f8a079df7d55576209f45fcf00afd700fc60c0b18d758d572585ccea594ae3`)
 
 ## kem-08-1: C128 decapsulation branches on decrypted coefficients
 
 Severity: Medium
 Status: Confirmed
-Layer: Implementation
+Layer: Side-channel
 Affected: BW_KEM_C128 reference implementation
 Discovery: Trivial
 Exploitation: Secret-dependent branch trace before ciphertext validation; key recovery not demonstrated

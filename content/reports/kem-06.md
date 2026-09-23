@@ -59,7 +59,7 @@ The ordinary, unsanitized guard-page test confirms faults for GF(2^67) and GF(2^
 
 Severity: Medium
 Status: Confirmed
-Layer: Implementation
+Layer: Side-channel
 Affected: Reference implementations, all three parameter sets
 Discovery: Moderate
 Exploitation: Local cache observer; key recovery not demonstrated

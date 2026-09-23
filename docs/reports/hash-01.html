@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AFS-TrEDM (hash-01) · ngcc.dev</title>
-<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+<link rel="stylesheet" href="../assets/style.css?v=15e56c79">
 </head>
 <body>
 <header class="site-header">
@@ -18,13 +18,14 @@
 <div class="table-wrap"><table class="meta">
 <tr><th>Candidate</th><td>AFS-TrEDM</td></tr>
 <tr><th>Family</th><td>Symmetric (sponge hash)</td></tr>
-<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/AFS-TrEDM.zip">AFS-TrEDM.zip</a></td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/AFS-TrEDM.zip">AFS-TrEDM.zip</a> (SHA-256: <code>6a4b3d3ca5c225ad7d8714878e12f10cbf92aa6e081a8b85f504b6eeb2f4188b</code>)</td></tr>
 </table></div>
 
 <h2 class="issue-heading issue-heading-first" id="hash-01-1-partial-message-bits-control-a-machine-branch">hash-01-1: Partial-message bits control a machine branch</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-medium">Medium / implementation</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>side-channel</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Reference AFS-TrEDM-512/768/1024 on non-byte-aligned messages</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>

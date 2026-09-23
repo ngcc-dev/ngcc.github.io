@@ -24,4 +24,18 @@ All twelve submitted Mito-E source trees (six parameter variants, each in refere
 python3 security/design_parameter_audit.py --report-id kem-23-1
 ```
 
-The `kem-23-1` check verifies this data-flow defect in all twelve E-variant source trees (six parameter variants in reference and optimized form) and the corresponding errors-and-erasures requirement in the PDF.
+The `kem-23-1` check verifies this data-flow defect in the six reference
+E-variant source trees retained in the public harness and the corresponding
+errors-and-erasures requirement in the PDF. The command does not inspect the
+optimized trees.
+
+To check the six optimized counterparts mentioned above, download the
+SHA-256-identified official archive and inspect each optimized E-variant's
+`code.c` and `reed_solomon.h` for the same discarded `t`/`pos` values and
+two-argument `reed_solomon_decode(m, tmp)` call:
+
+```sh
+IDS=kem-23 ./download.sh
+./extract.sh kem-23
+rg -n 'reed_muller_decode\(tmp, pos, em\)|reed_solomon_decode\(m, tmp\)' kem-23/Implementations --glob code.c
+```

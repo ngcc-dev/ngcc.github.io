@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Loom (kex-05) · ngcc.dev</title>
-<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+<link rel="stylesheet" href="../assets/style.css?v=15e56c79">
 </head>
 <body>
 <header class="site-header">
@@ -24,7 +24,8 @@
 <h2 class="issue-heading issue-heading-first" id="kex-05-1-the-specified-decryption-failure-rate-causes-honest-session-aborts">kex-05-1: The specified decryption-failure rate causes honest-session aborts</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-medium">Medium / design</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>LoomKEX-256 construction and submitted reference implementation</td></tr>
 <tr><th>Discovery</th><td>Non-trivial</td></tr>
@@ -49,7 +50,8 @@ sha256sum /tmp/loom-witness.txt
 <h2 class="issue-heading" id="kex-05-2-resettable-pass-1-state-enables-ephemeral-key-recovery">kex-05-2: Resettable pass-1 state enables ephemeral-key recovery</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-high">High / implementation</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>LoomKEX-256 reference and optimized implementations when a pass-1 state can be snapshotted, rolled back, or evaluated concurrently</td></tr>
 <tr><th>Discovery</th><td>Non-trivial</td></tr>
@@ -74,11 +76,10 @@ kex-05/reproduce_state_rollback_key_recovery
 recovered_ephemeral_sk_digest=cac8fae173f31fe3063ac092df0acf7e90f71a4bc20ae5b6e03168f110cd8d1b
 shared_secret=2acee149b895cace5f7ebf94aa6ea9e2c504c7411b6e2e15edb4ad8e40b541f7
 </code></pre>
-<p>The reference run takes approximately 4.9 seconds on the development host. The submitted AVX2 tier independently completes in approximately 4.3 seconds:</p>
-<pre><code class="language-sh">cmake -S security/loom_optimized -B security/loom_optimized/build -DCMAKE_BUILD_TYPE=Release
-cmake --build security/loom_optimized/build --target loom_state_rollback_key_recovery_256 -j&quot;$(nproc)&quot;
-security/loom_optimized/build/bin/loom_state_rollback_key_recovery_256
-</code></pre>
+<p>The reference run takes approximately 4.9 seconds on the development host.
+The optimized implementation was independently cross-checked during analysis,
+but its separate witness build is not included in the public harness and is not
+needed to reproduce this finding.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

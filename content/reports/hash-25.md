@@ -1,7 +1,7 @@
 <!-- synchronized report: hash-25/report.md -->
 Candidate: TaiChi
 Family: Symmetric (sponge-like hash)
-Archive: [TaiChi.zip](https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/TaiChi.zip)
+Archive: [TaiChi.zip](https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/TaiChi.zip) (SHA-256: `013bdcd9c7fdcce5bfbfaae84f02f20c5c4ae8a88cb742e7da3fddafeef2e7de`)
 
 ## hash-25-1: Allocation failure reports success without writing a digest
 

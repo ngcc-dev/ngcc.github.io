@@ -21,6 +21,15 @@ The reporters give equal-length fixed-IV messages `00^d || BE32(x) || 00^60`, wi
 
 Further analysis: [Yufei Yuan et al., *Structural Analysis of Seven Hash Functions Submitted to the NGCC*](https://eprint.iacr.org/2026/2152), Section 4 (2026-09-23), derives this local-feedback collision and its fixed-IV message pairs. It does not address the separate `hash-21-2` mechanism below.
 
+### Reproducing
+
+The same candidate-local witness checks both collision families against all
+three submitted libraries:
+
+```sh
+make -C hash-21 reproduce
+```
+
 ## hash-21-2: Reduction modulo 2^32-5 creates reachable state mergers
 
 Severity: Critical
@@ -49,7 +58,7 @@ make -C hash-21 reproduce
 
 Severity: Medium
 Status: Confirmed
-Layer: Implementation
+Layer: Side-channel
 Affected: Reference Neulaser-512/768/1024
 Discovery: Trivial
 Exploitation: Cache side-channel dependent

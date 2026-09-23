@@ -112,7 +112,8 @@ The existing 160f harness result is a direct witness: flipping bit 28911 at byte
 
 ```sh
 make -C sign-11 lib/libFlextree-160f.so
-security/ngcc_security sign-11/lib/libFlextree-160f.so sig-signature-flip
+make -C tools
+tools/ngcc_attack sig-pors-padding sign-11/lib/libFlextree-160f.so
 ```
 
 ## sign-11-6: The specified PORS tree reuses leaf hash addresses

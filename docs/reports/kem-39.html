@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>WeaverKEM (kem-39) · ngcc.dev</title>
-<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+<link rel="stylesheet" href="../assets/style.css?v=15e56c79">
 </head>
 <body>
 <header class="site-header">
@@ -24,7 +24,8 @@
 <h2 class="issue-heading issue-heading-first" id="kem-39-1-prf-substream-reuse-violates-the-ind-cpa-proofs-independence-premise">kem-39-1: PRF substream reuse violates the IND-CPA proof&#x27;s independence premise</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-medium">Medium / implementation</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-probable">Probable</span></td></tr>
 <tr><th>Affected</th><td>Reference implementation, all three parameter sets</td></tr>
 <tr><th>Discovery</th><td>Non-trivial</td></tr>
@@ -37,6 +38,18 @@
 <p>In the implementation, <code>polyvec_invq</code> receives its nonce by value and consumes counter 0 and later substreams internally. Its caller observes only one increment and begins sampling <code>r</code> at counter 1. The CBD input for <code>r[0]</code> is therefore a prefix of the same <code>PRF(seed1, 1)</code> stream already consumed by inverse-q lifting, with additional overlap depending on rejection and vector consumption.</p>
 <p>The counter reuse is present in WeaverKEM-128, WeaverKEM-256, and WeaverKEM-512 and directly contradicts the independence premise used in Game 2 of the submitted proof. The correlation is confirmed, but it has not yet been converted into a concrete IND-CPA distinguisher or key-recovery algorithm. This is therefore a probable claim violation, not a claimed complete break.</p>
 <p>Each logical sampler must receive a disjoint domain or counter range, and the nonce consumed inside <code>polyvec_invq</code> must be returned to or advanced by its caller.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>Fetch the official archive and compare <code>WeaverKEM-128/indcpa.c</code> lines 337–368
+with <code>WeaverKEM-128/poly_invq.c</code> lines 88–103. <code>nonce++</code> passes zero by value
+to <code>polyvec_invq</code>; that function consumes further nonces internally, while the
+caller next uses one for <code>r</code>. The same data flow occurs in the 256 and 512
+reference variants. This verifies the shared PRF substream, not a concrete
+IND-CPA distinguisher.</p>
+<pre><code class="language-sh">IDS=kem-39 ./download.sh
+./extract.sh kem-39
+rg -n 'polyvec_invq|poly_getnoise_eta2|prf\(' kem-39/Implementations/Reference_Implementation/WeaverKEM-128/{indcpa,poly_invq}.c
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

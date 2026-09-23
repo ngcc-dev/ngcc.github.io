@@ -1,7 +1,7 @@
 <!-- synchronized report: sign-26/report.md -->
 Candidate: SQIsign2D-push1/2
 Family: Isogeny-based signature
-Archive: [SQIsign2D-push12.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/SQIsign2D-push12.zip)
+Archive: [SQIsign2D-push12.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/SQIsign2D-push12.zip) (SHA-256: `98b7e4ffddfe31b5fb0f448345b49228c8d8a7c87078688ba1656b28631448c5`)
 
 ## sign-26-1: Prime sizing assumes a superseded square-root isogeny cost
 

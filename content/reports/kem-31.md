@@ -1,7 +1,7 @@
 <!-- synchronized report: kem-31/report.md -->
 Candidate: QIMEN-PIKE
 Family: Isogeny-based
-Archive: [QIMEN-PIKE.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/QIMEN-PIKE.zip)
+Archive: [QIMEN-PIKE.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/QIMEN-PIKE.zip) (SHA-256: `eff17fd345bbb44cbaeb822bece3c0b82b8d00f49278e72a89c83e2551c1752a`)
 
 ## kem-31-1: Invalid ciphertexts trigger an assertion during decapsulation
 

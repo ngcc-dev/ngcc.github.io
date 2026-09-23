@@ -113,7 +113,7 @@ It reports identical signing-key and encoded-salt digests. Source inspection sho
 
 Severity: Medium
 Status: Probable
-Layer: Implementation
+Layer: Side-channel
 Affected: VDOO reference signer, all three parameter sets
 Discovery: Trivial
 Exploitation: Local timing/power side channel; no independent full-key extraction demonstrated

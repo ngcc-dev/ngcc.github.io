@@ -1,7 +1,7 @@
 <!-- synchronized report: kem-10/report.md -->
 Candidate: C-Multi-UR-AG
 Family: Code-based (rank metric)
-Archive: [C-Multi-UR-AG.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/C-Multi-UR-AG.zip)
+Archive: [C-Multi-UR-AG.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/C-Multi-UR-AG.zip) (SHA-256: `c41e372a55e1dd4aa0e30c6b53d9d7b4f9cd1d7ae431763535e1e61097445e2c`)
 
 ## kem-10-1: Malformed ciphertexts crash the reference decapsulator
 
@@ -36,7 +36,7 @@ Each command runs in its own process because the attack input terminates that pr
 
 Severity: Medium
 Status: Confirmed
-Layer: Implementation
+Layer: Side-channel
 Affected: Reference implementations, all three parameter sets
 Discovery: Moderate
 Exploitation: Local cache observer; key recovery not demonstrated

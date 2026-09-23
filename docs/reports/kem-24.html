@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MORNING-Scabbard (kem-24) · ngcc.dev</title>
-<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+<link rel="stylesheet" href="../assets/style.css?v=15e56c79">
 </head>
 <body>
 <header class="site-header">
@@ -24,7 +24,8 @@
 <h2 class="issue-heading issue-heading-first" id="kem-24-1-encryption-omits-the-specified-rounding-constant">kem-24-1: Encryption omits the specified rounding constant</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-medium">Medium / implementation</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-probable">Probable</span></td></tr>
 <tr><th>Affected</th><td>Reference implementation, scabbard128 and scabbard256</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
@@ -36,6 +37,18 @@
 <p>Algorithm 10 forms encryption component <code>u</code> by adding the constant <code>h</code> before the <code>q</code>-to-<code>p</code> right shift, implementing nearest rounding. The scabbard128 and scabbard256 reference implementations omit <code>+h</code> and truncate instead. The scabbard512 source contains the specified addition and provides a direct comparison.</p>
 <p>Re-encryption repeats the same altered operation, so functional KATs and the Fujisaki-Okamoto equality check remain internally consistent. Nevertheless, the ciphertext distribution and decryption-noise law differ from those used by the specification's correctness, decryption-failure, and IND-CPA analyses.</p>
 <p>This is a confirmed implementation/specification mismatch in two of three parameter sets. No concrete distinguisher or key-recovery attack has yet been derived from the changed distribution, so the report does not claim a complete confidentiality break.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>This is a source review, not a runnable attack. Fetch the official archive and
+compare the encryption-component <code>u</code> rounding in the three reference variants:</p>
+<pre><code class="language-sh">IDS=kem-24 ./download.sh
+./extract.sh kem-24
+for level in 128 256 512; do
+  sed -n '60,72p' &quot;kem-24/Implementations/Reference_Implementation/scabbard${level}/indcpa.c&quot;
+done
+</code></pre>
+<p>The <code>u</code> shift is at lines 69, 67, and 69 respectively; only scabbard512 adds
+<code>h1</code> first. Compare Algorithm 10 in <code>kem-24/kem-24-spec.pdf</code>.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FlexTree (sign-11) · ngcc.dev</title>
-<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+<link rel="stylesheet" href="../assets/style.css?v=15e56c79">
 </head>
 <body>
 <header class="site-header">
@@ -24,7 +24,8 @@
 <h2 class="issue-heading issue-heading-first" id="sign-11-1-pors-counter-grinding-reduces-every-claimed-security-level">sign-11-1: PORS counter grinding reduces every claimed security level</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-high">High / design</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>All eight parameter sets</td></tr>
 <tr><th>Discovery</th><td>Moderate</td></tr>
@@ -43,7 +44,8 @@
 <h2 class="issue-heading" id="sign-11-2-withdrawn-sm3-evaluation-mode-length-extension">sign-11-2: Withdrawn — SM3 evaluation-mode length extension</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-info">Info / evaluation</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-info">Info</span></td></tr>
+<tr><th>Scope</th><td>evaluation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-withdrawn">Withdrawn</span></td></tr>
 <tr><th>Affected</th><td>Concrete SM3 evaluation instantiation of the deterministic option only</td></tr>
 <tr><th>Discovery</th><td>Moderate</td></tr>
@@ -62,7 +64,8 @@ it is not a witness against an ideal replacement.</p>
 <h2 class="issue-heading" id="sign-11-3-the-specified-ots-verifier-omits-its-encoding-checks">sign-11-3: The specified OTS verifier omits its encoding checks</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-critical">Critical / design</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Specification-conformant verifiers, all parameter sets; submitted verifier is unaffected</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
@@ -81,7 +84,8 @@ it is not a witness against an ideal replacement.</p>
 <h2 class="issue-heading" id="sign-11-4-withdrawn-sm3-evaluation-state-ceiling">sign-11-4: Withdrawn — SM3 evaluation-state ceiling</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-info">Info / evaluation</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-info">Info</span></td></tr>
+<tr><th>Scope</th><td>evaluation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-withdrawn">Withdrawn</span></td></tr>
 <tr><th>Affected</th><td>Concrete SM3 evaluation instantiations of FlexTree-384s/f and FlexTree-512s/f only</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
@@ -100,7 +104,8 @@ it is not a witness against an ideal replacement.</p>
 <h2 class="issue-heading" id="sign-11-5-unchecked-pors-padding-makes-signatures-malleable">sign-11-5: Unchecked PORS padding makes signatures malleable</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-medium">Medium / design</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>All parameter sets</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
@@ -114,12 +119,14 @@ it is not a witness against an ideal replacement.</p>
 <h3 id="reproducing_4">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">make -C sign-11 lib/libFlextree-160f.so
-security/ngcc_security sign-11/lib/libFlextree-160f.so sig-signature-flip
+make -C tools
+tools/ngcc_attack sig-pors-padding sign-11/lib/libFlextree-160f.so
 </code></pre>
 <h2 class="issue-heading" id="sign-11-6-the-specified-pors-tree-reuses-leaf-hash-addresses">sign-11-6: The specified PORS tree reuses leaf hash addresses</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-low">Low / design</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Specification-conformant implementations; submitted code is unaffected</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
@@ -138,7 +145,8 @@ security/ngcc_security sign-11/lib/libFlextree-160f.so sig-signature-flip
 <h2 class="issue-heading" id="sign-11-7-the-implementation-leaves-1-to-4-ots-digest-bits-unchecked">sign-11-7: The implementation leaves 1 to 4 OTS digest bits unchecked</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-low">Low / implementation</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Seven parameter sets; FlexTree-384s has no loss</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
@@ -156,7 +164,8 @@ security/ngcc_security sign-11/lib/libFlextree-160f.so sig-signature-flip
 <h2 class="issue-heading" id="sign-11-8-complementary-constant-sum-rounding-breaks-interoperability">sign-11-8: Complementary constant-sum rounding breaks interoperability</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-low">Low / design</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>FlexTree-384f and FlexTree-512s specification/code interoperability</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>

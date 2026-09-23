@@ -32,7 +32,7 @@ The check verifies the TSUOV-512 construction on physical PDF pages 18–21 and 
 
 Severity: Medium
 Status: Probable
-Layer: Implementation
+Layer: Side-channel
 Affected: TSUOV reference signer, all three parameter sets
 Discovery: Trivial
 Exploitation: Local timing side channel; no key recovery demonstrated
@@ -43,4 +43,9 @@ The signing trapdoor builds a linear system from the private central map and fre
 
 ### Reproducing
 
-Inspect `TSUOV_128/tsuov_core.c` lines 680–790 and 960–985 and trace the matrix construction from `TSUOV_Sign`. The same source pattern occurs in the other two reference parameter sets. This confirms secret-dependent control flow, not a measured remote timing exploit.
+Inspect the included reference source at
+`sign-31/Implementations/Digital_Signature-TSUOV-x86-Reference_Implementation/API_PKC/Implementations/Reference_Implementation/TSUOV_128/tsuov_core.c`,
+lines 680–790 and 960–985, and trace the matrix construction from
+`TSUOV_Sign`. The corresponding `tsuov_core.c` files for TSUOV_256 and
+TSUOV_512 are also included for comparison. This confirms secret-dependent
+control flow, not a measured remote timing exploit.

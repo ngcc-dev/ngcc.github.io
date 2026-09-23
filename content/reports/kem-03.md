@@ -1,13 +1,13 @@
 <!-- synchronized report: kem-03/report.md -->
 Candidate: BAG-Loong
 Family: Code-based (rank metric)
-Archive: [BAG-Loong.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/BAG-Loong.zip)
+Archive: [BAG-Loong.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/BAG-Loong.zip) (SHA-256: `2795fd57d3d00791652256362b4a21982116d3aad1fb63633dac923e0e76e05b`)
 
 ## kem-03-1: Secret-dependent pivoting in the Gabidulin decoder
 
 Severity: Medium
 Status: Confirmed
-Layer: Implementation
+Layer: Side-channel
 Affected: Reference implementations, all four parameter sets
 Discovery: Moderate
 Exploitation: Local control-flow/cache observer; key recovery not demonstrated

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Neulaser (hash-21) · ngcc.dev</title>
-<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+<link rel="stylesheet" href="../assets/style.css?v=15e56c79">
 </head>
 <body>
 <header class="site-header">
@@ -24,7 +24,8 @@
 <h2 class="issue-heading issue-heading-first" id="hash-21-1-a-local-feedback-collision-merges-complete-neulaser-states">hash-21-1: A local feedback collision merges complete Neulaser states</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-critical">Critical / design</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Neulaser-512, Neulaser-768, and Neulaser-1024</td></tr>
 <tr><th>Discovery</th><td>Moderate</td></tr>
@@ -36,10 +37,17 @@
 <p>For a register module whose only nonzero word is its discarded first stage, the feedback map sends both <code>00002743</code> and <code>0002ad84</code> to <code>8c41db68</code>. The global mixing function does not read that stage, so states differing only by these words become identical after one initialization round. All later rounds and the final digests are then identical.</p>
 <p>The reporters give equal-length fixed-IV messages <code>00^d || BE32(x) || 00^60</code>, with <code>d=56,88,120</code> bytes for the three instances and <code>x</code> chosen from the colliding pair. The submitted Neulaser-512 implementation maps both 120-byte messages to <code>f899bf50663e6e04fa5374baf28886153ea332bf25443817eb2abbca88072458dbd7a077712aae99fb112b7672c85a705700e027b348516cc45f8fff537713d3</code>; full-round collisions reproduce for all three instances.</p>
 <p>Further analysis: <a href="https://eprint.iacr.org/2026/2152">Yufei Yuan et al., <em>Structural Analysis of Seven Hash Functions Submitted to the NGCC</em></a>, Section 4 (2026-09-23), derives this local-feedback collision and its fixed-IV message pairs. It does not address the separate <code>hash-21-2</code> mechanism below.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>The same candidate-local witness checks both collision families against all
+three submitted libraries:</p>
+<pre><code class="language-sh">make -C hash-21 reproduce
+</code></pre>
 <h2 class="issue-heading" id="hash-21-2-reduction-modulo-232-5-creates-reachable-state-mergers">hash-21-2: Reduction modulo 2^32-5 creates reachable state mergers</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-critical">Critical / design</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Neulaser-512, Neulaser-768, and Neulaser-1024</td></tr>
 <tr><th>Discovery</th><td>Moderate</td></tr>
@@ -50,7 +58,7 @@
 <p>Original source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/XQYQ4KEDXJKCSRQT6DY5XNA4WIHGJB4J/">CryptHashForum report</a></p>
 <p>Neulaser loads unrestricted 32-bit message words but overwrites stages 8, 12, and 15 after reduction modulo <code>p=2^32-5</code>. Each value <code>y</code> from 0 through 4 therefore has two encodings, <code>y</code> and <code>y+p</code>. Stages 8 and 12 do not enter any other tap feeding that round, so choosing the two pre-reduction values makes the entire state merge after one round.</p>
 <p>The public comment supplies deterministic one-block collisions for every parameter set. For Neulaser-512, two otherwise-zero 888-bit messages place <code>45d27672</code> and <code>ba2d8989</code> at bytes 24--27; both produce the published digest beginning <code>a4cfaefc283b5d78</code>. Four independently mergeable words give 16-message multicollisions. This is a second, independent full-round collision mechanism, not a restatement of <code>hash-21-1</code>.</p>
-<h3 id="reproducing">Reproducing</h3>
+<h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>The witness verifies both published collision families, including the exact full digests, against all three submitted libraries:</p>
 <pre><code class="language-sh">make -C hash-21 reproduce
@@ -58,7 +66,8 @@
 <h2 class="issue-heading" id="hash-21-3-secret-state-indexes-a-256-byte-s-box">hash-21-3: Secret state indexes a 256-byte S-box</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-medium">Medium / implementation</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>side-channel</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Reference Neulaser-512/768/1024</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
@@ -68,7 +77,7 @@
 </table></div>
 
 <p><code>nl_sbox_word</code> reads <code>NL_SBOX</code> at four indices derived from an evolving 32-bit state word (<code>CryptHash_AlgorithmInstance.c:85-90</code>). The 256-byte table spans cache lines, so the lookup address depends on secret message content. The source also computes state-derived <code>x % (2^32-5)</code> (<code>:60-63</code>), whose timing requires target-specific code inspection; the report does not rely on it. No preimage-recovery exploit is claimed. See <a href="../constant-time/hash-21.html">constant_time.md</a>.</p>
-<h3 id="reproducing_1">Reproducing</h3>
+<h3 id="reproducing_2">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>Inspect the four <code>NL_SBOX</code> accesses in any reference variant and compare indices for unequal state words; they select different table lines.</p>
 </main>

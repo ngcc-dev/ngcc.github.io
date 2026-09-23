@@ -1,13 +1,13 @@
 <!-- synchronized report: hash-11/report.md -->
 Candidate: Garnet
 Family: Symmetric (AES-derived hash)
-Archive: [Garnet.zip](https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/Garnet.zip)
+Archive: [Garnet.zip](https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/Garnet.zip) (SHA-256: `9cb659f7e01a64bdcce2a4fea8a7d6e6b5687b2a0ed8ce4ffe5fa86dd3e77646`)
 
 ## hash-11-1: Secret state indexes AES T-tables
 
 Severity: Medium
 Status: Confirmed
-Layer: Implementation
+Layer: Side-channel
 Affected: Reference Garnet variants
 Discovery: Trivial
 Exploitation: Cache side-channel dependent
@@ -19,4 +19,3 @@ Each AES-like round indexes four 1-KiB T-tables with bytes of the evolving hash 
 ### Reproducing
 
 Inspect the cited `TE0`–`TE3` loads; identical-length inputs with different first blocks produce different state-derived table indices. This is an address-trace witness, not a timing-extraction benchmark.
-

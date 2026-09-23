@@ -31,7 +31,7 @@ The static witness checks all three independent implementation copies and fails 
 
 Severity: Medium
 Status: Probable
-Layer: Implementation
+Layer: Side-channel
 Affected: Reference decapsulation, all three parameter sets
 Discovery: Trivial
 Exploitation: Local cache/address-trace leak of an internal decryption value; no key recovery demonstrated

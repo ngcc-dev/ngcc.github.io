@@ -88,7 +88,7 @@ make -C hash-04 reproduce
 
 Severity: Medium
 Status: Confirmed
-Layer: Implementation
+Layer: Side-channel
 Affected: Reference CHAMP-512 and CHAMP-1024
 Discovery: Trivial
 Exploitation: Cache side-channel dependent

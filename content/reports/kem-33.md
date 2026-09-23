@@ -1,13 +1,18 @@
 <!-- synchronized report: kem-33/report.md -->
 Candidate: QUBE
 Family: Code-based
-Archive: [QUBE.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/QUBE.zip)
+Archive: [QUBE.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/QUBE.zip) (SHA-256: `f5eedd8a4bf786cd5a56a21f2c7ad5cf3307939a1bf0aeca5041920067880396`)
+
+Reference-KAT note: `make -C kem-33 test` reports four mismatches and one
+missing KAT because the submitted top-level vectors do not match the submitted
+reference tree; this is independent of the timing findings below. The harness
+documents the submitted reference/in-tree-vector comparison in `kem-33/README.md`.
 
 ## kem-33-1: Decapsulation re-expands the private seed with a variable-length sampler
 
 Severity: Medium
 Status: Confirmed
-Layer: Implementation
+Layer: Side-channel
 Affected: QUBE reference KEM decapsulation; demonstrated on QUBE-256
 Discovery: Trivial
 Exploitation: Secret-seed-dependent execution trace; key recovery not demonstrated
@@ -41,7 +46,7 @@ It confirms different draw counts for two private seeds (254 versus 231 on this 
 
 Severity: Medium
 Status: Probable
-Layer: Implementation
+Layer: Side-channel
 Affected: QUBE reference decapsulation; demonstrated in QUBE-256 source
 Discovery: Moderate
 Exploitation: Local branch/address trace tied to private support; full shared-secret recovery not demonstrated

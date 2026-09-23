@@ -7,4 +7,9 @@ constant-time certification. A source trace alone does not establish a remote
 timing attack or key recovery; see the linked [reports](../reports/index.md)
 for finding-specific impact and status.
 
+Some reviews cite submission source files that are not bundled in the compact
+[public harness](https://github.com/ngcc-dev/ngcc-harness). To inspect them,
+download the official archive with `IDS=<id> ./download.sh`, verify its digest
+against `SOURCE_ARCHIVES.md`, and run `./extract.sh <id>` in a harness checkout.
+
 <!-- constant-time -->

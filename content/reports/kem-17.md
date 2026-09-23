@@ -117,7 +117,7 @@ On a freshly generated official HEP-QC-1 key, this prints `3^5888 + 1^64`; its u
 
 Severity: Medium
 Status: Confirmed
-Layer: Implementation
+Layer: Side-channel
 Affected: Reference and x86_64 implementations, all parameter sets
 Discovery: Moderate
 Exploitation: Local cache/control-flow observation; no full key recovery demonstrated

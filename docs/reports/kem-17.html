@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>HEP-QC (kem-17) · ngcc.dev</title>
-<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+<link rel="stylesheet" href="../assets/style.css?v=15e56c79">
 </head>
 <body>
 <header class="site-header">
@@ -24,7 +24,8 @@
 <h2 class="issue-heading issue-heading-first" id="kem-17-1-publicly-reproducible-secret-keys">kem-17-1: Publicly reproducible secret keys</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-critical">Critical / implementation</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Reference implementation, all four parameter sets</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
@@ -48,7 +49,8 @@ witnesses and their controls. See <code>tools/README.md</code>.</p>
 <h2 class="issue-heading" id="kem-17-2-hep-qc-7-has-at-most-256-bits-of-key-generation-support">kem-17-2: HEP-QC-7 has at most 256 bits of key-generation support</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-critical">Critical / design</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>HEP-QC-7 specification</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
@@ -68,7 +70,8 @@ witnesses and their controls. See <code>tools/README.md</code>.</p>
 <h2 class="issue-heading" id="kem-17-3-first-encapsulation-in-each-process-is-publicly-reproducible">kem-17-3: First encapsulation in each process is publicly reproducible</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-critical">Critical / implementation</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Reference implementation, all four parameter sets</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
@@ -89,7 +92,8 @@ witnesses and their controls. See <code>tools/README.md</code>.</p>
 <h2 class="issue-heading" id="kem-17-4-public-column-multiplicities-break-the-epc-p-assumption">kem-17-4: Public column multiplicities break the EPC-P assumption</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-high">High / design</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>All four HEP-QC parameter sets</td></tr>
 <tr><th>Discovery</th><td>Moderate</td></tr>
@@ -110,7 +114,8 @@ python3 kem-17/reproduce_epcp_fingerprint.py
 <h2 class="issue-heading" id="kem-17-5-secret-permutation-and-mixing-matrix-drive-memory-and-control-flow">kem-17-5: Secret permutation and mixing matrix drive memory and control flow</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-medium">Medium / implementation</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>side-channel</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Reference and x86_64 implementations, all parameter sets</td></tr>
 <tr><th>Discovery</th><td>Moderate</td></tr>

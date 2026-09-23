@@ -21,3 +21,18 @@ In the implementation, `polyvec_invq` receives its nonce by value and consumes c
 The counter reuse is present in WeaverKEM-128, WeaverKEM-256, and WeaverKEM-512 and directly contradicts the independence premise used in Game 2 of the submitted proof. The correlation is confirmed, but it has not yet been converted into a concrete IND-CPA distinguisher or key-recovery algorithm. This is therefore a probable claim violation, not a claimed complete break.
 
 Each logical sampler must receive a disjoint domain or counter range, and the nonce consumed inside `polyvec_invq` must be returned to or advanced by its caller.
+
+### Reproducing
+
+Fetch the official archive and compare `WeaverKEM-128/indcpa.c` lines 337–368
+with `WeaverKEM-128/poly_invq.c` lines 88–103. `nonce++` passes zero by value
+to `polyvec_invq`; that function consumes further nonces internally, while the
+caller next uses one for `r`. The same data flow occurs in the 256 and 512
+reference variants. This verifies the shared PRF substream, not a concrete
+IND-CPA distinguisher.
+
+```sh
+IDS=kem-39 ./download.sh
+./extract.sh kem-39
+rg -n 'polyvec_invq|poly_getnoise_eta2|prf\(' kem-39/Implementations/Reference_Implementation/WeaverKEM-128/{indcpa,poly_invq}.c
+```

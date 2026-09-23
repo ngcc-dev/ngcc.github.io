@@ -43,7 +43,7 @@ ATTACK kex-pfs-recovery AFS_KEX_C512 CONFIRMED recorded m1/m2 plus later API lon
 
 Severity: Medium
 Status: Confirmed
-Layer: Implementation
+Layer: Side-channel
 Affected: AFS_KEX_C128 reference implementation
 Discovery: Trivial
 Exploitation: Secret-dependent decapsulation control flow; key recovery not demonstrated

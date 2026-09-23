@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mito (kem-23) · ngcc.dev</title>
-<link rel="stylesheet" href="../assets/style.css?v=d6026593">
+<link rel="stylesheet" href="../assets/style.css?v=15e56c79">
 </head>
 <body>
 <header class="site-header">
@@ -24,7 +24,8 @@
 <h2 class="issue-heading issue-heading-first" id="kem-23-1-mito-e-discards-every-erasure-before-reedsolomon-decoding">kem-23-1: Mito-E discards every erasure before Reed–Solomon decoding</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Classification</th><td><span class="sev sev-medium">Medium / implementation</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Mito-1-E and Mito-2-E, all three parameter sets</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
@@ -39,7 +40,18 @@
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 security/design_parameter_audit.py --report-id kem-23-1
 </code></pre>
-<p>The <code>kem-23-1</code> check verifies this data-flow defect in all twelve E-variant source trees (six parameter variants in reference and optimized form) and the corresponding errors-and-erasures requirement in the PDF.</p>
+<p>The <code>kem-23-1</code> check verifies this data-flow defect in the six reference
+E-variant source trees retained in the public harness and the corresponding
+errors-and-erasures requirement in the PDF. The command does not inspect the
+optimized trees.</p>
+<p>To check the six optimized counterparts mentioned above, download the
+SHA-256-identified official archive and inspect each optimized E-variant's
+<code>code.c</code> and <code>reed_solomon.h</code> for the same discarded <code>t</code>/<code>pos</code> values and
+two-argument <code>reed_solomon_decode(m, tmp)</code> call:</p>
+<pre><code class="language-sh">IDS=kem-23 ./download.sh
+./extract.sh kem-23
+rg -n 'reed_muller_decode\(tmp, pos, em\)|reed_solomon_decode\(m, tmp\)' kem-23/Implementations --glob code.c
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

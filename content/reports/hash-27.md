@@ -1,13 +1,13 @@
 <!-- synchronized report: hash-27/report.md -->
 Candidate: Vedak
 Family: Symmetric (sponge hash)
-Archive: [Vedak.zip](https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/Vedak.zip)
+Archive: [Vedak.zip](https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/Vedak.zip) (SHA-256: `dc1fa5612337e0aae3e236606c3e46322a513c21b1550ac8f20753790892637e`)
 
 ## hash-27-1: Secret state indexes an eight-bit substitution table
 
 Severity: Medium
 Status: Confirmed
-Layer: Implementation
+Layer: Side-channel
 Affected: Reference Vedak-512/768/1024
 Discovery: Trivial
 Exploitation: Cache side-channel dependent
