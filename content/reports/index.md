@@ -15,6 +15,6 @@ integration rather than the specified construction.
 Each finding has a stable `xxx-yy-z` identifier; candidates with multiple
 findings occupy multiple rows and each row is classified independently.
 
-<!-- recent-updates -->
+<!-- recent-additions -->
 
 <!-- reports -->

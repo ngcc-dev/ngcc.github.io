@@ -284,7 +284,7 @@ def recent_updates_html(reports, prefix):
             by_date.setdefault(date, []).append((issue["id"], report["cid"], issue["anchor"]))
             by_layer[issue["layer"]] += 1
 
-    lines = ['<h2 id="recent-updates">Recent updates</h2>']
+    lines = ['<h2 id="recent-additions">Recent additions</h2>']
     for date in sorted(by_date, reverse=True):
         links = []
         for issue_id, cid, anchor in sorted(by_date[date]):
@@ -378,7 +378,7 @@ def report_page(r, prefix):
 
 
 def expand_placeholders(text, cands, prefix, reports):
-    text = re.sub(r"<!--\s*recent-updates\s*-->",
+    text = re.sub(r"<!--\s*recent-additions\s*-->",
                   lambda m: recent_updates_html(reports, prefix), text)
     text = re.sub(r"<!--\s*reports\s*-->", lambda m: reports_html(reports, cands, prefix), text)
 
