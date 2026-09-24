@@ -1,3 +1,6 @@
 __pycache__/
 *.pyc
 .venv/
+# Unpublished performance drafts; never copy them into the published site.
+/content/data/performance/
+/docs/data/performance/

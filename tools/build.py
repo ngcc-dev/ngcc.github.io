@@ -494,7 +494,9 @@ def main():
     if ASSETS.is_dir():
         shutil.copytree(ASSETS, DOCS / "assets")
     if (CONTENT / "data").is_dir():
-        shutil.copytree(CONTENT / "data", DOCS / "data")
+        # Unpublished local performance drafts are not part of the website.
+        shutil.copytree(CONTENT / "data", DOCS / "data",
+                        ignore=shutil.ignore_patterns("performance"))
     cands = load_candidates()
     reports = load_reports()
     pages = sorted(p.relative_to(CONTENT) for p in CONTENT.rglob("*.md"))

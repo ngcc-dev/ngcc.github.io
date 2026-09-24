@@ -17,7 +17,7 @@
 <h1 id="origami-sign-18">Origami (sign-18)</h1>
 <div class="table-wrap"><table class="meta">
 <tr><th>Candidate</th><td>Origami</td></tr>
-<tr><th>Family</th><td>MPC-in-the-head</td></tr>
+<tr><th>Family</th><td>Multivariate (layered MQ)</td></tr>
 <tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/Origami.zip">Origami.zip</a> (SHA-256: <code>e34f18832e968681dd0c51ce0d4b29d80e01ad29daa83dfb805718b76fdffa80</code>)</td></tr>
 </table></div>
 
@@ -98,6 +98,27 @@ python3 sign-18/reproduce_signature_subspace.py
 <h3 id="reproducing_3">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>Inspect the cited lookup definitions and signer call sites in <code>Implementations and Test_Vectors/Implementations/Reference_Implementation/Origami-256/</code>; the same pattern is present in the other reference parameter sets. This is a source/dataflow witness, not a measured extraction.</p>
+<h2 class="issue-heading" id="sign-18-5-public-variable-permutation-permits-signature-forgery">sign-18-5: Public variable permutation permits signature forgery</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Origami-128 (full forgery reproduced); the same public-permutation and triangular-zone construction occurs in Origami-256/-384/-512, not runtime-tested here</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Public-key-only forgery for a chosen message, with no signing queries</td></tr>
+<tr><th>Credit</th><td>Pierre Pébereau</td></tr>
+<tr><th>Date</th><td>2026-09-24</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/HTZTMJ42AUXCWEDA3AURP4ZOEGSGSV4Z/">NGCC PKC Forum post</a>, <a href="https://github.com/pi-r2/UnfoldOrigami/tree/defa3405d66e763580729b14d6f81c1300fbb219">UnfoldOrigami code</a></p>
+<p>Origami §2.5.6 explicitly derives the change of variables <code>Π_pub</code> from the <em>public</em> expansion seed and defines <code>P_pub = G ∘ Π_pub^-1</code>. Undoing that permutation exposes the zone order. The public-key expansion supplies each zone's affine coefficients, so an attacker can choose its vinegar coordinates and solve the resulting linear system for oil coordinates, proceeding zone by zone. This reproduces the signer's easy inversion without its secret seed or a signing oracle. It is distinct from <code>sign-18-2</code>'s signature-derived subspace observation.</p>
+<p>Pébereau's Origami-128 implementation forges a signature that the archived <code>sig_verify</code> accepts; a changed-message control rejects. The four submitted sets have byte-identical <code>origami_ref.c</code> evaluators and the same public-permutation construction, but full-size forging runtimes for the higher sets have not been independently measured here. This attack survives ideal replacement of the contest hash/XOF placeholders: those determine the public target, not the invertibility of the public map.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C sign-18 lib/libOrigami-128.so
+python3 sign-18/reproduce_public_forgery.py
+</code></pre>
+<p>The checker clones and checks out Pébereau's pinned attack source into a temporary directory; an existing checkout at that commit can instead be supplied as its positional argument. It loads only the library built from the archived Origami source, not the attack repository's bundled binary. It seeds key generation afresh, erases the resulting secret before calling <code>forge</code>, verifies the new signature, and rejects the same signature on a changed message. Three local runs passed with roughly 0.6-second inversion each; this is not an all-level benchmark. Python must provide <code>hashlib</code> SM3 support for this submitted evaluation variant.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

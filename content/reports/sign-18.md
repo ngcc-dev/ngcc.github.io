@@ -1,6 +1,6 @@
 <!-- synchronized report: sign-18/report.md -->
 Candidate: Origami
-Family: MPC-in-the-head
+Family: Multivariate (layered MQ)
 Archive: [Origami.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/Origami.zip) (SHA-256: `e34f18832e968681dd0c51ce0d4b29d80e01ad29daa83dfb805718b76fdffa80`)
 
 ## sign-18-1: A fixed 512-bit message prehash caps forgery security at 256 bits
@@ -88,3 +88,28 @@ Origami's `gf_mult` and `gf_inv` index 256-byte and 16-byte tables by field oper
 ### Reproducing
 
 Inspect the cited lookup definitions and signer call sites in `Implementations and Test_Vectors/Implementations/Reference_Implementation/Origami-256/`; the same pattern is present in the other reference parameter sets. This is a source/dataflow witness, not a measured extraction.
+
+## sign-18-5: Public variable permutation permits signature forgery
+
+Severity: Critical
+Status: Confirmed
+Layer: Design
+Affected: Origami-128 (full forgery reproduced); the same public-permutation and triangular-zone construction occurs in Origami-256/-384/-512, not runtime-tested here
+Discovery: Moderate
+Exploitation: Public-key-only forgery for a chosen message, with no signing queries
+Credit: Pierre Pébereau
+Date: 2026-09-24
+Original source: [NGCC PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/HTZTMJ42AUXCWEDA3AURP4ZOEGSGSV4Z/), [UnfoldOrigami code](https://github.com/pi-r2/UnfoldOrigami/tree/defa3405d66e763580729b14d6f81c1300fbb219)
+
+Origami §2.5.6 explicitly derives the change of variables `Π_pub` from the *public* expansion seed and defines `P_pub = G ∘ Π_pub^-1`. Undoing that permutation exposes the zone order. The public-key expansion supplies each zone's affine coefficients, so an attacker can choose its vinegar coordinates and solve the resulting linear system for oil coordinates, proceeding zone by zone. This reproduces the signer's easy inversion without its secret seed or a signing oracle. It is distinct from `sign-18-2`'s signature-derived subspace observation.
+
+Pébereau's Origami-128 implementation forges a signature that the archived `sig_verify` accepts; a changed-message control rejects. The four submitted sets have byte-identical `origami_ref.c` evaluators and the same public-permutation construction, but full-size forging runtimes for the higher sets have not been independently measured here. This attack survives ideal replacement of the contest hash/XOF placeholders: those determine the public target, not the invertibility of the public map.
+
+### Reproducing
+
+```sh
+make -C sign-18 lib/libOrigami-128.so
+python3 sign-18/reproduce_public_forgery.py
+```
+
+The checker clones and checks out Pébereau's pinned attack source into a temporary directory; an existing checkout at that commit can instead be supplied as its positional argument. It loads only the library built from the archived Origami source, not the attack repository's bundled binary. It seeds key generation afresh, erases the resulting secret before calling `forge`, verifies the new signature, and rejects the same signature on a changed message. Three local runs passed with roughly 0.6-second inversion each; this is not an all-level benchmark. Python must provide `hashlib` SM3 support for this submitted evaluation variant.
