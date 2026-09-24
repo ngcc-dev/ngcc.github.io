@@ -59,3 +59,47 @@ tools/ngcc_attack sig-malleable sign-01/lib/libAigis-sig1.so
 ```
 
 The command reports both the accepted noncanonical flips for `sign-01-1` and the number of flips that crash the verifier. The source defect is shared by the three submitted parameter sets.
+
+## sign-01-3: Signature API ignores declared key-buffer lengths
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: Aigis-Sig+ reference wrappers, all three parameter sets; runtime witness on set I
+Discovery: Trivial
+Exploitation: Out-of-bounds read or crash on a caller-supplied short key; no disclosure shown
+Credit: Askus Operator (Luna High), with human review by Askus Li
+Date: 2026-09-23
+Original source: [NGCC PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/2ZTM3BMRATA6QTPA2OZSSSEBVBCTPHM6/), [GitHub PR #14](https://github.com/ngcc-dev/ngcc-harness/pull/14)
+
+The submitted `sig_sign` and `sig_verify` wrappers discard `sk_len_bytes` and `pk_len_bytes` before `unpack_sk` and `unpack_pk` read the fixed-size keys. A one-byte key declared with length zero triggers an AddressSanitizer out-of-bounds read in each path. Applications that always pass the advertised key sizes do not encounter this defect; no remote disclosure or stronger exploit is demonstrated.
+
+### Reproducing
+
+```sh
+bash sign-01/reproduce_memory_safety.sh
+```
+
+The source-built set-I tests require Linux/GCC AddressSanitizer and print separate `CONFIRMED` lines for the short secret and public keys.
+
+## sign-01-4: Honest signing writes one polynomial past the mask vector
+
+Severity: Medium
+Status: Confirmed
+Layer: Implementation
+Affected: Aigis-Sig+ reference signers, all three parameter sets; runtime witness on set I
+Discovery: Trivial
+Exploitation: 2,048-byte stack-buffer write on the signer path; controlled corruption or key disclosure not shown
+Credit: Askus Operator (Luna High), with human review by Askus Li
+Date: 2026-09-23
+Original source: [NGCC PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/2ZTM3BMRATA6QTPA2OZSSSEBVBCTPHM6/), [GitHub PR #14](https://github.com/ngcc-dev/ngcc-harness/pull/14)
+
+`polyvecl_uniform_gamma1` fills `PARAM_L` polynomials and then calls `polyz_unpack(v->vec + i, outbuf)` once more after the loop, when `i == PARAM_L`. That writes an entire polynomial past the `polyvecl` object during honest signing. The extra call is present in all three reference sets. AddressSanitizer confirms the out-of-bounds stack write at `polyvec.c:214`; ordinary signing may appear to work because the adjacent stack layout varies. This is separate from `sign-01-2`'s attacker-input overflow in verification.
+
+### Reproducing
+
+```sh
+bash sign-01/reproduce_memory_safety.sh
+```
+
+The set-I witness invokes the same mask sampler as the signer and requires an AddressSanitizer stack-buffer-overflow diagnostic at `polyvecl_uniform_gamma1`.

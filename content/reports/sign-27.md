@@ -40,6 +40,8 @@ Original source: [GitHub issue #10 and its attached cost model](https://github.c
 
 Section 5.3 selects `p` by requiring `p^1/2 > 2^λ` and states that the One Endomorphism Problem is equivalent to the underlying isogeny problem. [Wesolowski, ePrint 2026/1486](https://eprint.iacr.org/2026/1486) gives a heuristic `p^(1/3+o(1))` time-and-memory algorithm for that problem. The square-root sizing premise is therefore superseded at all four levels, including the 128- and 160-bit sets. For the 160-bit set, `p=9·2^309−1` gives a bare `p^1/3` exponent of about 104.1; this is **not** the paper's concrete attack cost. The issue's attached model lists the Triangle primes, but uncertain superpolynomial overhead and high memory could close smaller margins. No concrete full-size key recovery or forgery is claimed.
 
+[Mamah's later concrete time–space analysis](https://eprint.iacr.org/2026/1821), updated 2026-09-23, finds that the optimistic improvement can require prohibitive memory even for generic 256- and 512-bit SQIsign primes. It does not cost these archived NGCC instances, so this remains a lead rather than a concrete break.
+
 ### Reproducing
 
 Compare §5.3 and Table 6 of `sign-27-spec.pdf` with the cited paper and [issue model](https://github.com/user-attachments/files/32554686/w26_estimate.py).

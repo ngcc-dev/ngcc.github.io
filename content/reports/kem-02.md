@@ -55,3 +55,27 @@ The Amoeba decapsulator decrypts under the private key and ECC-decodes the resul
 ### Reproducing
 
 Follow `src/backend/ccakem.c:60-80` → `src/backend/cpapke.c:438-447` → `src/backend/hamming.c:131,157-183` under `Implementations/Reference_Implementation/Amoeba-576/`; the same decoder pattern appears in the other reference sets. This is a source-level witness, not a measured timing benchmark. See `constant_time.md` for the secret/public classification.
+
+## kem-02-3: The decryption-failure bound omits detected two-error rejections
+
+Severity: Medium
+Status: Confirmed
+Layer: Design
+Affected: All five Amoeba parameter sets; Amoeba-576's modeled bound falls below its 128-bit target
+Discovery: Moderate
+Exploitation: Failure-bound/proof mismatch; no separate full-size key recovery demonstrated
+Credit: Yijian Liu (with AI assistance)
+Date: 2026-09-23
+Original source: [NGCC PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/35SR56KWDUXV5KRSKBU6TXO3LW25CMOC/)
+
+Section 2.3.2 says the shortened extended Hamming decoder corrects one error but **rejects** exactly two. Nevertheless its quoted decryption-failure bound uses only the probability of three or more errors. The submitted `CPAPKE_Decrypt` returns `-1` when `decode_ECC` detects two errors, and `CCAKEM_Decaps` propagates that rejection. Those events must count when bounding honest key-agreement failures and the PKE failure term used in §3.1.2's CCA reduction.
+
+Under the submission's own Gaussian and independent-bit approximation, counting two-error events changes the Amoeba-576 tail from `2^-130.2722` to `2^-86.1221`; the same notebook prints both numbers, while Table 4 quotes a roughly `2^-133.3` failure claim. The revised figure is **not** a measurement or certified bound for correlated implementation noise, and this accounting flaw is not a second demonstrated key-recovery attack.
+
+### Reproducing
+
+```sh
+python3 kem-02/reproduce_dfr_tail.py
+```
+
+The standalone calculation reproduces all five two- and three-error tails from the archived `Security/noise_estimation.ipynb`. Inspect `hamming.c:157-183`, `cpapke.c:438-447`, and `ccakem.c:60-63` in the Amoeba-576 reference tree for the actual rejection path.

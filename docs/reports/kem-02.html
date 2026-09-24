@@ -64,6 +64,26 @@
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>Follow <code>src/backend/ccakem.c:60-80</code> → <code>src/backend/cpapke.c:438-447</code> → <code>src/backend/hamming.c:131,157-183</code> under <code>Implementations/Reference_Implementation/Amoeba-576/</code>; the same decoder pattern appears in the other reference sets. This is a source-level witness, not a measured timing benchmark. See <code>constant_time.md</code> for the secret/public classification.</p>
+<h2 class="issue-heading" id="kem-02-3-the-decryption-failure-bound-omits-detected-two-error-rejections">kem-02-3: The decryption-failure bound omits detected two-error rejections</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All five Amoeba parameter sets; Amoeba-576's modeled bound falls below its 128-bit target</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Failure-bound/proof mismatch; no separate full-size key recovery demonstrated</td></tr>
+<tr><th>Credit</th><td>Yijian Liu (with AI assistance)</td></tr>
+<tr><th>Date</th><td>2026-09-23</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/35SR56KWDUXV5KRSKBU6TXO3LW25CMOC/">NGCC PKC Forum post</a></p>
+<p>Section 2.3.2 says the shortened extended Hamming decoder corrects one error but <strong>rejects</strong> exactly two. Nevertheless its quoted decryption-failure bound uses only the probability of three or more errors. The submitted <code>CPAPKE_Decrypt</code> returns <code>-1</code> when <code>decode_ECC</code> detects two errors, and <code>CCAKEM_Decaps</code> propagates that rejection. Those events must count when bounding honest key-agreement failures and the PKE failure term used in §3.1.2's CCA reduction.</p>
+<p>Under the submission's own Gaussian and independent-bit approximation, counting two-error events changes the Amoeba-576 tail from <code>2^-130.2722</code> to <code>2^-86.1221</code>; the same notebook prints both numbers, while Table 4 quotes a roughly <code>2^-133.3</code> failure claim. The revised figure is <strong>not</strong> a measurement or certified bound for correlated implementation noise, and this accounting flaw is not a second demonstrated key-recovery attack.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-02/reproduce_dfr_tail.py
+</code></pre>
+<p>The standalone calculation reproduces all five two- and three-error tails from the archived <code>Security/noise_estimation.ipynb</code>. Inspect <code>hamming.c:157-183</code>, <code>cpapke.c:438-447</code>, and <code>ccakem.c:60-63</code> in the Amoeba-576 reference tree for the actual rejection path.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

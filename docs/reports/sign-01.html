@@ -68,6 +68,44 @@ witnesses and their controls. See <code>tools/README.md</code>.</p>
 tools/ngcc_attack sig-malleable sign-01/lib/libAigis-sig1.so
 </code></pre>
 <p>The command reports both the accepted noncanonical flips for <code>sign-01-1</code> and the number of flips that crash the verifier. The source defect is shared by the three submitted parameter sets.</p>
+<h2 class="issue-heading" id="sign-01-3-signature-api-ignores-declared-key-buffer-lengths">sign-01-3: Signature API ignores declared key-buffer lengths</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Aigis-Sig+ reference wrappers, all three parameter sets; runtime witness on set I</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Out-of-bounds read or crash on a caller-supplied short key; no disclosure shown</td></tr>
+<tr><th>Credit</th><td>Askus Operator (Luna High), with human review by Askus Li</td></tr>
+<tr><th>Date</th><td>2026-09-23</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/2ZTM3BMRATA6QTPA2OZSSSEBVBCTPHM6/">NGCC PKC Forum post</a>, <a href="https://github.com/ngcc-dev/ngcc-harness/pull/14">GitHub PR #14</a></p>
+<p>The submitted <code>sig_sign</code> and <code>sig_verify</code> wrappers discard <code>sk_len_bytes</code> and <code>pk_len_bytes</code> before <code>unpack_sk</code> and <code>unpack_pk</code> read the fixed-size keys. A one-byte key declared with length zero triggers an AddressSanitizer out-of-bounds read in each path. Applications that always pass the advertised key sizes do not encounter this defect; no remote disclosure or stronger exploit is demonstrated.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">bash sign-01/reproduce_memory_safety.sh
+</code></pre>
+<p>The source-built set-I tests require Linux/GCC AddressSanitizer and print separate <code>CONFIRMED</code> lines for the short secret and public keys.</p>
+<h2 class="issue-heading" id="sign-01-4-honest-signing-writes-one-polynomial-past-the-mask-vector">sign-01-4: Honest signing writes one polynomial past the mask vector</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Aigis-Sig+ reference signers, all three parameter sets; runtime witness on set I</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>2,048-byte stack-buffer write on the signer path; controlled corruption or key disclosure not shown</td></tr>
+<tr><th>Credit</th><td>Askus Operator (Luna High), with human review by Askus Li</td></tr>
+<tr><th>Date</th><td>2026-09-23</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/2ZTM3BMRATA6QTPA2OZSSSEBVBCTPHM6/">NGCC PKC Forum post</a>, <a href="https://github.com/ngcc-dev/ngcc-harness/pull/14">GitHub PR #14</a></p>
+<p><code>polyvecl_uniform_gamma1</code> fills <code>PARAM_L</code> polynomials and then calls <code>polyz_unpack(v-&gt;vec + i, outbuf)</code> once more after the loop, when <code>i == PARAM_L</code>. That writes an entire polynomial past the <code>polyvecl</code> object during honest signing. The extra call is present in all three reference sets. AddressSanitizer confirms the out-of-bounds stack write at <code>polyvec.c:214</code>; ordinary signing may appear to work because the adjacent stack layout varies. This is separate from <code>sign-01-2</code>'s attacker-input overflow in verification.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">bash sign-01/reproduce_memory_safety.sh
+</code></pre>
+<p>The set-I witness invokes the same mask sampler as the signer and requires an AddressSanitizer stack-buffer-overflow diagnostic at <code>polyvecl_uniform_gamma1</code>.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

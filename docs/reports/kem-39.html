@@ -33,10 +33,11 @@
 <tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
 <tr><th>Date</th><td>2026-09-21</td></tr>
 </table></div>
-
+<p>Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/TYYRYC5JRX3WVQTN3R66KOV2YWDA5EKP/">Weaver submitters' 2026-09-24 response</a></p>
 <p>The specification's encryption proof models randomized inverse-q lifting and the ephemeral secret <code>r</code> as independent PRF outputs obtained under distinct counters.</p>
 <p>In the implementation, <code>polyvec_invq</code> receives its nonce by value and consumes counter 0 and later substreams internally. Its caller observes only one increment and begins sampling <code>r</code> at counter 1. The CBD input for <code>r[0]</code> is therefore a prefix of the same <code>PRF(seed1, 1)</code> stream already consumed by inverse-q lifting, with additional overlap depending on rejection and vector consumption.</p>
 <p>The counter reuse is present in WeaverKEM-128, WeaverKEM-256, and WeaverKEM-512 and directly contradicts the independence premise used in Game 2 of the submitted proof. The correlation is confirmed, but it has not yet been converted into a concrete IND-CPA distinguisher or key-recovery algorithm. This is therefore a probable claim violation, not a claimed complete break.</p>
+<p>The <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/TYYRYC5JRX3WVQTN3R66KOV2YWDA5EKP/">submitters acknowledged and fixed the reference-code nonce propagation on 2026-09-24</a>. This report concerns the archived submission.</p>
 <p>Each logical sampler must receive a disjoint domain or counter range, and the nonce consumed inside <code>polyvec_invq</code> must be returned to or advanced by its caller.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
@@ -50,6 +51,29 @@ IND-CPA distinguisher.</p>
 ./extract.sh kem-39
 rg -n 'polyvec_invq|poly_getnoise_eta2|prf\(' kem-39/Implementations/Reference_Implementation/WeaverKEM-128/{indcpa,poly_invq}.c
 </code></pre>
+<h2 class="issue-heading" id="kem-39-2-weaverkem-256-omits-its-high-layer-bch-decoder">kem-39-2: WeaverKEM-256 omits its high-layer BCH decoder</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>WeaverKEM-256 reference and optimized implementations (Weaver-1024 in the specification)</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Correctable high-layer errors change the decapsulated message; actual honest KEM failure rate unmeasured</td></tr>
+<tr><th>Credit</th><td>Yijian Liu (with AI assistance)</td></tr>
+<tr><th>Date</th><td>2026-09-24</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/DJRC6VQK5TYNKMAJBD2MIKUH7EAZ4VO6/">NGCC PKC Forum post</a></p>
+<p>Table 3's Weaver-1024 failure estimate (<code>2^-231.7</code> overall) assumes a high-layer BCH(255,223,4) decoder. Both submitted WeaverKEM-256 <code>poly_frommsg</code> implementations encode this redundancy, but their <code>WEAVER_MODE == 3</code> <code>poly_tomsg</code> branches copy the hard-decision high bits into the message without calling the included <code>decode_bch_high_nibbles</code>. Other modes do call their high-layer decoder. Thus Table 3's correction-based bound does not describe this implementation; no replacement failure probability or key-recovery attack is claimed.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">D=kem-39/Implementations/Reference_Implementation/WeaverKEM-256
+T=$(mktemp -d)
+gcc -O2 -DWEAVER_MODE=3 -I&quot;$D&quot; kem-39/reproduce_high_bch_omission.c \
+    &quot;$D&quot;/{msgenc,bch_high,bch_low,reduce}.c -o &quot;$T/repro&quot;
+&quot;$T/repro&quot;
+</code></pre>
+<p>The witness starts with a correctly encoded zero message, injects one high-layer bit error, and obtains <code>0x80</code> from the submitted decoder; the included BCH decoder corrects the same bit to <code>0x00</code>. This demonstrates the omitted correction, not the frequency of naturally occurring ciphertext failures.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

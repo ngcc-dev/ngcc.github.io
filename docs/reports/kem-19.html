@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lore (kem-19) · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=15e56c79">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>kem-19</code> · <a href="../constant-time/kem-19.html">Constant-time review</a></p>
+
+<h1 id="lore-kem-19">Lore (kem-19)</h1>
+<div class="table-wrap"><table class="meta">
+<tr><th>Candidate</th><td>Lore</td></tr>
+<tr><th>Family</th><td>Lattice (module-LWR)</td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/Lore.zip">Lore.zip</a> (SHA-256: <code>e33130fb45a3b1e220f8043739d1396a884c0043cb4336104e67e5404c7cc725</code>)</td></tr>
+</table></div>
+
+<h2 class="issue-heading issue-heading-first" id="kem-19-1-lore-512s-reducible-ring-admits-smaller-quotient-attacks">kem-19-1: Lore-512&#x27;s reducible ring admits smaller quotient attacks</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-lead">Lead</span></td></tr>
+<tr><th>Affected</th><td>Lore-512 (Lore-L4), both SHAKE and SM3 variants</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Forum's heuristic full-recovery estimate is about 2^451 classical work; not independently validated</td></tr>
+<tr><th>Credit</th><td>Xu Haomeng and collaborators</td></tr>
+<tr><th>Date</th><td>2026-09-23</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/US6X74OOCAN377LPXHUOJBHR7BSOQ3EB/">NGCC PKC Forum post</a></p>
+<p>Lore-512 uses <code>Z_1028[x]/(x^768+1)</code>, but <code>x^768+1 = (x^256+1)(x^512-x^256+1)</code>. The factors are coprime modulo 1028: writing <code>y=x^256</code>, their Bézout difference is <code>3</code>, which is invertible modulo 1028. Public ring equations therefore project into degree-256 and degree-512 quotient rings, and the two recovered secret projections would reconstruct the full secret by CRT. A secret with coefficients in <code>{-2,-1,0,1,2}</code> projects to coefficients bounded by 6 and 4 respectively, so the smaller instances do not lose the small-secret structure.</p>
+<p>The forum estimates approximately 451 classical and 391 quantum bits for full recovery, below the claimed 512-bit classical level. Those figures depend on an independent-coefficient/GSA lattice model that has <strong>not</strong> been reproduced here and does not fully model Lore's fixed-composition secret, rounding correlations, or concrete reduction costs. This is a structurally verified parameter-selection lead, not a demonstrated full-size key recovery or a confirmed 451-bit attack.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-19/reproduce_ring_projection.py
+</code></pre>
+<p>The preflight checks exact quotient multiplication and CRT reconstruction modulo 1028 using small-secret polynomials. It does not run lattice reduction; inspect <code>Lore-L4/params.h</code> and <code>poly.c</code> in either submitted backend for the modulus, degree, and negacyclic multiplication.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>
