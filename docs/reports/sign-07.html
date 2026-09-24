@@ -9,7 +9,7 @@
 <body>
 <header class="site-header">
 <a class="brand" href="../index.html">ngcc.dev</a>
-<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-Time</a></nav>
 </header>
 <main>
 <p class="crumb"><a href="../reports/index.html">Reports</a> › <code>sign-07</code> · <a href="../constant-time/sign-07.html">Constant-time review</a></p>
@@ -74,6 +74,24 @@ sign-07/forgery_CS-256 sign-07/lib/libCS-256.so \
 sign-07/forgery_CS-512 sign-07/lib/libCS-512.so \
   --control --threads 4 --trials 200000 --verbose
 </code></pre>
+<h2 class="issue-heading" id="sign-07-3-compressed-signatures-may-leak-the-cs-128-signing-key">sign-07-3: Compressed signatures may leak the CS-128 signing key</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-lead">Lead</span></td></tr>
+<tr><th>Affected</th><td>CS-128 full compressed scheme; higher sets not evaluated</td></tr>
+<tr><th>Discovery</th><td>Non-trivial</td></tr>
+<tr><th>Exploitation</th><td>Reporter claims recovery from 2^27 signatures; not independently replayed</td></tr>
+<tr><th>Credit</th><td>Yijian Liu (on behalf of Xianhui Lu; with AI assistance)</td></tr>
+<tr><th>Date</th><td>2026-09-24</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/PNQJ4PBNVDPNY624PDPCOO7ZL2GXIP6H/">NGCC PKC Forum post</a></p>
+<p>In the full compressed scheme, §3.4 (Correctness) derives the verifier-visible relation <code>z2' = z2 - c_r·b_0 + (-LowBits_h(w,α)+LSB(w))/2 (mod ±q)</code>, where <code>b_0</code> is the secret low part of the public-key relation and <code>c_r</code> aggregates hidden bimodal signing signs. Liu reports estimating <code>E[c_r | z0,c]</code> from public signature fields, then using its correlation with <code>z2'</code> to recover all coefficients of <code>b_0</code>; a second cross moment reportedly recovers <code>s1</code>, from which the remaining short key follows. The cited experiment used <code>2^27</code> CS-128 signatures and reported exact 768-coefficient recovery after normalization.</p>
+<p>The <code>c_r·b_0</code> term and public reconstruction are verified in specification Algorithm 11/12 and reference <code>cs.c</code>. The statistical estimator, sample cost, and claimed full key recovery are <strong>not</strong> independently reproduced: the post supplies no attack code or public transcripts. This is a high-priority lead, not a confirmed key-recovery break. It is separate from <code>sign-07-2</code>'s challenge-sign-blind forgery.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>Compare §3.4's correctness identity with Algorithm 11, Algorithm 12, and <code>CS_Sign</code>/<code>CS_Verify</code> in the archived CS-128 reference source. This checks the secret-dependent public relation only; a full witness requires the reporter's 2^27-signature estimator or an independent equivalent.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

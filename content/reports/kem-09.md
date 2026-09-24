@@ -65,3 +65,27 @@ LATTICE_ESTIMATOR_PATH=/path/to/lattice-estimator \
 
 The script checks the factorization and quotient homomorphism, then instantiates the estimator with the folded secret, error, and compression distributions.
 The command uses this host's Sage environment; elsewhere, any Python with `sage.all` importable can run the script with `LATTICE_ESTIMATOR_PATH` set.
+
+## kem-09-3: Cheetah's decryption-failure analysis omits public-key rounding
+
+Severity: Medium
+Status: Confirmed
+Layer: Design
+Affected: All four CheetahKEM parameter sets
+Discovery: Moderate
+Exploitation: Submitted failure estimates omit a noise term; actual DFR and attack impact unmeasured
+Credit: Yijian Liu (with AI assistance)
+Date: 2026-09-24
+Original source: [NGCC PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/5TLZROCK6ZQKG6HTV3PNNESJKICDDKGE/)
+
+Algorithm 15 publishes `b' = Compress(A·s+e)`, and Algorithm 16 encrypts with `Decompress(b')`. Writing the nonzero public-key rounding error as `e_pk = Decompress(b')-(A·s+e)`, the decryption noise contains `e_pk·r`. Section 2.2's correctness derivation substitutes `b·r` as though no public-key compression occurred, and its Gaussian DFR formula includes `e·r`, `s·e1`, and ciphertext-rounding terms but omits `e_pk·r`. The source performs the same compression/decompression (`KEM_Cheetah.c:96,123`).
+
+Liu estimates corrected log2 failure rates of about −77.85, −51.54, −115.07, and −198.96, versus the submission's −129, −176, −189, and −243. Those **numerical** estimates have not been independently reproduced or measured against the full KEM here. The confirmed result is the missing nonzero term, which invalidates the quoted derivation; this report does not claim a practical decapsulation attack.
+
+### Reproducing
+
+```sh
+python3 kem-09/reproduce_pk_compression_noise.py
+```
+
+The script exactly enumerates the source's one-coefficient public-key rounding error for each `db` and confirms a nonzero `e_pk·r` variance under the submission's independent-coefficient surrogate. It does not compute a failure tail or validate Liu's four exponents.

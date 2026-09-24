@@ -65,3 +65,23 @@ sign-07/forgery_CS-256 sign-07/lib/libCS-256.so \
 sign-07/forgery_CS-512 sign-07/lib/libCS-512.so \
   --control --threads 4 --trials 200000 --verbose
 ```
+
+## sign-07-3: Compressed signatures may leak the CS-128 signing key
+
+Severity: High
+Status: Lead
+Layer: Design
+Affected: CS-128 full compressed scheme; higher sets not evaluated
+Discovery: Non-trivial
+Exploitation: Reporter claims recovery from 2^27 signatures; not independently replayed
+Credit: Yijian Liu (on behalf of Xianhui Lu; with AI assistance)
+Date: 2026-09-24
+Original source: [NGCC PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/PNQJ4PBNVDPNY624PDPCOO7ZL2GXIP6H/)
+
+In the full compressed scheme, §3.4 (Correctness) derives the verifier-visible relation `z2' = z2 - c_r·b_0 + (-LowBits_h(w,α)+LSB(w))/2 (mod ±q)`, where `b_0` is the secret low part of the public-key relation and `c_r` aggregates hidden bimodal signing signs. Liu reports estimating `E[c_r | z0,c]` from public signature fields, then using its correlation with `z2'` to recover all coefficients of `b_0`; a second cross moment reportedly recovers `s1`, from which the remaining short key follows. The cited experiment used `2^27` CS-128 signatures and reported exact 768-coefficient recovery after normalization.
+
+The `c_r·b_0` term and public reconstruction are verified in specification Algorithm 11/12 and reference `cs.c`. The statistical estimator, sample cost, and claimed full key recovery are **not** independently reproduced: the post supplies no attack code or public transcripts. This is a high-priority lead, not a confirmed key-recovery break. It is separate from `sign-07-2`'s challenge-sign-blind forgery.
+
+### Reproducing
+
+Compare §3.4's correctness identity with Algorithm 11, Algorithm 12, and `CS_Sign`/`CS_Verify` in the archived CS-128 reference source. This checks the secret-dependent public relation only; a full witness requires the reporter's 2^27-signature estimator or an independent equivalent.

@@ -9,7 +9,7 @@
 <body>
 <header class="site-header">
 <a class="brand" href="../index.html">ngcc.dev</a>
-<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-Time</a></nav>
 </header>
 <main>
 <p class="crumb"><a href="../reports/index.html">Reports</a> › <code>kem-09</code> · <a href="../constant-time/kem-09.html">Constant-time review</a></p>
@@ -72,6 +72,26 @@ the script with Sage's Python and point it at that checkout:</p>
 </code></pre>
 <p>The script checks the factorization and quotient homomorphism, then instantiates the estimator with the folded secret, error, and compression distributions.
 The command uses this host's Sage environment; elsewhere, any Python with <code>sage.all</code> importable can run the script with <code>LATTICE_ESTIMATOR_PATH</code> set.</p>
+<h2 class="issue-heading" id="kem-09-3-cheetahs-decryption-failure-analysis-omits-public-key-rounding">kem-09-3: Cheetah&#x27;s decryption-failure analysis omits public-key rounding</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All four CheetahKEM parameter sets</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Submitted failure estimates omit a noise term; actual DFR and attack impact unmeasured</td></tr>
+<tr><th>Credit</th><td>Yijian Liu (with AI assistance)</td></tr>
+<tr><th>Date</th><td>2026-09-24</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/5TLZROCK6ZQKG6HTV3PNNESJKICDDKGE/">NGCC PKC Forum post</a></p>
+<p>Algorithm 15 publishes <code>b' = Compress(A·s+e)</code>, and Algorithm 16 encrypts with <code>Decompress(b')</code>. Writing the nonzero public-key rounding error as <code>e_pk = Decompress(b')-(A·s+e)</code>, the decryption noise contains <code>e_pk·r</code>. Section 2.2's correctness derivation substitutes <code>b·r</code> as though no public-key compression occurred, and its Gaussian DFR formula includes <code>e·r</code>, <code>s·e1</code>, and ciphertext-rounding terms but omits <code>e_pk·r</code>. The source performs the same compression/decompression (<code>KEM_Cheetah.c:96,123</code>).</p>
+<p>Liu estimates corrected log2 failure rates of about −77.85, −51.54, −115.07, and −198.96, versus the submission's −129, −176, −189, and −243. Those <strong>numerical</strong> estimates have not been independently reproduced or measured against the full KEM here. The confirmed result is the missing nonzero term, which invalidates the quoted derivation; this report does not claim a practical decapsulation attack.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-09/reproduce_pk_compression_noise.py
+</code></pre>
+<p>The script exactly enumerates the source's one-coefficient public-key rounding error for each <code>db</code> and confirms a nonzero <code>e_pk·r</code> variance under the submission's independent-coefficient surrogate. It does not compute a failure tail or validate Liu's four exponents.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

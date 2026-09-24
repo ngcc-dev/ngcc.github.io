@@ -9,7 +9,7 @@
 <body>
 <header class="site-header">
 <a class="brand" href="../index.html">ngcc.dev</a>
-<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-time review</a></nav>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-Time</a></nav>
 </header>
 <main>
 <p class="crumb"><a href="../reports/index.html">Reports</a> › <code>hash-14</code> · <a href="../constant-time/hash-14.html">Constant-time review</a></p>
@@ -33,9 +33,11 @@
 <tr><th>Credit</th><td>Tsinghua Hash Lab <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#99;&#117;&#105;&#104;&#114;&#50;&#54;&#64;&#109;&#97;&#105;&#108;&#115;&#46;&#116;&#115;&#105;&#110;&#103;&#104;&#117;&#97;&#46;&#101;&#100;&#117;&#46;&#99;&#110;">&#99;&#117;&#105;&#104;&#114;&#50;&#54;&#64;&#109;&#97;&#105;&#108;&#115;&#46;&#116;&#115;&#105;&#110;&#103;&#104;&#117;&#97;&#46;&#101;&#100;&#117;&#46;&#99;&#110;</a></td></tr>
 <tr><th>Date</th><td>2026-09-22</td></tr>
 </table></div>
-<p>Original source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/YGSFWSHQSIOIFIJTX6IBSDQCV25WS7I2/">CryptHashForum report</a></p>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/YGSFWSHQSIOIFIJTX6IBSDQCV25WS7I2/">CryptHashForum report</a>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/CC2SBG5TUNBN5ZD2WWEKITUQEVNJD56L/">Laurus team's 2026-09-24 response</a></p>
 <p>The specification uses <code>fid=0</code> for hashing and <code>fid=1</code> for XOF operation, placing the identifier only in the initial state. At <code>c=1024</code>, a message of 513 to 1024 bits causes one 512-bit absorption. That absorption omits the identifier from the permutation input and moves its difference into the first eight state words; finalization then discards exactly those words. The complete output is consequently independent of <code>fid</code>.</p>
 <p>For example, the 768-bit all-zero message has identical 1024-bit outputs under <code>Laurus[1024,0]</code> and <code>Laurus[1024,1]</code>. This is a functional-domain separation failure in the normative generic interface, not a collision between distinct messages in a named fixed-output hash. The submitted <code>Laurus-XOF</code> wrapper fixes <code>c=512</code>, so it does not expose this particular pair through the uniform API.</p>
+<p>The <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/CC2SBG5TUNBN5ZD2WWEKITUQEVNJD56L/">Laurus team confirmed the generic-interface defect</a> while reiterating that the named XOF uses <code>c=512</code>; they proposed repeating the function-ID-bearing initialization value across all three 512-bit state segments in an erratum. The archived specification remains the target here.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>The target exposes the otherwise internal generic interface from the submitted source, checks the 768-bit equality, and checks a 512-bit negative control:</p>

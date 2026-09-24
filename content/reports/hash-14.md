@@ -14,10 +14,13 @@ Exploitation: Trivial
 Credit: Tsinghua Hash Lab <cuihr26@mails.tsinghua.edu.cn>
 Date: 2026-09-22
 Original source: [CryptHashForum report](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/YGSFWSHQSIOIFIJTX6IBSDQCV25WS7I2/)
+Follow-up source: [Laurus team's 2026-09-24 response](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/CC2SBG5TUNBN5ZD2WWEKITUQEVNJD56L/)
 
 The specification uses `fid=0` for hashing and `fid=1` for XOF operation, placing the identifier only in the initial state. At `c=1024`, a message of 513 to 1024 bits causes one 512-bit absorption. That absorption omits the identifier from the permutation input and moves its difference into the first eight state words; finalization then discards exactly those words. The complete output is consequently independent of `fid`.
 
 For example, the 768-bit all-zero message has identical 1024-bit outputs under `Laurus[1024,0]` and `Laurus[1024,1]`. This is a functional-domain separation failure in the normative generic interface, not a collision between distinct messages in a named fixed-output hash. The submitted `Laurus-XOF` wrapper fixes `c=512`, so it does not expose this particular pair through the uniform API.
+
+The [Laurus team confirmed the generic-interface defect](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/CC2SBG5TUNBN5ZD2WWEKITUQEVNJD56L/) while reiterating that the named XOF uses `c=512`; they proposed repeating the function-ID-bearing initialization value across all three 512-bit state segments in an erratum. The archived specification remains the target here.
 
 ### Reproducing
 

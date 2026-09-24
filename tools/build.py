@@ -34,7 +34,7 @@ MAINTAINER = "markku-juhani.saarinen@tuni.fi"
 UPDATED_UTC = datetime.datetime.now(datetime.UTC).replace(microsecond=0).strftime("%Y-%m-%d %H:%M:%S UTC")
 CATS = [("sign", "Signatures"), ("kem", "KEMs"), ("kex", "Key exchange"), ("hash", "Hash functions")]
 
-NAV = [("Home", "index.html"), ("Reports", "reports/index.html"), ("Constant-time review", "constant-time/index.html"), ("Candidates", "candidates/index.html"),
+NAV = [("Home", "index.html"), ("Reports", "reports/index.html"), ("Constant-Time", "constant-time/index.html"), ("Candidates", "candidates/index.html"),
        ("KAT results", "results.html"), ("Security survey", "security-survey.html"),
        ("Attack matrix", "attack-matrix.html"), ("Audit", "audit.html")]
 

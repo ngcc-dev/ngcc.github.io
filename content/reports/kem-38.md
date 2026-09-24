@@ -50,3 +50,36 @@ python3 security/kem_mutation_oracle.py \
 ```
 
 The seeds, mutations, return codes, and timings are deterministic. The slow `-2` witness takes about 50 seconds on the audit host.
+
+## kem-38-3: Retry reactions may expose UVW-KEM-128 session keys
+
+Severity: High
+Status: Lead
+Layer: Side-channel
+Affected: UVW-KEM-128 reference implementation; higher sets not tested
+Discovery: Non-trivial
+Exploitation: Conditional recovery from about 1.06 million precise first-attempt reaction labels; an uninstrumented timing classifier is not demonstrated
+Credit: Tianyuan Xie (on behalf of the openHiTLS team; with AI assistance)
+Date: 2026-09-24
+Original source: [NGCC PKC Forum post and attached reproducer](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/A6PUI23BHC7YNE5UQ3SMRO33GDBWCF2P/)
+
+UVW's secret monomial transform hides 430 column pairs and their ratios. A chosen valid ciphertext whose error has a nonzero equal-scaled value in a hidden pair can make the first information-set decoding attempt retry. Conditioning public error samples on that reaction enriches the true pair/ratio triples. With the pairs recovered, a public `Δ` projection cancels the duplicated component, exposes a generalized Reed–Solomon image, and permits decoding a fresh ciphertext and deriving its exact 512-bit session key. This is a candidate-specific exploitation path for the retry behavior, distinct from `kem-38-2`'s final-status oracle on malformed ciphertexts.
+
+The attached package's reference source matches the archived UVW-KEM-128 source (apart from an omitted build file). It validates an **instrumented** retry counter on real `kem_dec`, then recovers all 430 pairs and the target secret (`E2E_OK`). Its high-volume phase, however, reads the secret key to simulate 1,055,028 first-attempt reactions; it does **not** send those ciphertexts to the real decapsulator. A reported local timing check on 100 real valid decapsulations found 99 one-attempt calls averaging 811 ms and one three-attempt call at 896 ms; no runnable timing check is supplied. In the package's 60 real-decapsulation channel checks, only two ciphertexts were bad (one did not retry), too few to validate a reaction classifier. Thus the full public-interface attack remains a lead conditional on an observable, sufficiently accurate retry signal; the package does not demonstrate black-box shared-secret recovery. The structural attack does not depend on the contest hash/XOF placeholders being weak.
+
+### Reproducing
+
+Download the [forum attachment](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/A6PUI23BHC7YNE5UQ3SMRO33GDBWCF2P/attachment/4/uvw-kem-128-reaction-poc.tar.gz) (SHA-256 `9ae70267f8244247270f5d5e6e8edc34f87ba180cb0b340b2c6926f24b3e9fd9`), inspect its `README.md` and `attack/run_attack.sh`, then run it with a Python environment providing NumPy:
+
+```sh
+T=$(mktemp -d)
+curl -fL -o "$T/poc.tar.gz" \
+  'https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/A6PUI23BHC7YNE5UQ3SMRO33GDBWCF2P/attachment/4/uvw-kem-128-reaction-poc.tar.gz'
+printf '%s  %s\n' '9ae70267f8244247270f5d5e6e8edc34f87ba180cb0b340b2c6926f24b3e9fd9' "$T/poc.tar.gz" | sha256sum -c -
+tar -xzf "$T/poc.tar.gz" -C "$T"
+cd "$T/uvw-kem-128-reaction-poc/attack"
+python3 -c 'import numpy'  # activate an environment with NumPy if needed
+bash run_attack.sh
+```
+
+The package compiles the submitted code, checks its two-line counter instrumentation, tests the real decoder channel, simulates the high-volume labels, and finishes with a fresh ciphertext and `E2E_OK`. The distinction between real decapsulation and secret-assisted simulation is essential when interpreting the result.
