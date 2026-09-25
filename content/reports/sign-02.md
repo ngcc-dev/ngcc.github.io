@@ -36,7 +36,7 @@ Layer: Design
 Affected: BiT-128; the same shared-sign construction appears in the other sets, but their recovery costs were not established
 Discovery: Non-trivial
 Exploitation: The original analysis reports equivalent-key recovery and an accepted fresh-message forgery from 200,000–250,000 signatures
-Credit: OpenAI Codex (Daybreak Blue), disclosed by Martin Feussner
+Credit: Martin Feussner, with OpenAI Codex (Daybreak Blue) assistance
 Date: 2026-09-25
 Original source: [Feussner's pqc-forum post and attached analysis](https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/84_EKMOtk_M/m/ZNMqLQ07BAAJ)
 

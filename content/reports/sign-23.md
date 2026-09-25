@@ -11,7 +11,7 @@ Layer: Design
 Affected: Shuttle-128, -256, and -512 NGCC specification and reference implementations
 Discovery: Non-trivial
 Exploitation: Equivalent-key recovery and accepted fresh-message forgeries from 175,000/275,000/300,000 valid signatures in independent 128/256/512 tests
-Credit: OpenAI Codex (Daybreak Blue), disclosed by Martin Feussner
+Credit: Martin Feussner, with OpenAI Codex (Daybreak Blue) assistance
 Date: 2026-09-25
 Original source: [Feussner's pqc-forum post and attached analysis](https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/5ao-Ebsa_Ow/m/zwYJk_Q-BAAJ)
 

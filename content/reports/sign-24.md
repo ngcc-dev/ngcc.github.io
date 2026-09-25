@@ -11,7 +11,7 @@ Layer: Implementation
 Affected: Sigurd-128, -256, and -512 reference implementations
 Discovery: Moderate
 Exploitation: Witness recovery and accepted fresh-message forgeries from 4–8 ordinary signatures in independent tests
-Credit: OpenAI Codex (Daybreak Blue), disclosed by Martin Feussner
+Credit: Martin Feussner, with OpenAI Codex (Daybreak Blue) assistance
 Date: 2026-09-25
 Original source: [Feussner's pqc-forum post and attached analysis](https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/2lO14yYyDK4/m/UYKYkWM7BAAJ)
 

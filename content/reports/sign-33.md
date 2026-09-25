@@ -134,7 +134,7 @@ Layer: Implementation
 Affected: VDOO-128, -256, and -512 reference implementations share the restricted coefficient mask; the reported forgery concerns VDOO-128
 Discovery: Non-trivial
 Exploitation: The original analysis reports an accepted fresh-message forgery using only the public key in about 12 minutes
-Credit: OpenAI Codex (Daybreak Blue), disclosed by Martin Feussner
+Credit: Martin Feussner, with OpenAI Codex (Daybreak Blue) assistance
 Date: 2026-09-25
 Original source: [Feussner's pqc-forum post and attached analysis](https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/mYN9Br_C8dg/m/BDmmwIE6BAAJ)
 

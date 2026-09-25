@@ -11,7 +11,7 @@ Layer: Design
 Affected: OAEP-NTRU-648, -1296, and -2592 reference implementations; the same decoder omission is present in the submitted optimized and additional sources
 Discovery: Trivial
 Exploitation: One decapsulation query for a byte-distinct encoding of an honest challenge ciphertext
-Credit: mmtobs, with AI assistance
+Credit: Matthias Meijers (GitHub @mmtobs), with AI assistance
 Date: 2026-09-25
 Original source: [ngcc-harness pull request #17](https://github.com/ngcc-dev/ngcc-harness/pull/17)
 

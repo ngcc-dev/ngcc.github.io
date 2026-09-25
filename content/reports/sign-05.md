@@ -11,7 +11,7 @@ Layer: Implementation
 Affected: All 14 SM4th, uBlockith and Vistrutith parameter sets, reference and optimized implementations
 Discovery: Moderate
 Exploitation: No signing queries or secret information; one ordinary signing computation (0.01–6 s) per forged message
-Credit: OpenAI Codex (Daybreak Blue), disclosed by Martin Feussner
+Credit: Martin Feussner, with OpenAI Codex (Daybreak Blue) assistance
 Date: 2026-09-25
 Original source: [Feussner's pqc-forum post](https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/_WrUbtphjHw/m/fHXYK5hJBAAJ) and attached analysis
 

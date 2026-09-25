@@ -11,7 +11,7 @@ Layer: Design
 Affected: All DKEM parameter sets and submitted implementation families
 Discovery: Trivial
 Exploitation: Rejected ciphertexts sharing `c2` share a key; no IND-CCA or shared-secret recovery attack shown
-Credit: zhengjieyu
+Credit: Jieyu Zheng (GitHub @zhengjieyu)
 Date: 2026-09-25
 Original source: [ngcc-harness issue #16](https://github.com/ngcc-dev/ngcc-harness/issues/16)
 
