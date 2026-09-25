@@ -83,3 +83,22 @@ bash run_attack.sh
 ```
 
 The package compiles the submitted code, checks its two-line counter instrumentation, tests the real decoder channel, simulates the high-volume labels, and finishes with a fresh ciphertext and `E2E_OK`. The distinction between real decapsulation and secret-assisted simulation is essential when interpreting the result.
+
+## kem-38-4: Unused c1 bits make ciphertexts malleable without changing the key
+
+Severity: Critical
+Status: Confirmed
+Layer: Implementation
+Affected: UVW-KEM-128 and UVW-KEM-512 reference implementations; UVW-KEM-256 has no unused bits
+Discovery: Trivial
+Exploitation: One decapsulation query on a byte-distinct copy of the challenge ciphertext
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-09-25
+
+The packed `c1` field ends with 4 unused bits, which `decompress_gf_array` ignores. Decapsulation compares the decoded `c1`, `c2` and `d` (`KEM_AlgorithmInstance.c:436,475–476` in UVW-KEM-128; `:433,480` in UVW-KEM-512), and the key is `H4(m', c1, c2)` over the decoded values (`:483` in 128; `:488` in 512). Setting any unused bit yields a different ciphertext with the same key. The submission claims IND-CCA security, which is trivially violated.
+
+### Reproducing
+
+```sh
+python3 kem-38/reproduce_padding_alias.py          # add 512 for UVW-KEM-512 (minutes)
+```

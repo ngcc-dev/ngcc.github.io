@@ -19,3 +19,22 @@ The decapsulator expands the private PKE key and decrypts a chosen ciphertext. T
 ### Reproducing
 
 The source-level witness is the chain `src/common/ccakem.c:125-132` → `src/scheme/bag_piglet.c:325-378` → `src/common/augabidulin.c:120-133` → `src/common/gabidulin.c:273-390` under `Implementations/Reference_Implementation/bag_piglet128/`. See `constant_time.md` for the secret/public classification and scope.
+
+## kem-04-2: The rejection key does not bind the received ciphertext
+
+Severity: High
+Status: Confirmed
+Layer: Design
+Affected: All BAG-Piglet parameter sets
+Discovery: Moderate
+Exploitation: Observable rejection keys give a plaintext-checking oracle; challenge-key recovery is unshown
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-09-25
+
+Algorithm 2 (§1.4) specifies `K(ξ, ct')` on rejection, where `ct'` is the re-encryption of the decrypted message rather than the received ciphertext; `ccakem_decaps` follows it. Distinct invalid ciphertexts that decrypt to the same message therefore share a rejection key, exposing a plaintext-checking oracle when keys are observable. This departs from standard Fujisaki–Okamoto rejection, so the stated IND-CCA2 proof does not establish the submitted construction's claim. A mauled challenge returns `K(ξ, c*)`, not the challenge key `K*`; the witness demonstrates rejection-key collisions, not challenge-key recovery or a full IND-CCA2 attack.
+
+### Reproducing
+
+```sh
+python3 kem-04/reproduce_rejection_key.py kem-04/lib/libbag_piglet_128.so
+```

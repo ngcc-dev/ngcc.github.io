@@ -38,6 +38,24 @@
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>The source-level witness is the decapsulation call in <code>src/loong_kem.c:217-218</code>, the secret-key product in <code>src/loong_pke.c:1003-1014</code>, and the value-dependent pivot loop in <code>src/gabidulin.c:213-279</code> under <code>Implementations/Reference_Implementation/Loong-Block-ms-128/</code>. The same files occur in the other reference parameter directories. See <code>constant_time.md</code> for the secret/public classification.</p>
+<h2 class="issue-heading" id="kem-03-2-the-rejection-key-does-not-bind-the-received-ciphertext">kem-03-2: The rejection key does not bind the received ciphertext</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All BAG-Loong parameter sets</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Observable rejection keys give a plaintext-checking and decoding-failure oracle; challenge-key recovery is unshown</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-25</td></tr>
+</table></div>
+
+<p>Algorithm 2 (§1.4) specifies <code>K(ξ, ct')</code> on rejection, where <code>ct'</code> is the re-encryption of the decrypted message rather than the received ciphertext. The code follows it (<code>loong_kem.c:229–246</code>). Distinct invalid ciphertexts with the same decryption therefore share a rejection key, exposing a plaintext-checking and decoding-failure oracle when keys are observable. This departs from standard Fujisaki–Okamoto rejection, so the stated IND-CCA2 proof does not establish the submitted construction's claim. A mauled challenge returns <code>K(ξ, c*)</code>, not the challenge key <code>K*</code>; the witness demonstrates rejection-key collisions, not challenge-key recovery or a full IND-CCA2 attack.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-03/reproduce_rejection_key.py kem-03/lib/libBAG-Loong-128.so
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

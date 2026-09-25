@@ -70,7 +70,7 @@ Original source: [NGCC PKC Forum post](https://list.niccs.org.cn/archives/list/p
 
 Section 2.3.2 says the shortened extended Hamming decoder corrects one error but **rejects** exactly two. Nevertheless its quoted decryption-failure bound uses only the probability of three or more errors. The submitted `CPAPKE_Decrypt` returns `-1` when `decode_ECC` detects two errors, and `CCAKEM_Decaps` propagates that rejection. Those events must count when bounding honest key-agreement failures and the PKE failure term used in §3.1.2's CCA reduction.
 
-Under the submission's own Gaussian and independent-bit approximation, counting two-error events changes the Amoeba-576 tail from `2^-130.2722` to `2^-86.1221`; the same notebook prints both numbers, while Table 4 quotes a roughly `2^-133.3` failure claim. The revised figure is **not** a measurement or certified bound for correlated implementation noise, and this accounting flaw is not a second demonstrated key-recovery attack.
+Under the submission's own Gaussian and independent-bit approximation, counting two-error events changes the Amoeba-576 tail from `2^-130.2722` to `2^-86.1221`; the calculation in the official archive's `Security/noise_estimation.ipynb` gives both numbers, while Table 4 quotes a roughly `2^-133.3` failure claim. The revised figure is **not** a measurement or certified bound for correlated implementation noise, and this accounting flaw is not a second demonstrated key-recovery attack.
 
 ### Reproducing
 
@@ -78,4 +78,25 @@ Under the submission's own Gaussian and independent-bit approximation, counting 
 python3 kem-02/reproduce_dfr_tail.py
 ```
 
-The standalone calculation reproduces all five two- and three-error tails from the archived `Security/noise_estimation.ipynb`. Inspect `hamming.c:157-183`, `cpapke.c:438-447`, and `ccakem.c:60-63` in the Amoeba-576 reference tree for the actual rejection path.
+This is a static/model calculation, not a runtime failure measurement. The standalone script reproduces all five two- and three-error tails from `Security/noise_estimation.ipynb` in the official Amoeba archive; the notebook need not be present to run the script. Inspect `hamming.c:157-183`, `cpapke.c:438-447`, and `ccakem.c:60-63` in the Amoeba-576 reference tree for the actual rejection path.
+
+## kem-02-4: A one-bit ciphertext change writes outside the Hamming correction buffer
+
+Severity: High
+Status: Confirmed
+Layer: Implementation
+Affected: All five Amoeba reference parameter sets
+Discovery: Moderate
+Exploitation: One malformed ciphertext aborts decapsulation; no code execution demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-09-25
+
+The Hamming `syndrome_map` (`hamming.c:8`) holds check-bit positions up to 1023, but the correction buffer `c_corr` has 523 bytes, and `hamming.c:177` flips `c_corr[q]` without a bound check. Flipping the top bit of one compressed `c2` coefficient makes decapsulation write past the buffer; stack protection then aborts the process in every parameter set.
+
+The same incorrect syndrome mapping can be reached by an honest ciphertext with one noise error on a check coefficient at positions 516–521, so this is also a decapsulation reliability defect. The witness now tests a neighboring check bit whose mapped correction stays inside the buffer; it returns without aborting in all five sets.
+
+### Reproducing
+
+```sh
+python3 kem-02/reproduce_ecc_stack_write.py
+```

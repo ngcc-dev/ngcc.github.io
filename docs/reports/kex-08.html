@@ -75,6 +75,42 @@ cc -w -Wno-error=implicit-function-declaration -Wno-error=incompatible-pointer-t
 &quot;$tmp/check_two_keys&quot;
 </code></pre>
 <p>The witness prints <code>ATTACK kex-08-2 NIIKE-lv512 CONFIRMED: two-key cycle</code>.</p>
+<h2 class="issue-heading" id="kex-08-3-a-crafted-peer-key-forces-the-honest-partys-shared-secret">kex-08-3: A crafted peer key forces the honest party&#x27;s shared secret</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>NIIKE-lv128 and NIIKE-lv256 reference implementations (shared source); demonstrated on lv128</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>The peer chooses its public key; no secret or computation beyond a public relabelling is needed</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-25</td></tr>
+</table></div>
+
+<p>The group-action design permits a peer to send a public relabelling of the honest party's own key (cycle reversed, <code>P</code> and <code>Q</code> swapped), producing a repeatable, non-contributory shared secret. Algorithms 5 and 9 do not require peer-key validation, while the specified HKR-CKS-1 model covers only honestly registered keys. A malicious NIKE peer already knows the shared secret, so this witness does not violate that model; it shows a low-severity contributiveness gap for unvalidated keys. Separately, <code>kex_derive_ss_a</code>/<code>_b</code> accept all-zero or all-<code>0xFF</code> peer-key bytes and return an all-zero secret with success (<code>ngccapi/KEX_AlgorithmInstance.c:142,157</code>), an implementation input-validation defect.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kex-08/reproduce_malicious_peer_key.py
+</code></pre>
+<h2 class="issue-heading" id="kex-08-4-malformed-peer-keys-terminate-the-honest-partys-process">kex-08-4: Malformed peer keys terminate the honest party&#x27;s process</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>NIIKE-lv128 and NIIKE-lv256 reference implementations (shared source); demonstrated on lv128</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>One malformed peer public key aborts key derivation</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-25</td></tr>
+</table></div>
+
+<p>Peer public keys are not validated before use. An honest key with its <code>P</code> and <code>Q</code> points swapped reaches the consistency check in <code>bundleeval_action_stra</code> (<code>protocols/bundleprotocols.c:193-213</code>), which aborts on <code>assert</code> in the submitted build; with <code>NDEBUG</code> defined the check, and with it the only validation, disappears entirely. A party deriving a key from an attacker-supplied, for example ephemeral, public key can thus be terminated.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kex-08/reproduce_malformed_key_abort.py
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

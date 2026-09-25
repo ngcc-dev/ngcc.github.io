@@ -57,14 +57,14 @@ rg -n 'polyvec_invq|poly_getnoise_eta2|prf\(' kem-39/Implementations/Reference_I
 <tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
 <tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
-<tr><th>Affected</th><td>WeaverKEM-256 reference and optimized implementations (Weaver-1024 in the specification)</td></tr>
+<tr><th>Affected</th><td>WeaverKEM-256 reference implementation (Weaver-1024 in the specification); optimized implementation reported but not independently checked</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
 <tr><th>Exploitation</th><td>Correctable high-layer errors change the decapsulated message; actual honest KEM failure rate unmeasured</td></tr>
 <tr><th>Credit</th><td>Yijian Liu (with AI assistance)</td></tr>
 <tr><th>Date</th><td>2026-09-24</td></tr>
 </table></div>
 <p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/DJRC6VQK5TYNKMAJBD2MIKUH7EAZ4VO6/">NGCC PKC Forum post</a></p>
-<p>Table 3's Weaver-1024 failure estimate (<code>2^-231.7</code> overall) assumes a high-layer BCH(255,223,4) decoder. Both submitted WeaverKEM-256 <code>poly_frommsg</code> implementations encode this redundancy, but their <code>WEAVER_MODE == 3</code> <code>poly_tomsg</code> branches copy the hard-decision high bits into the message without calling the included <code>decode_bch_high_nibbles</code>. Other modes do call their high-layer decoder. Thus Table 3's correction-based bound does not describe this implementation; no replacement failure probability or key-recovery attack is claimed.</p>
+<p>Table 3's Weaver-1024 failure estimate (<code>2^-231.7</code> overall) assumes a high-layer BCH(255,223,4) decoder. The archived WeaverKEM-256 reference <code>poly_frommsg</code> encodes this redundancy, but its <code>WEAVER_MODE == 3</code> <code>poly_tomsg</code> branch copies the hard-decision high bits into the message without calling the included <code>decode_bch_high_nibbles</code>. Other modes do call their high-layer decoder. The forum post says the optimized implementation has the same omission; that source was not included in the available archive and is not independently verified here. Thus Table 3's correction-based bound does not describe the checked implementation; no replacement failure probability or key-recovery attack is claimed.</p>
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">D=kem-39/Implementations/Reference_Implementation/WeaverKEM-256

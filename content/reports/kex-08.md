@@ -64,3 +64,41 @@ cc -w -Wno-error=implicit-function-declaration -Wno-error=incompatible-pointer-t
 ```
 
 The witness prints `ATTACK kex-08-2 NIIKE-lv512 CONFIRMED: two-key cycle`.
+
+## kex-08-3: A crafted peer key forces the honest party's shared secret
+
+Severity: Low
+Status: Confirmed
+Layer: Design
+Affected: NIIKE-lv128 and NIIKE-lv256 reference implementations (shared source); demonstrated on lv128
+Discovery: Moderate
+Exploitation: The peer chooses its public key; no secret or computation beyond a public relabelling is needed
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-09-25
+
+The group-action design permits a peer to send a public relabelling of the honest party's own key (cycle reversed, `P` and `Q` swapped), producing a repeatable, non-contributory shared secret. Algorithms 5 and 9 do not require peer-key validation, while the specified HKR-CKS-1 model covers only honestly registered keys. A malicious NIKE peer already knows the shared secret, so this witness does not violate that model; it shows a low-severity contributiveness gap for unvalidated keys. Separately, `kex_derive_ss_a`/`_b` accept all-zero or all-`0xFF` peer-key bytes and return an all-zero secret with success (`ngccapi/KEX_AlgorithmInstance.c:142,157`), an implementation input-validation defect.
+
+### Reproducing
+
+```sh
+python3 kex-08/reproduce_malicious_peer_key.py
+```
+
+## kex-08-4: Malformed peer keys terminate the honest party's process
+
+Severity: Medium
+Status: Confirmed
+Layer: Implementation
+Affected: NIIKE-lv128 and NIIKE-lv256 reference implementations (shared source); demonstrated on lv128
+Discovery: Trivial
+Exploitation: One malformed peer public key aborts key derivation
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-09-25
+
+Peer public keys are not validated before use. An honest key with its `P` and `Q` points swapped reaches the consistency check in `bundleeval_action_stra` (`protocols/bundleprotocols.c:193-213`), which aborts on `assert` in the submitted build; with `NDEBUG` defined the check, and with it the only validation, disappears entirely. A party deriving a key from an attacker-supplied, for example ephemeral, public key can thus be terminated.
+
+### Reproducing
+
+```sh
+python3 kex-08/reproduce_malformed_key_abort.py
+```

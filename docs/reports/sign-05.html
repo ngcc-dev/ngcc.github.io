@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chinith (sign-05) · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=15e56c79">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-Time</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>sign-05</code> · <a href="../constant-time/sign-05.html">Constant-time review</a></p>
+
+<h1 id="chinith-sign-05">Chinith (sign-05)</h1>
+<div class="table-wrap"><table class="meta">
+<tr><th>Candidate</th><td>Chinith</td></tr>
+<tr><th>Family</th><td>Symmetric-key (VOLE-in-the-head) signature</td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/Chinith.zip">Chinith.zip</a> (SHA-256: <code>4d31ba3fe8718f59901b7efdf01b4179912ef8e04f58b4b6dbba84186f002283</code>)</td></tr>
+</table></div>
+
+<h2 class="issue-heading issue-heading-first" id="sign-05-1-the-final-fiatshamir-challenge-omits-a0-allowing-public-key-only-universal-forgery">sign-05-1: The final Fiat–Shamir challenge omits ã0, allowing public-key-only universal forgery</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All 14 SM4th, uBlockith and Vistrutith parameter sets, reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>No signing queries or secret information; one ordinary signing computation (0.01–6 s) per forged message</td></tr>
+<tr><th>Credit</th><td>OpenAI Codex (Daybreak Blue), disclosed by Martin Feussner</td></tr>
+<tr><th>Date</th><td>2026-09-25</td></tr>
+</table></div>
+<p>Original source: <a href="https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/_WrUbtphjHw/m/fHXYK5hJBAAJ">Feussner's pqc-forum post</a> and attached analysis</p>
+<p>The submission claims EUF-CMA security (§9.1.5–9.1.6), which is trivially violated: anyone can sign any message under any public key.</p>
+<p>The specification binds the QuickSilver constant term into the final challenge, <code>chall3 ← H32(chall2 ∥ ã0 ∥ ã1 ∥ … ∥ ãd−1 ∥ ctr)</code> (SM4th.Sign line 24, physical PDF page 60; uBlockith line 23, page 71; Vistrutith line 19, page 92). The verifier reconstructs ã0 from the public key and the committed witness and recomputes that hash (SM4th.Verify lines 19–21, page 63). ã0 is the only value that depends on whether the committed witness satisfies the public one-way-function relation.</p>
+<p>The implementations never hash ã0. <code>hash_challenge_3_init</code> absorbs <code>chall_2</code> and then <code>deg − 1</code> field elements starting at the signature's ã1 (<code>sm4th_d3_128f_loose/sig_impl.c:104-113</code>). The signer computes <code>a0_tilde</code> and frees it unused (<code>:440-458,516</code>). The verifier also computes it (<code>:652-658</code>), hashes only ã1…ãd−1 (<code>:670-671</code>), compares <code>chall_3</code> (<code>:675</code>), and frees <code>a0_tilde</code> (<code>:679</code>). uBlockith (<code>utils_ublock/sig_impl_ublock.c:203</code>) and Vistrutith (<code>utils_vistrutah/sig_impl_vistrutith.c:205</code>) do the same, as do all optimized copies. A forger therefore runs the ordinary signer with the victim's public key and a false witness, for example the extended witness of an all-zero key. All remaining commitment, consistency and grinding checks are honestly satisfied. Signer and verifier share the defect, so self-generated KATs pass.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C sign-05 exploit
+for b in sign-05/bin/reproduce_forgery_*; do &quot;$b&quot;; done
+</code></pre>
+<p>For each parameter set, the witness generates a victim key pair with <code>sig_keygen</code> and wipes the secret key. It checks that the all-zero OWF key is not a preimage of the public key, then signs with that key's witness while claiming the victim's OWF output. The public <code>sig_verify</code> accepts the forged signature, and a one-bit message change is rejected. Each set prints <code>ATTACK sign-05-1 &lt;set&gt; CONFIRMED</code>; all 14 were confirmed.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

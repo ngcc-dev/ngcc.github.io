@@ -78,12 +78,31 @@
 </table></div>
 <p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/35SR56KWDUXV5KRSKBU6TXO3LW25CMOC/">NGCC PKC Forum post</a></p>
 <p>Section 2.3.2 says the shortened extended Hamming decoder corrects one error but <strong>rejects</strong> exactly two. Nevertheless its quoted decryption-failure bound uses only the probability of three or more errors. The submitted <code>CPAPKE_Decrypt</code> returns <code>-1</code> when <code>decode_ECC</code> detects two errors, and <code>CCAKEM_Decaps</code> propagates that rejection. Those events must count when bounding honest key-agreement failures and the PKE failure term used in §3.1.2's CCA reduction.</p>
-<p>Under the submission's own Gaussian and independent-bit approximation, counting two-error events changes the Amoeba-576 tail from <code>2^-130.2722</code> to <code>2^-86.1221</code>; the same notebook prints both numbers, while Table 4 quotes a roughly <code>2^-133.3</code> failure claim. The revised figure is <strong>not</strong> a measurement or certified bound for correlated implementation noise, and this accounting flaw is not a second demonstrated key-recovery attack.</p>
+<p>Under the submission's own Gaussian and independent-bit approximation, counting two-error events changes the Amoeba-576 tail from <code>2^-130.2722</code> to <code>2^-86.1221</code>; the calculation in the official archive's <code>Security/noise_estimation.ipynb</code> gives both numbers, while Table 4 quotes a roughly <code>2^-133.3</code> failure claim. The revised figure is <strong>not</strong> a measurement or certified bound for correlated implementation noise, and this accounting flaw is not a second demonstrated key-recovery attack.</p>
 <h3 id="reproducing_2">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 kem-02/reproduce_dfr_tail.py
 </code></pre>
-<p>The standalone calculation reproduces all five two- and three-error tails from the archived <code>Security/noise_estimation.ipynb</code>. Inspect <code>hamming.c:157-183</code>, <code>cpapke.c:438-447</code>, and <code>ccakem.c:60-63</code> in the Amoeba-576 reference tree for the actual rejection path.</p>
+<p>This is a static/model calculation, not a runtime failure measurement. The standalone script reproduces all five two- and three-error tails from <code>Security/noise_estimation.ipynb</code> in the official Amoeba archive; the notebook need not be present to run the script. Inspect <code>hamming.c:157-183</code>, <code>cpapke.c:438-447</code>, and <code>ccakem.c:60-63</code> in the Amoeba-576 reference tree for the actual rejection path.</p>
+<h2 class="issue-heading" id="kem-02-4-a-one-bit-ciphertext-change-writes-outside-the-hamming-correction-buffer">kem-02-4: A one-bit ciphertext change writes outside the Hamming correction buffer</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All five Amoeba reference parameter sets</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>One malformed ciphertext aborts decapsulation; no code execution demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-25</td></tr>
+</table></div>
+
+<p>The Hamming <code>syndrome_map</code> (<code>hamming.c:8</code>) holds check-bit positions up to 1023, but the correction buffer <code>c_corr</code> has 523 bytes, and <code>hamming.c:177</code> flips <code>c_corr[q]</code> without a bound check. Flipping the top bit of one compressed <code>c2</code> coefficient makes decapsulation write past the buffer; stack protection then aborts the process in every parameter set.</p>
+<p>The same incorrect syndrome mapping can be reached by an honest ciphertext with one noise error on a check coefficient at positions 516–521, so this is also a decapsulation reliability defect. The witness now tests a neighboring check bit whose mapped correction stays inside the buffer; it returns without aborting in all five sets.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-02/reproduce_ecc_stack_write.py
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

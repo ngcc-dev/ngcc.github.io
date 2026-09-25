@@ -48,3 +48,22 @@ C-Multi-UR-AG decryption computes a rank-code word using the private matrix `Y` 
 ### Reproducing
 
 Inspect `src/kem.c:209-213`, `src/cmultiurag.c:248-257`, and `src/augmented_gabidulin.c:185-201` under `Implementations/Reference_Implementation/CMultiURAG-128/`; the same pivot code is present in the other reference sets. See `constant_time.md` for the fuller trace.
+
+## kem-10-3: Ignored padding bits make CMultiURAG-512 ciphertexts malleable without changing the key
+
+Severity: Critical
+Status: Confirmed
+Layer: Implementation
+Affected: CMultiURAG-512 reference implementation; the 128 and 256 encodings have no padding
+Discovery: Trivial
+Exploitation: One decapsulation query on a byte-distinct copy of the challenge ciphertext
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-09-25
+
+With `m = 181`, the `U` and `V` encodings each end with 5 unused bits, which `rbc_vec_from_string` ignores (`rbc_vec.c:789-809`). Decapsulation compares the re-serialized decoded `U, V` with the re-encryption (`kem.c:235-246`), and the key hashes the re-serialized values (`kem.c:257-262`). Each honest ciphertext has 1,023 byte-distinct variants with the same key. The submission claims IND-CCA2 security, which is trivially violated.
+
+### Reproducing
+
+```sh
+python3 kem-10/reproduce_padding_alias.py
+```

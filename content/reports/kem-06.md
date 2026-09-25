@@ -71,3 +71,22 @@ BRA decryption computes `v-u*y` using private `y` and the public ciphertext (`sr
 ### Reproducing
 
 Inspect `src/kem.c:214`, `src/bra.c:277-288`, and `src/augmented_gabidulin.c:184-205` under `Implementations/Reference_Implementation/BRA-128/`; the same pivot code is present in BRA-256/512. See `constant_time.md` for the fuller trace.
+
+## kem-06-4: Ignored padding bits make ciphertexts malleable without changing the key
+
+Severity: Critical
+Status: Confirmed
+Layer: Implementation
+Affected: BRA-128, BRA-256, and BRA-512 reference implementations
+Discovery: Trivial
+Exploitation: One decapsulation query on a byte-distinct copy of the challenge ciphertext
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-09-25
+
+The `u` and `v` encodings end with 5 unused bits each, which `rbc_vec_from_string` ignores (`rbc_vec.c:789-809`). Decapsulation compares the re-serialized decoded vectors rather than the received bytes (`kem.c:241-252`), and the key hashes those re-serialized vectors (`kem.c:265-266`). Every honest ciphertext therefore has 1,023 byte-distinct variants that decapsulate to the same key. The submission claims IND-CCA2 security, which is trivially violated.
+
+### Reproducing
+
+```sh
+python3 kem-06/reproduce_padding_alias.py
+```

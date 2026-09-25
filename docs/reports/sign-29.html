@@ -33,10 +33,12 @@
 <tr><th>Credit</th><td>Tianyuan Xie</td></tr>
 <tr><th>Date</th><td>2026-09-22</td></tr>
 </table></div>
-<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/ECMH3PMGM2NWJG4JIBQBCKQ6U5CBUDDA/">NGCC PKC Forum report</a></p>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/ECMH3PMGM2NWJG4JIBQBCKQ6U5CBUDDA/">NGCC PKC Forum report</a>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/AJF5VVYQAJTICBWFFS5DHIO4U2FZZOXT/">Tins team's 2026-09-25 response</a></p>
 <p>Tianyuan Xie reported the attack in the <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/ECMH3PMGM2NWJG4JIBQBCKQ6U5CBUDDA/">NGCC PKC Forum</a>. Tins masks its binary witness <code>(alpha,beta)</code> with vectors over the 12-bit subfield, while publishing <code>p_mid</code> in <code>GF(2^k)</code>. After substituting the verifier-reconstructed evaluations into <code>p_mid</code>, the bilinear witness terms cancel in characteristic two. Only a 12-bit additive mask remains, confined to the final subfield coefficient.</p>
 <p>Every execution therefore exposes <code>k-12</code> public binary equations in the <code>2(n-2)</code> witness bits. Two executions from one signature have full rank for each submitted set: the reported ranks after the first and second executions are 264 then 276, 516 then 532, and 1,032 then 1,044. Recovering the witness is deterministic and inexpensive; the witness satisfies the public NSBC relation and can run the specified signer on arbitrary messages, violating EUF-CMA.</p>
 <p>The local reproducer independently performs the attack on a fresh Tins128 key and signature. It uses only the public key and signature after signing, obtains rank 276/276 from two executions, and validates the recovered witness against the public relation. Xie additionally reports end-to-end accepted forgeries on all three sets and exact recovery from all ten usable Tins128 and Tins256 KAT signatures.</p>
+<p>On 2026-09-25, the Tins team <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/AJF5VVYQAJTICBWFFS5DHIO4U2FZZOXT/">confirmed Xie's attack and withdrew the proposal</a>. They said sampling the masking polynomial over the smaller subfield had been a known design risk chosen for efficiency.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">make -C sign-29 exploit

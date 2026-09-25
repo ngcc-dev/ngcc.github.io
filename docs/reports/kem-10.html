@@ -63,6 +63,24 @@ security/ngcc_security kem-10/lib/libCMultiURAG-512.so kem-zero
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>Inspect <code>src/kem.c:209-213</code>, <code>src/cmultiurag.c:248-257</code>, and <code>src/augmented_gabidulin.c:185-201</code> under <code>Implementations/Reference_Implementation/CMultiURAG-128/</code>; the same pivot code is present in the other reference sets. See <code>constant_time.md</code> for the fuller trace.</p>
+<h2 class="issue-heading" id="kem-10-3-ignored-padding-bits-make-cmultiurag-512-ciphertexts-malleable-without-changing-the-key">kem-10-3: Ignored padding bits make CMultiURAG-512 ciphertexts malleable without changing the key</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>CMultiURAG-512 reference implementation; the 128 and 256 encodings have no padding</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>One decapsulation query on a byte-distinct copy of the challenge ciphertext</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-25</td></tr>
+</table></div>
+
+<p>With <code>m = 181</code>, the <code>U</code> and <code>V</code> encodings each end with 5 unused bits, which <code>rbc_vec_from_string</code> ignores (<code>rbc_vec.c:789-809</code>). Decapsulation compares the re-serialized decoded <code>U, V</code> with the re-encryption (<code>kem.c:235-246</code>), and the key hashes the re-serialized values (<code>kem.c:257-262</code>). Each honest ciphertext has 1,023 byte-distinct variants with the same key. The submission claims IND-CCA2 security, which is trivially violated.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-10/reproduce_padding_alias.py
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

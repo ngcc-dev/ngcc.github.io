@@ -125,3 +125,26 @@ Date: 2026-09-23
 ### Reproducing
 
 Inspect `vdoo_sign.c` lines 7–35, 82–105, and 127–159 in any reference parameter set. The `coeff` and `c` branch operands are obtained directly from `gfv_get_ele(sk->F, …)`. See `constant_time.md` for the secret/public review. This is a source/dataflow witness, not a measured remote timing exploit.
+
+## sign-33-6: Restricted oil terms may enable a public-key-only VDOO forgery
+
+Severity: Critical
+Status: Probable
+Layer: Implementation
+Affected: VDOO-128, -256, and -512 reference implementations share the restricted coefficient mask; the reported forgery concerns VDOO-128
+Discovery: Non-trivial
+Exploitation: The original analysis reports an accepted fresh-message forgery using only the public key in about 12 minutes
+Credit: OpenAI Codex (Daybreak Blue), disclosed by Martin Feussner
+Date: 2026-09-25
+Original source: [Feussner's pqc-forum post and attached analysis](https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/mYN9Br_C8dg/m/BDmmwIE6BAAJ)
+
+The VDOO specification gives each oil-layer equation products with every oil variable of that layer. The submitted coefficient filter permits a vinegar–oil product only when the oil variable has the same index as the output equation (`vdoo_keypair.c:194–225`), identically in all three reference sets. This creates a hidden one-variable-per-equation triangular system. The posted analysis describes a public-key-only structural search and reports a VDOO-128 forgery, but the search has no released code. The fixed replay regenerates both public and secret keys from the public trivial seed `seed[i]=i`, matches the posted public-key hash, and verifies the posted 85-byte signature; message and signature flips reject. Since that seed also permits ordinary honest signing, replaying the signature gives no evidence of how it was generated and does not independently establish a public-key-only forgery. This remains Probable on the original analysis. The optimized source is absent from the harness and was not checked here; the specified dense oil layers are unaffected.
+
+### Reproducing
+
+```sh
+make -C sign-33 replay-forgery
+sign-33/bin/replay_public_forgery
+```
+
+The replay checks the published public-key, message, and signature hashes before verifying the signature and two negative controls; it does not reproduce the public-key-only attack. Compare the specification's oil-layer sums with `is_allowed_oil1` and `is_allowed_oil2` in `vdoo_keypair.c` for the structural defect. The [original analysis](https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/mYN9Br_C8dg/m/BDmmwIE6BAAJ) describes the unreproduced public-key search.

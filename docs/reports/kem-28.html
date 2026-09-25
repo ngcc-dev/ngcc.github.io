@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OAEP-NTRU (kem-28) · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=15e56c79">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-Time</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>kem-28</code> · <a href="../constant-time/kem-28.html">Constant-time review</a></p>
+
+<h1 id="oaep-ntru-kem-28">OAEP-NTRU (kem-28)</h1>
+<div class="table-wrap"><table class="meta">
+<tr><th>Candidate</th><td>OAEP-NTRU</td></tr>
+<tr><th>Family</th><td>Lattice (NTRU)</td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/OAEP-NTRU.zip">OAEP-NTRU.zip</a> (SHA-256: <code>aaab8e0692fd19dd2edda5384b5e85bba74661d478823b48cab3cccb53675756</code>)</td></tr>
+</table></div>
+
+<h2 class="issue-heading issue-heading-first" id="kem-28-1-noncanonical-ciphertext-encoding-defeats-ind-cca-security">kem-28-1: Noncanonical ciphertext encoding defeats IND-CCA security</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>OAEP-NTRU-648, -1296, and -2592 reference implementations; the same decoder omission is present in the submitted optimized and additional sources</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>One decapsulation query for a byte-distinct encoding of an honest challenge ciphertext</td></tr>
+<tr><th>Credit</th><td>mmtobs, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-25</td></tr>
+</table></div>
+<p>Original source: <a href="https://github.com/ngcc-dev/ngcc-harness/pull/17">ngcc-harness pull request #17</a></p>
+<p>Specification Algorithms 12 and 14 unpack fixed-width coefficient fields without rejecting values at least <code>q</code>, and Algorithm 3 never rechecks the received ciphertext bytes. The reference <code>poly_frombytes</code> does the same (<code>poly.c:104</code>). When a ciphertext coefficient <code>c + q</code> still fits its field, replacing <code>c</code> with <code>c + q</code> changes the ciphertext bytes but leaves the polynomial residue used by decapsulation unchanged. <code>kem_dec</code> checks the confirmation tag but never checks that the received polynomial bytes are canonical (<code>KEM_AlgorithmInstance.c:170–204</code> in OAEP-NTRU-648, <code>:215–249</code> in -1296, and <code>:185–228</code> in -2592). A modified encoding of an honest ciphertext therefore returns its original shared secret. In the IND-CCA game, this byte-distinct alias can be submitted to the decapsulation oracle even though the challenge ciphertext itself cannot.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>Run <code>python3 kem-28/reproduce_noncanonical_ciphertext.py</code> against the built harness libraries. This independent witness reproduced 5/5 accepted <code>+q</code> aliases at each of the three levels (15/15 total), all with return code 0 and the honest shared secret. None of the 15 non-congruent <code>+q+1</code> controls returned that key. <a href="https://github.com/ngcc-dev/ngcc-harness/pull/17">PR #17</a> separately reports 10/10 aliases per level; its code remains unmerged. The optimized and additional decoder omissions were checked in source, not executed by this witness.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

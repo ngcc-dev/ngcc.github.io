@@ -15,9 +15,9 @@ Credit: Samuel J. G. G. (GitHub @SamuelJGG)
 Date: 2026-09-23
 Original source: [GitHub issue #15](https://github.com/ngcc-dev/ngcc-harness/issues/15)
 
-Encryption adds `q/(2p)` before compressing `c_m`. Algorithm 1 and all three submitted `pke.c` copies add `p/(2t) - q/(2p)` during decryption; centering the compression remainder instead requires `q/(2p) - p/(2t)`. The specified sign leaves the Mithril-128/-256 decoder substantially off center, whereas the submitted decryption-failure analysis assumes a centered error. The report does not establish a new key-recovery attack or a numerical honest-failure probability.
+Encryption adds `q/(2p)` before compressing `c_m`. Algorithm 1 specifies `p/(2t) - q/(2p)` during decryption, and the live decoder in `arith/packing.c:215` applies the corresponding `+126` for Mithril-256. (The similar `poly_subp` in `pke.c` is unused.) Centering the compression remainder instead requires `q/(2p) - p/(2t)`. The specified sign leaves the Mithril-128/-256 decoder substantially off center, whereas the submitted decryption-failure analysis assumes a centered error. The report does not establish a new key-recovery attack or a numerical honest-failure probability.
 
-Samuel's concrete Mithril-256 record uses the submitters' own PKE and KEM functions: an honestly formed ciphertext gives different encapsulated and decapsulated secrets. Its wrong bit has LWR noise 136 and compression remainder 254; the specified offset yields 514, beyond the decision margin 512, while the centered offset yields 262. The same external input/output dimensions and this error remain if the contest hash placeholders are replaced by ideal primitives.
+Samuel's concrete Mithril-256 record uses the submitters' own PKE and KEM functions: an honestly formed ciphertext gives different encapsulated and decapsulated secrets. Its wrong bit has LWR noise 136 and compression remainder 254; the specified offset yields 514, beyond the decision margin 512, while the centered offset yields 262. This pinned record depends on the submitted hash output and need not persist under an ideal replacement, but the erroneous decoder offset is independent of that hash choice.
 
 ### Reproducing
 

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shuttle (sign-23) · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=15e56c79">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-Time</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>sign-23</code> · <a href="../constant-time/sign-23.html">Constant-time review</a></p>
+
+<h1 id="shuttle-sign-23">Shuttle (sign-23)</h1>
+<div class="table-wrap"><table class="meta">
+<tr><th>Candidate</th><td>Shuttle</td></tr>
+<tr><th>Family</th><td>Lattice (Module-LWE/Module-SIS)</td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/shuttle.zip">shuttle.zip</a> (SHA-256: <code>09253fd33c2215098177991db3375cb94e4e4a73a65b019783edabefa5bd8a62</code>)</td></tr>
+</table></div>
+
+<h2 class="issue-heading issue-heading-first" id="sign-23-1-reversed-transition-leaks-shuttles-signing-key">sign-23-1: Reversed transition leaks Shuttle&#x27;s signing key</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Shuttle-128, -256, and -512 NGCC specification and reference implementations</td></tr>
+<tr><th>Discovery</th><td>Non-trivial</td></tr>
+<tr><th>Exploitation</th><td>Equivalent-key recovery and accepted fresh-message forgeries from 175,000/275,000/300,000 valid signatures in independent 128/256/512 tests</td></tr>
+<tr><th>Credit</th><td>OpenAI Codex (Daybreak Blue), disclosed by Martin Feussner</td></tr>
+<tr><th>Date</th><td>2026-09-25</td></tr>
+</table></div>
+<p>Original source: <a href="https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/5ao-Ebsa_Ow/m/zwYJk_Q-BAAJ">Feussner's pqc-forum post and attached analysis</a></p>
+<p>Figure 1, Eq. (8), and §4.1.1 define <code>p_v(y)</code> as the probability of returning <code>y−v</code>, but Algorithm 22 sets its flag on the corresponding interval event and returns <code>y+flag·v</code>. All three reference <code>irs.c</code> files implement that same sign (<code>irs.c:382–399</code>). Reversing the intended transition leaves a secret-dependent covariance in valid responses. The constant first component of Shuttle's signing secret supplies a public anchor for estimating the other secret components. An independent driver recovered an equivalent key using only ordinary signatures and the public key, then produced an accepted fresh-message forgery at every level. The original analysis also reports a corrected-sign control; that control has not been independently rerun. The authors' separate <a href="https://eprint.iacr.org/2026/1991">ePrint 2026/1991</a> uses the matching <code>y−v</code> branch, so this finding concerns the NGCC submission.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C sign-23 exploit
+tools/reproduce.sh sign-23
+</code></pre>
+<p>The independent driver parses verified signatures, accumulates challenge-conditioned covariance, checks recovered secret coefficients through the public-key relation and key-generation bounds, and signs a fresh message with the resulting equivalent key. It splits ordinary signing queries over eight independent processes by default; no original secret data enters the estimator or public completion. The <a href="https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/5ao-Ebsa_Ow/m/zwYJk_Q-BAAJ">original post</a> describes the same mechanism.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

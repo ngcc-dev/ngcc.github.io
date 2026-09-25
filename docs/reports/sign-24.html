@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sigurd (sign-24) · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=15e56c79">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-Time</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>sign-24</code> · <a href="../constant-time/sign-24.html">Constant-time review</a></p>
+
+<h1 id="sigurd-sign-24">Sigurd (sign-24)</h1>
+<div class="table-wrap"><table class="meta">
+<tr><th>Candidate</th><td>Sigurd</td></tr>
+<tr><th>Family</th><td>Code-based (regular syndrome decoding)</td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/Sigurd.zip">Sigurd.zip</a> (SHA-256: <code>443ab14257658d89a60e14ad0d4b7f4df9fcdd06da4f42fcb29bbbfc75a97153</code>)</td></tr>
+</table></div>
+
+<h2 class="issue-heading issue-heading-first" id="sign-24-1-chunked-reedsolomon-encoding-reveals-the-signing-witness">sign-24-1: Chunked Reed–Solomon encoding reveals the signing witness</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Sigurd-128, -256, and -512 reference implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Witness recovery and accepted fresh-message forgeries from 4–8 ordinary signatures in independent tests</td></tr>
+<tr><th>Credit</th><td>OpenAI Codex (Daybreak Blue), disclosed by Martin Feussner</td></tr>
+<tr><th>Date</th><td>2026-09-25</td></tr>
+</table></div>
+<p>Original source: <a href="https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/2lO14yYyDK4/m/UYKYkWM7BAAJ">Feussner's pqc-forum post and attached analysis</a></p>
+<p>The specification's vector commitment pads the witness with fresh random tail elements and applies one Reed–Solomon encoding. The submitted <code>RS_encode</code> instead divides the input into 32 independently encoded chunks (<code>sig_core.c:640–745</code> in Sigurd-128; the same structure appears in the other reference sets). Early chunks contain only the unchanged witness prefix; the fresh tail cannot hide their evaluations. Signatures expose selected encoded-witness symbols, so openings accumulated across signatures interpolate those chunks. The public syndrome then determines the short remaining witness suffix. An independent whole-scheme witness recovered all 217/458/946 blocks from 4–8 ordinary signatures and forged a fresh message accepted by each submitted verifier; changing one recovered one-hot block made the control forgery reject. The flaw is in the submitted encoding, not the specified single-code construction.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C sign-24 exploit
+tools/reproduce.sh sign-24
+</code></pre>
+<p>The independent driver queries <code>sig_sign</code> for ordinary signatures, parses only public transcripts, interpolates witness-only chunks, solves the remaining public-syndrome system, and calls the submitted <code>Prover</code> with the recovered witness. The original <a href="https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/2lO14yYyDK4/m/UYKYkWM7BAAJ">forum analysis</a> reports broader 35-key testing; our witness tests two different keys at each level.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

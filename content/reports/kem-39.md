@@ -45,14 +45,14 @@ rg -n 'polyvec_invq|poly_getnoise_eta2|prf\(' kem-39/Implementations/Reference_I
 Severity: Medium
 Status: Confirmed
 Layer: Implementation
-Affected: WeaverKEM-256 reference and optimized implementations (Weaver-1024 in the specification)
+Affected: WeaverKEM-256 reference implementation (Weaver-1024 in the specification); optimized implementation reported but not independently checked
 Discovery: Trivial
 Exploitation: Correctable high-layer errors change the decapsulated message; actual honest KEM failure rate unmeasured
 Credit: Yijian Liu (with AI assistance)
 Date: 2026-09-24
 Original source: [NGCC PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/DJRC6VQK5TYNKMAJBD2MIKUH7EAZ4VO6/)
 
-Table 3's Weaver-1024 failure estimate (`2^-231.7` overall) assumes a high-layer BCH(255,223,4) decoder. Both submitted WeaverKEM-256 `poly_frommsg` implementations encode this redundancy, but their `WEAVER_MODE == 3` `poly_tomsg` branches copy the hard-decision high bits into the message without calling the included `decode_bch_high_nibbles`. Other modes do call their high-layer decoder. Thus Table 3's correction-based bound does not describe this implementation; no replacement failure probability or key-recovery attack is claimed.
+Table 3's Weaver-1024 failure estimate (`2^-231.7` overall) assumes a high-layer BCH(255,223,4) decoder. The archived WeaverKEM-256 reference `poly_frommsg` encodes this redundancy, but its `WEAVER_MODE == 3` `poly_tomsg` branch copies the hard-decision high bits into the message without calling the included `decode_bch_high_nibbles`. Other modes do call their high-layer decoder. The forum post says the optimized implementation has the same omission; that source was not included in the available archive and is not independently verified here. Thus Table 3's correction-based bound does not describe the checked implementation; no replacement failure probability or key-recovery attack is claimed.
 
 ### Reproducing
 

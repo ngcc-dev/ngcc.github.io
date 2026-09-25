@@ -19,3 +19,22 @@ BRQC decryption computes `v-u*y` using private `y` and the public ciphertext (`s
 ### Reproducing
 
 Inspect `src/kem.c:214`, `src/brqc.c:277-288`, and `src/gabidulin.c:185-201` under `Implementations/Reference_Implementation/BRQC-128/`; the same pivot code is present in BRQC-256/512. See `constant_time.md` for the fuller trace.
+
+## kem-07-2: Ignored padding bits make ciphertexts malleable without changing the key
+
+Severity: Critical
+Status: Confirmed
+Layer: Implementation
+Affected: BRQC-128, BRQC-256, and BRQC-512 reference implementations
+Discovery: Trivial
+Exploitation: One decapsulation query on a byte-distinct copy of the challenge ciphertext
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-09-25
+
+The `u` and `v` encodings end with 7, 5, or 1 unused bits per vector, which `rbc_vec_from_string` ignores (`rbc_vec.c:789-809`). Decapsulation compares the re-serialized decoded vectors rather than the received bytes (`kem.c:241-252`), and the key hashes those re-serialized vectors (`kem.c:265-266`). Changing any padding bit yields a different ciphertext with the same key. The submission claims IND-CCA2 security, which is trivially violated.
+
+### Reproducing
+
+```sh
+python3 kem-07/reproduce_padding_alias.py
+```

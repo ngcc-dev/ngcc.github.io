@@ -45,6 +45,42 @@ security/ngcc_security kem-31/lib/libNGCC-2.so kem-zero
 security/ngcc_security kem-31/lib/libNGCC-3.so kem-zero
 </code></pre>
 <p>Run each separately because it aborts the process. All three reproduced locally; <code>make -C kem-31 test</code> passed all three honest-input KAT sets.</p>
+<h2 class="issue-heading" id="kem-31-2-non-canonical-field-encodings-make-ciphertexts-malleable-without-changing-the-key">kem-31-2: Non-canonical field encodings make ciphertexts malleable without changing the key</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>NGCC-1, NGCC-2, and NGCC-3 reference implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>One decapsulation query on a byte-distinct copy of the challenge ciphertext</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-25</td></tr>
+</table></div>
+
+<p><code>fp_decode</code> reduces field elements modulo <code>p</code> without rejecting values at least <code>p</code>, and NGCC-1 also leaves 4 bytes of each 64-byte field slot unread. Decapsulation compares and hashes the re-encoded decoded ciphertext rather than the received bytes (<code>KEM_AlgorithmInstance.c:245,252</code>). Replacing any field element <code>x</code> by <code>x + p</code>, or changing an unread slot byte, therefore returns the honest key. The submission claims IND-CCA security, which is trivially violated.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-31/reproduce_ciphertext_alias.py
+</code></pre>
+<h2 class="issue-heading" id="kem-31-3-malformed-public-keys-hang-or-abort-encapsulation">kem-31-3: Malformed public keys hang or abort encapsulation</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>NGCC-1, NGCC-2, and NGCC-3 reference implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>A sender encapsulating to a crafted public key with square A+2 in F_{p²} loops or aborts</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-25</td></tr>
+</table></div>
+
+<p>Encapsulation does not validate the public key. With the two basis hints set to zero, <code>ec_curve_to_basis_Tmin_from_hint</code> loops when <code>A+2</code> is a square in <code>F_{p²}</code> (<code>ec/ref/pike_ecx/basis.c:1283–1307</code>), a condition an attacker can choose. With the curve coefficient of NGCC-1 set to zero, encapsulation aborts on an assertion (<code>ec/ref/ecx/biextension.c:1448</code>). Honest encapsulation takes well under two seconds.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-31/reproduce_malformed_public_key.py
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

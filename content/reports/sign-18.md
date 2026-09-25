@@ -109,7 +109,10 @@ Pébereau's Origami-128 implementation forges a signature that the archived `sig
 
 ```sh
 make -C sign-18 lib/libOrigami-128.so
-python3 sign-18/reproduce_public_forgery.py
+T=$(mktemp -d)
+git clone https://github.com/pi-r2/UnfoldOrigami.git "$T/UnfoldOrigami"
+git -C "$T/UnfoldOrigami" checkout defa3405d66e763580729b14d6f81c1300fbb219
+python3 sign-18/reproduce_public_forgery.py "$T/UnfoldOrigami"
 ```
 
-The checker clones and checks out Pébereau's pinned attack source into a temporary directory; an existing checkout at that commit can instead be supplied as its positional argument. Before import, it verifies SHA-256 `1fe0c4ca114efd217a1e42291f60450dd3a4edd2606b8ef56e411ebc46594917` for `forge.sage` and `b287be01bf244ca7cdc749b2bb7c9ca00d756e0eee895bb117d5f722352e9cb2` for `technical.py`. It loads only the library built from the archived Origami source, not the attack repository's bundled binary. It seeds key generation afresh, erases the resulting secret before calling `forge`, verifies the new signature, and rejects the same signature on a changed message. Three local runs passed with roughly 0.6-second inversion each; this is not an all-level benchmark. Python must provide `hashlib` SM3 support for this submitted evaluation variant.
+The local checker verifies SHA-256 `1fe0c4ca114efd217a1e42291f60450dd3a4edd2606b8ef56e411ebc46594917` for `forge.sage` and `b287be01bf244ca7cdc749b2bb7c9ca00d756e0eee895bb117d5f722352e9cb2` for `technical.py` before importing the pinned attack code. It loads only the library built from the archived Origami source, not the repository's bundled binary. It seeds key generation afresh, erases the resulting secret before calling `forge`, verifies the new signature, and rejects the same signature on a changed message. Three local runs passed with roughly 0.6-second inversion each; this is not an all-level benchmark. Python must provide `hashlib` SM3 support for this submitted evaluation variant.

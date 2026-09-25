@@ -76,7 +76,7 @@ Original source: [Related SQIsign parameter issue #10](https://github.com/ngcc-d
 
 Further extension to Yintong Luo's analysis: SQIsign2D2 §4.1 also chooses `log2 p ≈ 2λ` because it prices generic classical attacks at `p^1/2`. [Wesolowski, ePrint 2026/1486](https://eprint.iacr.org/2026/1486) improves the underlying supersingular-isogeny problem to heuristic `p^(1/3+o(1))` time and memory. The archived Level3-eff prime is even identical to SQIsign2D-push1/2's Level-3 prime. This supersedes the square-root sizing premise for **all** submitted levels, including Level1 and Level2; the bare `p^1/3` exponent for Level1-eff is about 84.9 against a 128-bit claim. The paper cautions that superpolynomial overhead and memory may dominate at concrete sizes, particularly for the smaller levels. No particular set is asserted to have a concrete below-claim attack, and no full-size key recovery or forgery is claimed here.
 
-[Mamah's later concrete time–space analysis](https://eprint.iacr.org/2026/1821), updated 2026-09-23, finds that the optimistic improvement can require prohibitive memory even for generic 256- and 512-bit SQIsign primes. It does not cost these archived NGCC instances, so this remains a lead rather than a concrete break.
+[Mamah's later time–space analysis](https://eprint.iacr.org/2026/1821), revised 2026-09-23, expects Wesolowski's method to improve on the state of the art at NIST Level I within the practical memory ranges studied. At higher levels, memory offsets that advantage in those ranges, although highly parallelized vOW can recover it. The paper does not cost these archived NGCC primes, so this remains a lead rather than a concrete break.
 
 ### Reproducing
 

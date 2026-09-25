@@ -19,3 +19,22 @@ Decapsulation forms a rank-code word by multiplying the public ciphertext compon
 ### Reproducing
 
 The source-level witness is the decapsulation call in `src/loong_kem.c:217-218`, the secret-key product in `src/loong_pke.c:1003-1014`, and the value-dependent pivot loop in `src/gabidulin.c:213-279` under `Implementations/Reference_Implementation/Loong-Block-ms-128/`. The same files occur in the other reference parameter directories. See `constant_time.md` for the secret/public classification.
+
+## kem-03-2: The rejection key does not bind the received ciphertext
+
+Severity: High
+Status: Confirmed
+Layer: Design
+Affected: All BAG-Loong parameter sets
+Discovery: Moderate
+Exploitation: Observable rejection keys give a plaintext-checking and decoding-failure oracle; challenge-key recovery is unshown
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-09-25
+
+Algorithm 2 (§1.4) specifies `K(ξ, ct')` on rejection, where `ct'` is the re-encryption of the decrypted message rather than the received ciphertext. The code follows it (`loong_kem.c:229–246`). Distinct invalid ciphertexts with the same decryption therefore share a rejection key, exposing a plaintext-checking and decoding-failure oracle when keys are observable. This departs from standard Fujisaki–Okamoto rejection, so the stated IND-CCA2 proof does not establish the submitted construction's claim. A mauled challenge returns `K(ξ, c*)`, not the challenge key `K*`; the witness demonstrates rejection-key collisions, not challenge-key recovery or a full IND-CCA2 attack.
+
+### Reproducing
+
+```sh
+python3 kem-03/reproduce_rejection_key.py kem-03/lib/libBAG-Loong-128.so
+```
