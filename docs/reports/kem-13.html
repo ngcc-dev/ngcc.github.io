@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DKEM (Ding Key Encapsulation) (kem-13) · ngcc.dev</title>
+<link rel="stylesheet" href="../assets/style.css?v=15e56c79">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Reports</a><a href="../constant-time/index.html">Constant-Time</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../reports/index.html">Reports</a> › <code>kem-13</code> · <a href="../constant-time/kem-13.html">Constant-time review</a></p>
+
+<h1 id="dkem-ding-key-encapsulation-kem-13">DKEM (Ding Key Encapsulation) (kem-13)</h1>
+<div class="table-wrap"><table class="meta">
+<tr><th>Candidate</th><td>DKEM (Ding Key Encapsulation)</td></tr>
+<tr><th>Family</th><td>Lattice (Module-LWE)</td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/DKEM.zip">DKEM.zip</a> (SHA-256: <code>862f40ba424253bae7fadbc9c2f54a568b77e0f97fba4728c5fd1e4e826dddc7</code>)</td></tr>
+</table></div>
+
+<h2 class="issue-heading issue-heading-first" id="kem-13-1-dkems-rejection-key-does-not-bind-the-full-ciphertext">kem-13-1: DKEM&#x27;s rejection key does not bind the full ciphertext</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All DKEM parameter sets and submitted implementation families</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Rejected ciphertexts sharing <code>c2</code> share a key; no IND-CCA or shared-secret recovery attack shown</td></tr>
+<tr><th>Credit</th><td>zhengjieyu</td></tr>
+<tr><th>Date</th><td>2026-09-25</td></tr>
+</table></div>
+<p>Original source: <a href="https://github.com/ngcc-dev/ngcc-harness/issues/16">ngcc-harness issue #16</a></p>
+<p>Specification Algorithm 16 derives the rejection key as <code>KDF(rej || c2)</code>, omitting the <code>c1</code> component of <code>ct = c1 || c2</code>. The twelve submitted <code>dkecca.c</code> copies do the same (<code>dkecca.c:109–111</code>). Thus distinct rejected ciphertexts with the same <code>c2</code> return the same key, violating full-ciphertext key binding. With access to decapsulation outputs, comparing a ciphertext's key to that of a changed-<code>c1</code> ciphertext also distinguishes acceptance from rejection, contrary to the specification's §5.3 claim that implicit rejection provides no validity signal. This does <strong>not</strong> establish an IND-CCA break or a way to recover an honest party's secret key or session key; the submitted IND-CCA proof explicitly models this <code>c2</code>-only rejection derivation.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C api harness
+make -C kem-13
+python3 kem-13/reproduce_rejection_binding.py \
+  kem-13/lib/libDKEM-128.so kem-13/lib/libDKEM-256.so \
+  kem-13/lib/libDKEM-512.so
+</code></pre>
+<p>For each parameter set, the witness checks an honest encapsulation, two distinct rejected <code>c1</code> values with the same <code>c2</code> and identical decapsulation keys, and a changed-<code>c2</code> control with a different key. It exercises the archived reference implementation; the identical rejection derivation in optimized and additional sources was checked statically.</p>
+<h2 class="issue-heading" id="kem-13-2-malicious-public-key-defeats-dkems-contributory-key-derivation">kem-13-2: Malicious public key defeats DKEM&#x27;s contributory key derivation</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>DKEM-128, DKEM-256, and DKEM-512</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Fresh encapsulations to a malicious public key produce a repeated, predictable key; protocol impact depends on how the key is used</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-25</td></tr>
+</table></div>
+
+<p>The specification's §3 says DKEM is “contributory by construction” because both parties affect the reconciled secret. This claim fails for an attacker-supplied public key whose polynomial vector is zero. In Algorithm 11, the sender's product with that vector vanishes; the remaining doubled, small error produces a zero reconciliation signal and an all-zero raw shared secret. Algorithm 14 and <code>dkecca.c</code> then derive the final key from that raw secret alone, so fresh sender coins and distinct ciphertexts all yield the same <code>KDF</code> output. The ciphertext's <code>c2</code> also exposes the coins because it XORs them with the zero raw secret. This holds for each submitted parameter set and does not depend on weaknesses of the placeholder hash functions.</p>
+<p>The witness gives 64 distinct ciphertexts but one shared key across 64 encapsulations for each parameter set, versus 64 distinct keys with an honestly generated public key. For DKEM-128 and DKEM-256 the repeated key is exactly <code>sm3hash(256, 0^32)</code>. This is a malicious-public-key contributiveness and key-binding failure; it does not establish an IND-CCA break for honestly generated keys or show that a recipient accepts these ciphertexts under an honestly generated secret key. Including fresh sender input in the final key derivation would prevent this particular repeated-key outcome; any broader public-key or ciphertext binding claim needs its own analysis.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C api harness
+make -C kem-13
+python3 kem-13/reproduce_malicious_key.py \
+  kem-13/lib/libDKEM-128.so kem-13/lib/libDKEM-256.so \
+  kem-13/lib/libDKEM-512.so
+</code></pre>
+<p>For each parameter set, the witness encapsulates 64 times to an honestly generated public key (control: 64 distinct keys) and 64 times to the same key with its polynomial vector zeroed and <code>rho</code> kept. It checks distinct ciphertexts and distinct <code>c2</code> values but a single key, and for 32-byte keys that the key equals <code>sm3hash(256, 0^32)</code>. The source-level trace, identical in all three <code>Reference_Implementation/DKEM-*</code> instances, is Algorithm 11's zero public vector, <code>dkecpa.c:174–186</code> (the sender's reconciled secret), <code>dke_utils.c:97–105,172–176</code> (signal and raw-secret extraction), and <code>dkecca.c:65–76</code> (the final key and <code>c2</code>).</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>
