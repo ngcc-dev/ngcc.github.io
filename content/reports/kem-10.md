@@ -62,7 +62,7 @@ Date: 2026-09-25
 
 With `m = 181`, the `U` and `V` encodings each end with 5 unused bits, which `rbc_vec_from_string` ignores (`rbc_vec.c:789-809`). Decapsulation compares the re-serialized decoded `U, V` with the re-encryption (`kem.c:235-246`), and the key hashes the re-serialized values (`kem.c:257-262`). Each honest ciphertext has 1,023 byte-distinct variants with the same key. The submission claims IND-CCA2 security, which is trivially violated.
 
-The specification's Algorithm 9 (§3.4) compares the received `(U, V)` with the re-encryption, and §5 describes that check as byte-by-byte. It does not specify acceptance of alternative wire encodings. The submitted byte parser discards the padding bits before the check, so the implementation never compares the original ciphertext bytes.
+The specification's Algorithm 9 (§3.4) compares the received `(U, V)` with the re-encryption as algebraic values; it defines no byte parser or rule for accepting alternative wire encodings. The submitted byte parser discards the padding bits before the check, so the implementation never compares the original ciphertext bytes.
 
 ### Reproducing
 

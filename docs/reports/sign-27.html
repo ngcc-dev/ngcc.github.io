@@ -68,24 +68,24 @@ security/ngcc_security sign-27/lib/libSQIsignTriangle_lvl1.so sig-zero
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>All four SQIsignTriangle parameter sets</td></tr>
 <tr><th>Discovery</th><td>Moderate</td></tr>
-<tr><th>Exploitation</th><td>About 2^64, 2^80, 2^128, or 2^256 hash trials at the 128-, 160-, 256-, or 512-bit levels</td></tr>
+<tr><th>Exploitation</th><td>About 2^64, 2^80, 2^128, or 2^256 classical hash trials at the 128-, 160-, 256-, or 512-bit levels; about 2^(lambda/4) quantum search work</td></tr>
 <tr><th>Credit</th><td>Tako Boris Fouotsa</td></tr>
 <tr><th>Date</th><td>2026-09-26</td></tr>
 </table></div>
 <p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/F3RT6SYIAB7MLENH3OUBX6OSWQQTJ2LE/">Fouotsa's PKC Forum post and attached analysis</a></p>
-<p>A signature exposes its response degree <code>q</code>; its auxiliary curve and torsion data recover the same commitment independently of the message. Verification binds a message only by hashing <code>(j(E_pk), j(E_com), message)</code> to <code>(c1,c2)</code> and checking <code>q mod c1 = c2</code>. A forger therefore keeps any valid signature and searches for a different message whose challenge satisfies that single congruence.</p>
-<p>Each challenge component is only <code>lambda/2</code> bits: the implementation sets <code>byte_len = SECURITY_BITS / 16</code> and imports that many bytes into each integer, agreeing with the specification's challenge interval of size <code>2^(lambda/2)</code>. For fixed <code>q</code> and <code>c1</code>, exactly one <code>lambda/2</code>-bit value of <code>c2</code> succeeds, so the expected search is about <code>2^(lambda/2)</code> rather than the claimed <code>2^lambda</code>. A chosen-message signing query supplies the starting signature, making this a direct EUF-CMA attack. It violates every claimed security level and is therefore Critical, even though the larger instances remain computationally infeasible.</p>
+<p>A signature exposes its response degree <code>q</code>; its auxiliary curve and torsion data recover the same commitment independently of the message. Verification hashes the public-key curve, commitment curve and message to <code>(c1,c2)</code>, then checks <code>q mod c1 = c2</code>. A forger therefore keeps any valid signature and searches for a different message whose challenge satisfies that single congruence.</p>
+<p>Each challenge component is only <code>lambda/2</code> bits: the implementation sets <code>byte_len = SECURITY_BITS / 16</code> and imports that many bytes into each integer, agreeing with the specification's challenge interval of size <code>2^(lambda/2)</code>. The verifier checks <code>(q - c2) mod c1 = 0</code> without requiring <code>c2 &lt; c1</code>, so several <code>c2</code> values can succeed for one <code>c1</code>; either codomain component can also supply <code>c1</code>. The search still costs on the order of <code>2^(lambda/2)</code> classical trials, rather than the claimed <code>2^lambda</code>. Grover search brings the quantum work to about <code>2^(lambda/4)</code>. A chosen-message signing query supplies the starting signature, making this a direct EUF-CMA attack. It violates every claimed security level and is therefore Critical, even though the larger instances remain computationally infeasible.</p>
 <h3 id="reproducing_2">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 sign-27/reproduce_modular_challenge.py
 </code></pre>
-<p>The witness checks the archived verifier and challenge-width expressions, prints the four full-size costs, constructs two distinct accepting challenge pairs for one response degree, and runs the exact hash-to-prime/congruence search at a scaled 16-bit security parameter.</p>
+<p>The witness checks relevant expressions in the archived source, prints the four full-size costs, constructs two distinct accepting challenge pairs for one response degree, and models the hash-to-prime/congruence search in Python at a scaled 16-bit security parameter. It does not call the submitted verifier.</p>
 <h2 class="issue-heading" id="sign-27-4-distinct-challenges-can-share-the-identical-response-invalidating-special-soundness">sign-27-4: Distinct challenges can share the identical response, invalidating special soundness</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
 <tr><th>Scope</th><td>design</td></tr>
-<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr>
 <tr><th>Affected</th><td>The SQIsignTriangle special-soundness argument for all four parameter sets</td></tr>
 <tr><th>Discovery</th><td>Moderate</td></tr>
 <tr><th>Exploitation</th><td>Proof failure; no attack beyond sign-27-3 is claimed</td></tr>
@@ -99,7 +99,7 @@ security/ngcc_security sign-27/lib/libSQIsignTriangle_lvl1.so sig-zero
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 sign-27/reproduce_modular_challenge.py
 </code></pre>
-<p>The script exhibits two distinct prime challenges that accept the same fixed degree and verifies the exact congruences used by Algorithm 4.3 and <code>verify.c</code>.</p>
+<p>The script models two distinct prime challenges that accept the same fixed degree and checks the corresponding congruences. It checks the submitted source expressions statically but does not execute <code>verify.c</code>.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -101,27 +101,26 @@ The same incorrect syndrome mapping can be reached by an honest ciphertext with 
 python3 kem-02/reproduce_ecc_stack_write.py
 ```
 
-## kem-02-5: Uninitialized standalone key generation repeats a universal key pair
+## kem-02-5: Withdrawn — unseeded caller repeats Amoeba keys
 
-Severity: Critical
-Status: Confirmed
-Layer: Implementation
-Affected: All five Amoeba reference parameter sets when the exported API is called without KAT-internal DRNG setup
+Severity: Info
+Status: Withdrawn
+Layer: Evaluation
+Affected: Unseeded calls to all five Amoeba reference parameter sets
 Discovery: Trivial
-Exploitation: One local key generation reveals the private key used by every fresh unseeded process
+Exploitation: None under the caller-seeded NICCS API
 Credit: Jiadong Han
 Date: 2026-09-26
 Original source: [Han's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/MRNBLY5HODKCWN6VLWETBR3W4VE3CDZC/)
 
-`cpapke.c` defines the file-global `drng_algorithm`, so a fresh process starts from the all-zero BSS image. `CPAPKE_Init()` would seed it from the operating system, but the exported path `kem_keygen -> CCAKEM_KeyGen -> CPAPKE_KeyGen` never calls that function. The contest KAT driver masks the defect by initializing the same global before calling `kem_keygen`; `CPAPKE_Init` is not part of the public KEM API.
+The official NICCS API makes the caller responsible for randomness: its KAT driver defines `drng_algorithm` (`api/API_PKC/Implementations/Reference_Implementation/AlgorithmInstance/KAT_KEM.c:42`) and seeds it before key generation (`:105`). The algorithm code normally declares this state `extern`. Amoeba instead defines the global in `cpapke.c:13`, so an unseeded caller still links and silently uses the zero-initialized state. Its unused `CPAPKE_Init()` helper (`:15-19`) suggests initialization but is not called by `kem_keygen`.
 
-Two fresh processes consequently return byte-identical public and private keys. We reproduced this through the untouched exported `kem_keygen` for all five sets. Explicitly seeding the global with two different seeds makes the keys differ, confirming that the repeated key comes from missing initialization rather than an ineffective key generator. An attacker can run the same build once and obtain the private key for every affected unseeded deployment.
+Fresh unseeded processes return identical Amoeba keys, while two explicitly seeded processes differ. The same unseeded-process test also repeats keys for Aigis-Enc+, Mithril, UVW, BAG-Loong and BRA. This is a consequence of omitting the caller's required seeding step, not an Amoeba-specific universal key pair. The finding is withdrawn; Amoeba's self-defined global is a robustness concern, not a demonstrated break of correctly seeded key generation.
 
 ### Reproducing
 
 ```sh
-make -C kem-02
-python3 kem-02/reproduce_unseeded_keygen.py
+make -C kem-02 check-unseeded-keygen
 ```
 
-The witness launches two fresh child processes per parameter set and compares `SHA-256(pk || sk)`, then repeats with two explicit distinct seeds as a control.
+The check launches two fresh child processes per parameter set and compares `SHA-256(pk || sk)`, then repeats with two explicit distinct seeds as a control. It demonstrates the effect of violating the API's seeding contract.

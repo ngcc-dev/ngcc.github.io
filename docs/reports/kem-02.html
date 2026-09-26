@@ -103,27 +103,26 @@
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 kem-02/reproduce_ecc_stack_write.py
 </code></pre>
-<h2 class="issue-heading" id="kem-02-5-uninitialized-standalone-key-generation-repeats-a-universal-key-pair">kem-02-5: Uninitialized standalone key generation repeats a universal key pair</h2>
+<h2 class="issue-heading" id="kem-02-5-withdrawn-unseeded-caller-repeats-amoeba-keys">kem-02-5: Withdrawn — unseeded caller repeats Amoeba keys</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
-<tr><th>Scope</th><td>implementation</td></tr>
-<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
-<tr><th>Affected</th><td>All five Amoeba reference parameter sets when the exported API is called without KAT-internal DRNG setup</td></tr>
+<tr><th>Severity</th><td><span class="sev sev-info">Info</span></td></tr>
+<tr><th>Scope</th><td>evaluation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-withdrawn">Withdrawn</span></td></tr>
+<tr><th>Affected</th><td>Unseeded calls to all five Amoeba reference parameter sets</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
-<tr><th>Exploitation</th><td>One local key generation reveals the private key used by every fresh unseeded process</td></tr>
+<tr><th>Exploitation</th><td>None under the caller-seeded NICCS API</td></tr>
 <tr><th>Credit</th><td>Jiadong Han</td></tr>
 <tr><th>Date</th><td>2026-09-26</td></tr>
 </table></div>
 <p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/MRNBLY5HODKCWN6VLWETBR3W4VE3CDZC/">Han's PKC Forum post</a></p>
-<p><code>cpapke.c</code> defines the file-global <code>drng_algorithm</code>, so a fresh process starts from the all-zero BSS image. <code>CPAPKE_Init()</code> would seed it from the operating system, but the exported path <code>kem_keygen -&gt; CCAKEM_KeyGen -&gt; CPAPKE_KeyGen</code> never calls that function. The contest KAT driver masks the defect by initializing the same global before calling <code>kem_keygen</code>; <code>CPAPKE_Init</code> is not part of the public KEM API.</p>
-<p>Two fresh processes consequently return byte-identical public and private keys. We reproduced this through the untouched exported <code>kem_keygen</code> for all five sets. Explicitly seeding the global with two different seeds makes the keys differ, confirming that the repeated key comes from missing initialization rather than an ineffective key generator. An attacker can run the same build once and obtain the private key for every affected unseeded deployment.</p>
+<p>The official NICCS API makes the caller responsible for randomness: its KAT driver defines <code>drng_algorithm</code> (<code>api/API_PKC/Implementations/Reference_Implementation/AlgorithmInstance/KAT_KEM.c:42</code>) and seeds it before key generation (<code>:105</code>). The algorithm code normally declares this state <code>extern</code>. Amoeba instead defines the global in <code>cpapke.c:13</code>, so an unseeded caller still links and silently uses the zero-initialized state. Its unused <code>CPAPKE_Init()</code> helper (<code>:15-19</code>) suggests initialization but is not called by <code>kem_keygen</code>.</p>
+<p>Fresh unseeded processes return identical Amoeba keys, while two explicitly seeded processes differ. The same unseeded-process test also repeats keys for Aigis-Enc+, Mithril, UVW, BAG-Loong and BRA. This is a consequence of omitting the caller's required seeding step, not an Amoeba-specific universal key pair. The finding is withdrawn; Amoeba's self-defined global is a robustness concern, not a demonstrated break of correctly seeded key generation.</p>
 <h3 id="reproducing_4">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
-<pre><code class="language-sh">make -C kem-02
-python3 kem-02/reproduce_unseeded_keygen.py
+<pre><code class="language-sh">make -C kem-02 check-unseeded-keygen
 </code></pre>
-<p>The witness launches two fresh child processes per parameter set and compares <code>SHA-256(pk || sk)</code>, then repeats with two explicit distinct seeds as a control.</p>
+<p>The check launches two fresh child processes per parameter set and compares <code>SHA-256(pk || sk)</code>, then repeats with two explicit distinct seeds as a control. It demonstrates the effect of violating the API's seeding contract.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

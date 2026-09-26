@@ -32,7 +32,7 @@ Severity: Critical
 Status: Confirmed
 Layer: Design
 Affected: DARTS-128 as specified and implemented; the other parameter sets were not tested
-Discovery: High
+Discovery: Non-trivial
 Exploitation: About 20–30 million public signatures, followed by seconds of CPU work
 Credit: Bing Shi <roadicing@gmail.com>
 Date: 2026-09-26
@@ -40,7 +40,7 @@ Original source: [Shi's PKC Forum post](https://list.niccs.org.cn/archives/list/
 
 Step 9 of Algorithm 7 accepts every signing attempt when the hidden branch bit is `b=1`, but for `b=0` accepts only when `Comp_d(omega) = Comp_d(omega+c alpha)`. Because `omega=A round(y)`, this asymmetric restart tilts the joint distribution of the published challenge and rounded response by a small key-dependent multiple of the sparse secret. Shi separates that impulse train from a smooth fixed bias, then enumerates the few uncertain coefficients and checks candidates with the exact public relation `e=(q+1)/2 beta-A s mod q`, requiring ternary `e`.
 
-We replayed the pinned PoC's accumulators from 20,000,000 DARTS-128 signatures. The collector derives them only from decoded public signature fields; an independent 100,000-signature collection under a different key already showed a `5.67`-sigma signal and correctly stopped as insufficient for recovery. The full data estimated 19,983,582 samples, measured a `656.87`-sigma signal, and recovered all secret polynomials after 40,342 public-relation candidates. The recovered bytes before the independent signing seed matched the submitted secret-key control exactly. Setting that irrelevant seed to zero still produced a fresh-message signature accepted by the untouched submitted verifier; changing one message byte was rejected. This is therefore equivalent signing-key recovery and an EUF-CMA forgery, not merely a distinguisher.
+We replayed the pinned PoC's accumulators from 20,000,000 DARTS-128 signatures. The collector derives them only from decoded public signature fields. The full data estimated 19,983,582 samples, measured a `656.87`-sigma signal, and recovered all secret polynomials after 40,342 public-relation candidates. The recovered bytes before the independent signing seed matched the submitted secret-key control exactly. Setting that irrelevant seed to zero still produced a fresh-message signature accepted by the untouched submitted verifier; changing one message byte was rejected. This is therefore equivalent signing-key recovery and an EUF-CMA forgery, not merely a distinguisher.
 
 ### Reproducing
 

@@ -53,14 +53,14 @@ Status: Confirmed
 Layer: Design
 Affected: All four SQIsignTriangle parameter sets
 Discovery: Moderate
-Exploitation: About 2^64, 2^80, 2^128, or 2^256 hash trials at the 128-, 160-, 256-, or 512-bit levels
+Exploitation: About 2^64, 2^80, 2^128, or 2^256 classical hash trials at the 128-, 160-, 256-, or 512-bit levels; about 2^(lambda/4) quantum search work
 Credit: Tako Boris Fouotsa
 Date: 2026-09-26
 Original source: [Fouotsa's PKC Forum post and attached analysis](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/F3RT6SYIAB7MLENH3OUBX6OSWQQTJ2LE/)
 
-A signature exposes its response degree `q`; its auxiliary curve and torsion data recover the same commitment independently of the message. Verification binds a message only by hashing `(j(E_pk), j(E_com), message)` to `(c1,c2)` and checking `q mod c1 = c2`. A forger therefore keeps any valid signature and searches for a different message whose challenge satisfies that single congruence.
+A signature exposes its response degree `q`; its auxiliary curve and torsion data recover the same commitment independently of the message. Verification hashes the public-key curve, commitment curve and message to `(c1,c2)`, then checks `q mod c1 = c2`. A forger therefore keeps any valid signature and searches for a different message whose challenge satisfies that single congruence.
 
-Each challenge component is only `lambda/2` bits: the implementation sets `byte_len = SECURITY_BITS / 16` and imports that many bytes into each integer, agreeing with the specification's challenge interval of size `2^(lambda/2)`. For fixed `q` and `c1`, exactly one `lambda/2`-bit value of `c2` succeeds, so the expected search is about `2^(lambda/2)` rather than the claimed `2^lambda`. A chosen-message signing query supplies the starting signature, making this a direct EUF-CMA attack. It violates every claimed security level and is therefore Critical, even though the larger instances remain computationally infeasible.
+Each challenge component is only `lambda/2` bits: the implementation sets `byte_len = SECURITY_BITS / 16` and imports that many bytes into each integer, agreeing with the specification's challenge interval of size `2^(lambda/2)`. The verifier checks `(q - c2) mod c1 = 0` without requiring `c2 < c1`, so several `c2` values can succeed for one `c1`; either codomain component can also supply `c1`. The search still costs on the order of `2^(lambda/2)` classical trials, rather than the claimed `2^lambda`. Grover search brings the quantum work to about `2^(lambda/4)`. A chosen-message signing query supplies the starting signature, making this a direct EUF-CMA attack. It violates every claimed security level and is therefore Critical, even though the larger instances remain computationally infeasible.
 
 ### Reproducing
 
@@ -68,12 +68,12 @@ Each challenge component is only `lambda/2` bits: the implementation sets `byte_
 python3 sign-27/reproduce_modular_challenge.py
 ```
 
-The witness checks the archived verifier and challenge-width expressions, prints the four full-size costs, constructs two distinct accepting challenge pairs for one response degree, and runs the exact hash-to-prime/congruence search at a scaled 16-bit security parameter.
+The witness checks relevant expressions in the archived source, prints the four full-size costs, constructs two distinct accepting challenge pairs for one response degree, and models the hash-to-prime/congruence search in Python at a scaled 16-bit security parameter. It does not call the submitted verifier.
 
 ## sign-27-4: Distinct challenges can share the identical response, invalidating special soundness
 
-Severity: High
-Status: Confirmed
+Severity: Medium
+Status: Proof gap
 Layer: Design
 Affected: The SQIsignTriangle special-soundness argument for all four parameter sets
 Discovery: Moderate
@@ -92,4 +92,4 @@ This is a deterministic counterexample to the stated two-special-soundness claim
 python3 sign-27/reproduce_modular_challenge.py
 ```
 
-The script exhibits two distinct prime challenges that accept the same fixed degree and verifies the exact congruences used by Algorithm 4.3 and `verify.c`.
+The script models two distinct prime challenges that accept the same fixed degree and checks the corresponding congruences. It checks the submitted source expressions statically but does not execute `verify.c`.
