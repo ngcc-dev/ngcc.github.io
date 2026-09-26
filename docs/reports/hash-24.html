@@ -50,6 +50,24 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/crypthashforu
 <pre><code class="language-text">CONFIRMED: full QSH-512 permutation preserves the 512-bit subspace
 random-permutation probability: 2^-1536
 </code></pre>
+<h2 class="issue-heading" id="hash-24-2-truncated-tree-chaining-values-cap-qsh-second-preimage-security">hash-24-2: Truncated tree chaining values cap QSH second-preimage security</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>QSH-512 and QSH-1024 specifications and implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>About 2^n / T compression calls for a target with T leaf chunks: approximately 2^462 for QSH-512 and 2^975 for QSH-1024 at the 2^64-bit maximum message length</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-26</td></tr>
+</table></div>
+
+<p>QSH-512 and QSH-1024 claim second-preimage security of 512 and 1024 bits (Table 5, physical PDF page 21), which a multi-target attack on the tree's chaining values violates.</p>
+<p>Leaf chunks are processed with a wide state, but each chunk passes on only a chaining value truncated to m/2 bits (§5.3, page 15). That value is 512 bits for QSH-512 and 1024 bits for QSH-1024, equal to the digest length (<code>CryptHash_AlgorithmInstance.c:256,288</code> in the QSH-512 reference source). The chunk flags mark only chunk start, chunk end and root; the chunk position is not bound (<code>:282-284</code>). An attacker hashes candidate full-size replacement chunks and compares each result with all T eligible leaf chaining values of a long target. On a match, the attacker replaces the particular target leaf whose chaining value was hit. Length, padding and tree shape are unchanged, and the remainder of the tree computation is therefore identical. The expected cost is 2^n / T. With the maximum message length of 2^64 bits (page 33), this is about 2^462 and 2^975. The wide-pipe argument on page 30 holds only within a chunk, and the cited tree-hashing results do not bound truncated n-bit node values beyond n bits. QSH-768 is not affected, because its 1024-bit chaining value exceeds its digest length.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>Compare the claim on physical PDF page 21 with the chaining-value truncation on pages 15–16 and at the cited source lines.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

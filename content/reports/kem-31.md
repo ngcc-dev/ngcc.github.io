@@ -43,6 +43,8 @@ Date: 2026-09-25
 
 `fp_decode` reduces field elements modulo `p` without rejecting values at least `p`, and NGCC-1 also leaves 4 bytes of each 64-byte field slot unread. Decapsulation compares and hashes the re-encoded decoded ciphertext rather than the received bytes (`KEM_AlgorithmInstance.c:245,252`). Replacing any field element `x` by `x + p`, or changing an unread slot byte, therefore returns the honest key. The submission claims IND-CCA security, which is trivially violated.
 
+The specification's Algorithm 15 (§3.3.2, p. 36) compares the received `ct` with the re-encryption `ct′` and uses `Hct(ct)` to derive the key. Section 3.3.1 says this hash binds the full ciphertext transcript. Appendix B.1 (p. 78) describes reduced field-element serialization, while Chapter 5 notes that NGCC-1 reserves 64 bytes for a field element that needs only 60. The specification does not define a parser for malformed byte encodings. In the submitted byte API, `ct_decode` accepts them, and `compare_ct_for_kdf` and `derive_ss_from_m_and_ct` use a fresh encoding of the decoded object (`KEM_AlgorithmInstance.c:612–633,588–605`). This normalization is where the byte-distinct alias survives the specified equality and hash steps.
+
 ### Reproducing
 
 ```sh

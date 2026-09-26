@@ -38,6 +38,46 @@
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>Inspect the cited table accesses in any reference variant. The lookup indices are the evolving <code>P[i] ^ RK[i]</code> bytes, not public counters.</p>
+<h2 class="issue-heading" id="hash-05-2-narrow-pipe-iteration-limits-uhash-second-preimage-security-for-long-messages">hash-05-2: Narrow-pipe iteration limits uHash second-preimage security for long messages</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>uHash-512, uHash-768 and uHash-1024 specifications and implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>About 2^h / l compression calls for an l-chunk target: approximately 2^457.6, 2^713 and 2^968 at the required 2^64-bit message length</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-26</td></tr>
+</table></div>
+
+<p>uHash claims that "the classical security against preimage and second-preimage attacks is no less than h bits" (abstract, physical PDF page 1; Table 9, page 11), which a long-message attack violates.</p>
+<p>The chaining value is exactly h bits wide (Algorithm 1, page 4). Padding is <code>M ∥ 1 ∥ 0*</code> with no length field (§1.2.1, page 4; <code>Padding</code>, <code>CryptHash_AlgorithmInstance.c:441-474</code> in the uHash-512 reference source). Intermediate compression calls take no block index; only the final call is tweaked (<code>:526</code>, <code>:578-586</code> in that source). The uHash-768 and uHash-1024 reference sources follow the same structure. An attacker tries one-chunk prefixes until the chaining value equals any intermediate chaining value of an l-chunk target, then appends the rest of the target. The expected cost is 2^h / l compression calls. The specification requires messages of up to 2^64 − 1 bits (page 3), so the cost falls to about 2^457.6, 2^713 and 2^968 for the three sets. The specification's own proof bounds the second-preimage advantage by (b + l)q / 2^h (§3.2.2, page 14), which is consistent with this loss but not with the flat h-bit claim.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>Compare the claim on physical PDF pages 1 and 11 with the padding and iteration in Algorithm 1 (page 4) and at the cited source lines.</p>
+<h2 class="issue-heading" id="hash-05-3-unused-partial-byte-bits-cancel-padding-and-give-trivial-collisions">hash-05-3: Unused partial-byte bits cancel padding and give trivial collisions</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Reference and optimized uHash-512/768/1024 bitstring-input paths</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Immediate full-round collision; no search required</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-26</td></tr>
+</table></div>
+
+<p>The API accepts a message pointer and its length in bits, using the most-significant bits of a partial byte. Bits after that declared length are not part of the message, and the supplied API instructions impose no precondition that callers zero them. The specification pads the bitstring injectively as <code>M ∥ 1 ∥ 0*</code> (§1.2.1 and §2.2), but <code>Padding</code> copies the caller's entire partial byte and <strong>adds</strong> the pad bit without first masking the unused bits (<code>CryptHash_AlgorithmInstance.c:442-463</code>; optimized implementation <code>:6178-6199</code>).</p>
+<p>This gives deterministic collisions between distinct bitstrings. The one-bit message <code>0</code>, supplied as byte <code>00</code> with length 1, is padded to byte <code>40</code>. The two-bit message <code>00</code>, supplied as byte <code>20</code> with length 2, is also padded to <code>40</code>: the <code>20</code> bit is outside the declared two-bit message and the implementation adds the two-bit padding marker <code>20</code>. The complete padded inputs are identical, so all subsequent full-round computation is identical. The submitted uHash-512, uHash-768 and uHash-1024 libraries all return equal digests for this pair; canonical encoding of the two-bit message and a changed meaningful bit are non-colliding controls.</p>
+<p>The collision requires nonzero unused bits in the caller's final byte. Canonically encoded inputs do not collide under this witness, which limits its severity to High; <code>hash-09-1</code> does not have that input-encoding precondition.</p>
+<p>The implementation must mask the unused low bits before setting the padding bit, for example <code>M[k] = (msg[k] &amp; (0xff &lt;&lt; (8-r))) | (1 &lt;&lt; (7-r))</code> for <code>r = msg_len_bits mod 8</code>.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C hash-05 exploit
+</code></pre>
+<p>The witness checks the collision and both controls through every submitted reference-library API and prints three <code>ATTACK hash-05-3 ... CONFIRMED</code> lines.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

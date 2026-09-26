@@ -40,3 +40,22 @@ Expected output:
 CONFIRMED: full QSH-512 permutation preserves the 512-bit subspace
 random-permutation probability: 2^-1536
 ```
+
+## hash-24-2: Truncated tree chaining values cap QSH second-preimage security
+
+Severity: Medium
+Status: Confirmed
+Layer: Design
+Affected: QSH-512 and QSH-1024 specifications and implementations
+Discovery: Moderate
+Exploitation: About 2^n / T compression calls for a target with T leaf chunks: approximately 2^462 for QSH-512 and 2^975 for QSH-1024 at the 2^64-bit maximum message length
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-09-26
+
+QSH-512 and QSH-1024 claim second-preimage security of 512 and 1024 bits (Table 5, physical PDF page 21), which a multi-target attack on the tree's chaining values violates.
+
+Leaf chunks are processed with a wide state, but each chunk passes on only a chaining value truncated to m/2 bits (§5.3, page 15). That value is 512 bits for QSH-512 and 1024 bits for QSH-1024, equal to the digest length (`CryptHash_AlgorithmInstance.c:256,288` in the QSH-512 reference source). The chunk flags mark only chunk start, chunk end and root; the chunk position is not bound (`:282-284`). An attacker hashes candidate full-size replacement chunks and compares each result with all T eligible leaf chaining values of a long target. On a match, the attacker replaces the particular target leaf whose chaining value was hit. Length, padding and tree shape are unchanged, and the remainder of the tree computation is therefore identical. The expected cost is 2^n / T. With the maximum message length of 2^64 bits (page 33), this is about 2^462 and 2^975. The wide-pipe argument on page 30 holds only within a chunk, and the cited tree-hashing results do not bound truncated n-bit node values beyond n bits. QSH-768 is not affected, because its 1024-bit chaining value exceeds its digest length.
+
+### Reproducing
+
+Compare the claim on physical PDF page 21 with the chaining-value truncation on pages 15–16 and at the cited source lines.

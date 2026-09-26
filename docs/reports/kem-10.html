@@ -77,6 +77,7 @@ security/ngcc_security kem-10/lib/libCMultiURAG-512.so kem-zero
 </table></div>
 
 <p>With <code>m = 181</code>, the <code>U</code> and <code>V</code> encodings each end with 5 unused bits, which <code>rbc_vec_from_string</code> ignores (<code>rbc_vec.c:789-809</code>). Decapsulation compares the re-serialized decoded <code>U, V</code> with the re-encryption (<code>kem.c:235-246</code>), and the key hashes the re-serialized values (<code>kem.c:257-262</code>). Each honest ciphertext has 1,023 byte-distinct variants with the same key. The submission claims IND-CCA2 security, which is trivially violated.</p>
+<p>The specification's Algorithm 9 (§3.4) compares the received <code>(U, V)</code> with the re-encryption, and §5 describes that check as byte-by-byte. It does not specify acceptance of alternative wire encodings. The submitted byte parser discards the padding bits before the check, so the implementation never compares the original ciphertext bytes.</p>
 <h3 id="reproducing_2">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 kem-10/reproduce_padding_alias.py

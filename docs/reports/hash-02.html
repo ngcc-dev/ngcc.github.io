@@ -58,6 +58,27 @@
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>Compile <code>AXIS-768/axis_core.c</code> with <code>gcc -O2 -g -c</code>; <code>objdump -dSl</code> shows conditional jumps at <code>axis_flip_bit</code> in <code>axis_step_generic</code>.</p>
+<h2 class="issue-heading" id="hash-02-3-the-invertible-axis-state-caps-axis-1024-second-preimage-security-at-768-bits">hash-02-3: The invertible AXIS state caps AXIS-1024 second-preimage security at 768 bits</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>AXIS-1024 specification and implementations; AXIS-768 is exactly at the bound</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Approximately 2^768 beat evaluations and memory; no second preimage has been computed</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-26</td></tr>
+</table></div>
+
+<p>AXIS-1024 claims 1024-bit second-preimage security (Table 2, physical PDF page 12), which a generic meet-in-the-middle on its 1536-bit state violates.</p>
+<p>Each beat reads only positions {0, 11, 12, 32, 96, 107, 125} of a 192-bit register, flips only positions {66, 75, 90, 162, 178, 188}, and rotates the register by one bit. The eight registers are updated in order (<code>def.h:20-34</code>, <code>axis_core.c:613-640</code>). For known message bits the beat is therefore a permutation of the full 1536-bit state, and it can be run backwards. AXIS-1024 supplies one independent message bit per beat, using that bit for both update inputs (<code>axis_core.c:813,1087,1133</code> in AXIS-1024). Given a target with a sufficiently long prefix, an attacker computes about 2^768 states forward from the IV over 768 free message bits and about 2^768 states backward from the target's intermediate state over another 768 free bits. Joining a match with the rest of the target keeps the length and the blank and digest beats unchanged. The resulting second preimage costs about 2^768 rather than 2^1024. The specification gives no second-preimage argument beyond setting it "conservatively" equal to the preimage level (page 17).</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>The witness runs the submission's own <code>axis_step</code> forward for random states and message bits, then checks that an independent inverse restores each state for all three variants:</p>
+<pre><code class="language-sh">make -C hash-02 reproduce-inverse
+</code></pre>
+<p>It prints <code>ATTACK hash-02-3 CONFIRMED</code>.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

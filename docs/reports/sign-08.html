@@ -41,6 +41,26 @@
 <pre><code class="language-sh">python3 security/design_parameter_audit.py
 </code></pre>
 <p>The check verifies the DARTS-512 algorithm on physical PDF pages 4, 8, and 12–13 and traces its 64-byte <code>mu</code>.</p>
+<h2 class="issue-heading" id="sign-08-2-the-compression-consistency-restart-leaks-an-equivalent-darts-128-signing-key">sign-08-2: The compression-consistency restart leaks an equivalent DARTS-128 signing key</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>DARTS-128 as specified and implemented; the other parameter sets were not tested</td></tr>
+<tr><th>Discovery</th><td>High</td></tr>
+<tr><th>Exploitation</th><td>About 20–30 million public signatures, followed by seconds of CPU work</td></tr>
+<tr><th>Credit</th><td>Bing Shi <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#114;&#111;&#97;&#100;&#105;&#99;&#105;&#110;&#103;&#64;&#103;&#109;&#97;&#105;&#108;&#46;&#99;&#111;&#109;">&#114;&#111;&#97;&#100;&#105;&#99;&#105;&#110;&#103;&#64;&#103;&#109;&#97;&#105;&#108;&#46;&#99;&#111;&#109;</a></td></tr>
+<tr><th>Date</th><td>2026-09-26</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/62AUZI56IWGEN34OQTD6Z2U6APFMRYWC/">Shi's PKC Forum post</a> and <a href="https://github.com/roadicing/darts-key-recovery-attack/tree/5df01ac2b3e4b7a804fae5b3c5b4f8ad531cdaff">public proof of concept</a></p>
+<p>Step 9 of Algorithm 7 accepts every signing attempt when the hidden branch bit is <code>b=1</code>, but for <code>b=0</code> accepts only when <code>Comp_d(omega) = Comp_d(omega+c alpha)</code>. Because <code>omega=A round(y)</code>, this asymmetric restart tilts the joint distribution of the published challenge and rounded response by a small key-dependent multiple of the sparse secret. Shi separates that impulse train from a smooth fixed bias, then enumerates the few uncertain coefficients and checks candidates with the exact public relation <code>e=(q+1)/2 beta-A s mod q</code>, requiring ternary <code>e</code>.</p>
+<p>We replayed the pinned PoC's accumulators from 20,000,000 DARTS-128 signatures. The collector derives them only from decoded public signature fields; an independent 100,000-signature collection under a different key already showed a <code>5.67</code>-sigma signal and correctly stopped as insufficient for recovery. The full data estimated 19,983,582 samples, measured a <code>656.87</code>-sigma signal, and recovered all secret polynomials after 40,342 public-relation candidates. The recovered bytes before the independent signing seed matched the submitted secret-key control exactly. Setting that irrelevant seed to zero still produced a fresh-message signature accepted by the untouched submitted verifier; changing one message byte was rejected. This is therefore equivalent signing-key recovery and an EUF-CMA forgery, not merely a distinguisher.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C sign-08 exploit-key-recovery
+</code></pre>
+<p>The wrapper clones and verifies the pinned attack commit, builds its public-relation checker against this repository's archived DARTS-128 source, replays the published accumulators, and tests a fresh signature with the recovered key. It requires Git, a C compiler, and a Python interpreter with NumPy; set <code>NGCC_SAGE_PYTHON</code> when NumPy is available only in a Sage environment. The original 20-million-signature collection is not repeated.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

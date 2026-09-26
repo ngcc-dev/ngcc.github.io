@@ -94,6 +94,7 @@
 </table></div>
 
 <p>The <code>u</code> and <code>v</code> encodings end with 5 unused bits each, which <code>rbc_vec_from_string</code> ignores (<code>rbc_vec.c:789-809</code>). Decapsulation compares the re-serialized decoded vectors rather than the received bytes (<code>kem.c:241-252</code>), and the key hashes those re-serialized vectors (<code>kem.c:265-266</code>). Every honest ciphertext therefore has 1,023 byte-distinct variants that decapsulate to the same key. The submission claims IND-CCA2 security, which is trivially violated.</p>
+<p>The specification's Algorithm 9 (§3.4) compares the received <code>(u, v)</code> with the re-encryption, and §5 describes that check as byte-by-byte. It does not specify acceptance of alternative wire encodings. The submitted byte parser discards the padding bits before the check, so the implementation never compares the original ciphertext bytes.</p>
 <h3 id="reproducing_3">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 kem-06/reproduce_padding_alias.py

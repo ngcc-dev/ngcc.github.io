@@ -33,6 +33,8 @@ Date: 2026-09-25
 
 The `u` and `v` encodings end with 7, 5, or 1 unused bits per vector, which `rbc_vec_from_string` ignores (`rbc_vec.c:789-809`). Decapsulation compares the re-serialized decoded vectors rather than the received bytes (`kem.c:241-252`), and the key hashes those re-serialized vectors (`kem.c:265-266`). Changing any padding bit yields a different ciphertext with the same key. The submission claims IND-CCA2 security, which is trivially violated.
 
+The specification's Algorithm 9 (§3.4) compares the received `(u, v)` with the re-encryption, and §5 describes that check as byte-by-byte. It does not specify acceptance of alternative wire encodings. The submitted byte parser discards the padding bits before the check, so the implementation never compares the original ciphertext bytes.
+
 ### Reproducing
 
 ```sh

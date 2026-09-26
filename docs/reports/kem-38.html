@@ -105,6 +105,7 @@ bash run_attack.sh
 </table></div>
 
 <p>The packed <code>c1</code> field ends with 4 unused bits, which <code>decompress_gf_array</code> ignores. Decapsulation compares the decoded <code>c1</code>, <code>c2</code> and <code>d</code> (<code>KEM_AlgorithmInstance.c:436,475–476</code> in UVW-KEM-128; <code>:433,480</code> in UVW-KEM-512), and the key is <code>H4(m', c1, c2)</code> over the decoded values (<code>:483</code> in 128; <code>:488</code> in 512). Setting any unused bit yields a different ciphertext with the same key. The submission claims IND-CCA security, which is trivially violated.</p>
+<p>The specification's Algorithm 9 (§1.2.2) checks equality of the received <code>(c1, c2, d)</code> with the re-encryption before returning the key. It defines these as algebraic objects and gives no byte-padding rule. The alias enters through the submitted <code>decompress_gf_array</code> parser, which drops the unused bits before equality and key derivation.</p>
 <h3 id="reproducing_3">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 kem-38/reproduce_padding_alias.py          # add 512 for UVW-KEM-512 (minutes)

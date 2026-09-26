@@ -97,6 +97,8 @@ Date: 2026-09-25
 
 The packed `c1` field ends with 4 unused bits, which `decompress_gf_array` ignores. Decapsulation compares the decoded `c1`, `c2` and `d` (`KEM_AlgorithmInstance.c:436,475–476` in UVW-KEM-128; `:433,480` in UVW-KEM-512), and the key is `H4(m', c1, c2)` over the decoded values (`:483` in 128; `:488` in 512). Setting any unused bit yields a different ciphertext with the same key. The submission claims IND-CCA security, which is trivially violated.
 
+The specification's Algorithm 9 (§1.2.2) checks equality of the received `(c1, c2, d)` with the re-encryption before returning the key. It defines these as algebraic objects and gives no byte-padding rule. The alias enters through the submitted `decompress_gf_array` parser, which drops the unused bits before equality and key derivation.
+
 ### Reproducing
 
 ```sh
