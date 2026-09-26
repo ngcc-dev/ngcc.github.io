@@ -30,12 +30,13 @@
 <tr><th>Affected</th><td>Submitted compressed reference implementation, NGCC-1/2/3</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
 <tr><th>Exploitation</th><td>Unauthenticated decapsulation request aborts the process; key recovery not demonstrated</td></tr>
-<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance; root-cause and memory-safety extension by Jieyu Zheng (GitHub @zhengjieyu)</td></tr>
 <tr><th>Date</th><td>2026-09-23</td></tr>
 </table></div>
-
+<p>Follow-up source: <a href="https://github.com/ngcc-dev/ngcc-harness/issues/22">Jieyu Zheng's GitHub issue #22, 2026-09-26</a></p>
 <p>With an honestly generated key, the all-zero ciphertext aborts decapsulation in every submitted QIMEN-PIKE parameter set. The failing assertion is <code>is_point_equal(PnQ, P)</code> in <code>point_ratio</code> (<code>src/ec/ref/ecx/biextension.c:185</code>), reached while decoding attacker-controlled ciphertext data. The existing mutation sweep also records aborts for fixed-length bit flips. All three reference KAT sets pass, so the failure is specific to malformed input rather than routine operation.</p>
 <p>An application that decapsulates untrusted ciphertexts in-process can therefore be terminated by a single request. This is a confirmed availability failure in the submitted assertion-enabled build, not evidence of key recovery or a failure of the underlying isogeny assumption. Disabling assertions has not been established as a safe repair: malformed points must be checked and rejected explicitly before use.</p>
+<p>Jieyu Zheng identified a concrete memory-safety root cause behind this warning. <code>ct_decode</code> decodes four attacker-controlled hint fields as signed <code>int</code> values (<code>pike_compressed.c:1049,1122-1128</code>). The reconstruction routines test only <code>hint &lt; 20</code> before evaluating <code>Z_NQR_TABLE[hint]</code> or <code>NQR_TABLE[hint]</code> (<code>basis.c:1725-1727,1834-1836</code>), so a negative hint reads before either 20-element table. Changing any one hint of an honest ciphertext to <code>-1</code> aborted all 12 tested parameter-set/field combinations; the issue's AddressSanitizer run additionally records a 128-byte out-of-bounds read. This confirms that removing assertions is unsafe. No key recovery or disclosed-memory channel has been demonstrated, so the finding remains Medium and keeps its existing ID.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">make -C security
@@ -45,6 +46,9 @@ security/ngcc_security kem-31/lib/libNGCC-2.so kem-zero
 security/ngcc_security kem-31/lib/libNGCC-3.so kem-zero
 </code></pre>
 <p>Run each separately because it aborts the process. All three reproduced locally; <code>make -C kem-31 test</code> passed all three honest-input KAT sets.</p>
+<p>The controlled negative-hint witness preserves every other byte of an honest ciphertext and checks an honest-decapsulation control:</p>
+<pre><code class="language-sh">make -C kem-31 reproduce-hint
+</code></pre>
 <h2 class="issue-heading" id="kem-31-2-non-canonical-field-encodings-make-ciphertexts-malleable-without-changing-the-key">kem-31-2: Non-canonical field encodings make ciphertexts malleable without changing the key</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">

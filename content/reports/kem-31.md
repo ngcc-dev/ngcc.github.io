@@ -11,12 +11,15 @@ Layer: Implementation
 Affected: Submitted compressed reference implementation, NGCC-1/2/3
 Discovery: Trivial
 Exploitation: Unauthenticated decapsulation request aborts the process; key recovery not demonstrated
-Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance; root-cause and memory-safety extension by Jieyu Zheng (GitHub @zhengjieyu)
 Date: 2026-09-23
+Follow-up source: [Jieyu Zheng's GitHub issue #22, 2026-09-26](https://github.com/ngcc-dev/ngcc-harness/issues/22)
 
 With an honestly generated key, the all-zero ciphertext aborts decapsulation in every submitted QIMEN-PIKE parameter set. The failing assertion is `is_point_equal(PnQ, P)` in `point_ratio` (`src/ec/ref/ecx/biextension.c:185`), reached while decoding attacker-controlled ciphertext data. The existing mutation sweep also records aborts for fixed-length bit flips. All three reference KAT sets pass, so the failure is specific to malformed input rather than routine operation.
 
 An application that decapsulates untrusted ciphertexts in-process can therefore be terminated by a single request. This is a confirmed availability failure in the submitted assertion-enabled build, not evidence of key recovery or a failure of the underlying isogeny assumption. Disabling assertions has not been established as a safe repair: malformed points must be checked and rejected explicitly before use.
+
+Jieyu Zheng identified a concrete memory-safety root cause behind this warning. `ct_decode` decodes four attacker-controlled hint fields as signed `int` values (`pike_compressed.c:1049,1122-1128`). The reconstruction routines test only `hint < 20` before evaluating `Z_NQR_TABLE[hint]` or `NQR_TABLE[hint]` (`basis.c:1725-1727,1834-1836`), so a negative hint reads before either 20-element table. Changing any one hint of an honest ciphertext to `-1` aborted all 12 tested parameter-set/field combinations; the issue's AddressSanitizer run additionally records a 128-byte out-of-bounds read. This confirms that removing assertions is unsafe. No key recovery or disclosed-memory channel has been demonstrated, so the finding remains Medium and keeps its existing ID.
 
 ### Reproducing
 
@@ -29,6 +32,12 @@ security/ngcc_security kem-31/lib/libNGCC-3.so kem-zero
 ```
 
 Run each separately because it aborts the process. All three reproduced locally; `make -C kem-31 test` passed all three honest-input KAT sets.
+
+The controlled negative-hint witness preserves every other byte of an honest ciphertext and checks an honest-decapsulation control:
+
+```sh
+make -C kem-31 reproduce-hint
+```
 
 ## kem-31-2: Non-canonical field encodings make ciphertexts malleable without changing the key
 

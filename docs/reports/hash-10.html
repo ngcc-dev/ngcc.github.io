@@ -27,20 +27,103 @@
 <tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
 <tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
-<tr><th>Affected</th><td>Reference FEILIAN512/768/1024</td></tr>
+<tr><th>Affected</th><td>Reference and optimized FEILIAN512/768/1024 C implementations</td></tr>
 <tr><th>Discovery</th><td>Moderate</td></tr>
 <tr><th>Exploitation</th><td>Resource-contingent false-success digest; not a normal-operation cryptanalytic collision</td></tr>
-<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance; optimized scope verified by Mounir Idrassi <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#111;&#117;&#110;&#105;&#114;&#64;&#97;&#109;&#99;&#114;&#121;&#112;&#116;&#111;&#46;&#106;&#112;">&#109;&#111;&#117;&#110;&#105;&#114;&#64;&#97;&#109;&#99;&#114;&#121;&#112;&#116;&#111;&#46;&#106;&#112;</a></td></tr>
 <tr><th>Date</th><td>2026-09-23</td></tr>
 </table></div>
-
+<p>Follow-up source: <a href="https://github.com/ngcc-dev/ngcc-harness/issues/21">Mounir Idrassi's GitHub issue #21, 2026-09-26</a></p>
 <p>FEILIAN's <code>pad_message</code> returns zero when its padded-message allocation fails. The hash core then zeroes the requested digest, while the public <code>CryptHash</code> API returns success. Under a bounded address space, two distinct 16-MiB byte-aligned messages both returned <code>0</code> and the same all-zero 512-bit digest. A changed-message control yields distinct digests with available memory, and the ordinary FEILIAN512 KAT passes.</p>
 <p>This is a resource-contingent implementation failure, not a collision in the successfully executed FEILIAN construction. It is relevant when a caller accepts a digest after the library silently fails; allocation failure should be returned as an error.</p>
+<p>Mounir Idrassi's follow-up source review confirms the identical failure path in <code>FEILIAN_SIMD512</code>, <code>FEILIAN_SIMD768</code> and <code>FEILIAN_SIMD1024</code>: <code>pad_message</code> returns zero, the internal routine clears the digest, and the public wrapper still returns success. This extends the affected scope but is not a separate vulnerability.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">make -C hash-10 exploit
 </code></pre>
 <p>The Linux witness preallocates the input, caps process virtual memory at its current use plus 4 MiB, and verifies both successful zero-digest responses.</p>
+<h2 class="issue-heading" id="hash-10-2-three-feilian-rtl-cores-have-trivial-zero-extension-collisions">hash-10-2: Three FEILIAN RTL cores have trivial zero-extension collisions</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Submitted FEILIAN_1SC, FEILIAN_4SC and FEILIAN_8SC RTL implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Immediate full-round collision; no search required</td></tr>
+<tr><th>Credit</th><td>Mounir Idrassi <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#111;&#117;&#110;&#105;&#114;&#64;&#97;&#109;&#99;&#114;&#121;&#112;&#116;&#111;&#46;&#106;&#112;">&#109;&#111;&#117;&#110;&#105;&#114;&#64;&#97;&#109;&#99;&#114;&#121;&#112;&#116;&#111;&#46;&#106;&#112;</a></td></tr>
+<tr><th>Date</th><td>2026-09-26</td></tr>
+</table></div>
+<p>Original source: <a href="https://github.com/ngcc-dev/ngcc-harness/issues/18">GitHub issue #18</a></p>
+<p>RTL here means the submitted synthesizable SystemVerilog in the optional <code>FEILIAN/Implementations/Additional_Implementation</code> tree. The 1SC, 2SC, 4SC and 8SC names denote hardware architectures with different SubColumn parallelism.</p>
+<p>The specification increments the cumulative bit count to include the current block before compression (§2.3). These three wrappers instead form <code>cf_domain</code> from <code>hashed_bits_reg</code>, which counts only completed blocks, and add the current block after compression finishes (<code>core.sv:135,157</code> in 1SC/4SC; <code>:137,160</code> in 8SC). Their zero-only padding and final flag therefore do not distinguish final blocks that differ only by trailing zero bytes.</p>
+<p>Further extension to Mounir Idrassi's analysis: the canonical byte messages <code>0x61</code> and <code>0x6100</code> are both presented to the sole (first-and-final) compression call as the same zero-padded 1024-bit block, the same final flag and counter zero. Full RTL simulation confirms identical 1024-bit digests in 1SC, 4SC and 8SC. The 2SC wrapper computes <code>hashed_bits_updated</code> before compression (<code>core.sv:120-141</code>) and produces different digests for the pair, providing a clean control. This is a break of the submitted hardware hashes, not of the correctly counted C implementations.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>With Verilator installed:</p>
+<pre><code class="language-sh">make -C hash-10 rtl-exploit
+</code></pre>
+<p>The witness compiles all four submitted cores, prints three <code>ATTACK hash-10-2 ... CONFIRMED</code> lines, and shows the 2SC control as <code>NOT-CONFIRMED</code>.</p>
+<h2 class="issue-heading" id="hash-10-3-the-specification-examples-and-rtl-define-incompatible-feilian-variants">hash-10-3: The specification, examples and RTL define incompatible FEILIAN variants</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Submitted FEILIAN specification, Appendix B examples and RTL packages</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Interoperability and analysis-target failure; no collision in the C implementations demonstrated</td></tr>
+<tr><th>Credit</th><td>Mounir Idrassi <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#111;&#117;&#110;&#105;&#114;&#64;&#97;&#109;&#99;&#114;&#121;&#112;&#116;&#111;&#46;&#106;&#112;">&#109;&#111;&#117;&#110;&#105;&#114;&#64;&#97;&#109;&#99;&#114;&#121;&#112;&#116;&#111;&#46;&#106;&#112;</a></td></tr>
+<tr><th>Date</th><td>2026-09-26</td></tr>
+</table></div>
+<p>Original source: <a href="https://github.com/ngcc-dev/ngcc-harness/issues/19">GitHub issue #19</a></p>
+<p>Several definitions conflict. Chapter 2 prints IV word 7 as <code>3D84...</code> (line 101), while its stated pi derivation, C and RTL give <code>3F84...</code>. The AddConstant diagram places the tweak in row 1 and constants in row 3, while Appendix A, C and RTL reverse them. C and 2SC encode the 128-bit counter high word first, while 1SC/4SC/8SC encode it low word first. All four RTL packages hard-code version <code>0x400</code> and a 1024-bit digest even though the submitted <code>FEILIAN/Implementations/README.txt:21,23</code> labels 1SC and 4SC as 512-bit designs.</p>
+<p>Appendix B is internally mixed as well. Independent evaluation of all six examples shows that the 1024-bit examples use the true cumulative message lengths, while the 512- and 768-bit examples use cumulative padded-block lengths. The latter convention loses the logical-length binding on which zero padding relies. The ordinary C implementations and their KATs use true lengths, so this is an ambiguity and conformance defect rather than a full-round attack on those implementations.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>The review package at tag <code>v1.0.1</code>, commit <code>16567114688adf5cae44d65f45d88ed308d0f893</code>, provides the numerical checker. Its quick mode reports six digests, nine initial states, 45 round snapshots and nine domains verified, and identifies the true-count versus padded-count split. Verify the exact commit before running it:</p>
+<pre><code class="language-sh">git clone --depth 1 --branch v1.0.1 https://github.com/amcrypto-jp/feilian-cryptanalysis.git /tmp/feilian-review &amp;&amp;
+  test &quot;$(git -C /tmp/feilian-review rev-parse HEAD)&quot; = 16567114688adf5cae44d65f45d88ed308d0f893 &amp;&amp;
+  python3 /tmp/feilian-review/run.py --mode quick --output-dir /tmp/feilian-quick
+</code></pre>
+<h2 class="issue-heading" id="hash-10-4-c-implementations-hash-storage-bits-outside-partial-byte-messages">hash-10-4: C implementations hash storage bits outside partial-byte messages</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Reference and optimized FEILIAN512/768/1024 C implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Noncanonical encodings of one bitstring produce different digests; no collision demonstrated</td></tr>
+<tr><th>Credit</th><td>Mounir Idrassi <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#111;&#117;&#110;&#105;&#114;&#64;&#97;&#109;&#99;&#114;&#121;&#112;&#116;&#111;&#46;&#106;&#112;">&#109;&#111;&#117;&#110;&#105;&#114;&#64;&#97;&#109;&#99;&#114;&#121;&#112;&#116;&#111;&#46;&#106;&#112;</a></td></tr>
+<tr><th>Date</th><td>2026-09-26</td></tr>
+</table></div>
+<p>Original source: <a href="https://github.com/ngcc-dev/ngcc-harness/issues/20">GitHub issue #20</a></p>
+<p>For a non-byte-aligned input, <code>pad_message</code> copies <code>(msg_bits + 7) / 8</code> complete bytes without masking the unused low bits (<code>CryptHash_AlgorithmInstance.c:84-90</code>; SIMD source <code>:192-198</code>). The API length declares those bits outside the message, and §2.3 specifies zero padding. Consequently byte buffers <code>80</code> and <code>81</code>, each declared to contain the same one-bit message <code>1</code>, produce different digests in every C instance. Passing KATs do not cover this condition because their generator clears unused bits.</p>
+<p>This is a bitstring-API correctness failure, but unlike <code>hash-05-3</code> no collision between distinct declared bitstrings has been demonstrated. Masking the unused low bits before compression repairs the defect.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C hash-10 unused-bits
+</code></pre>
+<p>The runtime witness exercises the three reference libraries; source inspection confirms the identical unmasked-copy path in the three optimized implementations.</p>
+<h2 class="issue-heading" id="hash-10-5-c-input-length-conversion-and-padding-arithmetic-are-unchecked">hash-10-5: C input-length conversion and padding arithmetic are unchecked</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-info">Info</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Reference and optimized FEILIAN512/768/1024 C implementations, especially platforms where size_t is narrower than unsigned long long</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Extreme-length contract failure; no memory-safety exploit demonstrated</td></tr>
+<tr><th>Credit</th><td>Mounir Idrassi <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#111;&#117;&#110;&#105;&#114;&#64;&#97;&#109;&#99;&#114;&#121;&#112;&#116;&#111;&#46;&#106;&#112;">&#109;&#111;&#117;&#110;&#105;&#114;&#64;&#97;&#109;&#99;&#114;&#121;&#112;&#116;&#111;&#46;&#106;&#112;</a></td></tr>
+<tr><th>Date</th><td>2026-09-26</td></tr>
+</table></div>
+<p>Original source: <a href="https://github.com/ngcc-dev/ngcc-harness/issues/20">GitHub issue #20</a></p>
+<p>The public API accepts an <code>unsigned long long</code> bit length and casts it to <code>size_t</code> without checking representability (<code>CryptHash_AlgorithmInstance.c:345-356</code>; SIMD source <code>:405-416</code>). <code>pad_message</code> then rounds with <code>msg_bits + 7</code> and adds the padding length without overflow checks. A narrower <code>size_t</code> truncates valid API values; even at equal width, values near <code>SIZE_MAX</code> wrap during rounding. The internal two-word counter therefore does not make the one-shot implementation support its written length domain.</p>
+<p>This is a platform- and extreme-input contract defect, not a demonstrated ordinary-input collision or out-of-bounds access. On a 64-bit platform, the wrap requires a declared input near 2^64 bits, which cannot be held in memory; narrower <code>size_t</code> platforms can reach the conversion limit earlier. That limited practical impact warrants Info. The implementation should reject unrepresentable lengths and check every rounding and allocation calculation before reading the message.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>Inspect the conversions and arithmetic at the cited reference and SIMD source lines. The issue's source manifest confirms the same pattern in all six C instances.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
