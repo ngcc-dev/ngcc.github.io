@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: hash-30 The ZC-DM Hash Function — performance on AArch64 (system arm1)</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=808fa5e8">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
+<nav><a href="../../index.html">Home</a><a href="../../reports/index.html">Security</a><a href="../../performance/index.html">Performance</a><a href="../../constant-time/index.html">Side-Channel</a></nav>
+</header>
+<main class="">
+<!-- synchronized from harness: hash-30/perf_arm_1.md -->
+<h1 id="hash-30-the-zc-dm-hash-function-performance-on-aarch64-system-arm_1">hash-30 The ZC-DM Hash Function — performance on AArch64 (system arm_1)</h1>
+<p><a href="index.html">Performance arm_1</a> › <code>hash-30</code> · <a href="method.html">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101534683994607616.html">NICCS page</a></p>
+<p><strong>Systems:</strong> <a href="../x86_1/hash-30.html">x86_1</a> · <strong>arm_1</strong></p>
+<p>Independent measurement following the structure of the NICCS ARM self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.</p>
+<h2 id="1-basic-information">1. Basic information</h2>
+<ul>
+<li>Category: cryptographic hash algorithm; function: hash</li>
+<li>Algorithm: The ZC-DM Hash Function</li>
+<li>Implementation versions measured: reference</li>
+<li>Parameter sets: <code>ZC-DM-1280-512</code>, <code>ZC-DM-1280-768</code>, <code>ZC-DM-1280-1024</code>, <code>ZC-DM-1536-512</code>, <code>ZC-DM-1536-768</code>, <code>ZC-DM-1536-1024</code></li>
+</ul>
+<h2 id="2-assessment-environment">2. Assessment environment</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>item</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>processor</td>
+<td>Qualcomm Oryon (CPU 2, one core)</td>
+</tr>
+<tr>
+<td>machine</td>
+<td>ASUS Vivobook S 15</td>
+</tr>
+<tr>
+<td>clock</td>
+<td>fixed 2.71 GHz (governor performance, minimum = maximum), boost off, SMT none</td>
+</tr>
+<tr>
+<td>memory</td>
+<td>30562 MiB</td>
+</tr>
+<tr>
+<td>OS / kernel</td>
+<td>Ubuntu 26.04.1 LTS / 7.0.0-34-generic</td>
+</tr>
+<tr>
+<td>compiler / build tool</td>
+<td>gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0 / cmake version 4.2.3</td>
+</tr>
+<tr>
+<td>campaign start / end (UTC)</td>
+<td>2026-09-28T15:05:46 / 2026-09-29T08:43:52</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="3-functional-testing-kat">3. Functional testing (KAT)</h2>
+<p>Each library was checked against the submitted KAT vectors (SHA-256 manifest <code>hash-30/kat.sha256</code> in the harness) before timing.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>build flags</th>
+<th>KAT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ZC-DM-1280-512</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-768</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-1024</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-512</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-768</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-1024</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="4-performance">4. Performance</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>message</th>
+<th>mean cycles</th>
+<th>cycles/byte</th>
+<th>mean time</th>
+<th>MB/s</th>
+<th>n</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ZC-DM-1280-512</code></td>
+<td>32 B</td>
+<td>497</td>
+<td>15.5</td>
+<td>185 ns</td>
+<td>173.0</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-512</code></td>
+<td>128 B</td>
+<td>931</td>
+<td>7.3</td>
+<td>347 ns</td>
+<td>369.2</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-512</code></td>
+<td>512 B</td>
+<td>2675</td>
+<td>5.2</td>
+<td>994 ns</td>
+<td>514.9</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-512</code></td>
+<td>1024 B</td>
+<td>5284</td>
+<td>5.2</td>
+<td>1.96 µs</td>
+<td>521.7</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-512</code></td>
+<td>4096 B</td>
+<td>20.5 k</td>
+<td>5.0</td>
+<td>7.59 µs</td>
+<td>539.6</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-512</code></td>
+<td>8192 B</td>
+<td>40.8 k</td>
+<td>5.0</td>
+<td>15.2 µs</td>
+<td>540.6</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-512</code></td>
+<td>16384 B</td>
+<td>81.1 k</td>
+<td>5.0</td>
+<td>30.1 µs</td>
+<td>544.1</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-512</code></td>
+<td>65536 B</td>
+<td>323.0 k</td>
+<td>4.9</td>
+<td>120 µs</td>
+<td>546.8</td>
+<td>25950 (5 × 5190)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-768</code></td>
+<td>32 B</td>
+<td>906</td>
+<td>28.3</td>
+<td>337 ns</td>
+<td>94.9</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-768</code></td>
+<td>128 B</td>
+<td>1760</td>
+<td>13.7</td>
+<td>655 ns</td>
+<td>195.3</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-768</code></td>
+<td>512 B</td>
+<td>4758</td>
+<td>9.3</td>
+<td>1.77 µs</td>
+<td>289.5</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-768</code></td>
+<td>1024 B</td>
+<td>8594</td>
+<td>8.4</td>
+<td>3.19 µs</td>
+<td>320.9</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-768</code></td>
+<td>4096 B</td>
+<td>32.0 k</td>
+<td>7.8</td>
+<td>11.9 µs</td>
+<td>343.9</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-768</code></td>
+<td>8192 B</td>
+<td>63.1 k</td>
+<td>7.7</td>
+<td>23.4 µs</td>
+<td>349.8</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-768</code></td>
+<td>16384 B</td>
+<td>125.3 k</td>
+<td>7.6</td>
+<td>46.5 µs</td>
+<td>352.3</td>
+<td>66120 (5 × 13224)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-768</code></td>
+<td>65536 B</td>
+<td>499.2 k</td>
+<td>7.6</td>
+<td>185 µs</td>
+<td>353.7</td>
+<td>16970 (5 × 3394)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-1024</code></td>
+<td>32 B</td>
+<td>2909</td>
+<td>90.9</td>
+<td>1.08 µs</td>
+<td>29.6</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-1024</code></td>
+<td>128 B</td>
+<td>4633</td>
+<td>36.2</td>
+<td>1.72 µs</td>
+<td>74.4</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-1024</code></td>
+<td>512 B</td>
+<td>11.5 k</td>
+<td>22.5</td>
+<td>4.28 µs</td>
+<td>119.6</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-1024</code></td>
+<td>1024 B</td>
+<td>20.6 k</td>
+<td>20.1</td>
+<td>7.64 µs</td>
+<td>134.0</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-1024</code></td>
+<td>4096 B</td>
+<td>75.6 k</td>
+<td>18.5</td>
+<td>28.1 µs</td>
+<td>146.0</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-1024</code></td>
+<td>8192 B</td>
+<td>149.5 k</td>
+<td>18.2</td>
+<td>55.5 µs</td>
+<td>147.7</td>
+<td>55495 (5 × 11099)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-1024</code></td>
+<td>16384 B</td>
+<td>295.9 k</td>
+<td>18.1</td>
+<td>110 µs</td>
+<td>149.2</td>
+<td>28695 (5 × 5739)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-1024</code></td>
+<td>65536 B</td>
+<td>1.18 M</td>
+<td>18.0</td>
+<td>437 µs</td>
+<td>149.8</td>
+<td>7150 (5 × 1430)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-512</code></td>
+<td>32 B</td>
+<td>919</td>
+<td>28.7</td>
+<td>343 ns</td>
+<td>93.4</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-512</code></td>
+<td>128 B</td>
+<td>1903</td>
+<td>14.9</td>
+<td>708 ns</td>
+<td>180.8</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-512</code></td>
+<td>512 B</td>
+<td>4315</td>
+<td>8.4</td>
+<td>1.6 µs</td>
+<td>319.2</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-512</code></td>
+<td>1024 B</td>
+<td>7708</td>
+<td>7.5</td>
+<td>2.87 µs</td>
+<td>357.4</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-512</code></td>
+<td>4096 B</td>
+<td>29.8 k</td>
+<td>7.3</td>
+<td>11.1 µs</td>
+<td>370.6</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-512</code></td>
+<td>8192 B</td>
+<td>58.6 k</td>
+<td>7.2</td>
+<td>21.7 µs</td>
+<td>376.7</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-512</code></td>
+<td>16384 B</td>
+<td>116.3 k</td>
+<td>7.1</td>
+<td>43.2 µs</td>
+<td>379.7</td>
+<td>70800 (5 × 14160)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-512</code></td>
+<td>65536 B</td>
+<td>464.2 k</td>
+<td>7.1</td>
+<td>172 µs</td>
+<td>380.4</td>
+<td>18170 (5 × 3634)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-768</code></td>
+<td>32 B</td>
+<td>1885</td>
+<td>58.9</td>
+<td>701 ns</td>
+<td>45.7</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-768</code></td>
+<td>128 B</td>
+<td>2572</td>
+<td>20.1</td>
+<td>956 ns</td>
+<td>133.8</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-768</code></td>
+<td>512 B</td>
+<td>5955</td>
+<td>11.6</td>
+<td>2.21 µs</td>
+<td>231.5</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-768</code></td>
+<td>1024 B</td>
+<td>11.0 k</td>
+<td>10.8</td>
+<td>4.1 µs</td>
+<td>249.7</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-768</code></td>
+<td>4096 B</td>
+<td>40.7 k</td>
+<td>9.9</td>
+<td>15.1 µs</td>
+<td>271.2</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-768</code></td>
+<td>8192 B</td>
+<td>80.5 k</td>
+<td>9.8</td>
+<td>29.9 µs</td>
+<td>274.3</td>
+<td>98160 (5 × 19632)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-768</code></td>
+<td>16384 B</td>
+<td>159.3 k</td>
+<td>9.7</td>
+<td>59.1 µs</td>
+<td>277.1</td>
+<td>51950 (5 × 10390)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-768</code></td>
+<td>65536 B</td>
+<td>632.1 k</td>
+<td>9.6</td>
+<td>235 µs</td>
+<td>279.5</td>
+<td>13005 (5 × 2601)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-1024</code></td>
+<td>32 B</td>
+<td>2558</td>
+<td>79.9</td>
+<td>951 ns</td>
+<td>33.6</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-1024</code></td>
+<td>128 B</td>
+<td>4235</td>
+<td>33.1</td>
+<td>1.57 µs</td>
+<td>81.3</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-1024</code></td>
+<td>512 B</td>
+<td>10.1 k</td>
+<td>19.8</td>
+<td>3.77 µs</td>
+<td>135.8</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-1024</code></td>
+<td>1024 B</td>
+<td>17.8 k</td>
+<td>17.3</td>
+<td>6.59 µs</td>
+<td>155.3</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-1024</code></td>
+<td>4096 B</td>
+<td>64.2 k</td>
+<td>15.7</td>
+<td>23.8 µs</td>
+<td>172.0</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-1024</code></td>
+<td>8192 B</td>
+<td>125.7 k</td>
+<td>15.3</td>
+<td>46.7 µs</td>
+<td>175.6</td>
+<td>65575 (5 × 13115)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-1024</code></td>
+<td>16384 B</td>
+<td>249.1 k</td>
+<td>15.2</td>
+<td>92.4 µs</td>
+<td>177.2</td>
+<td>33710 (5 × 6742)</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-1024</code></td>
+<td>65536 B</td>
+<td>989.4 k</td>
+<td>15.1</td>
+<td>367 µs</td>
+<td>178.5</td>
+<td>8580 (5 × 1716)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-resource-consumption">5. Resource consumption</h2>
+<p>Static memory is approximated by the library's loadable ELF segments; peak memory is the process high-water mark (VmHWM) including the benchmark driver and libc, so both are upper-bound proxies rather than isolated algorithm memory.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>static: ELF image (bytes)</th>
+<th>baseline RSS</th>
+<th>peak RSS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ZC-DM-1280-512</code></td>
+<td>hash_32</td>
+<td>12664</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-512</code></td>
+<td>hash_128</td>
+<td>12664</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-512</code></td>
+<td>hash_512</td>
+<td>12664</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-512</code></td>
+<td>hash_1024</td>
+<td>12664</td>
+<td>3444 KiB</td>
+<td>3508 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-512</code></td>
+<td>hash_4096</td>
+<td>12664</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-512</code></td>
+<td>hash_8192</td>
+<td>12664</td>
+<td>1408 KiB</td>
+<td>1472 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-512</code></td>
+<td>hash_16384</td>
+<td>12664</td>
+<td>1416 KiB</td>
+<td>1480 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-512</code></td>
+<td>hash_65536</td>
+<td>12664</td>
+<td>1464 KiB</td>
+<td>1528 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-768</code></td>
+<td>hash_32</td>
+<td>12664</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-768</code></td>
+<td>hash_128</td>
+<td>12664</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-768</code></td>
+<td>hash_512</td>
+<td>12664</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-768</code></td>
+<td>hash_1024</td>
+<td>12664</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-768</code></td>
+<td>hash_4096</td>
+<td>12664</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-768</code></td>
+<td>hash_8192</td>
+<td>12664</td>
+<td>1408 KiB</td>
+<td>1472 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-768</code></td>
+<td>hash_16384</td>
+<td>12664</td>
+<td>3456 KiB</td>
+<td>3520 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-768</code></td>
+<td>hash_65536</td>
+<td>12664</td>
+<td>1464 KiB</td>
+<td>1528 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-1024</code></td>
+<td>hash_32</td>
+<td>12664</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-1024</code></td>
+<td>hash_128</td>
+<td>12664</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-1024</code></td>
+<td>hash_512</td>
+<td>12664</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-1024</code></td>
+<td>hash_1024</td>
+<td>12664</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-1024</code></td>
+<td>hash_4096</td>
+<td>12664</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-1024</code></td>
+<td>hash_8192</td>
+<td>12664</td>
+<td>1408 KiB</td>
+<td>1472 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-1024</code></td>
+<td>hash_16384</td>
+<td>12664</td>
+<td>1416 KiB</td>
+<td>1480 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-1024</code></td>
+<td>hash_65536</td>
+<td>12664</td>
+<td>3484 KiB</td>
+<td>3548 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-512</code></td>
+<td>hash_32</td>
+<td>16720</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-512</code></td>
+<td>hash_128</td>
+<td>16720</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-512</code></td>
+<td>hash_512</td>
+<td>16720</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-512</code></td>
+<td>hash_1024</td>
+<td>16720</td>
+<td>1408 KiB</td>
+<td>1472 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-512</code></td>
+<td>hash_4096</td>
+<td>16720</td>
+<td>1408 KiB</td>
+<td>1472 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-512</code></td>
+<td>hash_8192</td>
+<td>16720</td>
+<td>1412 KiB</td>
+<td>1476 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-512</code></td>
+<td>hash_16384</td>
+<td>16720</td>
+<td>1420 KiB</td>
+<td>1484 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-512</code></td>
+<td>hash_65536</td>
+<td>16720</td>
+<td>1468 KiB</td>
+<td>1532 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-768</code></td>
+<td>hash_32</td>
+<td>16720</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-768</code></td>
+<td>hash_128</td>
+<td>16720</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-768</code></td>
+<td>hash_512</td>
+<td>16720</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-768</code></td>
+<td>hash_1024</td>
+<td>16720</td>
+<td>1408 KiB</td>
+<td>1472 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-768</code></td>
+<td>hash_4096</td>
+<td>16720</td>
+<td>1408 KiB</td>
+<td>1472 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-768</code></td>
+<td>hash_8192</td>
+<td>16720</td>
+<td>1412 KiB</td>
+<td>1476 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-768</code></td>
+<td>hash_16384</td>
+<td>16720</td>
+<td>1420 KiB</td>
+<td>1484 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-768</code></td>
+<td>hash_65536</td>
+<td>16720</td>
+<td>1468 KiB</td>
+<td>1532 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-1024</code></td>
+<td>hash_32</td>
+<td>16720</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-1024</code></td>
+<td>hash_128</td>
+<td>16720</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-1024</code></td>
+<td>hash_512</td>
+<td>16720</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-1024</code></td>
+<td>hash_1024</td>
+<td>16720</td>
+<td>1408 KiB</td>
+<td>1472 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-1024</code></td>
+<td>hash_4096</td>
+<td>16720</td>
+<td>1408 KiB</td>
+<td>1472 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-1024</code></td>
+<td>hash_8192</td>
+<td>16720</td>
+<td>1412 KiB</td>
+<td>1476 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-1024</code></td>
+<td>hash_16384</td>
+<td>16720</td>
+<td>1420 KiB</td>
+<td>1484 KiB</td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-1024</code></td>
+<td>hash_65536</td>
+<td>16720</td>
+<td>3488 KiB</td>
+<td>3552 KiB</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="7-raw-evidence-index">7. Raw evidence index</h2>
+<p>Paths are relative to <code>performance/data/arm_1/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>; each JSON file records its commands, environment and trials.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>item</th>
+<th>file</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ZC-DM-1280-512</code></td>
+<td>KAT log (sha256 <code>fd498f3f2835d888…</code>)</td>
+<td><code>kat/hash-30/ZC-DM-1280-512.log</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-512</code></td>
+<td>timing hash_1024</td>
+<td><code>records/hash-30/ZC-DM-1280-512__hash_1024.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-512</code></td>
+<td>timing hash_128</td>
+<td><code>records/hash-30/ZC-DM-1280-512__hash_128.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-512</code></td>
+<td>timing hash_16384</td>
+<td><code>records/hash-30/ZC-DM-1280-512__hash_16384.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-512</code></td>
+<td>timing hash_32</td>
+<td><code>records/hash-30/ZC-DM-1280-512__hash_32.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-512</code></td>
+<td>timing hash_4096</td>
+<td><code>records/hash-30/ZC-DM-1280-512__hash_4096.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-512</code></td>
+<td>timing hash_512</td>
+<td><code>records/hash-30/ZC-DM-1280-512__hash_512.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-512</code></td>
+<td>timing hash_65536</td>
+<td><code>records/hash-30/ZC-DM-1280-512__hash_65536.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-512</code></td>
+<td>timing hash_8192</td>
+<td><code>records/hash-30/ZC-DM-1280-512__hash_8192.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-768</code></td>
+<td>KAT log (sha256 <code>d676ff6ee9dc2341…</code>)</td>
+<td><code>kat/hash-30/ZC-DM-1280-768.log</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-768</code></td>
+<td>timing hash_1024</td>
+<td><code>records/hash-30/ZC-DM-1280-768__hash_1024.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-768</code></td>
+<td>timing hash_128</td>
+<td><code>records/hash-30/ZC-DM-1280-768__hash_128.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-768</code></td>
+<td>timing hash_16384</td>
+<td><code>records/hash-30/ZC-DM-1280-768__hash_16384.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-768</code></td>
+<td>timing hash_32</td>
+<td><code>records/hash-30/ZC-DM-1280-768__hash_32.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-768</code></td>
+<td>timing hash_4096</td>
+<td><code>records/hash-30/ZC-DM-1280-768__hash_4096.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-768</code></td>
+<td>timing hash_512</td>
+<td><code>records/hash-30/ZC-DM-1280-768__hash_512.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-768</code></td>
+<td>timing hash_65536</td>
+<td><code>records/hash-30/ZC-DM-1280-768__hash_65536.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-768</code></td>
+<td>timing hash_8192</td>
+<td><code>records/hash-30/ZC-DM-1280-768__hash_8192.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-1024</code></td>
+<td>KAT log (sha256 <code>be7e7ccb9e73949d…</code>)</td>
+<td><code>kat/hash-30/ZC-DM-1280-1024.log</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-1024</code></td>
+<td>timing hash_1024</td>
+<td><code>records/hash-30/ZC-DM-1280-1024__hash_1024.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-1024</code></td>
+<td>timing hash_128</td>
+<td><code>records/hash-30/ZC-DM-1280-1024__hash_128.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-1024</code></td>
+<td>timing hash_16384</td>
+<td><code>records/hash-30/ZC-DM-1280-1024__hash_16384.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-1024</code></td>
+<td>timing hash_32</td>
+<td><code>records/hash-30/ZC-DM-1280-1024__hash_32.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-1024</code></td>
+<td>timing hash_4096</td>
+<td><code>records/hash-30/ZC-DM-1280-1024__hash_4096.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-1024</code></td>
+<td>timing hash_512</td>
+<td><code>records/hash-30/ZC-DM-1280-1024__hash_512.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-1024</code></td>
+<td>timing hash_65536</td>
+<td><code>records/hash-30/ZC-DM-1280-1024__hash_65536.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1280-1024</code></td>
+<td>timing hash_8192</td>
+<td><code>records/hash-30/ZC-DM-1280-1024__hash_8192.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-512</code></td>
+<td>KAT log (sha256 <code>f48fecda0086bc69…</code>)</td>
+<td><code>kat/hash-30/ZC-DM-1536-512.log</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-512</code></td>
+<td>timing hash_1024</td>
+<td><code>records/hash-30/ZC-DM-1536-512__hash_1024.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-512</code></td>
+<td>timing hash_128</td>
+<td><code>records/hash-30/ZC-DM-1536-512__hash_128.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-512</code></td>
+<td>timing hash_16384</td>
+<td><code>records/hash-30/ZC-DM-1536-512__hash_16384.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-512</code></td>
+<td>timing hash_32</td>
+<td><code>records/hash-30/ZC-DM-1536-512__hash_32.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-512</code></td>
+<td>timing hash_4096</td>
+<td><code>records/hash-30/ZC-DM-1536-512__hash_4096.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-512</code></td>
+<td>timing hash_512</td>
+<td><code>records/hash-30/ZC-DM-1536-512__hash_512.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-512</code></td>
+<td>timing hash_65536</td>
+<td><code>records/hash-30/ZC-DM-1536-512__hash_65536.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-512</code></td>
+<td>timing hash_8192</td>
+<td><code>records/hash-30/ZC-DM-1536-512__hash_8192.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-768</code></td>
+<td>KAT log (sha256 <code>01d1887987b6a755…</code>)</td>
+<td><code>kat/hash-30/ZC-DM-1536-768.log</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-768</code></td>
+<td>timing hash_1024</td>
+<td><code>records/hash-30/ZC-DM-1536-768__hash_1024.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-768</code></td>
+<td>timing hash_128</td>
+<td><code>records/hash-30/ZC-DM-1536-768__hash_128.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-768</code></td>
+<td>timing hash_16384</td>
+<td><code>records/hash-30/ZC-DM-1536-768__hash_16384.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-768</code></td>
+<td>timing hash_32</td>
+<td><code>records/hash-30/ZC-DM-1536-768__hash_32.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-768</code></td>
+<td>timing hash_4096</td>
+<td><code>records/hash-30/ZC-DM-1536-768__hash_4096.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-768</code></td>
+<td>timing hash_512</td>
+<td><code>records/hash-30/ZC-DM-1536-768__hash_512.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-768</code></td>
+<td>timing hash_65536</td>
+<td><code>records/hash-30/ZC-DM-1536-768__hash_65536.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-768</code></td>
+<td>timing hash_8192</td>
+<td><code>records/hash-30/ZC-DM-1536-768__hash_8192.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-1024</code></td>
+<td>KAT log (sha256 <code>81f68be63270df7f…</code>)</td>
+<td><code>kat/hash-30/ZC-DM-1536-1024.log</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-1024</code></td>
+<td>timing hash_1024</td>
+<td><code>records/hash-30/ZC-DM-1536-1024__hash_1024.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-1024</code></td>
+<td>timing hash_128</td>
+<td><code>records/hash-30/ZC-DM-1536-1024__hash_128.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-1024</code></td>
+<td>timing hash_16384</td>
+<td><code>records/hash-30/ZC-DM-1536-1024__hash_16384.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-1024</code></td>
+<td>timing hash_32</td>
+<td><code>records/hash-30/ZC-DM-1536-1024__hash_32.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-1024</code></td>
+<td>timing hash_4096</td>
+<td><code>records/hash-30/ZC-DM-1536-1024__hash_4096.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-1024</code></td>
+<td>timing hash_512</td>
+<td><code>records/hash-30/ZC-DM-1536-1024__hash_512.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-1024</code></td>
+<td>timing hash_65536</td>
+<td><code>records/hash-30/ZC-DM-1536-1024__hash_65536.json</code></td>
+</tr>
+<tr>
+<td><code>ZC-DM-1536-1024</code></td>
+<td>timing hash_8192</td>
+<td><code>records/hash-30/ZC-DM-1536-1024__hash_8192.json</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Scripts: <code>performance/campaign.py</code>, <code>performance/ngcc_perf.c</code>, <code>performance/hashprof/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

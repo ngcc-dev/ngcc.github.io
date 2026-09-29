@@ -29,7 +29,11 @@ The two functions therefore lack cross-variant domain separation and cannot be t
 
 The same missing domain separation affects the XOF profiles. On the audited short messages, the 384- and 512-profile 256-bit XOF outputs are equal, while shorter outputs are prefixes of the longer XOF streams. This follows from the normative zero initialization, common padding and permutation, and `MSB_l` output rule; it is not only a wrapper artifact.
 
-The Megascon team subsequently assigned a distinct four-bit initialization domain to every digest and XOF profile and regenerated the specification, implementations, and KATs. That revision prevents the cross-profile state alignment; the frozen Round 1 archive remains affected.
+The frozen Round 1 archive remains the target of this finding.
+
+### Proposed fixes
+
+The [Megascon team's revision notice](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/2VJXXVHAC7K44UFJ7YLSTJRSIWRJTVAQ/) proposes a distinct four-bit initialization domain for every digest and XOF profile and reports regenerated specifications, implementations, and KATs. This section records the proposal without evaluating it.
 
 ### Reproducing
 
@@ -64,7 +68,11 @@ For MEGASCON-512, take two 256-byte messages initialized to zero, set `M[192] = 
 
 This is a specification-listing failure, not an attack on the archived implementations: the optimized code uses the corrected immediates `a6` and `56`, and the reference code implements the bijective mathematical S-box.
 
-The Megascon team confirms that Listing 3 was a transcription error and replaces `b4`/`1e` by `a6`/`56` in its revised specification. This correction agrees with the already-correct submitted source.
+The Megascon team confirms that Listing 3 was a transcription error. The submitted source already uses `a6` and `56`.
+
+### Proposed fixes
+
+The [Megascon team's correction](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/2VJXXVHAC7K44UFJ7YLSTJRSIWRJTVAQ/) proposes replacing Listing 3's `b4`/`1e` immediates by `a6`/`56`. This section records the proposal without evaluating it.
 
 ### Reproducing
 

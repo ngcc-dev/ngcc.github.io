@@ -3,6 +3,8 @@
 
 [Performance x86_1](index.md) › `hash-11` · [method](method.md) · [NICCS page](https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101538925484527616.html)
 
+**Systems:** **x86_1** · [arm_1](../arm_1/hash-11.md)
+
 Independent measurement following the structure of the NICCS x86 self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.
 
 ## 1. Basic information
@@ -38,7 +40,7 @@ Each library was checked against the submitted KAT vectors (SHA-256 manifest `ha
 | `Garnet_1024` | guide | PASS |
 | `Garnet_1024_DM4x4` | harness-default | MISMATCH [1] (not timed) |
 
-[1] No reference source: the submission ships a second 1024-bit KAT set (DM4x4, apparently a 512-bit-rate variant) whose only code is x86-64 assembly in the optimized tree
+[1] No reference source: the submission ships a second 1024-bit KAT set (DM4x4, apparently a 512-bit-rate variant) whose only code is x86-64 assembly in the optimized tree; the harness label reuses the Garnet_1024 C sources, so its timing would duplicate Garnet_1024 (hash-11/pseudocode.md, discrepancy 3).
 
 ## 4. Performance
 

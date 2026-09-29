@@ -1,5 +1,5 @@
 <!-- synchronized from harness: performance/summary_x86_1.md -->
-<p class="crumb"><a href="../index.md">Performance measurements</a> › system: <strong>x86_1</strong></p>
+<p class="crumb"><a href="../index.md">Performance measurements</a> › system: <strong>x86_1</strong> · <a href="../arm_1/index.md">arm_1</a></p>
 
 # Performance — x86-64, system x86_1
 

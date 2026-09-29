@@ -3,6 +3,8 @@
 
 [Performance x86_1](index.md) › `sign-15` · [method](method.md) · [NICCS page](https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561078120534016.html)
 
+**Systems:** **x86_1** · [arm_1](../arm_1/sign-15.md)
+
 Independent measurement following the structure of the NICCS x86 self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.
 
 ## 1. Basic information
@@ -34,7 +36,7 @@ Each library was checked against the submitted KAT vectors (SHA-256 manifest `si
 | `lwrdsa256` | harness-default | OVERFLOW [1] |
 | `lwrdsa512` | harness-default | OVERFLOW [1] |
 
-[1] OVERFLOW: sig_sign returns (and writes) signatures up to 64 bytes longer than the declared maximum sn length (confirmed finding sign-15-1, out-of-bounds heap disclosure) These instances are timed anyway; their output is not validated.
+[1] OVERFLOW: sig_sign returns (and writes) signatures up to 64 bytes longer than the declared maximum sn length (confirmed finding sign-15-1, out-of-bounds heap disclosure); timed with a 4 KiB guard buffer and the excess recorded. In addition, sig_verify accepted the honest signature once and then rejected the same unchanged inputs on later calls, so the verification time is that of calls with inconsistent verdicts (counted as verify_rejections in each record). These instances are timed anyway; their output is not validated.
 
 ## 4. Performance
 

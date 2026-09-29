@@ -10,10 +10,10 @@
 <body>
 <header class="site-header">
 <a class="brand" href="../index.html"><img class="brand-icon" src="../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
-<nav><a href="../index.html">Home</a><a href="../reports/index.html">Security</a><a href="../performance/x86_1/index.html">Performance</a><a href="../constant-time/index.html">Side-Channel</a></nav>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Security</a><a href="../performance/index.html">Performance</a><a href="../constant-time/index.html">Side-Channel</a></nav>
 </header>
 <main class="">
-<p class="crumb"><a href="../reports/index.html">Security</a> › <code>kem-19</code> · <a href="../constant-time/kem-19.html">Constant-time review</a> · <a href="../performance/x86_1/kem-19.html">Performance</a></p>
+<p class="crumb"><a href="../reports/index.html">Security</a> › <code>kem-19</code> · <a href="../constant-time/kem-19.html">Constant-time review</a> · Performance: <a href="../performance/x86_1/kem-19.html">x86_1</a> · <a href="../performance/arm_1/kem-19.html">arm_1</a></p>
 
 <h1 id="lore-kem-19">Lore (kem-19)</h1>
 <div class="table-wrap"><table class="meta">
@@ -39,7 +39,9 @@
 <p>Lore-512 uses <code>Z_1028[x]/(x^768+1)</code>, where <code>1028 = t·q</code> with the specification's headline modulus <code>q = 257</code> and <code>t = 4</code>. Here <code>x^768+1 = (x^256+1)(x^512-x^256+1)</code>. The factors are coprime modulo 1028: writing <code>y=x^256</code>, their Bézout difference is <code>3</code>, which is invertible modulo 1028. Public ring equations therefore project into degree-256 and degree-512 quotient rings, and the two recovered secret projections would reconstruct the full secret by CRT. A secret with coefficients in <code>{-2,-1,0,1,2}</code> projects to coefficients bounded by 6 and 4 respectively, so the smaller instances do not lose the small-secret structure.</p>
 <p>The forum estimates approximately 451 classical and 391 quantum bits for full recovery, below the claimed 512-bit classical level. Those figures depend on an independent-coefficient/GSA lattice model that has <strong>not</strong> been reproduced here and does not fully model Lore's fixed-composition secret, rounding correlations, or concrete reduction costs. This is a structurally verified parameter-selection lead, not a demonstrated full-size key recovery or a confirmed 451-bit attack.</p>
 <h3 id="follow-up-analysis">Follow-up Analysis</h3>
-<p>The Lore team's <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/KGBWR5YQU6ASUKNVUQEBNNJZ7TWZIOY4/">first response</a> and <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/W6XIOQDXGIUZPVKR3MZW4HZCDJEVYRMR/">revised-parameter post</a> change Lore-512 to <code>n=1024</code>, <code>k=2</code>, and the ring <code>Z_1028[x]/(x^1024+1)</code>, together with updated fixed-composition and BCH parameters. That removes the particular degree-256/512 quotient projection reported here. This report continues to describe the archived Round 1 submission identified above; it does not apply the same factorization claim to the revised set.</p>
+<p>The Lore team's <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/KGBWR5YQU6ASUKNVUQEBNNJZ7TWZIOY4/">first response</a> and <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/W6XIOQDXGIUZPVKR3MZW4HZCDJEVYRMR/">revised-parameter post</a> concern a revised parameter set. This report continues to describe the archived Round 1 submission identified above and does not apply its factorization claim to a later set.</p>
+<h3 id="proposed-fixes">Proposed fixes</h3>
+<p>The Lore team's <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/W6XIOQDXGIUZPVKR3MZW4HZCDJEVYRMR/">revised-parameter post</a> proposes changing Lore-512 to <code>n=1024</code>, <code>k=2</code>, and <code>x^1024+1</code>, while retaining <code>q=257</code> and <code>t=4</code>, together with revised fixed-composition and BCH parameters. This section records the proposal without evaluating it.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 kem-19/reproduce_ring_projection.py

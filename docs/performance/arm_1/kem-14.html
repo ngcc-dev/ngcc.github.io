@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: kem-14 DTRU — performance on AArch64 (system arm1)</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=808fa5e8">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
+<nav><a href="../../index.html">Home</a><a href="../../reports/index.html">Security</a><a href="../../performance/index.html">Performance</a><a href="../../constant-time/index.html">Side-Channel</a></nav>
+</header>
+<main class="">
+<!-- synchronized from harness: kem-14/perf_arm_1.md -->
+<h1 id="kem-14-dtru-performance-on-aarch64-system-arm_1">kem-14 DTRU — performance on AArch64 (system arm_1)</h1>
+<p><a href="index.html">Performance arm_1</a> › <code>kem-14</code> · <a href="method.html">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560844682350592.html">NICCS page</a></p>
+<p><strong>Systems:</strong> <a href="../x86_1/kem-14.html">x86_1</a> · <strong>arm_1</strong></p>
+<p>Independent measurement following the structure of the NICCS ARM self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.</p>
+<h2 id="1-basic-information">1. Basic information</h2>
+<ul>
+<li>Category: public-key algorithm; function: key encapsulation</li>
+<li>Algorithm: DTRU</li>
+<li>Implementation versions measured: reference</li>
+<li>Parameter sets: <code>DTRU-648</code>, <code>DTRU-648-PACK_PK</code>, <code>DTRU-768</code>, <code>DTRU-768-PACK_PK</code>, <code>DTRU-1024</code>, <code>DTRU-1024-PACK_PK</code>, <code>DTRU-1536</code>, <code>DTRU-1536-PACK_PK</code>, <code>DTRU-2048</code>, <code>DTRU-2048-PACK_PK</code>, <code>DTRU-Light</code>, <code>DTRU-Prime</code></li>
+</ul>
+<h2 id="2-assessment-environment">2. Assessment environment</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>item</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>processor</td>
+<td>Qualcomm Oryon (CPU 2, one core)</td>
+</tr>
+<tr>
+<td>machine</td>
+<td>ASUS Vivobook S 15</td>
+</tr>
+<tr>
+<td>clock</td>
+<td>fixed 2.71 GHz (governor performance, minimum = maximum), boost off, SMT none</td>
+</tr>
+<tr>
+<td>memory</td>
+<td>30562 MiB</td>
+</tr>
+<tr>
+<td>OS / kernel</td>
+<td>Ubuntu 26.04.1 LTS / 7.0.0-34-generic</td>
+</tr>
+<tr>
+<td>compiler / build tool</td>
+<td>gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0 / cmake version 4.2.3</td>
+</tr>
+<tr>
+<td>campaign start / end (UTC)</td>
+<td>2026-09-28T15:05:46 / 2026-09-29T08:43:52</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="3-functional-testing-kat">3. Functional testing (KAT)</h2>
+<p>Each library was checked against the submitted KAT vectors (SHA-256 manifest <code>kem-14/kat.sha256</code> in the harness) before timing.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>build flags</th>
+<th>KAT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DTRU-648</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>DTRU-648-PACK_PK</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>DTRU-768</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>DTRU-768-PACK_PK</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>DTRU-1024</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>DTRU-1024-PACK_PK</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>DTRU-1536</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>DTRU-1536-PACK_PK</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>DTRU-2048</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>DTRU-2048-PACK_PK</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>DTRU-Light</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>DTRU-Prime</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="4-performance">4. Performance</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>mean cycles</th>
+<th>mean time</th>
+<th>ops/s</th>
+<th>median trial</th>
+<th>n (trials × iters)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DTRU-648</code></td>
+<td>keygen</td>
+<td>241.9 k</td>
+<td>89.7 µs</td>
+<td>1.11e+04</td>
+<td>89.7 µs</td>
+<td>26940 (5 × 5388)</td>
+</tr>
+<tr>
+<td><code>DTRU-648</code></td>
+<td>enc</td>
+<td>129.9 k</td>
+<td>48.2 µs</td>
+<td>2.07e+04</td>
+<td>48.1 µs</td>
+<td>55365 (5 × 11073)</td>
+</tr>
+<tr>
+<td><code>DTRU-648</code></td>
+<td>dec</td>
+<td>257.4 k</td>
+<td>95.5 µs</td>
+<td>1.05e+04</td>
+<td>95.4 µs</td>
+<td>30655 (5 × 6131)</td>
+</tr>
+<tr>
+<td><code>DTRU-648-PACK_PK</code></td>
+<td>keygen</td>
+<td>245.3 k</td>
+<td>91 µs</td>
+<td>1.1e+04</td>
+<td>91 µs</td>
+<td>31645 (5 × 6329)</td>
+</tr>
+<tr>
+<td><code>DTRU-648-PACK_PK</code></td>
+<td>enc</td>
+<td>140.5 k</td>
+<td>52.1 µs</td>
+<td>1.92e+04</td>
+<td>52.1 µs</td>
+<td>57835 (5 × 11567)</td>
+</tr>
+<tr>
+<td><code>DTRU-648-PACK_PK</code></td>
+<td>dec</td>
+<td>268.2 k</td>
+<td>99.5 µs</td>
+<td>1e+04</td>
+<td>99.5 µs</td>
+<td>31190 (5 × 6238)</td>
+</tr>
+<tr>
+<td><code>DTRU-768</code></td>
+<td>keygen</td>
+<td>211.9 k</td>
+<td>78.6 µs</td>
+<td>1.27e+04</td>
+<td>78.6 µs</td>
+<td>37210 (5 × 7442)</td>
+</tr>
+<tr>
+<td><code>DTRU-768</code></td>
+<td>enc</td>
+<td>150.1 k</td>
+<td>55.7 µs</td>
+<td>1.8e+04</td>
+<td>55.7 µs</td>
+<td>54055 (5 × 10811)</td>
+</tr>
+<tr>
+<td><code>DTRU-768</code></td>
+<td>dec</td>
+<td>282.4 k</td>
+<td>105 µs</td>
+<td>9.54e+03</td>
+<td>104 µs</td>
+<td>29835 (5 × 5967)</td>
+</tr>
+<tr>
+<td><code>DTRU-768-PACK_PK</code></td>
+<td>keygen</td>
+<td>216.5 k</td>
+<td>80.4 µs</td>
+<td>1.24e+04</td>
+<td>80.1 µs</td>
+<td>36530 (5 × 7306)</td>
+</tr>
+<tr>
+<td><code>DTRU-768-PACK_PK</code></td>
+<td>enc</td>
+<td>162.9 k</td>
+<td>60.4 µs</td>
+<td>1.65e+04</td>
+<td>60.4 µs</td>
+<td>49385 (5 × 9877)</td>
+</tr>
+<tr>
+<td><code>DTRU-768-PACK_PK</code></td>
+<td>dec</td>
+<td>294.4 k</td>
+<td>109 µs</td>
+<td>9.16e+03</td>
+<td>109 µs</td>
+<td>28305 (5 × 5661)</td>
+</tr>
+<tr>
+<td><code>DTRU-1024</code></td>
+<td>keygen</td>
+<td>256.9 k</td>
+<td>95.3 µs</td>
+<td>1.05e+04</td>
+<td>94.8 µs</td>
+<td>30365 (5 × 6073)</td>
+</tr>
+<tr>
+<td><code>DTRU-1024</code></td>
+<td>enc</td>
+<td>175.8 k</td>
+<td>65.3 µs</td>
+<td>1.53e+04</td>
+<td>65.2 µs</td>
+<td>47105 (5 × 9421)</td>
+</tr>
+<tr>
+<td><code>DTRU-1024</code></td>
+<td>dec</td>
+<td>341.4 k</td>
+<td>127 µs</td>
+<td>7.89e+03</td>
+<td>127 µs</td>
+<td>24695 (5 × 4939)</td>
+</tr>
+<tr>
+<td><code>DTRU-1024-PACK_PK</code></td>
+<td>keygen</td>
+<td>261.5 k</td>
+<td>97 µs</td>
+<td>1.03e+04</td>
+<td>97.1 µs</td>
+<td>29685 (5 × 5937)</td>
+</tr>
+<tr>
+<td><code>DTRU-1024-PACK_PK</code></td>
+<td>enc</td>
+<td>192.5 k</td>
+<td>71.4 µs</td>
+<td>1.4e+04</td>
+<td>71.5 µs</td>
+<td>42405 (5 × 8481)</td>
+</tr>
+<tr>
+<td><code>DTRU-1024-PACK_PK</code></td>
+<td>dec</td>
+<td>358.2 k</td>
+<td>133 µs</td>
+<td>7.52e+03</td>
+<td>133 µs</td>
+<td>23520 (5 × 4704)</td>
+</tr>
+<tr>
+<td><code>DTRU-1536</code></td>
+<td>keygen</td>
+<td>341.5 k</td>
+<td>127 µs</td>
+<td>7.89e+03</td>
+<td>126 µs</td>
+<td>23580 (5 × 4716)</td>
+</tr>
+<tr>
+<td><code>DTRU-1536</code></td>
+<td>enc</td>
+<td>297.4 k</td>
+<td>110 µs</td>
+<td>9.06e+03</td>
+<td>110 µs</td>
+<td>28005 (5 × 5601)</td>
+</tr>
+<tr>
+<td><code>DTRU-1536</code></td>
+<td>dec</td>
+<td>564.2 k</td>
+<td>209 µs</td>
+<td>4.78e+03</td>
+<td>209 µs</td>
+<td>14930 (5 × 2986)</td>
+</tr>
+<tr>
+<td><code>DTRU-1536-PACK_PK</code></td>
+<td>keygen</td>
+<td>349.6 k</td>
+<td>130 µs</td>
+<td>7.71e+03</td>
+<td>129 µs</td>
+<td>22515 (5 × 4503)</td>
+</tr>
+<tr>
+<td><code>DTRU-1536-PACK_PK</code></td>
+<td>enc</td>
+<td>322.1 k</td>
+<td>120 µs</td>
+<td>8.36e+03</td>
+<td>120 µs</td>
+<td>24100 (5 × 4820)</td>
+</tr>
+<tr>
+<td><code>DTRU-1536-PACK_PK</code></td>
+<td>dec</td>
+<td>589.7 k</td>
+<td>219 µs</td>
+<td>4.57e+03</td>
+<td>219 µs</td>
+<td>14305 (5 × 2861)</td>
+</tr>
+<tr>
+<td><code>DTRU-2048</code></td>
+<td>keygen</td>
+<td>583.0 k</td>
+<td>216 µs</td>
+<td>4.62e+03</td>
+<td>216 µs</td>
+<td>13550 (5 × 2710)</td>
+</tr>
+<tr>
+<td><code>DTRU-2048</code></td>
+<td>enc</td>
+<td>405.7 k</td>
+<td>151 µs</td>
+<td>6.64e+03</td>
+<td>151 µs</td>
+<td>20360 (5 × 4072)</td>
+</tr>
+<tr>
+<td><code>DTRU-2048</code></td>
+<td>dec</td>
+<td>775.2 k</td>
+<td>288 µs</td>
+<td>3.48e+03</td>
+<td>287 µs</td>
+<td>10885 (5 × 2177)</td>
+</tr>
+<tr>
+<td><code>DTRU-2048-PACK_PK</code></td>
+<td>keygen</td>
+<td>595.0 k</td>
+<td>221 µs</td>
+<td>4.53e+03</td>
+<td>220 µs</td>
+<td>13180 (5 × 2636)</td>
+</tr>
+<tr>
+<td><code>DTRU-2048-PACK_PK</code></td>
+<td>enc</td>
+<td>439.3 k</td>
+<td>163 µs</td>
+<td>6.13e+03</td>
+<td>163 µs</td>
+<td>19165 (5 × 3833)</td>
+</tr>
+<tr>
+<td><code>DTRU-2048-PACK_PK</code></td>
+<td>dec</td>
+<td>806.2 k</td>
+<td>299 µs</td>
+<td>3.34e+03</td>
+<td>299 µs</td>
+<td>10215 (5 × 2043)</td>
+</tr>
+<tr>
+<td><code>DTRU-Light</code></td>
+<td>keygen</td>
+<td>91.1 k</td>
+<td>33.8 µs</td>
+<td>2.96e+04</td>
+<td>33.7 µs</td>
+<td>81635 (5 × 16327)</td>
+</tr>
+<tr>
+<td><code>DTRU-Light</code></td>
+<td>enc</td>
+<td>75.3 k</td>
+<td>28 µs</td>
+<td>3.58e+04</td>
+<td>27.9 µs</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>DTRU-Light</code></td>
+<td>dec</td>
+<td>149.5 k</td>
+<td>55.5 µs</td>
+<td>1.8e+04</td>
+<td>55.5 µs</td>
+<td>54985 (5 × 10997)</td>
+</tr>
+<tr>
+<td><code>DTRU-Prime</code></td>
+<td>keygen</td>
+<td>92.29 M</td>
+<td>34.2 ms</td>
+<td>29.2</td>
+<td>34.2 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>DTRU-Prime</code></td>
+<td>enc</td>
+<td>264.6 k</td>
+<td>98.2 µs</td>
+<td>1.02e+04</td>
+<td>98.2 µs</td>
+<td>31455 (5 × 6291)</td>
+</tr>
+<tr>
+<td><code>DTRU-Prime</code></td>
+<td>dec</td>
+<td>546.7 k</td>
+<td>203 µs</td>
+<td>4.93e+03</td>
+<td>202 µs</td>
+<td>15470 (5 × 3094)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-resource-consumption">5. Resource consumption</h2>
+<p>Static memory is approximated by the library's loadable ELF segments; peak memory is the process high-water mark (VmHWM) including the benchmark driver and libc, so both are upper-bound proxies rather than isolated algorithm memory.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>static: ELF image (bytes)</th>
+<th>baseline RSS</th>
+<th>peak RSS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DTRU-648</code></td>
+<td>keygen</td>
+<td>28620</td>
+<td>1420 KiB</td>
+<td>1488 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-648</code></td>
+<td>enc</td>
+<td>28620</td>
+<td>1424 KiB</td>
+<td>1488 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-648</code></td>
+<td>dec</td>
+<td>28620</td>
+<td>1432 KiB</td>
+<td>1496 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-648-PACK_PK</code></td>
+<td>keygen</td>
+<td>30516</td>
+<td>1420 KiB</td>
+<td>1496 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-648-PACK_PK</code></td>
+<td>enc</td>
+<td>30516</td>
+<td>1436 KiB</td>
+<td>1500 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-648-PACK_PK</code></td>
+<td>dec</td>
+<td>30516</td>
+<td>1440 KiB</td>
+<td>1504 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-768</code></td>
+<td>keygen</td>
+<td>27204</td>
+<td>1416 KiB</td>
+<td>1484 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-768</code></td>
+<td>enc</td>
+<td>27204</td>
+<td>1420 KiB</td>
+<td>1488 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-768</code></td>
+<td>dec</td>
+<td>27204</td>
+<td>1428 KiB</td>
+<td>1492 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-768-PACK_PK</code></td>
+<td>keygen</td>
+<td>29116</td>
+<td>1420 KiB</td>
+<td>1496 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-768-PACK_PK</code></td>
+<td>enc</td>
+<td>29116</td>
+<td>1440 KiB</td>
+<td>1508 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-768-PACK_PK</code></td>
+<td>dec</td>
+<td>29116</td>
+<td>1444 KiB</td>
+<td>1508 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-1024</code></td>
+<td>keygen</td>
+<td>29204</td>
+<td>1424 KiB</td>
+<td>1496 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-1024</code></td>
+<td>enc</td>
+<td>29204</td>
+<td>1432 KiB</td>
+<td>1496 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-1024</code></td>
+<td>dec</td>
+<td>29204</td>
+<td>1436 KiB</td>
+<td>1500 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-1024-PACK_PK</code></td>
+<td>keygen</td>
+<td>31100</td>
+<td>1428 KiB</td>
+<td>1508 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-1024-PACK_PK</code></td>
+<td>enc</td>
+<td>31100</td>
+<td>1452 KiB</td>
+<td>1516 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-1024-PACK_PK</code></td>
+<td>dec</td>
+<td>31100</td>
+<td>1456 KiB</td>
+<td>1520 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-1536</code></td>
+<td>keygen</td>
+<td>30092</td>
+<td>1424 KiB</td>
+<td>1500 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-1536</code></td>
+<td>enc</td>
+<td>30092</td>
+<td>1436 KiB</td>
+<td>1504 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-1536</code></td>
+<td>dec</td>
+<td>30092</td>
+<td>1444 KiB</td>
+<td>1512 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-1536-PACK_PK</code></td>
+<td>keygen</td>
+<td>32020</td>
+<td>1424 KiB</td>
+<td>1512 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-1536-PACK_PK</code></td>
+<td>enc</td>
+<td>32020</td>
+<td>3500 KiB</td>
+<td>3564 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-1536-PACK_PK</code></td>
+<td>dec</td>
+<td>32020</td>
+<td>1464 KiB</td>
+<td>1532 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-2048</code></td>
+<td>keygen</td>
+<td>36508</td>
+<td>1436 KiB</td>
+<td>1520 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-2048</code></td>
+<td>enc</td>
+<td>36508</td>
+<td>1460 KiB</td>
+<td>1524 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-2048</code></td>
+<td>dec</td>
+<td>36508</td>
+<td>1460 KiB</td>
+<td>1528 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-2048-PACK_PK</code></td>
+<td>keygen</td>
+<td>38404</td>
+<td>1436 KiB</td>
+<td>1536 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-2048-PACK_PK</code></td>
+<td>enc</td>
+<td>38404</td>
+<td>1488 KiB</td>
+<td>1552 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-2048-PACK_PK</code></td>
+<td>dec</td>
+<td>38404</td>
+<td>1492 KiB</td>
+<td>1560 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-Light</code></td>
+<td>keygen</td>
+<td>29404</td>
+<td>1420 KiB</td>
+<td>1484 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-Light</code></td>
+<td>enc</td>
+<td>29404</td>
+<td>1424 KiB</td>
+<td>1488 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-Light</code></td>
+<td>dec</td>
+<td>29404</td>
+<td>1424 KiB</td>
+<td>1488 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-Prime</code></td>
+<td>keygen</td>
+<td>32932</td>
+<td>1428 KiB</td>
+<td>1528 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-Prime</code></td>
+<td>enc</td>
+<td>32932</td>
+<td>3484 KiB</td>
+<td>3548 KiB</td>
+</tr>
+<tr>
+<td><code>DTRU-Prime</code></td>
+<td>dec</td>
+<td>32932</td>
+<td>1464 KiB</td>
+<td>1528 KiB</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="6-transmission-and-storage-overhead">6. Transmission and storage overhead</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>public key</th>
+<th>secret key</th>
+<th>ciphertext</th>
+<th>shared secret</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DTRU-648</code></td>
+<td>972</td>
+<td>1328</td>
+<td>729</td>
+<td>32</td>
+</tr>
+<tr>
+<td><code>DTRU-648-PACK_PK</code></td>
+<td>954</td>
+<td>1310</td>
+<td>729</td>
+<td>32</td>
+</tr>
+<tr>
+<td><code>DTRU-768</code></td>
+<td>1152</td>
+<td>1568</td>
+<td>960</td>
+<td>32</td>
+</tr>
+<tr>
+<td><code>DTRU-768-PACK_PK</code></td>
+<td>1130</td>
+<td>1546</td>
+<td>960</td>
+<td>32</td>
+</tr>
+<tr>
+<td><code>DTRU-1024</code></td>
+<td>1536</td>
+<td>2080</td>
+<td>1280</td>
+<td>32</td>
+</tr>
+<tr>
+<td><code>DTRU-1024-PACK_PK</code></td>
+<td>1506</td>
+<td>2050</td>
+<td>1280</td>
+<td>32</td>
+</tr>
+<tr>
+<td><code>DTRU-1536</code></td>
+<td>2304</td>
+<td>3136</td>
+<td>1920</td>
+<td>64</td>
+</tr>
+<tr>
+<td><code>DTRU-1536-PACK_PK</code></td>
+<td>2259</td>
+<td>3091</td>
+<td>1920</td>
+<td>64</td>
+</tr>
+<tr>
+<td><code>DTRU-2048</code></td>
+<td>3072</td>
+<td>3904</td>
+<td>2560</td>
+<td>64</td>
+</tr>
+<tr>
+<td><code>DTRU-2048-PACK_PK</code></td>
+<td>3012</td>
+<td>3844</td>
+<td>2560</td>
+<td>64</td>
+</tr>
+<tr>
+<td><code>DTRU-Light</code></td>
+<td>640</td>
+<td>864</td>
+<td>512</td>
+<td>32</td>
+</tr>
+<tr>
+<td><code>DTRU-Prime</code></td>
+<td>1495</td>
+<td>1935</td>
+<td>1359</td>
+<td>32</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="symmetric-primitives">Symmetric primitives</h2>
+<p><a href="../symmetric-survey.html">Survey</a> verdict: <strong>ICCS-only</strong></p>
+<p>Share of each operation spent in the ICCS placeholder hash functions and in the ICCS DRNG (reference build, measured in the same run with link-time wrappers):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>pseudohash/XOF/sm3</th>
+<th>DRNG</th>
+<th>calls per operation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DTRU-648</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>35%</td>
+<td>drng 2</td>
+</tr>
+<tr>
+<td><code>DTRU-648</code></td>
+<td>enc</td>
+<td>30%</td>
+<td>3.3%</td>
+<td>drng 1, pseudoXOF 1, pseudohash 1</td>
+</tr>
+<tr>
+<td><code>DTRU-648</code></td>
+<td>dec</td>
+<td>31%</td>
+<td>0.0%</td>
+<td>pseudoXOF 1, pseudohash 2</td>
+</tr>
+<tr>
+<td><code>DTRU-648-PACK_PK</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>34%</td>
+<td>drng 2</td>
+</tr>
+<tr>
+<td><code>DTRU-648-PACK_PK</code></td>
+<td>enc</td>
+<td>28%</td>
+<td>3.2%</td>
+<td>drng 1, pseudoXOF 1, pseudohash 1</td>
+</tr>
+<tr>
+<td><code>DTRU-648-PACK_PK</code></td>
+<td>dec</td>
+<td>29%</td>
+<td>0.0%</td>
+<td>pseudoXOF 1, pseudohash 2</td>
+</tr>
+<tr>
+<td><code>DTRU-768</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>30%</td>
+<td>drng 2</td>
+</tr>
+<tr>
+<td><code>DTRU-768</code></td>
+<td>enc</td>
+<td>41%</td>
+<td>2.8%</td>
+<td>drng 1, pseudoXOF 1, pseudohash 1</td>
+</tr>
+<tr>
+<td><code>DTRU-768</code></td>
+<td>dec</td>
+<td>39%</td>
+<td>0.0%</td>
+<td>pseudoXOF 1, pseudohash 2</td>
+</tr>
+<tr>
+<td><code>DTRU-768-PACK_PK</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>30%</td>
+<td>drng 2</td>
+</tr>
+<tr>
+<td><code>DTRU-768-PACK_PK</code></td>
+<td>enc</td>
+<td>38%</td>
+<td>2.6%</td>
+<td>drng 1, pseudoXOF 1, pseudohash 1</td>
+</tr>
+<tr>
+<td><code>DTRU-768-PACK_PK</code></td>
+<td>dec</td>
+<td>37%</td>
+<td>0.0%</td>
+<td>pseudoXOF 1, pseudohash 2</td>
+</tr>
+<tr>
+<td><code>DTRU-1024</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>33%</td>
+<td>drng 2</td>
+</tr>
+<tr>
+<td><code>DTRU-1024</code></td>
+<td>enc</td>
+<td>40%</td>
+<td>2.4%</td>
+<td>drng 1, pseudoXOF 1, pseudohash 1</td>
+</tr>
+<tr>
+<td><code>DTRU-1024</code></td>
+<td>dec</td>
+<td>37%</td>
+<td>0.0%</td>
+<td>pseudoXOF 1, pseudohash 2</td>
+</tr>
+<tr>
+<td><code>DTRU-1024-PACK_PK</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>32%</td>
+<td>drng 2</td>
+</tr>
+<tr>
+<td><code>DTRU-1024-PACK_PK</code></td>
+<td>enc</td>
+<td>35%</td>
+<td>2.2%</td>
+<td>drng 1, pseudoXOF 1, pseudohash 1</td>
+</tr>
+<tr>
+<td><code>DTRU-1024-PACK_PK</code></td>
+<td>dec</td>
+<td>36%</td>
+<td>0.0%</td>
+<td>pseudoXOF 1, pseudohash 2</td>
+</tr>
+<tr>
+<td><code>DTRU-1536</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>27%</td>
+<td>drng 2</td>
+</tr>
+<tr>
+<td><code>DTRU-1536</code></td>
+<td>enc</td>
+<td>40%</td>
+<td>1.9%</td>
+<td>drng 1, pseudoXOF 1, pseudohash 2</td>
+</tr>
+<tr>
+<td><code>DTRU-1536</code></td>
+<td>dec</td>
+<td>37%</td>
+<td>0.0%</td>
+<td>pseudoXOF 1, pseudohash 3</td>
+</tr>
+<tr>
+<td><code>DTRU-1536-PACK_PK</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>26%</td>
+<td>drng 2</td>
+</tr>
+<tr>
+<td><code>DTRU-1536-PACK_PK</code></td>
+<td>enc</td>
+<td>37%</td>
+<td>1.8%</td>
+<td>drng 1, pseudoXOF 1, pseudohash 2</td>
+</tr>
+<tr>
+<td><code>DTRU-1536-PACK_PK</code></td>
+<td>dec</td>
+<td>35%</td>
+<td>0.0%</td>
+<td>pseudoXOF 1, pseudohash 3</td>
+</tr>
+<tr>
+<td><code>DTRU-2048</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>24%</td>
+<td>drng 2</td>
+</tr>
+<tr>
+<td><code>DTRU-2048</code></td>
+<td>enc</td>
+<td>39%</td>
+<td>1.4%</td>
+<td>drng 1, pseudoXOF 1, pseudohash 2</td>
+</tr>
+<tr>
+<td><code>DTRU-2048</code></td>
+<td>dec</td>
+<td>35%</td>
+<td>0.0%</td>
+<td>pseudoXOF 1, pseudohash 3</td>
+</tr>
+<tr>
+<td><code>DTRU-2048-PACK_PK</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>24%</td>
+<td>drng 2</td>
+</tr>
+<tr>
+<td><code>DTRU-2048-PACK_PK</code></td>
+<td>enc</td>
+<td>36%</td>
+<td>1.3%</td>
+<td>drng 1, pseudoXOF 1, pseudohash 2</td>
+</tr>
+<tr>
+<td><code>DTRU-2048-PACK_PK</code></td>
+<td>dec</td>
+<td>33%</td>
+<td>0.0%</td>
+<td>pseudoXOF 1, pseudohash 3</td>
+</tr>
+<tr>
+<td><code>DTRU-Light</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>26%</td>
+<td>drng 2</td>
+</tr>
+<tr>
+<td><code>DTRU-Light</code></td>
+<td>enc</td>
+<td>35%</td>
+<td>5.7%</td>
+<td>drng 1, pseudoXOF 1, pseudohash 1</td>
+</tr>
+<tr>
+<td><code>DTRU-Light</code></td>
+<td>dec</td>
+<td>38%</td>
+<td>0.0%</td>
+<td>pseudoXOF 1, pseudohash 2</td>
+</tr>
+<tr>
+<td><code>DTRU-Prime</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>0.0%</td>
+<td>drng 2</td>
+</tr>
+<tr>
+<td><code>DTRU-Prime</code></td>
+<td>enc</td>
+<td>18%</td>
+<td>1.6%</td>
+<td>drng 1, pseudoXOF 1, pseudohash 1</td>
+</tr>
+<tr>
+<td><code>DTRU-Prime</code></td>
+<td>dec</td>
+<td>20%</td>
+<td>0.0%</td>
+<td>pseudoXOF 1, pseudohash 2</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="7-raw-evidence-index">7. Raw evidence index</h2>
+<p>Paths are relative to <code>performance/data/arm_1/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>; each JSON file records its commands, environment and trials.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>item</th>
+<th>file</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DTRU-648</code></td>
+<td>KAT log (sha256 <code>aeec76d8d2e84461…</code>)</td>
+<td><code>kat/kem-14/DTRU-648.log</code></td>
+</tr>
+<tr>
+<td><code>DTRU-648</code></td>
+<td>timing dec</td>
+<td><code>records/kem-14/DTRU-648__dec.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-648</code></td>
+<td>timing enc</td>
+<td><code>records/kem-14/DTRU-648__enc.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-648</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-14/DTRU-648__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-648</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-14/DTRU-648__dec.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-648</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-14/DTRU-648__enc.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-648</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-14/DTRU-648__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-648-PACK_PK</code></td>
+<td>KAT log (sha256 <code>d4d9fc462d803add…</code>)</td>
+<td><code>kat/kem-14/DTRU-648-PACK_PK.log</code></td>
+</tr>
+<tr>
+<td><code>DTRU-648-PACK_PK</code></td>
+<td>timing dec</td>
+<td><code>records/kem-14/DTRU-648-PACK_PK__dec.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-648-PACK_PK</code></td>
+<td>timing enc</td>
+<td><code>records/kem-14/DTRU-648-PACK_PK__enc.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-648-PACK_PK</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-14/DTRU-648-PACK_PK__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-648-PACK_PK</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-14/DTRU-648-PACK_PK__dec.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-648-PACK_PK</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-14/DTRU-648-PACK_PK__enc.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-648-PACK_PK</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-14/DTRU-648-PACK_PK__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-768</code></td>
+<td>KAT log (sha256 <code>3aa38e441ebe4ebd…</code>)</td>
+<td><code>kat/kem-14/DTRU-768.log</code></td>
+</tr>
+<tr>
+<td><code>DTRU-768</code></td>
+<td>timing dec</td>
+<td><code>records/kem-14/DTRU-768__dec.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-768</code></td>
+<td>timing enc</td>
+<td><code>records/kem-14/DTRU-768__enc.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-768</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-14/DTRU-768__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-768</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-14/DTRU-768__dec.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-768</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-14/DTRU-768__enc.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-768</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-14/DTRU-768__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-768-PACK_PK</code></td>
+<td>KAT log (sha256 <code>4bf33b245a17e05c…</code>)</td>
+<td><code>kat/kem-14/DTRU-768-PACK_PK.log</code></td>
+</tr>
+<tr>
+<td><code>DTRU-768-PACK_PK</code></td>
+<td>timing dec</td>
+<td><code>records/kem-14/DTRU-768-PACK_PK__dec.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-768-PACK_PK</code></td>
+<td>timing enc</td>
+<td><code>records/kem-14/DTRU-768-PACK_PK__enc.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-768-PACK_PK</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-14/DTRU-768-PACK_PK__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-768-PACK_PK</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-14/DTRU-768-PACK_PK__dec.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-768-PACK_PK</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-14/DTRU-768-PACK_PK__enc.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-768-PACK_PK</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-14/DTRU-768-PACK_PK__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-1024</code></td>
+<td>KAT log (sha256 <code>52d45fddf07db848…</code>)</td>
+<td><code>kat/kem-14/DTRU-1024.log</code></td>
+</tr>
+<tr>
+<td><code>DTRU-1024</code></td>
+<td>timing dec</td>
+<td><code>records/kem-14/DTRU-1024__dec.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-1024</code></td>
+<td>timing enc</td>
+<td><code>records/kem-14/DTRU-1024__enc.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-1024</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-14/DTRU-1024__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-1024</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-14/DTRU-1024__dec.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-1024</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-14/DTRU-1024__enc.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-1024</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-14/DTRU-1024__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-1024-PACK_PK</code></td>
+<td>KAT log (sha256 <code>d63ebc264ba63e3b…</code>)</td>
+<td><code>kat/kem-14/DTRU-1024-PACK_PK.log</code></td>
+</tr>
+<tr>
+<td><code>DTRU-1024-PACK_PK</code></td>
+<td>timing dec</td>
+<td><code>records/kem-14/DTRU-1024-PACK_PK__dec.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-1024-PACK_PK</code></td>
+<td>timing enc</td>
+<td><code>records/kem-14/DTRU-1024-PACK_PK__enc.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-1024-PACK_PK</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-14/DTRU-1024-PACK_PK__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-1024-PACK_PK</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-14/DTRU-1024-PACK_PK__dec.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-1024-PACK_PK</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-14/DTRU-1024-PACK_PK__enc.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-1024-PACK_PK</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-14/DTRU-1024-PACK_PK__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-1536</code></td>
+<td>KAT log (sha256 <code>30f3d16cfee917da…</code>)</td>
+<td><code>kat/kem-14/DTRU-1536.log</code></td>
+</tr>
+<tr>
+<td><code>DTRU-1536</code></td>
+<td>timing dec</td>
+<td><code>records/kem-14/DTRU-1536__dec.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-1536</code></td>
+<td>timing enc</td>
+<td><code>records/kem-14/DTRU-1536__enc.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-1536</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-14/DTRU-1536__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-1536</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-14/DTRU-1536__dec.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-1536</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-14/DTRU-1536__enc.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-1536</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-14/DTRU-1536__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-1536-PACK_PK</code></td>
+<td>KAT log (sha256 <code>bd51dde08cf71945…</code>)</td>
+<td><code>kat/kem-14/DTRU-1536-PACK_PK.log</code></td>
+</tr>
+<tr>
+<td><code>DTRU-1536-PACK_PK</code></td>
+<td>timing dec</td>
+<td><code>records/kem-14/DTRU-1536-PACK_PK__dec.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-1536-PACK_PK</code></td>
+<td>timing enc</td>
+<td><code>records/kem-14/DTRU-1536-PACK_PK__enc.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-1536-PACK_PK</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-14/DTRU-1536-PACK_PK__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-1536-PACK_PK</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-14/DTRU-1536-PACK_PK__dec.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-1536-PACK_PK</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-14/DTRU-1536-PACK_PK__enc.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-1536-PACK_PK</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-14/DTRU-1536-PACK_PK__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-2048</code></td>
+<td>KAT log (sha256 <code>71a81edc9fcd566a…</code>)</td>
+<td><code>kat/kem-14/DTRU-2048.log</code></td>
+</tr>
+<tr>
+<td><code>DTRU-2048</code></td>
+<td>timing dec</td>
+<td><code>records/kem-14/DTRU-2048__dec.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-2048</code></td>
+<td>timing enc</td>
+<td><code>records/kem-14/DTRU-2048__enc.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-2048</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-14/DTRU-2048__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-2048</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-14/DTRU-2048__dec.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-2048</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-14/DTRU-2048__enc.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-2048</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-14/DTRU-2048__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-2048-PACK_PK</code></td>
+<td>KAT log (sha256 <code>dfd43290bfab0cb1…</code>)</td>
+<td><code>kat/kem-14/DTRU-2048-PACK_PK.log</code></td>
+</tr>
+<tr>
+<td><code>DTRU-2048-PACK_PK</code></td>
+<td>timing dec</td>
+<td><code>records/kem-14/DTRU-2048-PACK_PK__dec.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-2048-PACK_PK</code></td>
+<td>timing enc</td>
+<td><code>records/kem-14/DTRU-2048-PACK_PK__enc.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-2048-PACK_PK</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-14/DTRU-2048-PACK_PK__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-2048-PACK_PK</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-14/DTRU-2048-PACK_PK__dec.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-2048-PACK_PK</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-14/DTRU-2048-PACK_PK__enc.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-2048-PACK_PK</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-14/DTRU-2048-PACK_PK__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-Light</code></td>
+<td>KAT log (sha256 <code>64a7aad61a11dbbd…</code>)</td>
+<td><code>kat/kem-14/DTRU-Light.log</code></td>
+</tr>
+<tr>
+<td><code>DTRU-Light</code></td>
+<td>timing dec</td>
+<td><code>records/kem-14/DTRU-Light__dec.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-Light</code></td>
+<td>timing enc</td>
+<td><code>records/kem-14/DTRU-Light__enc.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-Light</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-14/DTRU-Light__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-Light</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-14/DTRU-Light__dec.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-Light</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-14/DTRU-Light__enc.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-Light</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-14/DTRU-Light__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-Prime</code></td>
+<td>KAT log (sha256 <code>f4235f064790c004…</code>)</td>
+<td><code>kat/kem-14/DTRU-Prime.log</code></td>
+</tr>
+<tr>
+<td><code>DTRU-Prime</code></td>
+<td>timing dec</td>
+<td><code>records/kem-14/DTRU-Prime__dec.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-Prime</code></td>
+<td>timing enc</td>
+<td><code>records/kem-14/DTRU-Prime__enc.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-Prime</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-14/DTRU-Prime__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-Prime</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-14/DTRU-Prime__dec.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-Prime</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-14/DTRU-Prime__enc.json</code></td>
+</tr>
+<tr>
+<td><code>DTRU-Prime</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-14/DTRU-Prime__keygen.json</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Scripts: <code>performance/campaign.py</code>, <code>performance/ngcc_perf.c</code>, <code>performance/hashprof/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

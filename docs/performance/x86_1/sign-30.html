@@ -10,12 +10,13 @@
 <body>
 <header class="site-header">
 <a class="brand" href="../../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
-<nav><a href="../../index.html">Home</a><a href="../../reports/index.html">Security</a><a href="../../performance/x86_1/index.html">Performance</a><a href="../../constant-time/index.html">Side-Channel</a></nav>
+<nav><a href="../../index.html">Home</a><a href="../../reports/index.html">Security</a><a href="../../performance/index.html">Performance</a><a href="../../constant-time/index.html">Side-Channel</a></nav>
 </header>
 <main class="">
 <!-- synchronized from harness: sign-30/perf_x86_1.md -->
 <h1 id="sign-30-trine-performance-on-x86-64-system-x86_1">sign-30 TRINE — performance on x86-64 (system x86_1)</h1>
 <p><a href="index.html">Performance x86_1</a> › <code>sign-30</code> · <a href="method.html">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561105463201792.html">NICCS page</a></p>
+<p><strong>Systems:</strong> <strong>x86_1</strong> · <a href="../arm_1/sign-30.html">arm_1</a></p>
 <p>Independent measurement following the structure of the NICCS x86 self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.</p>
 <h2 id="1-basic-information">1. Basic information</h2>
 <ul>
@@ -102,7 +103,7 @@
 </tr>
 </tbody>
 </table></div>
-<p>[1] KAT TIMEOUT only: the ICCS build buffers the whole signing transcript and hashes it at the end (hundreds of MB per signature at level 512, sign-30/pseudocode.md), so even the reduced KAT runs exceed their time limits on a loaded machine These instances are timed anyway; their output is not validated.</p>
+<p>[1] KAT TIMEOUT only: the ICCS build buffers the whole signing transcript and hashes it at the end (hundreds of MB per signature at level 512, sign-30/pseudocode.md), so even the reduced KAT runs exceed their time limits on a loaded machine; the other three TRINE instances pass. One-record checks with a 4-hour limit reproduced the first submitted KAT record of all three (PASS; logs in performance/data/x86_1/katcheck/). On arm_1 only TRINE-512-Balanced exceeds its limit; the same one-record check passes there too (performance/data/arm_1/katcheck/). These instances are timed anyway; their output is not validated.</p>
 <h2 id="4-performance">4. Performance</h2>
 <div class="table-wrap"><table>
 <thead>

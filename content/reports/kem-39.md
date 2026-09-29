@@ -21,9 +21,11 @@ In the implementation, `polyvec_invq` receives its nonce by value and consumes c
 
 The counter reuse is present in WeaverKEM-128, WeaverKEM-256, and WeaverKEM-512 and directly contradicts the independence premise used in Game 2 of the submitted proof. The correlation is confirmed, but it has not yet been converted into a concrete IND-CPA distinguisher or key-recovery algorithm. This is therefore a probable claim violation, not a claimed complete break.
 
-The [submitters acknowledged and fixed the reference-code nonce propagation on 2026-09-24](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/TYYRYC5JRX3WVQTN3R66KOV2YWDA5EKP/). This report concerns the archived submission.
+The [submitters acknowledged the reference-code nonce propagation on 2026-09-24](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/TYYRYC5JRX3WVQTN3R66KOV2YWDA5EKP/). This report concerns the archived submission.
 
-Each logical sampler must receive a disjoint domain or counter range, and the nonce consumed inside `polyvec_invq` must be returned to or advanced by its caller.
+### Proposed fixes
+
+The [Weaver submitters' response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/TYYRYC5JRX3WVQTN3R66KOV2YWDA5EKP/) proposes changing `polyvec_invq` to accept a `uint8_t *nonce`, so the caller observes the nonce advances performed inside the function. This section records the proposal without evaluating it.
 
 ### Reproducing
 

@@ -3,29 +3,46 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ngcc.dev: The ZC-DM Hash Function (hash-30)</title>
+<title>ngcc.dev: ZC-DM (hash-30)</title>
 <link rel="icon" type="image/png" href="../assets/mag-glass.png">
 <link rel="stylesheet" href="../assets/style.css?v=808fa5e8">
 </head>
 <body>
 <header class="site-header">
 <a class="brand" href="../index.html"><img class="brand-icon" src="../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
-<nav><a href="../index.html">Home</a><a href="../reports/index.html">Security</a><a href="../performance/x86_1/index.html">Performance</a><a href="../constant-time/index.html">Side-Channel</a></nav>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Security</a><a href="../performance/index.html">Performance</a><a href="../constant-time/index.html">Side-Channel</a></nav>
 </header>
 <main class="">
-<p class="crumb"><a href="../reports/index.html">Security</a> › <code>hash-30</code> · <a href="../constant-time/hash-30.html">Constant-time review</a> · <a href="../performance/x86_1/hash-30.html">Performance</a></p>
+<p class="crumb"><a href="../reports/index.html">Security</a> › <code>hash-30</code> · <a href="../constant-time/hash-30.html">Constant-time review</a> · Performance: <a href="../performance/x86_1/hash-30.html">x86_1</a> · <a href="../performance/arm_1/hash-30.html">arm_1</a></p>
 
-<h1 id="the-zc-dm-hash-function-hash-30">The ZC-DM Hash Function (hash-30)</h1>
+<h1 id="zc-dm-hash-30">ZC-DM (hash-30)</h1>
 <div class="table-wrap"><table class="meta">
-<tr><th>Candidate</th><td>The ZC-DM Hash Function</td></tr>
-<tr><th>Family</th><td>Symmetric (sponge)</td></tr>
-<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/ZC-DM.zip">Official submission archive</a></td></tr>
+<tr><th>Candidate</th><td>ZC-DM</td></tr>
+<tr><th>Family</th><td>Symmetric (feed-forward sponge)</td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/ZC-DM.zip">ZC-DM.zip</a> (SHA-256: <code>47e6297d4d707897c64a75a0b490152b2c67abfb1777d89d225b4bcf58a0063b</code>)</td></tr>
 <tr><th>Specification</th><td><a href="https://github.com/ngcc-dev/ngcc-harness/raw/dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/hash-30/hash-30-spec.pdf" title="Download hash-30-spec.pdf from GitHub">hash-30-spec.pdf</a>&nbsp;<a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/hash-30/hash-30-spec.pdf" title="Open the hash-30 specification PDF">PDF</a></td></tr>
 </table></div>
 
-<h3 id="review-status">Review status</h3>
-<p>No vulnerability finding is currently published for this candidate. This is not a security endorsement: it records only the present state of the public finding inventory, and the candidate remains under review.</p>
-<p>See the <a href="../constant-time/hash-30.html">constant-time review</a> and the <a href="../performance/x86_1/hash-30.html">x86_1 performance summary</a>. See the <a href="https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101534683994607616.html">official submission page</a>.</p>
+<h2 class="issue-heading issue-heading-first" id="hash-30-1-a-conditional-iterative-trail-gives-a-2384-full-round-collision-estimate">hash-30-1: A conditional iterative trail gives a 2^384 full-round collision estimate</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-lead">Lead</span></td></tr>
+<tr><th>Affected</th><td>Full-round ZC-DM-1536-1024; reduced-round estimates for the other sets</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Estimated 2^384 work, conditional on multi-round trail assumptions</td></tr>
+<tr><th>Credit</th><td>Qinghe Crypto Group</td></tr>
+<tr><th>Date</th><td>2026-09-29</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/FCGYUVDJV4QBMGG64KAK6X2QZOZ6W4QX/">Qinghe Crypto Group's CryptHash Forum post</a></p>
+<p>For ZC-1536, the input difference <code>Delta A_0[0] = 0x1111111111111111</code> survives the linear layer. At each of its 16 active bit positions, the sequential χ mapping preserves the difference exactly when the two other input bits are <code>0,1</code>, a probability of <code>1/4</code>; the one-round trail therefore has weight 32. If it persists for <code>t</code> rounds, Davies–Meyer feed-forward cancels the identical input/output difference and produces a collision at estimated cost <code>2^(32t)</code>.</p>
+<p>This gives conditional estimates <code>2^224</code>, <code>2^352</code>, and <code>2^384</code> for 7, 11, and all 12 rounds, respectively. The full-round ZC-DM-1536-1024 estimate is below its claimed 512-bit collision security. The local transition, linear invariance, feed-forward cancellation, weights, and arithmetic check out. The post does not prove that the trail is satisfiable on full valid-message trajectories, that round conditions are independent, or that valid message inputs preserve the assumed distribution. Because the submitted IV is zero, the required first-round bit conditions may not all be directly message-controlled; a prefix block may be needed, and the existence of a suitable prefix is part of the unresolved satisfiability question. The full collision therefore remains a High Lead rather than a confirmed Critical break.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 security/zc_iterative_differential.py
+</code></pre>
+<p>The certificate exhausts the three-bit χ inputs and checks both reported masks against the linear rotations: the 16-active-position mask used above has weight 32 per round, while the all-ones mask used for the reported ZC-1280 reduced-round trail has 64 active positions and weight 128 per round. It then prints the unresolved multi-round limitation.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

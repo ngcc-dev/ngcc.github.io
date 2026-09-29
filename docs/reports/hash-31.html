@@ -10,10 +10,10 @@
 <body>
 <header class="site-header">
 <a class="brand" href="../index.html"><img class="brand-icon" src="../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
-<nav><a href="../index.html">Home</a><a href="../reports/index.html">Security</a><a href="../performance/x86_1/index.html">Performance</a><a href="../constant-time/index.html">Side-Channel</a></nav>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Security</a><a href="../performance/index.html">Performance</a><a href="../constant-time/index.html">Side-Channel</a></nav>
 </header>
 <main class="">
-<p class="crumb"><a href="../reports/index.html">Security</a> › <code>hash-31</code> · <a href="../constant-time/hash-31.html">Constant-time review</a> · <a href="../performance/x86_1/hash-31.html">Performance</a></p>
+<p class="crumb"><a href="../reports/index.html">Security</a> › <code>hash-31</code> · <a href="../constant-time/hash-31.html">Constant-time review</a> · Performance: <a href="../performance/x86_1/hash-31.html">x86_1</a> · <a href="../performance/arm_1/hash-31.html">arm_1</a></p>
 
 <h1 id="the-zc-dmc-hash-function-hash-31">The ZC-DMC Hash Function (hash-31)</h1>
 <div class="table-wrap"><table class="meta">
@@ -38,10 +38,32 @@
 <p>Original source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/CVL24T5A4ILSD6V2GACF73MENNFQC3JB/">CryptHashForum report</a></p>
 <p>The two instances share the same 1536-bit permutation and zero initial state, while moving the rate/capacity feed-forward boundary. Further extension to Tsinghua Hash Lab's analysis: take a common first 704-bit block (zero-extended to 960 bits for the 512 profile), then a zero block. After these two absorptions the states differ only at bits 704–959, by <code>D = P(B1)[704:960]</code>. Putting <code>D</code> in that region of the 512 profile's third block makes both final permutation inputs equal. Feed-forward leaves their first 704 state bits equal, so the first 64-bit squeeze blocks agree. The first-block counter value 13 gives the four-bit suffix needed to make both final blocks valid under the mandatory <code>M || 01 || 10*1</code> padding.</p>
 <p>The official 512- and 768-bit <code>CryptHash</code> libraries return the same first eight digest bytes, <code>7a07b396b47dfec4</code>, for the constructed messages. A one-bit control differs. This is a cross-profile distinguisher (ideal probability <code>2^-64</code>), <strong>not</strong> a same-instance or full-digest collision.</p>
-<p>Follow-up analysis: the <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/BWXG6OPAIQL32FMWWYJ3C4D6QMRGHGP4/">Iphe Algorithm Group's cross-rate note, posted by 崔灏睿 on 2026-09-23</a> gives an independent three-block ZC-DMC witness. The <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/R4Y2U6SYSDUPFSVPGYIYSXGWVGQKVIDJ/">ZC-DMC team's response on 2026-09-23</a> acknowledges the relation and proposes distinct three-bit IV tags; this report concerns the archived zero-IV submission.</p>
+<p>Follow-up analysis: the <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/BWXG6OPAIQL32FMWWYJ3C4D6QMRGHGP4/">Iphe Algorithm Group's cross-rate note, posted by 崔灏睿 on 2026-09-23</a> gives an independent three-block ZC-DMC witness. The <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/R4Y2U6SYSDUPFSVPGYIYSXGWVGQKVIDJ/">ZC-DMC team's response on 2026-09-23</a> acknowledges the relation; this report concerns the archived zero-IV submission.</p>
+<h3 id="proposed-fixes">Proposed fixes</h3>
+<p>The <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/R4Y2U6SYSDUPFSVPGYIYSXGWVGQKVIDJ/">ZC-DMC team's response</a> proposes distinct three-bit IV tags for the profiles. This section records the proposal without evaluating it.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>From the repository root, run <code>make -C hash-31 exploit</code>. The witness uses only the two official archived hash libraries for its verdict and prints <code>CONFIRMED hash-31-1</code>.</p>
+<h2 class="issue-heading" id="hash-31-2-a-conditional-iterative-trail-gives-a-2384-full-round-collision-estimate">hash-31-2: A conditional iterative trail gives a 2^384 full-round collision estimate</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-lead">Lead</span></td></tr>
+<tr><th>Affected</th><td>Full-round ZC-DMC-1536-1024; reduced-round estimates for the other sets</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Estimated 2^384 work, conditional on multi-round trail assumptions</td></tr>
+<tr><th>Credit</th><td>Qinghe Crypto Group</td></tr>
+<tr><th>Date</th><td>2026-09-29</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/UPLLMJ35VZ5K7U2BZ7RHJMVYG2ZSRN2Z/">Qinghe Crypto Group's CryptHash Forum post</a></p>
+<p>For ZC-1536, the input difference <code>Delta A_0[0] = 0x1111111111111111</code> survives the linear layer. At each of its 16 active bit positions, the sequential χ mapping preserves the difference exactly when the two other input bits are <code>0,1</code>, a probability of <code>1/4</code>; the one-round trail therefore has weight 32. Capacity-only feed-forward leaves this rate difference unchanged, after which a message-block difference can cancel it and merge the states.</p>
+<p>Under a <code>2^-32</code> independent probability per round, the reported 7-, 11-, and 12-round costs are <code>2^224</code>, <code>2^352</code>, and <code>2^384</code>. The full 12-round ZC-DMC-1536-1024 estimate is below its claimed 512-bit collision security. The local transition, linear invariance, feed-forward algebra, and arithmetic check out, but full-round satisfiability, independence, and the valid-message distribution remain unproved. Because the submitted IV is zero, the required first-round bit conditions may not all be directly message-controlled; a prefix block may be needed, and the existence of a suitable prefix is part of the unresolved satisfiability question. This is therefore a High Lead rather than a confirmed full collision.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 security/zc_iterative_differential.py
+</code></pre>
+<p>The certificate exhausts the three-bit χ inputs and checks both reported masks against the linear rotations: the 16-active-position mask used above has weight 32 per round, while the all-ones mask used for the reported ZC-1280 reduced-round trail has 64 active positions and weight 128 per round. It then prints the unresolved multi-round limitation.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

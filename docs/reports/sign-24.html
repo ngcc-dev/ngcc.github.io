@@ -10,10 +10,10 @@
 <body>
 <header class="site-header">
 <a class="brand" href="../index.html"><img class="brand-icon" src="../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
-<nav><a href="../index.html">Home</a><a href="../reports/index.html">Security</a><a href="../performance/x86_1/index.html">Performance</a><a href="../constant-time/index.html">Side-Channel</a></nav>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Security</a><a href="../performance/index.html">Performance</a><a href="../constant-time/index.html">Side-Channel</a></nav>
 </header>
 <main class="">
-<p class="crumb"><a href="../reports/index.html">Security</a> › <code>sign-24</code> · <a href="../constant-time/sign-24.html">Constant-time review</a> · <a href="../performance/x86_1/sign-24.html">Performance</a></p>
+<p class="crumb"><a href="../reports/index.html">Security</a> › <code>sign-24</code> · <a href="../constant-time/sign-24.html">Constant-time review</a> · Performance: <a href="../performance/x86_1/sign-24.html">x86_1</a> · <a href="../performance/arm_1/sign-24.html">arm_1</a></p>
 
 <h1 id="sigurd-sign-24">Sigurd (sign-24)</h1>
 <div class="table-wrap"><table class="meta">
@@ -38,7 +38,9 @@
 <p>Original source: <a href="https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/2lO14yYyDK4/m/UYKYkWM7BAAJ">Feussner's pqc-forum post and attached analysis</a>
 Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/5DEREMB3PTPDFONWGHOJ4MQR4OP3V3AQ/">Sigurd team's confirmation and repair</a></p>
 <p>The specification's vector commitment pads the witness with fresh random tail elements and applies one Reed–Solomon encoding. The submitted <code>RS_encode</code> instead divides the input into 32 independently encoded chunks (<code>sig_core.c:640–745</code> in Sigurd-128; the same structure appears in the other reference sets). Early chunks contain only the unchanged witness prefix; the fresh tail cannot hide their evaluations. Signatures expose selected encoded-witness symbols, so openings accumulated across signatures interpolate those chunks. The public syndrome then determines the short remaining witness suffix. An independent whole-scheme witness recovered all 217/458/946 blocks from 4–8 ordinary signatures and forged a fresh message accepted by each submitted verifier; changing one recovered one-hot block made the control forgery reject. The flaw is in the submitted encoding, not the specified single-code construction.</p>
-<p>The Sigurd team confirms that Guoxiao Liu first disclosed the issue privately and that Feussner and Saarinen found it independently shortly afterward. Its revision replaces the 32 short codes with one global Reed–Solomon code in every parameter set, regenerates the KATs, and makes the evaluation domain explicit. The frozen archive above remains affected.</p>
+<p>The Sigurd team confirms that Guoxiao Liu first disclosed the issue privately and that Feussner and Saarinen found it independently shortly afterward. The frozen archive above remains the target of this finding.</p>
+<h3 id="proposed-fixes">Proposed fixes</h3>
+<p>The <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/5DEREMB3PTPDFONWGHOJ4MQR4OP3V3AQ/">Sigurd team's response</a> proposes replacing the 32 short codes with one global Reed–Solomon code in every parameter set, regenerating the KATs, and making the evaluation domain explicit. This section records the proposal without evaluating it.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">make -C sign-24 exploit

@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: kem-23 Mito — performance on AArch64 (system arm1)</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=808fa5e8">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
+<nav><a href="../../index.html">Home</a><a href="../../reports/index.html">Security</a><a href="../../performance/index.html">Performance</a><a href="../../constant-time/index.html">Side-Channel</a></nav>
+</header>
+<main class="">
+<!-- synchronized from harness: kem-23/perf_arm_1.md -->
+<h1 id="kem-23-mito-performance-on-aarch64-system-arm_1">kem-23 Mito — performance on AArch64 (system arm_1)</h1>
+<p><a href="index.html">Performance arm_1</a> › <code>kem-23</code> · <a href="method.html">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560862776578048.html">NICCS page</a></p>
+<p><strong>Systems:</strong> <a href="../x86_1/kem-23.html">x86_1</a> · <strong>arm_1</strong></p>
+<p>Independent measurement following the structure of the NICCS ARM self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.</p>
+<h2 id="1-basic-information">1. Basic information</h2>
+<ul>
+<li>Category: public-key algorithm; function: key encapsulation</li>
+<li>Algorithm: Mito</li>
+<li>Implementation versions measured: reference</li>
+<li>Parameter sets: <code>Mito-1-128</code>, <code>Mito-1-256</code>, <code>Mito-1-512</code>, <code>Mito-1-E-128</code>, <code>Mito-1-E-256</code>, <code>Mito-1-E-512</code>, <code>Mito-2-E-128</code>, <code>Mito-2-E-256</code>, <code>Mito-2-E-512</code></li>
+</ul>
+<h2 id="2-assessment-environment">2. Assessment environment</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>item</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>processor</td>
+<td>Qualcomm Oryon (CPU 2, one core)</td>
+</tr>
+<tr>
+<td>machine</td>
+<td>ASUS Vivobook S 15</td>
+</tr>
+<tr>
+<td>clock</td>
+<td>fixed 2.71 GHz (governor performance, minimum = maximum), boost off, SMT none</td>
+</tr>
+<tr>
+<td>memory</td>
+<td>30562 MiB</td>
+</tr>
+<tr>
+<td>OS / kernel</td>
+<td>Ubuntu 26.04.1 LTS / 7.0.0-34-generic</td>
+</tr>
+<tr>
+<td>compiler / build tool</td>
+<td>gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0 / cmake version 4.2.3</td>
+</tr>
+<tr>
+<td>campaign start / end (UTC)</td>
+<td>2026-09-28T15:05:46 / 2026-09-29T08:43:52</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="3-functional-testing-kat">3. Functional testing (KAT)</h2>
+<p>Each library was checked against the submitted KAT vectors (SHA-256 manifest <code>kem-23/kat.sha256</code> in the harness) before timing.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>build flags</th>
+<th>KAT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Mito-1-128</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>Mito-1-256</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>Mito-1-512</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>Mito-1-E-128</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>Mito-1-E-256</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>Mito-1-E-512</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>Mito-2-E-128</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>Mito-2-E-256</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>Mito-2-E-512</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="4-performance">4. Performance</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>mean cycles</th>
+<th>mean time</th>
+<th>ops/s</th>
+<th>median trial</th>
+<th>n (trials × iters)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Mito-1-128</code></td>
+<td>keygen</td>
+<td>7.89 M</td>
+<td>2.93 ms</td>
+<td>342</td>
+<td>2.92 ms</td>
+<td>1070 (5 × 214)</td>
+</tr>
+<tr>
+<td><code>Mito-1-128</code></td>
+<td>enc</td>
+<td>12.99 M</td>
+<td>4.82 ms</td>
+<td>207</td>
+<td>4.82 ms</td>
+<td>655 (5 × 131)</td>
+</tr>
+<tr>
+<td><code>Mito-1-128</code></td>
+<td>dec</td>
+<td>18.38 M</td>
+<td>6.82 ms</td>
+<td>147</td>
+<td>6.81 ms</td>
+<td>465 (5 × 93)</td>
+</tr>
+<tr>
+<td><code>Mito-1-256</code></td>
+<td>keygen</td>
+<td>22.94 M</td>
+<td>8.51 ms</td>
+<td>117</td>
+<td>8.51 ms</td>
+<td>370 (5 × 74)</td>
+</tr>
+<tr>
+<td><code>Mito-1-256</code></td>
+<td>enc</td>
+<td>38.08 M</td>
+<td>14.1 ms</td>
+<td>70.8</td>
+<td>14.1 ms</td>
+<td>225 (5 × 45)</td>
+</tr>
+<tr>
+<td><code>Mito-1-256</code></td>
+<td>dec</td>
+<td>53.97 M</td>
+<td>20 ms</td>
+<td>49.9</td>
+<td>20 ms</td>
+<td>160 (5 × 32)</td>
+</tr>
+<tr>
+<td><code>Mito-1-512</code></td>
+<td>keygen</td>
+<td>139.20 M</td>
+<td>51.6 ms</td>
+<td>19.4</td>
+<td>51.6 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Mito-1-512</code></td>
+<td>enc</td>
+<td>231.64 M</td>
+<td>85.9 ms</td>
+<td>11.6</td>
+<td>85.9 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Mito-1-512</code></td>
+<td>dec</td>
+<td>326.19 M</td>
+<td>121 ms</td>
+<td>8.26</td>
+<td>121 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Mito-1-E-128</code></td>
+<td>keygen</td>
+<td>7.30 M</td>
+<td>2.71 ms</td>
+<td>369</td>
+<td>2.71 ms</td>
+<td>1155 (5 × 231)</td>
+</tr>
+<tr>
+<td><code>Mito-1-E-128</code></td>
+<td>enc</td>
+<td>12.02 M</td>
+<td>4.46 ms</td>
+<td>224</td>
+<td>4.46 ms</td>
+<td>700 (5 × 140)</td>
+</tr>
+<tr>
+<td><code>Mito-1-E-128</code></td>
+<td>dec</td>
+<td>16.99 M</td>
+<td>6.3 ms</td>
+<td>159</td>
+<td>6.3 ms</td>
+<td>505 (5 × 101)</td>
+</tr>
+<tr>
+<td><code>Mito-1-E-256</code></td>
+<td>keygen</td>
+<td>24.34 M</td>
+<td>9.03 ms</td>
+<td>111</td>
+<td>9.03 ms</td>
+<td>350 (5 × 70)</td>
+</tr>
+<tr>
+<td><code>Mito-1-E-256</code></td>
+<td>enc</td>
+<td>40.39 M</td>
+<td>15 ms</td>
+<td>66.7</td>
+<td>15 ms</td>
+<td>215 (5 × 43)</td>
+</tr>
+<tr>
+<td><code>Mito-1-E-256</code></td>
+<td>dec</td>
+<td>57.10 M</td>
+<td>21.2 ms</td>
+<td>47.2</td>
+<td>21.2 ms</td>
+<td>150 (5 × 30)</td>
+</tr>
+<tr>
+<td><code>Mito-1-E-512</code></td>
+<td>keygen</td>
+<td>133.45 M</td>
+<td>49.5 ms</td>
+<td>20.2</td>
+<td>49.5 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Mito-1-E-512</code></td>
+<td>enc</td>
+<td>222.03 M</td>
+<td>82.4 ms</td>
+<td>12.1</td>
+<td>82.4 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Mito-1-E-512</code></td>
+<td>dec</td>
+<td>312.57 M</td>
+<td>116 ms</td>
+<td>8.62</td>
+<td>116 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Mito-2-E-128</code></td>
+<td>keygen</td>
+<td>10.44 M</td>
+<td>3.87 ms</td>
+<td>258</td>
+<td>3.87 ms</td>
+<td>800 (5 × 160)</td>
+</tr>
+<tr>
+<td><code>Mito-2-E-128</code></td>
+<td>enc</td>
+<td>14.94 M</td>
+<td>5.54 ms</td>
+<td>180</td>
+<td>5.54 ms</td>
+<td>570 (5 × 114)</td>
+</tr>
+<tr>
+<td><code>Mito-2-E-128</code></td>
+<td>dec</td>
+<td>19.93 M</td>
+<td>7.4 ms</td>
+<td>135</td>
+<td>7.39 ms</td>
+<td>430 (5 × 86)</td>
+</tr>
+<tr>
+<td><code>Mito-2-E-256</code></td>
+<td>keygen</td>
+<td>32.59 M</td>
+<td>12.1 ms</td>
+<td>82.7</td>
+<td>12.1 ms</td>
+<td>260 (5 × 52)</td>
+</tr>
+<tr>
+<td><code>Mito-2-E-256</code></td>
+<td>enc</td>
+<td>47.04 M</td>
+<td>17.5 ms</td>
+<td>57.3</td>
+<td>17.4 ms</td>
+<td>185 (5 × 37)</td>
+</tr>
+<tr>
+<td><code>Mito-2-E-256</code></td>
+<td>dec</td>
+<td>62.44 M</td>
+<td>23.2 ms</td>
+<td>43.2</td>
+<td>23.2 ms</td>
+<td>140 (5 × 28)</td>
+</tr>
+<tr>
+<td><code>Mito-2-E-512</code></td>
+<td>keygen</td>
+<td>208.48 M</td>
+<td>77.4 ms</td>
+<td>12.9</td>
+<td>77.3 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Mito-2-E-512</code></td>
+<td>enc</td>
+<td>301.12 M</td>
+<td>112 ms</td>
+<td>8.95</td>
+<td>112 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Mito-2-E-512</code></td>
+<td>dec</td>
+<td>396.73 M</td>
+<td>147 ms</td>
+<td>6.79</td>
+<td>147 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-resource-consumption">5. Resource consumption</h2>
+<p>Static memory is approximated by the library's loadable ELF segments; peak memory is the process high-water mark (VmHWM) including the benchmark driver and libc, so both are upper-bound proxies rather than isolated algorithm memory.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>static: ELF image (bytes)</th>
+<th>baseline RSS</th>
+<th>peak RSS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Mito-1-128</code></td>
+<td>keygen</td>
+<td>51684</td>
+<td>1456 KiB</td>
+<td>1580 KiB</td>
+</tr>
+<tr>
+<td><code>Mito-1-128</code></td>
+<td>enc</td>
+<td>51684</td>
+<td>1524 KiB</td>
+<td>1596 KiB</td>
+</tr>
+<tr>
+<td><code>Mito-1-128</code></td>
+<td>dec</td>
+<td>51684</td>
+<td>1540 KiB</td>
+<td>1612 KiB</td>
+</tr>
+<tr>
+<td><code>Mito-1-256</code></td>
+<td>keygen</td>
+<td>53628</td>
+<td>1472 KiB</td>
+<td>1672 KiB</td>
+</tr>
+<tr>
+<td><code>Mito-1-256</code></td>
+<td>enc</td>
+<td>53628</td>
+<td>1636 KiB</td>
+<td>1708 KiB</td>
+</tr>
+<tr>
+<td><code>Mito-1-256</code></td>
+<td>dec</td>
+<td>53628</td>
+<td>1664 KiB</td>
+<td>1736 KiB</td>
+</tr>
+<tr>
+<td><code>Mito-1-512</code></td>
+<td>keygen</td>
+<td>54204</td>
+<td>1532 KiB</td>
+<td>1988 KiB</td>
+</tr>
+<tr>
+<td><code>Mito-1-512</code></td>
+<td>enc</td>
+<td>54204</td>
+<td>2036 KiB</td>
+<td>2112 KiB</td>
+</tr>
+<tr>
+<td><code>Mito-1-512</code></td>
+<td>dec</td>
+<td>54204</td>
+<td>2144 KiB</td>
+<td>2212 KiB</td>
+</tr>
+<tr>
+<td><code>Mito-1-E-128</code></td>
+<td>keygen</td>
+<td>51796</td>
+<td>1456 KiB</td>
+<td>1576 KiB</td>
+</tr>
+<tr>
+<td><code>Mito-1-E-128</code></td>
+<td>enc</td>
+<td>51796</td>
+<td>1520 KiB</td>
+<td>1592 KiB</td>
+</tr>
+<tr>
+<td><code>Mito-1-E-128</code></td>
+<td>dec</td>
+<td>51796</td>
+<td>1536 KiB</td>
+<td>1604 KiB</td>
+</tr>
+<tr>
+<td><code>Mito-1-E-256</code></td>
+<td>keygen</td>
+<td>53444</td>
+<td>1468 KiB</td>
+<td>1660 KiB</td>
+</tr>
+<tr>
+<td><code>Mito-1-E-256</code></td>
+<td>enc</td>
+<td>53444</td>
+<td>1624 KiB</td>
+<td>1696 KiB</td>
+</tr>
+<tr>
+<td><code>Mito-1-E-256</code></td>
+<td>dec</td>
+<td>53444</td>
+<td>3632 KiB</td>
+<td>3696 KiB</td>
+</tr>
+<tr>
+<td><code>Mito-1-E-512</code></td>
+<td>keygen</td>
+<td>54044</td>
+<td>1528 KiB</td>
+<td>1968 KiB</td>
+</tr>
+<tr>
+<td><code>Mito-1-E-512</code></td>
+<td>enc</td>
+<td>54044</td>
+<td>2012 KiB</td>
+<td>2080 KiB</td>
+</tr>
+<tr>
+<td><code>Mito-1-E-512</code></td>
+<td>dec</td>
+<td>54044</td>
+<td>2112 KiB</td>
+<td>2180 KiB</td>
+</tr>
+<tr>
+<td><code>Mito-2-E-128</code></td>
+<td>keygen</td>
+<td>51924</td>
+<td>3464 KiB</td>
+<td>3588 KiB</td>
+</tr>
+<tr>
+<td><code>Mito-2-E-128</code></td>
+<td>enc</td>
+<td>51924</td>
+<td>1528 KiB</td>
+<td>1600 KiB</td>
+</tr>
+<tr>
+<td><code>Mito-2-E-128</code></td>
+<td>dec</td>
+<td>51924</td>
+<td>1544 KiB</td>
+<td>1616 KiB</td>
+</tr>
+<tr>
+<td><code>Mito-2-E-256</code></td>
+<td>keygen</td>
+<td>53724</td>
+<td>1476 KiB</td>
+<td>1672 KiB</td>
+</tr>
+<tr>
+<td><code>Mito-2-E-256</code></td>
+<td>enc</td>
+<td>53724</td>
+<td>1636 KiB</td>
+<td>1704 KiB</td>
+</tr>
+<tr>
+<td><code>Mito-2-E-256</code></td>
+<td>dec</td>
+<td>53724</td>
+<td>3700 KiB</td>
+<td>3764 KiB</td>
+</tr>
+<tr>
+<td><code>Mito-2-E-512</code></td>
+<td>keygen</td>
+<td>54404</td>
+<td>1544 KiB</td>
+<td>2000 KiB</td>
+</tr>
+<tr>
+<td><code>Mito-2-E-512</code></td>
+<td>enc</td>
+<td>54404</td>
+<td>2036 KiB</td>
+<td>2108 KiB</td>
+</tr>
+<tr>
+<td><code>Mito-2-E-512</code></td>
+<td>dec</td>
+<td>54404</td>
+<td>4020 KiB</td>
+<td>4084 KiB</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="6-transmission-and-storage-overhead">6. Transmission and storage overhead</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>public key</th>
+<th>secret key</th>
+<th>ciphertext</th>
+<th>shared secret</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Mito-1-128</code></td>
+<td>3908</td>
+<td>4052</td>
+<td>5796</td>
+<td>64</td>
+</tr>
+<tr>
+<td><code>Mito-1-256</code></td>
+<td>8522</td>
+<td>8682</td>
+<td>12714</td>
+<td>64</td>
+</tr>
+<tr>
+<td><code>Mito-1-512</code></td>
+<td>26630</td>
+<td>26822</td>
+<td>39878</td>
+<td>64</td>
+</tr>
+<tr>
+<td><code>Mito-1-E-128</code></td>
+<td>3720</td>
+<td>3864</td>
+<td>5512</td>
+<td>64</td>
+</tr>
+<tr>
+<td><code>Mito-1-E-256</code></td>
+<td>8130</td>
+<td>8290</td>
+<td>12130</td>
+<td>64</td>
+</tr>
+<tr>
+<td><code>Mito-1-E-512</code></td>
+<td>25674</td>
+<td>25866</td>
+<td>38442</td>
+<td>64</td>
+</tr>
+<tr>
+<td><code>Mito-2-E-128</code></td>
+<td>5192</td>
+<td>5336</td>
+<td>6440</td>
+<td>64</td>
+</tr>
+<tr>
+<td><code>Mito-2-E-256</code></td>
+<td>10828</td>
+<td>10988</td>
+<td>13484</td>
+<td>64</td>
+</tr>
+<tr>
+<td><code>Mito-2-E-512</code></td>
+<td>32712</td>
+<td>32904</td>
+<td>40840</td>
+<td>64</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="symmetric-primitives">Symmetric primitives</h2>
+<p><a href="../symmetric-survey.html">Survey</a> verdict: <strong>ICCS-only</strong></p>
+<p>Share of each operation spent in the ICCS placeholder hash functions and in the ICCS DRNG (reference build, measured in the same run with link-time wrappers):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>pseudohash/XOF/sm3</th>
+<th>DRNG</th>
+<th>calls per operation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Mito-1-128</code></td>
+<td>keygen</td>
+<td>0.4%</td>
+<td>12%</td>
+<td>drng 177, pseudohash 1</td>
+</tr>
+<tr>
+<td><code>Mito-1-128</code></td>
+<td>enc</td>
+<td>1.5%</td>
+<td>10%</td>
+<td>drng 266, pseudohash 2</td>
+</tr>
+<tr>
+<td><code>Mito-1-128</code></td>
+<td>dec</td>
+<td>2.4%</td>
+<td>9.0%</td>
+<td>drng 351, pseudohash 3</td>
+</tr>
+<tr>
+<td><code>Mito-1-256</code></td>
+<td>keygen</td>
+<td>0.1%</td>
+<td>6.7%</td>
+<td>drng 275, pseudohash 1</td>
+</tr>
+<tr>
+<td><code>Mito-1-256</code></td>
+<td>enc</td>
+<td>1.0%</td>
+<td>5.6%</td>
+<td>drng 413, pseudohash 2</td>
+</tr>
+<tr>
+<td><code>Mito-1-256</code></td>
+<td>dec</td>
+<td>1.7%</td>
+<td>5.0%</td>
+<td>drng 552, pseudohash 3</td>
+</tr>
+<tr>
+<td><code>Mito-1-512</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>2.5%</td>
+<td>drng 536, pseudohash 1</td>
+</tr>
+<tr>
+<td><code>Mito-1-512</code></td>
+<td>enc</td>
+<td>0.5%</td>
+<td>2.0%</td>
+<td>drng 803, pseudohash 2</td>
+</tr>
+<tr>
+<td><code>Mito-1-512</code></td>
+<td>dec</td>
+<td>0.8%</td>
+<td>1.8%</td>
+<td>drng 1.08e+03, pseudohash 3</td>
+</tr>
+<tr>
+<td><code>Mito-1-E-128</code></td>
+<td>keygen</td>
+<td>0.5%</td>
+<td>13%</td>
+<td>drng 178, pseudohash 1</td>
+</tr>
+<tr>
+<td><code>Mito-1-E-128</code></td>
+<td>enc</td>
+<td>1.6%</td>
+<td>11%</td>
+<td>drng 267, pseudohash 2</td>
+</tr>
+<tr>
+<td><code>Mito-1-E-128</code></td>
+<td>dec</td>
+<td>2.5%</td>
+<td>10%</td>
+<td>drng 351, pseudohash 3</td>
+</tr>
+<tr>
+<td><code>Mito-1-E-256</code></td>
+<td>keygen</td>
+<td>0.1%</td>
+<td>6.2%</td>
+<td>drng 275, pseudohash 1</td>
+</tr>
+<tr>
+<td><code>Mito-1-E-256</code></td>
+<td>enc</td>
+<td>0.9%</td>
+<td>5.2%</td>
+<td>drng 411, pseudohash 2</td>
+</tr>
+<tr>
+<td><code>Mito-1-E-256</code></td>
+<td>dec</td>
+<td>1.5%</td>
+<td>4.7%</td>
+<td>drng 545, pseudohash 3</td>
+</tr>
+<tr>
+<td><code>Mito-1-E-512</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>2.5%</td>
+<td>drng 535, pseudohash 1</td>
+</tr>
+<tr>
+<td><code>Mito-1-E-512</code></td>
+<td>enc</td>
+<td>0.5%</td>
+<td>2.0%</td>
+<td>drng 802, pseudohash 2</td>
+</tr>
+<tr>
+<td><code>Mito-1-E-512</code></td>
+<td>dec</td>
+<td>0.8%</td>
+<td>1.8%</td>
+<td>drng 1.08e+03, pseudohash 3</td>
+</tr>
+<tr>
+<td><code>Mito-2-E-128</code></td>
+<td>keygen</td>
+<td>0.3%</td>
+<td>10%</td>
+<td>drng 194, pseudohash 1</td>
+</tr>
+<tr>
+<td><code>Mito-2-E-128</code></td>
+<td>enc</td>
+<td>1.7%</td>
+<td>8.2%</td>
+<td>drng 236, pseudohash 2</td>
+</tr>
+<tr>
+<td><code>Mito-2-E-128</code></td>
+<td>dec</td>
+<td>2.6%</td>
+<td>8.1%</td>
+<td>drng 327, pseudohash 3</td>
+</tr>
+<tr>
+<td><code>Mito-2-E-256</code></td>
+<td>keygen</td>
+<td>0.1%</td>
+<td>5.2%</td>
+<td>drng 292, pseudohash 1</td>
+</tr>
+<tr>
+<td><code>Mito-2-E-256</code></td>
+<td>enc</td>
+<td>1.0%</td>
+<td>4.3%</td>
+<td>drng 363, pseudohash 2</td>
+</tr>
+<tr>
+<td><code>Mito-2-E-256</code></td>
+<td>dec</td>
+<td>1.7%</td>
+<td>4.2%</td>
+<td>drng 504, pseudohash 3</td>
+</tr>
+<tr>
+<td><code>Mito-2-E-512</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>1.9%</td>
+<td>drng 555, pseudohash 1</td>
+</tr>
+<tr>
+<td><code>Mito-2-E-512</code></td>
+<td>enc</td>
+<td>0.5%</td>
+<td>1.4%</td>
+<td>drng 692, pseudohash 2</td>
+</tr>
+<tr>
+<td><code>Mito-2-E-512</code></td>
+<td>dec</td>
+<td>0.8%</td>
+<td>1.4%</td>
+<td>drng 964, pseudohash 3</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="7-raw-evidence-index">7. Raw evidence index</h2>
+<p>Paths are relative to <code>performance/data/arm_1/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>; each JSON file records its commands, environment and trials.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>item</th>
+<th>file</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Mito-1-128</code></td>
+<td>KAT log (sha256 <code>727893e1e1356b3f…</code>)</td>
+<td><code>kat/kem-23/Mito-1-128.log</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-128</code></td>
+<td>timing dec</td>
+<td><code>records/kem-23/Mito-1-128__dec.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-128</code></td>
+<td>timing enc</td>
+<td><code>records/kem-23/Mito-1-128__enc.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-128</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-23/Mito-1-128__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-128</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-23/Mito-1-128__dec.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-128</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-23/Mito-1-128__enc.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-128</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-23/Mito-1-128__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-256</code></td>
+<td>KAT log (sha256 <code>ed272f4a73ff71ef…</code>)</td>
+<td><code>kat/kem-23/Mito-1-256.log</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-256</code></td>
+<td>timing dec</td>
+<td><code>records/kem-23/Mito-1-256__dec.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-256</code></td>
+<td>timing enc</td>
+<td><code>records/kem-23/Mito-1-256__enc.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-256</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-23/Mito-1-256__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-256</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-23/Mito-1-256__dec.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-256</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-23/Mito-1-256__enc.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-256</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-23/Mito-1-256__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-512</code></td>
+<td>KAT log (sha256 <code>efbd0a20dc081ab1…</code>)</td>
+<td><code>kat/kem-23/Mito-1-512.log</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-512</code></td>
+<td>timing dec</td>
+<td><code>records/kem-23/Mito-1-512__dec.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-512</code></td>
+<td>timing enc</td>
+<td><code>records/kem-23/Mito-1-512__enc.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-512</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-23/Mito-1-512__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-512</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-23/Mito-1-512__dec.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-512</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-23/Mito-1-512__enc.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-512</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-23/Mito-1-512__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-E-128</code></td>
+<td>KAT log (sha256 <code>f5aded99c56a3d27…</code>)</td>
+<td><code>kat/kem-23/Mito-1-E-128.log</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-E-128</code></td>
+<td>timing dec</td>
+<td><code>records/kem-23/Mito-1-E-128__dec.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-E-128</code></td>
+<td>timing enc</td>
+<td><code>records/kem-23/Mito-1-E-128__enc.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-E-128</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-23/Mito-1-E-128__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-E-128</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-23/Mito-1-E-128__dec.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-E-128</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-23/Mito-1-E-128__enc.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-E-128</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-23/Mito-1-E-128__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-E-256</code></td>
+<td>KAT log (sha256 <code>5ab0b26d29af48b9…</code>)</td>
+<td><code>kat/kem-23/Mito-1-E-256.log</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-E-256</code></td>
+<td>timing dec</td>
+<td><code>records/kem-23/Mito-1-E-256__dec.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-E-256</code></td>
+<td>timing enc</td>
+<td><code>records/kem-23/Mito-1-E-256__enc.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-E-256</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-23/Mito-1-E-256__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-E-256</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-23/Mito-1-E-256__dec.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-E-256</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-23/Mito-1-E-256__enc.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-E-256</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-23/Mito-1-E-256__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-E-512</code></td>
+<td>KAT log (sha256 <code>9d46574d1d8d96ef…</code>)</td>
+<td><code>kat/kem-23/Mito-1-E-512.log</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-E-512</code></td>
+<td>timing dec</td>
+<td><code>records/kem-23/Mito-1-E-512__dec.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-E-512</code></td>
+<td>timing enc</td>
+<td><code>records/kem-23/Mito-1-E-512__enc.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-E-512</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-23/Mito-1-E-512__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-E-512</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-23/Mito-1-E-512__dec.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-E-512</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-23/Mito-1-E-512__enc.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-1-E-512</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-23/Mito-1-E-512__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-2-E-128</code></td>
+<td>KAT log (sha256 <code>bdf8327e34e8df14…</code>)</td>
+<td><code>kat/kem-23/Mito-2-E-128.log</code></td>
+</tr>
+<tr>
+<td><code>Mito-2-E-128</code></td>
+<td>timing dec</td>
+<td><code>records/kem-23/Mito-2-E-128__dec.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-2-E-128</code></td>
+<td>timing enc</td>
+<td><code>records/kem-23/Mito-2-E-128__enc.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-2-E-128</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-23/Mito-2-E-128__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-2-E-128</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-23/Mito-2-E-128__dec.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-2-E-128</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-23/Mito-2-E-128__enc.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-2-E-128</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-23/Mito-2-E-128__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-2-E-256</code></td>
+<td>KAT log (sha256 <code>90d42ac325e942de…</code>)</td>
+<td><code>kat/kem-23/Mito-2-E-256.log</code></td>
+</tr>
+<tr>
+<td><code>Mito-2-E-256</code></td>
+<td>timing dec</td>
+<td><code>records/kem-23/Mito-2-E-256__dec.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-2-E-256</code></td>
+<td>timing enc</td>
+<td><code>records/kem-23/Mito-2-E-256__enc.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-2-E-256</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-23/Mito-2-E-256__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-2-E-256</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-23/Mito-2-E-256__dec.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-2-E-256</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-23/Mito-2-E-256__enc.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-2-E-256</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-23/Mito-2-E-256__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-2-E-512</code></td>
+<td>KAT log (sha256 <code>89d9bcc64af44277…</code>)</td>
+<td><code>kat/kem-23/Mito-2-E-512.log</code></td>
+</tr>
+<tr>
+<td><code>Mito-2-E-512</code></td>
+<td>timing dec</td>
+<td><code>records/kem-23/Mito-2-E-512__dec.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-2-E-512</code></td>
+<td>timing enc</td>
+<td><code>records/kem-23/Mito-2-E-512__enc.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-2-E-512</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-23/Mito-2-E-512__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-2-E-512</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-23/Mito-2-E-512__dec.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-2-E-512</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-23/Mito-2-E-512__enc.json</code></td>
+</tr>
+<tr>
+<td><code>Mito-2-E-512</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-23/Mito-2-E-512__keygen.json</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Scripts: <code>performance/campaign.py</code>, <code>performance/ngcc_perf.c</code>, <code>performance/hashprof/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

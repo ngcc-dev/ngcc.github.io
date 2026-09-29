@@ -1,0 +1,1911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: hash-20 Mozi Hash Function — performance on AArch64 (system arm1)</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=808fa5e8">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
+<nav><a href="../../index.html">Home</a><a href="../../reports/index.html">Security</a><a href="../../performance/index.html">Performance</a><a href="../../constant-time/index.html">Side-Channel</a></nav>
+</header>
+<main class="">
+<!-- synchronized from harness: hash-20/perf_arm_1.md -->
+<h1 id="hash-20-mozi-hash-function-performance-on-aarch64-system-arm_1">hash-20 Mozi Hash Function — performance on AArch64 (system arm_1)</h1>
+<p><a href="index.html">Performance arm_1</a> › <code>hash-20</code> · <a href="method.html">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101537013422968832.html">NICCS page</a></p>
+<p><strong>Systems:</strong> <a href="../x86_1/hash-20.html">x86_1</a> · <strong>arm_1</strong></p>
+<p>Independent measurement following the structure of the NICCS ARM self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.</p>
+<h2 id="1-basic-information">1. Basic information</h2>
+<ul>
+<li>Category: cryptographic hash algorithm; function: hash</li>
+<li>Algorithm: Mozi Hash Function</li>
+<li>Implementation versions measured: reference</li>
+<li>Parameter sets: <code>MOZI-384</code>, <code>MOZI-384-XOF-256</code>, <code>MOZI-384-XOF-1024</code>, <code>MOZI-384-XOF-2048</code>, <code>MOZI-512</code>, <code>MOZI-512-XOF-256</code>, <code>MOZI-512-XOF-1024</code>, <code>MOZI-512-XOF-2048</code>, <code>MOZI-768</code>, <code>MOZI-1024</code></li>
+</ul>
+<h2 id="2-assessment-environment">2. Assessment environment</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>item</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>processor</td>
+<td>Qualcomm Oryon (CPU 2, one core)</td>
+</tr>
+<tr>
+<td>machine</td>
+<td>ASUS Vivobook S 15</td>
+</tr>
+<tr>
+<td>clock</td>
+<td>fixed 2.71 GHz (governor performance, minimum = maximum), boost off, SMT none</td>
+</tr>
+<tr>
+<td>memory</td>
+<td>30562 MiB</td>
+</tr>
+<tr>
+<td>OS / kernel</td>
+<td>Ubuntu 26.04.1 LTS / 7.0.0-34-generic</td>
+</tr>
+<tr>
+<td>compiler / build tool</td>
+<td>gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0 / cmake version 4.2.3</td>
+</tr>
+<tr>
+<td>campaign start / end (UTC)</td>
+<td>2026-09-28T15:05:46 / 2026-09-29T08:43:52</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="3-functional-testing-kat">3. Functional testing (KAT)</h2>
+<p>Each library was checked against the submitted KAT vectors (SHA-256 manifest <code>hash-20/kat.sha256</code> in the harness) before timing.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>build flags</th>
+<th>KAT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MOZI-384</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-256</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-1024</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-2048</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>MOZI-512</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-256</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-1024</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-2048</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>MOZI-768</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>MOZI-1024</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="4-performance">4. Performance</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>message</th>
+<th>mean cycles</th>
+<th>cycles/byte</th>
+<th>mean time</th>
+<th>MB/s</th>
+<th>n</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MOZI-384</code></td>
+<td>32 B</td>
+<td>2350</td>
+<td>73.4</td>
+<td>887 ns</td>
+<td>36.1</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-384</code></td>
+<td>128 B</td>
+<td>2393</td>
+<td>18.7</td>
+<td>903 ns</td>
+<td>141.7</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-384</code></td>
+<td>512 B</td>
+<td>9378</td>
+<td>18.3</td>
+<td>3.51 µs</td>
+<td>145.9</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-384</code></td>
+<td>1024 B</td>
+<td>16.0 k</td>
+<td>15.6</td>
+<td>5.96 µs</td>
+<td>171.7</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-384</code></td>
+<td>4096 B</td>
+<td>59.1 k</td>
+<td>14.4</td>
+<td>22 µs</td>
+<td>186.1</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-384</code></td>
+<td>8192 B</td>
+<td>118.1 k</td>
+<td>14.4</td>
+<td>44 µs</td>
+<td>186.3</td>
+<td>66115 (5 × 13223)</td>
+</tr>
+<tr>
+<td><code>MOZI-384</code></td>
+<td>16384 B</td>
+<td>233.3 k</td>
+<td>14.2</td>
+<td>86.8 µs</td>
+<td>188.7</td>
+<td>34460 (5 × 6892)</td>
+</tr>
+<tr>
+<td><code>MOZI-384</code></td>
+<td>65536 B</td>
+<td>956.5 k</td>
+<td>14.6</td>
+<td>356 µs</td>
+<td>184.1</td>
+<td>8590 (5 × 1718)</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-256</code></td>
+<td>32 B</td>
+<td>2485</td>
+<td>77.7</td>
+<td>936 ns</td>
+<td>34.2</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-256</code></td>
+<td>128 B</td>
+<td>2482</td>
+<td>19.4</td>
+<td>941 ns</td>
+<td>136.1</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-256</code></td>
+<td>512 B</td>
+<td>9756</td>
+<td>19.1</td>
+<td>3.64 µs</td>
+<td>140.7</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-256</code></td>
+<td>1024 B</td>
+<td>16.7 k</td>
+<td>16.3</td>
+<td>6.21 µs</td>
+<td>164.8</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-256</code></td>
+<td>4096 B</td>
+<td>61.6 k</td>
+<td>15.0</td>
+<td>22.9 µs</td>
+<td>178.7</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-256</code></td>
+<td>8192 B</td>
+<td>123.1 k</td>
+<td>15.0</td>
+<td>45.8 µs</td>
+<td>178.8</td>
+<td>62995 (5 × 12599)</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-256</code></td>
+<td>16384 B</td>
+<td>247.3 k</td>
+<td>15.1</td>
+<td>92.1 µs</td>
+<td>177.9</td>
+<td>32655 (5 × 6531)</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-256</code></td>
+<td>65536 B</td>
+<td>990.7 k</td>
+<td>15.1</td>
+<td>369 µs</td>
+<td>177.8</td>
+<td>8395 (5 × 1679)</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-1024</code></td>
+<td>32 B</td>
+<td>2707</td>
+<td>84.6</td>
+<td>1.02 µs</td>
+<td>31.4</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-1024</code></td>
+<td>128 B</td>
+<td>2786</td>
+<td>21.8</td>
+<td>1.06 µs</td>
+<td>120.6</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-1024</code></td>
+<td>512 B</td>
+<td>9768</td>
+<td>19.1</td>
+<td>3.65 µs</td>
+<td>140.1</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-1024</code></td>
+<td>1024 B</td>
+<td>16.9 k</td>
+<td>16.5</td>
+<td>6.3 µs</td>
+<td>162.6</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-1024</code></td>
+<td>4096 B</td>
+<td>63.0 k</td>
+<td>15.4</td>
+<td>23.4 µs</td>
+<td>174.7</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-1024</code></td>
+<td>8192 B</td>
+<td>123.4 k</td>
+<td>15.1</td>
+<td>46 µs</td>
+<td>178.0</td>
+<td>62995 (5 × 12599)</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-1024</code></td>
+<td>16384 B</td>
+<td>243.1 k</td>
+<td>14.8</td>
+<td>90.5 µs</td>
+<td>181.1</td>
+<td>31645 (5 × 6329)</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-1024</code></td>
+<td>65536 B</td>
+<td>969.2 k</td>
+<td>14.8</td>
+<td>361 µs</td>
+<td>181.6</td>
+<td>7610 (5 × 1522)</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-2048</code></td>
+<td>32 B</td>
+<td>5286</td>
+<td>165.2</td>
+<td>1.98 µs</td>
+<td>16.1</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-2048</code></td>
+<td>128 B</td>
+<td>5290</td>
+<td>41.3</td>
+<td>1.98 µs</td>
+<td>64.5</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-2048</code></td>
+<td>512 B</td>
+<td>12.3 k</td>
+<td>24.1</td>
+<td>4.61 µs</td>
+<td>111.1</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-2048</code></td>
+<td>1024 B</td>
+<td>19.5 k</td>
+<td>19.0</td>
+<td>7.28 µs</td>
+<td>140.6</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-2048</code></td>
+<td>4096 B</td>
+<td>65.7 k</td>
+<td>16.0</td>
+<td>24.4 µs</td>
+<td>167.6</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-2048</code></td>
+<td>8192 B</td>
+<td>125.9 k</td>
+<td>15.4</td>
+<td>47 µs</td>
+<td>174.3</td>
+<td>55690 (5 × 11138)</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-2048</code></td>
+<td>16384 B</td>
+<td>252.1 k</td>
+<td>15.4</td>
+<td>93.8 µs</td>
+<td>174.7</td>
+<td>28730 (5 × 5746)</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-2048</code></td>
+<td>65536 B</td>
+<td>971.9 k</td>
+<td>14.8</td>
+<td>362 µs</td>
+<td>181.1</td>
+<td>8350 (5 × 1670)</td>
+</tr>
+<tr>
+<td><code>MOZI-512</code></td>
+<td>32 B</td>
+<td>2331</td>
+<td>72.8</td>
+<td>882 ns</td>
+<td>36.3</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-512</code></td>
+<td>128 B</td>
+<td>4617</td>
+<td>36.1</td>
+<td>1.73 µs</td>
+<td>74.0</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-512</code></td>
+<td>512 B</td>
+<td>11.4 k</td>
+<td>22.2</td>
+<td>4.25 µs</td>
+<td>120.4</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-512</code></td>
+<td>1024 B</td>
+<td>21.6 k</td>
+<td>21.1</td>
+<td>8.03 µs</td>
+<td>127.6</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-512</code></td>
+<td>4096 B</td>
+<td>74.8 k</td>
+<td>18.3</td>
+<td>27.8 µs</td>
+<td>147.1</td>
+<td>83770 (5 × 16754)</td>
+</tr>
+<tr>
+<td><code>MOZI-512</code></td>
+<td>8192 B</td>
+<td>147.5 k</td>
+<td>18.0</td>
+<td>54.9 µs</td>
+<td>149.3</td>
+<td>53515 (5 × 10703)</td>
+</tr>
+<tr>
+<td><code>MOZI-512</code></td>
+<td>16384 B</td>
+<td>298.7 k</td>
+<td>18.2</td>
+<td>111 µs</td>
+<td>147.4</td>
+<td>27635 (5 × 5527)</td>
+</tr>
+<tr>
+<td><code>MOZI-512</code></td>
+<td>65536 B</td>
+<td>1.16 M</td>
+<td>17.7</td>
+<td>432 µs</td>
+<td>151.5</td>
+<td>7010 (5 × 1402)</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-256</code></td>
+<td>32 B</td>
+<td>2478</td>
+<td>77.4</td>
+<td>939 ns</td>
+<td>34.1</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-256</code></td>
+<td>128 B</td>
+<td>4858</td>
+<td>38.0</td>
+<td>1.82 µs</td>
+<td>70.5</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-256</code></td>
+<td>512 B</td>
+<td>12.1 k</td>
+<td>23.7</td>
+<td>4.53 µs</td>
+<td>113.1</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-256</code></td>
+<td>1024 B</td>
+<td>21.3 k</td>
+<td>20.8</td>
+<td>7.95 µs</td>
+<td>128.9</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-256</code></td>
+<td>4096 B</td>
+<td>78.0 k</td>
+<td>19.0</td>
+<td>29 µs</td>
+<td>141.2</td>
+<td>95240 (5 × 19048)</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-256</code></td>
+<td>8192 B</td>
+<td>153.5 k</td>
+<td>18.7</td>
+<td>57.1 µs</td>
+<td>143.5</td>
+<td>46925 (5 × 9385)</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-256</code></td>
+<td>16384 B</td>
+<td>310.1 k</td>
+<td>18.9</td>
+<td>115 µs</td>
+<td>142.0</td>
+<td>25440 (5 × 5088)</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-256</code></td>
+<td>65536 B</td>
+<td>1.26 M</td>
+<td>19.3</td>
+<td>470 µs</td>
+<td>139.5</td>
+<td>6100 (5 × 1220)</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-1024</code></td>
+<td>32 B</td>
+<td>2707</td>
+<td>84.6</td>
+<td>1.02 µs</td>
+<td>31.3</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-1024</code></td>
+<td>128 B</td>
+<td>5088</td>
+<td>39.7</td>
+<td>1.91 µs</td>
+<td>66.9</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-1024</code></td>
+<td>512 B</td>
+<td>12.6 k</td>
+<td>24.6</td>
+<td>4.71 µs</td>
+<td>108.6</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-1024</code></td>
+<td>1024 B</td>
+<td>21.6 k</td>
+<td>21.1</td>
+<td>8.05 µs</td>
+<td>127.2</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-1024</code></td>
+<td>4096 B</td>
+<td>78.2 k</td>
+<td>19.1</td>
+<td>29.1 µs</td>
+<td>140.7</td>
+<td>93570 (5 × 18714)</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-1024</code></td>
+<td>8192 B</td>
+<td>153.7 k</td>
+<td>18.8</td>
+<td>57.3 µs</td>
+<td>142.9</td>
+<td>50690 (5 × 10138)</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-1024</code></td>
+<td>16384 B</td>
+<td>304.5 k</td>
+<td>18.6</td>
+<td>113 µs</td>
+<td>144.4</td>
+<td>26375 (5 × 5275)</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-1024</code></td>
+<td>65536 B</td>
+<td>1.21 M</td>
+<td>18.5</td>
+<td>450 µs</td>
+<td>145.6</td>
+<td>6645 (5 × 1329)</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-2048</code></td>
+<td>32 B</td>
+<td>5399</td>
+<td>168.7</td>
+<td>2.02 µs</td>
+<td>15.9</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-2048</code></td>
+<td>128 B</td>
+<td>7656</td>
+<td>59.8</td>
+<td>2.86 µs</td>
+<td>44.8</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-2048</code></td>
+<td>512 B</td>
+<td>15.0 k</td>
+<td>29.2</td>
+<td>5.58 µs</td>
+<td>91.8</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-2048</code></td>
+<td>1024 B</td>
+<td>24.7 k</td>
+<td>24.1</td>
+<td>9.18 µs</td>
+<td>111.5</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-2048</code></td>
+<td>4096 B</td>
+<td>82.5 k</td>
+<td>20.1</td>
+<td>30.7 µs</td>
+<td>133.5</td>
+<td>90910 (5 × 18182)</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-2048</code></td>
+<td>8192 B</td>
+<td>156.3 k</td>
+<td>19.1</td>
+<td>58.1 µs</td>
+<td>140.9</td>
+<td>50210 (5 × 10042)</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-2048</code></td>
+<td>16384 B</td>
+<td>314.3 k</td>
+<td>19.2</td>
+<td>117 µs</td>
+<td>140.2</td>
+<td>25920 (5 × 5184)</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-2048</code></td>
+<td>65536 B</td>
+<td>1.21 M</td>
+<td>18.5</td>
+<td>451 µs</td>
+<td>145.3</td>
+<td>6595 (5 × 1319)</td>
+</tr>
+<tr>
+<td><code>MOZI-768</code></td>
+<td>32 B</td>
+<td>2747</td>
+<td>85.9</td>
+<td>1.03 µs</td>
+<td>31.0</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-768</code></td>
+<td>128 B</td>
+<td>2916</td>
+<td>22.8</td>
+<td>1.1 µs</td>
+<td>116.6</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-768</code></td>
+<td>512 B</td>
+<td>11.0 k</td>
+<td>21.6</td>
+<td>4.12 µs</td>
+<td>124.3</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-768</code></td>
+<td>1024 B</td>
+<td>18.8 k</td>
+<td>18.3</td>
+<td>6.99 µs</td>
+<td>146.5</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-768</code></td>
+<td>4096 B</td>
+<td>72.3 k</td>
+<td>17.6</td>
+<td>26.9 µs</td>
+<td>152.3</td>
+<td>92130 (5 × 18426)</td>
+</tr>
+<tr>
+<td><code>MOZI-768</code></td>
+<td>8192 B</td>
+<td>152.0 k</td>
+<td>18.6</td>
+<td>56.6 µs</td>
+<td>144.8</td>
+<td>52405 (5 × 10481)</td>
+</tr>
+<tr>
+<td><code>MOZI-768</code></td>
+<td>16384 B</td>
+<td>287.5 k</td>
+<td>17.5</td>
+<td>107 µs</td>
+<td>153.2</td>
+<td>25120 (5 × 5024)</td>
+</tr>
+<tr>
+<td><code>MOZI-768</code></td>
+<td>65536 B</td>
+<td>1.15 M</td>
+<td>17.6</td>
+<td>428 µs</td>
+<td>153.0</td>
+<td>7125 (5 × 1425)</td>
+</tr>
+<tr>
+<td><code>MOZI-1024</code></td>
+<td>32 B</td>
+<td>2742</td>
+<td>85.7</td>
+<td>1.03 µs</td>
+<td>31.0</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-1024</code></td>
+<td>128 B</td>
+<td>5574</td>
+<td>43.5</td>
+<td>2.09 µs</td>
+<td>61.4</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-1024</code></td>
+<td>512 B</td>
+<td>13.8 k</td>
+<td>27.0</td>
+<td>5.15 µs</td>
+<td>99.4</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-1024</code></td>
+<td>1024 B</td>
+<td>24.1 k</td>
+<td>23.5</td>
+<td>8.97 µs</td>
+<td>114.2</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MOZI-1024</code></td>
+<td>4096 B</td>
+<td>93.5 k</td>
+<td>22.8</td>
+<td>34.8 µs</td>
+<td>117.8</td>
+<td>83625 (5 × 16725)</td>
+</tr>
+<tr>
+<td><code>MOZI-1024</code></td>
+<td>8192 B</td>
+<td>189.6 k</td>
+<td>23.1</td>
+<td>70.5 µs</td>
+<td>116.2</td>
+<td>43600 (5 × 8720)</td>
+</tr>
+<tr>
+<td><code>MOZI-1024</code></td>
+<td>16384 B</td>
+<td>364.7 k</td>
+<td>22.3</td>
+<td>136 µs</td>
+<td>120.7</td>
+<td>14800 (5 × 2960)</td>
+</tr>
+<tr>
+<td><code>MOZI-1024</code></td>
+<td>65536 B</td>
+<td>1.46 M</td>
+<td>22.2</td>
+<td>542 µs</td>
+<td>120.9</td>
+<td>5610 (5 × 1122)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-resource-consumption">5. Resource consumption</h2>
+<p>Static memory is approximated by the library's loadable ELF segments; peak memory is the process high-water mark (VmHWM) including the benchmark driver and libc, so both are upper-bound proxies rather than isolated algorithm memory.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>static: ELF image (bytes)</th>
+<th>baseline RSS</th>
+<th>peak RSS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MOZI-384</code></td>
+<td>hash_32</td>
+<td>11380</td>
+<td>1400 KiB</td>
+<td>6392 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-384</code></td>
+<td>hash_128</td>
+<td>11380</td>
+<td>1400 KiB</td>
+<td>6176 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-384</code></td>
+<td>hash_512</td>
+<td>11380</td>
+<td>1400 KiB</td>
+<td>16204 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-384</code></td>
+<td>hash_1024</td>
+<td>11380</td>
+<td>1404 KiB</td>
+<td>25624 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-384</code></td>
+<td>hash_4096</td>
+<td>11380</td>
+<td>1404 KiB</td>
+<td>84760 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-384</code></td>
+<td>hash_8192</td>
+<td>11380</td>
+<td>1408 KiB</td>
+<td>111004 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-384</code></td>
+<td>hash_16384</td>
+<td>11380</td>
+<td>1416 KiB</td>
+<td>114428 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-384</code></td>
+<td>hash_65536</td>
+<td>11380</td>
+<td>1464 KiB</td>
+<td>113792 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-256</code></td>
+<td>hash_32</td>
+<td>11644</td>
+<td>1400 KiB</td>
+<td>6916 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-256</code></td>
+<td>hash_128</td>
+<td>11644</td>
+<td>1400 KiB</td>
+<td>6932 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-256</code></td>
+<td>hash_512</td>
+<td>11644</td>
+<td>1400 KiB</td>
+<td>16172 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-256</code></td>
+<td>hash_1024</td>
+<td>11644</td>
+<td>1404 KiB</td>
+<td>25412 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-256</code></td>
+<td>hash_4096</td>
+<td>11644</td>
+<td>1400 KiB</td>
+<td>84636 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-256</code></td>
+<td>hash_8192</td>
+<td>11644</td>
+<td>1408 KiB</td>
+<td>105688 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-256</code></td>
+<td>hash_16384</td>
+<td>11644</td>
+<td>1416 KiB</td>
+<td>108740 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-256</code></td>
+<td>hash_65536</td>
+<td>11644</td>
+<td>1464 KiB</td>
+<td>111004 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-1024</code></td>
+<td>hash_32</td>
+<td>11644</td>
+<td>1400 KiB</td>
+<td>6528 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-1024</code></td>
+<td>hash_128</td>
+<td>11644</td>
+<td>1400 KiB</td>
+<td>6904 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-1024</code></td>
+<td>hash_512</td>
+<td>11644</td>
+<td>1400 KiB</td>
+<td>16072 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-1024</code></td>
+<td>hash_1024</td>
+<td>11644</td>
+<td>1404 KiB</td>
+<td>25504 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-1024</code></td>
+<td>hash_4096</td>
+<td>11644</td>
+<td>1404 KiB</td>
+<td>84640 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-1024</code></td>
+<td>hash_8192</td>
+<td>11644</td>
+<td>1408 KiB</td>
+<td>106020 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-1024</code></td>
+<td>hash_16384</td>
+<td>11644</td>
+<td>1416 KiB</td>
+<td>104972 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-1024</code></td>
+<td>hash_65536</td>
+<td>11644</td>
+<td>1464 KiB</td>
+<td>101164 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-2048</code></td>
+<td>hash_32</td>
+<td>11644</td>
+<td>1400 KiB</td>
+<td>6580 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-2048</code></td>
+<td>hash_128</td>
+<td>11644</td>
+<td>1400 KiB</td>
+<td>6624 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-2048</code></td>
+<td>hash_512</td>
+<td>11644</td>
+<td>1400 KiB</td>
+<td>16132 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-2048</code></td>
+<td>hash_1024</td>
+<td>11644</td>
+<td>1404 KiB</td>
+<td>25620 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-2048</code></td>
+<td>hash_4096</td>
+<td>11644</td>
+<td>1404 KiB</td>
+<td>84640 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-2048</code></td>
+<td>hash_8192</td>
+<td>11644</td>
+<td>1408 KiB</td>
+<td>93592 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-2048</code></td>
+<td>hash_16384</td>
+<td>11644</td>
+<td>1412 KiB</td>
+<td>96076 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-2048</code></td>
+<td>hash_65536</td>
+<td>11644</td>
+<td>1464 KiB</td>
+<td>109624 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-512</code></td>
+<td>hash_32</td>
+<td>11364</td>
+<td>1400 KiB</td>
+<td>6200 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-512</code></td>
+<td>hash_128</td>
+<td>11364</td>
+<td>1400 KiB</td>
+<td>8364 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-512</code></td>
+<td>hash_512</td>
+<td>11364</td>
+<td>1400 KiB</td>
+<td>15804 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-512</code></td>
+<td>hash_1024</td>
+<td>11364</td>
+<td>1400 KiB</td>
+<td>25320 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-512</code></td>
+<td>hash_4096</td>
+<td>11364</td>
+<td>1404 KiB</td>
+<td>72572 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-512</code></td>
+<td>hash_8192</td>
+<td>11364</td>
+<td>1408 KiB</td>
+<td>89952 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-512</code></td>
+<td>hash_16384</td>
+<td>11364</td>
+<td>1416 KiB</td>
+<td>92308 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-512</code></td>
+<td>hash_65536</td>
+<td>11364</td>
+<td>1464 KiB</td>
+<td>93480 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-256</code></td>
+<td>hash_32</td>
+<td>11644</td>
+<td>1400 KiB</td>
+<td>5492 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-256</code></td>
+<td>hash_128</td>
+<td>11644</td>
+<td>3440 KiB</td>
+<td>7944 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-256</code></td>
+<td>hash_512</td>
+<td>11644</td>
+<td>1400 KiB</td>
+<td>16312 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-256</code></td>
+<td>hash_1024</td>
+<td>11644</td>
+<td>1404 KiB</td>
+<td>24996 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-256</code></td>
+<td>hash_4096</td>
+<td>11644</td>
+<td>1404 KiB</td>
+<td>82304 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-256</code></td>
+<td>hash_8192</td>
+<td>11644</td>
+<td>1408 KiB</td>
+<td>79812 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-256</code></td>
+<td>hash_16384</td>
+<td>11644</td>
+<td>1416 KiB</td>
+<td>85388 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-256</code></td>
+<td>hash_65536</td>
+<td>11644</td>
+<td>3464 KiB</td>
+<td>81868 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-1024</code></td>
+<td>hash_32</td>
+<td>11644</td>
+<td>1400 KiB</td>
+<td>5212 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-1024</code></td>
+<td>hash_128</td>
+<td>11644</td>
+<td>1400 KiB</td>
+<td>8076 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-1024</code></td>
+<td>hash_512</td>
+<td>11644</td>
+<td>1396 KiB</td>
+<td>16040 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-1024</code></td>
+<td>hash_1024</td>
+<td>11644</td>
+<td>1404 KiB</td>
+<td>26068 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-1024</code></td>
+<td>hash_4096</td>
+<td>11644</td>
+<td>3444 KiB</td>
+<td>80188 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-1024</code></td>
+<td>hash_8192</td>
+<td>11644</td>
+<td>1408 KiB</td>
+<td>85224 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-1024</code></td>
+<td>hash_16384</td>
+<td>11644</td>
+<td>3444 KiB</td>
+<td>88468 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-1024</code></td>
+<td>hash_65536</td>
+<td>11644</td>
+<td>3472 KiB</td>
+<td>88636 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-2048</code></td>
+<td>hash_32</td>
+<td>11644</td>
+<td>1400 KiB</td>
+<td>6168 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-2048</code></td>
+<td>hash_128</td>
+<td>11644</td>
+<td>1400 KiB</td>
+<td>8796 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-2048</code></td>
+<td>hash_512</td>
+<td>11644</td>
+<td>1400 KiB</td>
+<td>16264 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-2048</code></td>
+<td>hash_1024</td>
+<td>11644</td>
+<td>1404 KiB</td>
+<td>25904 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-2048</code></td>
+<td>hash_4096</td>
+<td>11644</td>
+<td>1400 KiB</td>
+<td>78368 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-2048</code></td>
+<td>hash_8192</td>
+<td>11644</td>
+<td>1408 KiB</td>
+<td>84884 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-2048</code></td>
+<td>hash_16384</td>
+<td>11644</td>
+<td>1416 KiB</td>
+<td>87200 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-2048</code></td>
+<td>hash_65536</td>
+<td>11644</td>
+<td>3508 KiB</td>
+<td>88188 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-768</code></td>
+<td>hash_32</td>
+<td>11692</td>
+<td>1400 KiB</td>
+<td>6356 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-768</code></td>
+<td>hash_128</td>
+<td>11692</td>
+<td>1400 KiB</td>
+<td>5888 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-768</code></td>
+<td>hash_512</td>
+<td>11692</td>
+<td>1396 KiB</td>
+<td>15432 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-768</code></td>
+<td>hash_1024</td>
+<td>11692</td>
+<td>1404 KiB</td>
+<td>24072 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-768</code></td>
+<td>hash_4096</td>
+<td>11692</td>
+<td>1404 KiB</td>
+<td>77152 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-768</code></td>
+<td>hash_8192</td>
+<td>11692</td>
+<td>1408 KiB</td>
+<td>87084 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-768</code></td>
+<td>hash_16384</td>
+<td>11692</td>
+<td>1416 KiB</td>
+<td>83548 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-768</code></td>
+<td>hash_65536</td>
+<td>11692</td>
+<td>1464 KiB</td>
+<td>94892 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-1024</code></td>
+<td>hash_32</td>
+<td>11708</td>
+<td>1400 KiB</td>
+<td>4752 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-1024</code></td>
+<td>hash_128</td>
+<td>11708</td>
+<td>1400 KiB</td>
+<td>8472 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-1024</code></td>
+<td>hash_512</td>
+<td>11708</td>
+<td>1400 KiB</td>
+<td>15264 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-1024</code></td>
+<td>hash_1024</td>
+<td>11708</td>
+<td>1404 KiB</td>
+<td>24536 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-1024</code></td>
+<td>hash_4096</td>
+<td>11708</td>
+<td>1404 KiB</td>
+<td>72188 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-1024</code></td>
+<td>hash_8192</td>
+<td>11708</td>
+<td>1408 KiB</td>
+<td>73752 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-1024</code></td>
+<td>hash_16384</td>
+<td>11708</td>
+<td>1416 KiB</td>
+<td>50956 KiB</td>
+</tr>
+<tr>
+<td><code>MOZI-1024</code></td>
+<td>hash_65536</td>
+<td>11708</td>
+<td>1464 KiB</td>
+<td>75004 KiB</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="7-raw-evidence-index">7. Raw evidence index</h2>
+<p>Paths are relative to <code>performance/data/arm_1/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>; each JSON file records its commands, environment and trials.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>item</th>
+<th>file</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MOZI-384</code></td>
+<td>KAT log (sha256 <code>e3f5cacbd8355fb3…</code>)</td>
+<td><code>kat/hash-20/MOZI-384.log</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384</code></td>
+<td>timing hash_1024</td>
+<td><code>records/hash-20/MOZI-384__hash_1024.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384</code></td>
+<td>timing hash_128</td>
+<td><code>records/hash-20/MOZI-384__hash_128.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384</code></td>
+<td>timing hash_16384</td>
+<td><code>records/hash-20/MOZI-384__hash_16384.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384</code></td>
+<td>timing hash_32</td>
+<td><code>records/hash-20/MOZI-384__hash_32.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384</code></td>
+<td>timing hash_4096</td>
+<td><code>records/hash-20/MOZI-384__hash_4096.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384</code></td>
+<td>timing hash_512</td>
+<td><code>records/hash-20/MOZI-384__hash_512.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384</code></td>
+<td>timing hash_65536</td>
+<td><code>records/hash-20/MOZI-384__hash_65536.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384</code></td>
+<td>timing hash_8192</td>
+<td><code>records/hash-20/MOZI-384__hash_8192.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-256</code></td>
+<td>KAT log (sha256 <code>90a0db86ea98fb91…</code>)</td>
+<td><code>kat/hash-20/MOZI-384-XOF-256.log</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-256</code></td>
+<td>timing hash_1024</td>
+<td><code>records/hash-20/MOZI-384-XOF-256__hash_1024.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-256</code></td>
+<td>timing hash_128</td>
+<td><code>records/hash-20/MOZI-384-XOF-256__hash_128.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-256</code></td>
+<td>timing hash_16384</td>
+<td><code>records/hash-20/MOZI-384-XOF-256__hash_16384.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-256</code></td>
+<td>timing hash_32</td>
+<td><code>records/hash-20/MOZI-384-XOF-256__hash_32.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-256</code></td>
+<td>timing hash_4096</td>
+<td><code>records/hash-20/MOZI-384-XOF-256__hash_4096.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-256</code></td>
+<td>timing hash_512</td>
+<td><code>records/hash-20/MOZI-384-XOF-256__hash_512.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-256</code></td>
+<td>timing hash_65536</td>
+<td><code>records/hash-20/MOZI-384-XOF-256__hash_65536.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-256</code></td>
+<td>timing hash_8192</td>
+<td><code>records/hash-20/MOZI-384-XOF-256__hash_8192.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-1024</code></td>
+<td>KAT log (sha256 <code>989ffb66a772ebc0…</code>)</td>
+<td><code>kat/hash-20/MOZI-384-XOF-1024.log</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-1024</code></td>
+<td>timing hash_1024</td>
+<td><code>records/hash-20/MOZI-384-XOF-1024__hash_1024.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-1024</code></td>
+<td>timing hash_128</td>
+<td><code>records/hash-20/MOZI-384-XOF-1024__hash_128.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-1024</code></td>
+<td>timing hash_16384</td>
+<td><code>records/hash-20/MOZI-384-XOF-1024__hash_16384.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-1024</code></td>
+<td>timing hash_32</td>
+<td><code>records/hash-20/MOZI-384-XOF-1024__hash_32.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-1024</code></td>
+<td>timing hash_4096</td>
+<td><code>records/hash-20/MOZI-384-XOF-1024__hash_4096.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-1024</code></td>
+<td>timing hash_512</td>
+<td><code>records/hash-20/MOZI-384-XOF-1024__hash_512.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-1024</code></td>
+<td>timing hash_65536</td>
+<td><code>records/hash-20/MOZI-384-XOF-1024__hash_65536.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-1024</code></td>
+<td>timing hash_8192</td>
+<td><code>records/hash-20/MOZI-384-XOF-1024__hash_8192.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-2048</code></td>
+<td>KAT log (sha256 <code>091ef026687c9596…</code>)</td>
+<td><code>kat/hash-20/MOZI-384-XOF-2048.log</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-2048</code></td>
+<td>timing hash_1024</td>
+<td><code>records/hash-20/MOZI-384-XOF-2048__hash_1024.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-2048</code></td>
+<td>timing hash_128</td>
+<td><code>records/hash-20/MOZI-384-XOF-2048__hash_128.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-2048</code></td>
+<td>timing hash_16384</td>
+<td><code>records/hash-20/MOZI-384-XOF-2048__hash_16384.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-2048</code></td>
+<td>timing hash_32</td>
+<td><code>records/hash-20/MOZI-384-XOF-2048__hash_32.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-2048</code></td>
+<td>timing hash_4096</td>
+<td><code>records/hash-20/MOZI-384-XOF-2048__hash_4096.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-2048</code></td>
+<td>timing hash_512</td>
+<td><code>records/hash-20/MOZI-384-XOF-2048__hash_512.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-2048</code></td>
+<td>timing hash_65536</td>
+<td><code>records/hash-20/MOZI-384-XOF-2048__hash_65536.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-384-XOF-2048</code></td>
+<td>timing hash_8192</td>
+<td><code>records/hash-20/MOZI-384-XOF-2048__hash_8192.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512</code></td>
+<td>KAT log (sha256 <code>bf18e6d6b6789188…</code>)</td>
+<td><code>kat/hash-20/MOZI-512.log</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512</code></td>
+<td>timing hash_1024</td>
+<td><code>records/hash-20/MOZI-512__hash_1024.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512</code></td>
+<td>timing hash_128</td>
+<td><code>records/hash-20/MOZI-512__hash_128.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512</code></td>
+<td>timing hash_16384</td>
+<td><code>records/hash-20/MOZI-512__hash_16384.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512</code></td>
+<td>timing hash_32</td>
+<td><code>records/hash-20/MOZI-512__hash_32.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512</code></td>
+<td>timing hash_4096</td>
+<td><code>records/hash-20/MOZI-512__hash_4096.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512</code></td>
+<td>timing hash_512</td>
+<td><code>records/hash-20/MOZI-512__hash_512.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512</code></td>
+<td>timing hash_65536</td>
+<td><code>records/hash-20/MOZI-512__hash_65536.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512</code></td>
+<td>timing hash_8192</td>
+<td><code>records/hash-20/MOZI-512__hash_8192.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-256</code></td>
+<td>KAT log (sha256 <code>e1eee2323153b9a1…</code>)</td>
+<td><code>kat/hash-20/MOZI-512-XOF-256.log</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-256</code></td>
+<td>timing hash_1024</td>
+<td><code>records/hash-20/MOZI-512-XOF-256__hash_1024.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-256</code></td>
+<td>timing hash_128</td>
+<td><code>records/hash-20/MOZI-512-XOF-256__hash_128.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-256</code></td>
+<td>timing hash_16384</td>
+<td><code>records/hash-20/MOZI-512-XOF-256__hash_16384.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-256</code></td>
+<td>timing hash_32</td>
+<td><code>records/hash-20/MOZI-512-XOF-256__hash_32.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-256</code></td>
+<td>timing hash_4096</td>
+<td><code>records/hash-20/MOZI-512-XOF-256__hash_4096.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-256</code></td>
+<td>timing hash_512</td>
+<td><code>records/hash-20/MOZI-512-XOF-256__hash_512.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-256</code></td>
+<td>timing hash_65536</td>
+<td><code>records/hash-20/MOZI-512-XOF-256__hash_65536.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-256</code></td>
+<td>timing hash_8192</td>
+<td><code>records/hash-20/MOZI-512-XOF-256__hash_8192.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-1024</code></td>
+<td>KAT log (sha256 <code>ed9d555f5f26ffa7…</code>)</td>
+<td><code>kat/hash-20/MOZI-512-XOF-1024.log</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-1024</code></td>
+<td>timing hash_1024</td>
+<td><code>records/hash-20/MOZI-512-XOF-1024__hash_1024.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-1024</code></td>
+<td>timing hash_128</td>
+<td><code>records/hash-20/MOZI-512-XOF-1024__hash_128.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-1024</code></td>
+<td>timing hash_16384</td>
+<td><code>records/hash-20/MOZI-512-XOF-1024__hash_16384.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-1024</code></td>
+<td>timing hash_32</td>
+<td><code>records/hash-20/MOZI-512-XOF-1024__hash_32.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-1024</code></td>
+<td>timing hash_4096</td>
+<td><code>records/hash-20/MOZI-512-XOF-1024__hash_4096.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-1024</code></td>
+<td>timing hash_512</td>
+<td><code>records/hash-20/MOZI-512-XOF-1024__hash_512.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-1024</code></td>
+<td>timing hash_65536</td>
+<td><code>records/hash-20/MOZI-512-XOF-1024__hash_65536.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-1024</code></td>
+<td>timing hash_8192</td>
+<td><code>records/hash-20/MOZI-512-XOF-1024__hash_8192.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-2048</code></td>
+<td>KAT log (sha256 <code>74e767b30edefff5…</code>)</td>
+<td><code>kat/hash-20/MOZI-512-XOF-2048.log</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-2048</code></td>
+<td>timing hash_1024</td>
+<td><code>records/hash-20/MOZI-512-XOF-2048__hash_1024.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-2048</code></td>
+<td>timing hash_128</td>
+<td><code>records/hash-20/MOZI-512-XOF-2048__hash_128.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-2048</code></td>
+<td>timing hash_16384</td>
+<td><code>records/hash-20/MOZI-512-XOF-2048__hash_16384.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-2048</code></td>
+<td>timing hash_32</td>
+<td><code>records/hash-20/MOZI-512-XOF-2048__hash_32.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-2048</code></td>
+<td>timing hash_4096</td>
+<td><code>records/hash-20/MOZI-512-XOF-2048__hash_4096.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-2048</code></td>
+<td>timing hash_512</td>
+<td><code>records/hash-20/MOZI-512-XOF-2048__hash_512.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-2048</code></td>
+<td>timing hash_65536</td>
+<td><code>records/hash-20/MOZI-512-XOF-2048__hash_65536.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-512-XOF-2048</code></td>
+<td>timing hash_8192</td>
+<td><code>records/hash-20/MOZI-512-XOF-2048__hash_8192.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-768</code></td>
+<td>KAT log (sha256 <code>49cb7b0643a13848…</code>)</td>
+<td><code>kat/hash-20/MOZI-768.log</code></td>
+</tr>
+<tr>
+<td><code>MOZI-768</code></td>
+<td>timing hash_1024</td>
+<td><code>records/hash-20/MOZI-768__hash_1024.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-768</code></td>
+<td>timing hash_128</td>
+<td><code>records/hash-20/MOZI-768__hash_128.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-768</code></td>
+<td>timing hash_16384</td>
+<td><code>records/hash-20/MOZI-768__hash_16384.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-768</code></td>
+<td>timing hash_32</td>
+<td><code>records/hash-20/MOZI-768__hash_32.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-768</code></td>
+<td>timing hash_4096</td>
+<td><code>records/hash-20/MOZI-768__hash_4096.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-768</code></td>
+<td>timing hash_512</td>
+<td><code>records/hash-20/MOZI-768__hash_512.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-768</code></td>
+<td>timing hash_65536</td>
+<td><code>records/hash-20/MOZI-768__hash_65536.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-768</code></td>
+<td>timing hash_8192</td>
+<td><code>records/hash-20/MOZI-768__hash_8192.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-1024</code></td>
+<td>KAT log (sha256 <code>48ba6e860bf244da…</code>)</td>
+<td><code>kat/hash-20/MOZI-1024.log</code></td>
+</tr>
+<tr>
+<td><code>MOZI-1024</code></td>
+<td>timing hash_1024</td>
+<td><code>records/hash-20/MOZI-1024__hash_1024.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-1024</code></td>
+<td>timing hash_128</td>
+<td><code>records/hash-20/MOZI-1024__hash_128.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-1024</code></td>
+<td>timing hash_16384</td>
+<td><code>records/hash-20/MOZI-1024__hash_16384.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-1024</code></td>
+<td>timing hash_32</td>
+<td><code>records/hash-20/MOZI-1024__hash_32.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-1024</code></td>
+<td>timing hash_4096</td>
+<td><code>records/hash-20/MOZI-1024__hash_4096.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-1024</code></td>
+<td>timing hash_512</td>
+<td><code>records/hash-20/MOZI-1024__hash_512.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-1024</code></td>
+<td>timing hash_65536</td>
+<td><code>records/hash-20/MOZI-1024__hash_65536.json</code></td>
+</tr>
+<tr>
+<td><code>MOZI-1024</code></td>
+<td>timing hash_8192</td>
+<td><code>records/hash-20/MOZI-1024__hash_8192.json</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Scripts: <code>performance/campaign.py</code>, <code>performance/ngcc_perf.c</code>, <code>performance/hashprof/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

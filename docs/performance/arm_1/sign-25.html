@@ -1,0 +1,2001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: sign-25 SQIsign2D2 — performance on AArch64 (system arm1)</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=808fa5e8">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
+<nav><a href="../../index.html">Home</a><a href="../../reports/index.html">Security</a><a href="../../performance/index.html">Performance</a><a href="../../constant-time/index.html">Side-Channel</a></nav>
+</header>
+<main class="">
+<!-- synchronized from harness: sign-25/perf_arm_1.md -->
+<h1 id="sign-25-sqisign2d2-performance-on-aarch64-system-arm_1">sign-25 SQIsign2D2 — performance on AArch64 (system arm_1)</h1>
+<p><a href="index.html">Performance arm_1</a> › <code>sign-25</code> · <a href="method.html">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561096361562112.html">NICCS page</a></p>
+<p><strong>Systems:</strong> <a href="../x86_1/sign-25.html">x86_1</a> · <strong>arm_1</strong></p>
+<p>Independent measurement following the structure of the NICCS ARM self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.</p>
+<h2 id="1-basic-information">1. Basic information</h2>
+<ul>
+<li>Category: public-key algorithm; function: digital signature</li>
+<li>Algorithm: SQIsign2D2</li>
+<li>Implementation versions measured: reference</li>
+<li>Parameter sets: <code>SQISign2Dsquare-Level1-eff_compressed</code>, <code>SQISign2Dsquare-Level1-eff_uncompressed</code>, <code>SQISign2Dsquare-Level1-sec_compressed</code>, <code>SQISign2Dsquare-Level1-sec_uncompressed</code>, <code>SQISign2Dsquare-Level2-eff_compressed</code>, <code>SQISign2Dsquare-Level2-eff_uncompressed</code>, <code>SQISign2Dsquare-Level2-sec_compressed</code>, <code>SQISign2Dsquare-Level2-sec_uncompressed</code>, <code>SQISign2Dsquare-Level3-eff_compressed</code>, <code>SQISign2Dsquare-Level3-eff_uncompressed</code>, <code>SQISign2Dsquare-Level3-sec_compressed</code>, <code>SQISign2Dsquare-Level3-sec_uncompressed</code>, <code>SQISign2Dsquare-Level5-eff_compressed</code>, <code>SQISign2Dsquare-Level5-eff_uncompressed</code>, <code>SQISign2Dsquare-Level5-sec_compressed</code>, <code>SQISign2Dsquare-Level5-sec_uncompressed</code></li>
+</ul>
+<h2 id="2-assessment-environment">2. Assessment environment</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>item</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>processor</td>
+<td>Qualcomm Oryon (CPU 2, one core)</td>
+</tr>
+<tr>
+<td>machine</td>
+<td>ASUS Vivobook S 15</td>
+</tr>
+<tr>
+<td>clock</td>
+<td>fixed 2.71 GHz (governor performance, minimum = maximum), boost off, SMT none</td>
+</tr>
+<tr>
+<td>memory</td>
+<td>30562 MiB</td>
+</tr>
+<tr>
+<td>OS / kernel</td>
+<td>Ubuntu 26.04.1 LTS / 7.0.0-34-generic</td>
+</tr>
+<tr>
+<td>compiler / build tool</td>
+<td>gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0 / cmake version 4.2.3</td>
+</tr>
+<tr>
+<td>campaign start / end (UTC)</td>
+<td>2026-09-28T15:05:46 / 2026-09-29T08:43:52</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="3-functional-testing-kat">3. Functional testing (KAT)</h2>
+<p>Each library was checked against the submitted KAT vectors (SHA-256 manifest <code>sign-25/kat.sha256</code> in the harness) before timing.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>build flags</th>
+<th>KAT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_compressed</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_uncompressed</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_compressed</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_uncompressed</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_compressed</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_uncompressed</code></td>
+<td>harness-default</td>
+<td class="st bad">CRYPTOFAIL [1]</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_compressed</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_uncompressed</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_compressed</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_uncompressed</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_compressed</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_uncompressed</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_compressed</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_uncompressed</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_compressed</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_uncompressed</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+</tbody>
+</table></div>
+<p>[1] CRYPTOFAIL: sig_verify accepts a modified message because the verifier's verdict is decided by stale stack contents (confirmed finding sign-25-1). Key generation and signing are timed normally; the verification time is that of the flawed verifier. These instances are timed anyway; their output is not validated.</p>
+<h2 id="4-performance">4. Performance</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>mean cycles</th>
+<th>mean time</th>
+<th>ops/s</th>
+<th>median trial</th>
+<th>n (trials × iters)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_compressed</code></td>
+<td>keygen</td>
+<td>46.24 M</td>
+<td>17.2 ms</td>
+<td>58.2</td>
+<td>17.2 ms</td>
+<td>190 (5 × 38)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_compressed</code></td>
+<td>sign</td>
+<td>152.62 M</td>
+<td>56.7 ms</td>
+<td>17.6</td>
+<td>56.6 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_compressed</code></td>
+<td>verify</td>
+<td>32.94 M</td>
+<td>12.2 ms</td>
+<td>81.7</td>
+<td>12.2 ms</td>
+<td>255 (5 × 51)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_uncompressed</code></td>
+<td>keygen</td>
+<td>25.48 M</td>
+<td>9.46 ms</td>
+<td>106</td>
+<td>9.46 ms</td>
+<td>345 (5 × 69)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_uncompressed</code></td>
+<td>sign</td>
+<td>137.80 M</td>
+<td>51.2 ms</td>
+<td>19.5</td>
+<td>51.2 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_uncompressed</code></td>
+<td>verify</td>
+<td>29.13 M</td>
+<td>10.8 ms</td>
+<td>92.3</td>
+<td>10.8 ms</td>
+<td>295 (5 × 59)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_compressed</code></td>
+<td>keygen</td>
+<td>66.74 M</td>
+<td>24.8 ms</td>
+<td>40.4</td>
+<td>24.8 ms</td>
+<td>125 (5 × 25)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_compressed</code></td>
+<td>sign</td>
+<td>218.62 M</td>
+<td>81.2 ms</td>
+<td>12.3</td>
+<td>81.1 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_compressed</code></td>
+<td>verify</td>
+<td>46.54 M</td>
+<td>17.3 ms</td>
+<td>57.8</td>
+<td>17.3 ms</td>
+<td>180 (5 × 36)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_uncompressed</code></td>
+<td>keygen</td>
+<td>35.06 M</td>
+<td>13 ms</td>
+<td>76.8</td>
+<td>13 ms</td>
+<td>255 (5 × 51)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_uncompressed</code></td>
+<td>sign</td>
+<td>197.49 M</td>
+<td>73.3 ms</td>
+<td>13.6</td>
+<td>72.9 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_uncompressed</code></td>
+<td>verify</td>
+<td>41.53 M</td>
+<td>15.4 ms</td>
+<td>64.7</td>
+<td>15.4 ms</td>
+<td>205 (5 × 41)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_compressed</code></td>
+<td>keygen</td>
+<td>43.05 M</td>
+<td>16 ms</td>
+<td>62.5</td>
+<td>15.9 ms</td>
+<td>210 (5 × 42)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_compressed</code></td>
+<td>sign</td>
+<td>140.46 M</td>
+<td>52.3 ms</td>
+<td>19.1</td>
+<td>52.2 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_compressed</code></td>
+<td>verify</td>
+<td>33.54 M</td>
+<td>12.5 ms</td>
+<td>80.1</td>
+<td>12.4 ms</td>
+<td>255 (5 × 51)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_uncompressed</code></td>
+<td>keygen</td>
+<td>23.15 M</td>
+<td>8.61 ms</td>
+<td>116</td>
+<td>8.61 ms</td>
+<td>380 (5 × 76)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_uncompressed</code></td>
+<td>sign</td>
+<td>132.36 M</td>
+<td>49.2 ms</td>
+<td>20.3</td>
+<td>49.1 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_uncompressed</code></td>
+<td>verify</td>
+<td>30.45 M</td>
+<td>11.3 ms</td>
+<td>88.2</td>
+<td>11.3 ms</td>
+<td>285 (5 × 57)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_compressed</code></td>
+<td>keygen</td>
+<td>104.76 M</td>
+<td>38.9 ms</td>
+<td>25.7</td>
+<td>38.5 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_compressed</code></td>
+<td>sign</td>
+<td>330.48 M</td>
+<td>123 ms</td>
+<td>8.14</td>
+<td>123 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_compressed</code></td>
+<td>verify</td>
+<td>81.97 M</td>
+<td>30.5 ms</td>
+<td>32.8</td>
+<td>30.4 ms</td>
+<td>105 (5 × 21)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_uncompressed</code></td>
+<td>keygen</td>
+<td>55.03 M</td>
+<td>20.5 ms</td>
+<td>48.9</td>
+<td>20.3 ms</td>
+<td>160 (5 × 32)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_uncompressed</code></td>
+<td>sign</td>
+<td>296.46 M</td>
+<td>110 ms</td>
+<td>9.08</td>
+<td>110 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_uncompressed</code></td>
+<td>verify</td>
+<td>64.82 M</td>
+<td>24.1 ms</td>
+<td>41.5</td>
+<td>24.1 ms</td>
+<td>135 (5 × 27)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_compressed</code></td>
+<td>keygen</td>
+<td>226.27 M</td>
+<td>84 ms</td>
+<td>11.9</td>
+<td>84.7 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_compressed</code></td>
+<td>sign</td>
+<td>763.78 M</td>
+<td>284 ms</td>
+<td>3.52</td>
+<td>281 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_compressed</code></td>
+<td>verify</td>
+<td>174.05 M</td>
+<td>64.9 ms</td>
+<td>15.4</td>
+<td>64.8 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_uncompressed</code></td>
+<td>keygen</td>
+<td>116.22 M</td>
+<td>43.2 ms</td>
+<td>23.2</td>
+<td>43.1 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_uncompressed</code></td>
+<td>sign</td>
+<td>694.01 M</td>
+<td>258 ms</td>
+<td>3.88</td>
+<td>257 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_uncompressed</code></td>
+<td>verify</td>
+<td>156.24 M</td>
+<td>58.3 ms</td>
+<td>17.1</td>
+<td>58.2 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_compressed</code></td>
+<td>keygen</td>
+<td>286.29 M</td>
+<td>106 ms</td>
+<td>9.41</td>
+<td>106 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_compressed</code></td>
+<td>sign</td>
+<td>930.37 M</td>
+<td>346 ms</td>
+<td>2.89</td>
+<td>344 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_compressed</code></td>
+<td>verify</td>
+<td>202.27 M</td>
+<td>75.5 ms</td>
+<td>13.3</td>
+<td>75.4 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_uncompressed</code></td>
+<td>keygen</td>
+<td>152.02 M</td>
+<td>56.5 ms</td>
+<td>17.7</td>
+<td>55.9 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_uncompressed</code></td>
+<td>sign</td>
+<td>846.47 M</td>
+<td>314 ms</td>
+<td>3.18</td>
+<td>314 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_uncompressed</code></td>
+<td>verify</td>
+<td>182.01 M</td>
+<td>67.9 ms</td>
+<td>14.7</td>
+<td>67.9 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_compressed</code></td>
+<td>keygen</td>
+<td>1.70 G</td>
+<td>631 ms</td>
+<td>1.59</td>
+<td>626 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_compressed</code></td>
+<td>sign</td>
+<td>5.52 G</td>
+<td>2.05 s</td>
+<td>0.487</td>
+<td>2.05 s</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_compressed</code></td>
+<td>verify</td>
+<td>1.20 G</td>
+<td>447 ms</td>
+<td>2.24</td>
+<td>448 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_uncompressed</code></td>
+<td>keygen</td>
+<td>886.76 M</td>
+<td>330 ms</td>
+<td>3.03</td>
+<td>330 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_uncompressed</code></td>
+<td>sign</td>
+<td>5.02 G</td>
+<td>1.86 s</td>
+<td>0.536</td>
+<td>1.86 s</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_uncompressed</code></td>
+<td>verify</td>
+<td>1.05 G</td>
+<td>391 ms</td>
+<td>2.56</td>
+<td>391 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_compressed</code></td>
+<td>keygen</td>
+<td>2.04 G</td>
+<td>759 ms</td>
+<td>1.32</td>
+<td>759 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_compressed</code></td>
+<td>sign</td>
+<td>6.53 G</td>
+<td>2.43 s</td>
+<td>0.412</td>
+<td>2.42 s</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_compressed</code></td>
+<td>verify</td>
+<td>1.44 G</td>
+<td>535 ms</td>
+<td>1.87</td>
+<td>535 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_uncompressed</code></td>
+<td>keygen</td>
+<td>1.10 G</td>
+<td>407 ms</td>
+<td>2.46</td>
+<td>407 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_uncompressed</code></td>
+<td>sign</td>
+<td>5.94 G</td>
+<td>2.2 s</td>
+<td>0.454</td>
+<td>2.2 s</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_uncompressed</code></td>
+<td>verify</td>
+<td>1.24 G</td>
+<td>461 ms</td>
+<td>2.17</td>
+<td>461 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-resource-consumption">5. Resource consumption</h2>
+<p>Static memory is approximated by the library's loadable ELF segments; peak memory is the process high-water mark (VmHWM) including the benchmark driver and libc, so both are upper-bound proxies rather than isolated algorithm memory.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>static: ELF image (bytes)</th>
+<th>baseline RSS</th>
+<th>peak RSS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_compressed</code></td>
+<td>keygen</td>
+<td>244300</td>
+<td>1600 KiB</td>
+<td>13900 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_compressed</code></td>
+<td>sign</td>
+<td>244300</td>
+<td>2380 KiB</td>
+<td>36036 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_compressed</code></td>
+<td>verify</td>
+<td>244300</td>
+<td>5428 KiB</td>
+<td>30852 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_uncompressed</code></td>
+<td>keygen</td>
+<td>242452</td>
+<td>1600 KiB</td>
+<td>20756 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_uncompressed</code></td>
+<td>sign</td>
+<td>242452</td>
+<td>2364 KiB</td>
+<td>26072 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_uncompressed</code></td>
+<td>verify</td>
+<td>242452</td>
+<td>5104 KiB</td>
+<td>33888 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_compressed</code></td>
+<td>keygen</td>
+<td>245652</td>
+<td>1600 KiB</td>
+<td>12980 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_compressed</code></td>
+<td>sign</td>
+<td>245652</td>
+<td>4476 KiB</td>
+<td>43128 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_compressed</code></td>
+<td>verify</td>
+<td>245652</td>
+<td>5780 KiB</td>
+<td>29784 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_uncompressed</code></td>
+<td>keygen</td>
+<td>243436</td>
+<td>1600 KiB</td>
+<td>19612 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_uncompressed</code></td>
+<td>sign</td>
+<td>243436</td>
+<td>2416 KiB</td>
+<td>29472 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_uncompressed</code></td>
+<td>verify</td>
+<td>243436</td>
+<td>5348 KiB</td>
+<td>31724 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_compressed</code></td>
+<td>keygen</td>
+<td>249780</td>
+<td>1644 KiB</td>
+<td>20972 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_compressed</code></td>
+<td>sign</td>
+<td>249780</td>
+<td>4264 KiB</td>
+<td>49920 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_compressed</code></td>
+<td>verify</td>
+<td>249780</td>
+<td>6076 KiB</td>
+<td>44280 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_uncompressed</code></td>
+<td>keygen</td>
+<td>244092</td>
+<td>1604 KiB</td>
+<td>31588 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_uncompressed</code></td>
+<td>sign</td>
+<td>244092</td>
+<td>4252 KiB</td>
+<td>34780 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_uncompressed</code></td>
+<td>verify</td>
+<td>244092</td>
+<td>5616 KiB</td>
+<td>48436 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_compressed</code></td>
+<td>keygen</td>
+<td>257000</td>
+<td>1652 KiB</td>
+<td>14648 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_compressed</code></td>
+<td>sign</td>
+<td>257000</td>
+<td>2548 KiB</td>
+<td>60620 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_compressed</code></td>
+<td>verify</td>
+<td>257000</td>
+<td>7220 KiB</td>
+<td>28264 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_uncompressed</code></td>
+<td>keygen</td>
+<td>254912</td>
+<td>1652 KiB</td>
+<td>19744 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_uncompressed</code></td>
+<td>sign</td>
+<td>254912</td>
+<td>4324 KiB</td>
+<td>42828 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_uncompressed</code></td>
+<td>verify</td>
+<td>254912</td>
+<td>5840 KiB</td>
+<td>32900 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_compressed</code></td>
+<td>keygen</td>
+<td>285600</td>
+<td>1664 KiB</td>
+<td>23720 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_compressed</code></td>
+<td>sign</td>
+<td>285600</td>
+<td>4912 KiB</td>
+<td>98308 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_compressed</code></td>
+<td>verify</td>
+<td>285600</td>
+<td>9532 KiB</td>
+<td>35648 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_uncompressed</code></td>
+<td>keygen</td>
+<td>287688</td>
+<td>1600 KiB</td>
+<td>24852 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_uncompressed</code></td>
+<td>sign</td>
+<td>287688</td>
+<td>2860 KiB</td>
+<td>69340 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_uncompressed</code></td>
+<td>verify</td>
+<td>287688</td>
+<td>7544 KiB</td>
+<td>36908 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_compressed</code></td>
+<td>keygen</td>
+<td>287400</td>
+<td>1668 KiB</td>
+<td>26776 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_compressed</code></td>
+<td>sign</td>
+<td>287400</td>
+<td>5028 KiB</td>
+<td>103084 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_compressed</code></td>
+<td>verify</td>
+<td>287400</td>
+<td>8564 KiB</td>
+<td>39992 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_uncompressed</code></td>
+<td>keygen</td>
+<td>285200</td>
+<td>1668 KiB</td>
+<td>26232 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_uncompressed</code></td>
+<td>sign</td>
+<td>285200</td>
+<td>5000 KiB</td>
+<td>74896 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_uncompressed</code></td>
+<td>verify</td>
+<td>285200</td>
+<td>9144 KiB</td>
+<td>37340 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_compressed</code></td>
+<td>keygen</td>
+<td>379276</td>
+<td>1736 KiB</td>
+<td>66124 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_compressed</code></td>
+<td>sign</td>
+<td>379276</td>
+<td>4884 KiB</td>
+<td>318056 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_compressed</code></td>
+<td>verify</td>
+<td>379276</td>
+<td>21136 KiB</td>
+<td>121460 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_uncompressed</code></td>
+<td>keygen</td>
+<td>377252</td>
+<td>1736 KiB</td>
+<td>67652 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_uncompressed</code></td>
+<td>sign</td>
+<td>377252</td>
+<td>4832 KiB</td>
+<td>221644 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_uncompressed</code></td>
+<td>verify</td>
+<td>377252</td>
+<td>16432 KiB</td>
+<td>116748 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_compressed</code></td>
+<td>keygen</td>
+<td>395048</td>
+<td>1736 KiB</td>
+<td>79260 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_compressed</code></td>
+<td>sign</td>
+<td>395048</td>
+<td>7180 KiB</td>
+<td>357824 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_compressed</code></td>
+<td>verify</td>
+<td>395048</td>
+<td>24692 KiB</td>
+<td>135668 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_uncompressed</code></td>
+<td>keygen</td>
+<td>392424</td>
+<td>1736 KiB</td>
+<td>71344 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_uncompressed</code></td>
+<td>sign</td>
+<td>392424</td>
+<td>7124 KiB</td>
+<td>254732 KiB</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_uncompressed</code></td>
+<td>verify</td>
+<td>392424</td>
+<td>17584 KiB</td>
+<td>128528 KiB</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="6-transmission-and-storage-overhead">6. Transmission and storage overhead</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>public key</th>
+<th>secret key</th>
+<th>signature</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_compressed</code></td>
+<td>65</td>
+<td>240</td>
+<td>168</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_uncompressed</code></td>
+<td>64</td>
+<td>488</td>
+<td>200</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_compressed</code></td>
+<td>69</td>
+<td>257</td>
+<td>178</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_uncompressed</code></td>
+<td>68</td>
+<td>521</td>
+<td>212</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_compressed</code></td>
+<td>81</td>
+<td>298</td>
+<td>208</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_uncompressed</code></td>
+<td>80</td>
+<td>610</td>
+<td>248</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_compressed</code></td>
+<td>85</td>
+<td>315</td>
+<td>218</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_uncompressed</code></td>
+<td>84</td>
+<td>643</td>
+<td>260</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_compressed</code></td>
+<td>129</td>
+<td>468</td>
+<td>326</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_uncompressed</code></td>
+<td>128</td>
+<td>976</td>
+<td>392</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_compressed</code></td>
+<td>133</td>
+<td>489</td>
+<td>338</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_uncompressed</code></td>
+<td>132</td>
+<td>1009</td>
+<td>404</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_compressed</code></td>
+<td>257</td>
+<td>936</td>
+<td>648</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_uncompressed</code></td>
+<td>256</td>
+<td>1952</td>
+<td>776</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_compressed</code></td>
+<td>269</td>
+<td>982</td>
+<td>678</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_uncompressed</code></td>
+<td>268</td>
+<td>2046</td>
+<td>812</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="symmetric-primitives">Symmetric primitives</h2>
+<p><a href="../symmetric-survey.html">Survey</a> verdict: <strong>ICCS-only</strong></p>
+<p>Share of each operation spent in the ICCS placeholder hash functions and in the ICCS DRNG (reference build, measured in the same run with link-time wrappers):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>pseudohash/XOF/sm3</th>
+<th>DRNG</th>
+<th>calls per operation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_compressed</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>2.3%</td>
+<td>drng 256</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_compressed</code></td>
+<td>sign</td>
+<td>0.4%</td>
+<td>1.3%</td>
+<td>drng 479, pseudohash 50.9</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_compressed</code></td>
+<td>verify</td>
+<td>1.2%</td>
+<td>0.0%</td>
+<td>pseudohash 32</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_uncompressed</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>4.3%</td>
+<td>drng 256</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_uncompressed</code></td>
+<td>sign</td>
+<td>0.4%</td>
+<td>1.5%</td>
+<td>drng 496, pseudohash 42.2</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_uncompressed</code></td>
+<td>verify</td>
+<td>1.3%</td>
+<td>0.0%</td>
+<td>pseudohash 32</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_compressed</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>1.7%</td>
+<td>drng 260</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_compressed</code></td>
+<td>sign</td>
+<td>0.0%</td>
+<td>1.1%</td>
+<td>drng 580, pseudohash 1.81</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_compressed</code></td>
+<td>verify</td>
+<td>0.0%</td>
+<td>0.0%</td>
+<td>pseudohash 1</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_uncompressed</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>3.4%</td>
+<td>drng 285</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_uncompressed</code></td>
+<td>sign</td>
+<td>0.0%</td>
+<td>0.8%</td>
+<td>drng 389, pseudohash 2.28</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_uncompressed</code></td>
+<td>verify</td>
+<td>0.0%</td>
+<td>0.0%</td>
+<td>pseudohash 1</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_compressed</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>2.9%</td>
+<td>drng 290</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_compressed</code></td>
+<td>sign</td>
+<td>3.2%</td>
+<td>1.2%</td>
+<td>drng 392, pseudohash 371</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_compressed</code></td>
+<td>verify</td>
+<td>18%</td>
+<td>0.0%</td>
+<td>pseudohash 512</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_uncompressed</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>5.1%</td>
+<td>drng 274</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_uncompressed</code></td>
+<td>sign</td>
+<td>3.1%</td>
+<td>1.3%</td>
+<td>drng 417, pseudohash 333</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_uncompressed</code></td>
+<td>verify</td>
+<td>20%</td>
+<td>0.0%</td>
+<td>pseudohash 512</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_compressed</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>1.5%</td>
+<td>drng 365</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_compressed</code></td>
+<td>sign</td>
+<td>0.0%</td>
+<td>0.5%</td>
+<td>drng 408, pseudohash 2.45</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_compressed</code></td>
+<td>verify</td>
+<td>0.0%</td>
+<td>0.0%</td>
+<td>pseudohash 1</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_uncompressed</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>2.8%</td>
+<td>drng 348</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_uncompressed</code></td>
+<td>sign</td>
+<td>0.0%</td>
+<td>0.5%</td>
+<td>drng 373, pseudohash 2.17</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_uncompressed</code></td>
+<td>verify</td>
+<td>0.0%</td>
+<td>0.0%</td>
+<td>pseudohash 1</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_compressed</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>1.0%</td>
+<td>drng 512</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_compressed</code></td>
+<td>sign</td>
+<td>1.1%</td>
+<td>0.4%</td>
+<td>drng 742, pseudohash 717</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_compressed</code></td>
+<td>verify</td>
+<td>7.1%</td>
+<td>0.0%</td>
+<td>pseudohash 1.02e+03</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_uncompressed</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>2.0%</td>
+<td>drng 543</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_uncompressed</code></td>
+<td>sign</td>
+<td>1.2%</td>
+<td>0.5%</td>
+<td>drng 749, pseudohash 717</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_uncompressed</code></td>
+<td>verify</td>
+<td>7.9%</td>
+<td>0.0%</td>
+<td>pseudohash 1.02e+03</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_compressed</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>0.8%</td>
+<td>drng 567</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_compressed</code></td>
+<td>sign</td>
+<td>0.0%</td>
+<td>0.1%</td>
+<td>drng 260, pseudohash 1.5</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_compressed</code></td>
+<td>verify</td>
+<td>0.0%</td>
+<td>0.0%</td>
+<td>pseudohash 1</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_uncompressed</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>1.6%</td>
+<td>drng 572</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_uncompressed</code></td>
+<td>sign</td>
+<td>0.0%</td>
+<td>0.2%</td>
+<td>drng 386, pseudohash 1.6</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_uncompressed</code></td>
+<td>verify</td>
+<td>0.0%</td>
+<td>0.0%</td>
+<td>pseudohash 1</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_compressed</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>0.3%</td>
+<td>drng 1.32e+03</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_compressed</code></td>
+<td>sign</td>
+<td>0.1%</td>
+<td>0.1%</td>
+<td>drng 1.25e+03, pseudohash 171</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_compressed</code></td>
+<td>verify</td>
+<td>0.8%</td>
+<td>0.0%</td>
+<td>pseudohash 256</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_uncompressed</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>0.5%</td>
+<td>drng 1.09e+03</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_uncompressed</code></td>
+<td>sign</td>
+<td>0.1%</td>
+<td>0.2%</td>
+<td>drng 2.01e+03, pseudohash 171</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_uncompressed</code></td>
+<td>verify</td>
+<td>0.9%</td>
+<td>0.0%</td>
+<td>pseudohash 256</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_compressed</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>0.5%</td>
+<td>drng 2.29e+03</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_compressed</code></td>
+<td>sign</td>
+<td>0.0%</td>
+<td>0.1%</td>
+<td>drng 1.25e+03, pseudohash 1</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_compressed</code></td>
+<td>verify</td>
+<td>0.0%</td>
+<td>0.0%</td>
+<td>pseudohash 1</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_uncompressed</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>1.0%</td>
+<td>drng 2.18e+03</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_uncompressed</code></td>
+<td>sign</td>
+<td>0.0%</td>
+<td>0.1%</td>
+<td>drng 1.27e+03, pseudohash 1</td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_uncompressed</code></td>
+<td>verify</td>
+<td>0.0%</td>
+<td>0.0%</td>
+<td>pseudohash 1</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="7-raw-evidence-index">7. Raw evidence index</h2>
+<p>Paths are relative to <code>performance/data/arm_1/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>; each JSON file records its commands, environment and trials.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>item</th>
+<th>file</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_compressed</code></td>
+<td>KAT log (sha256 <code>d0727a7c6c8acc8c…</code>)</td>
+<td><code>kat/sign-25/SQISign2Dsquare-Level1-eff_compressed.log</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_compressed</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level1-eff_compressed__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_compressed</code></td>
+<td>timing sign</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level1-eff_compressed__sign.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_compressed</code></td>
+<td>timing verify</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level1-eff_compressed__verify.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_compressed</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level1-eff_compressed__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_compressed</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level1-eff_compressed__sign.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_compressed</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level1-eff_compressed__verify.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_uncompressed</code></td>
+<td>KAT log (sha256 <code>0ed07e3b7ebbd08e…</code>)</td>
+<td><code>kat/sign-25/SQISign2Dsquare-Level1-eff_uncompressed.log</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_uncompressed</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level1-eff_uncompressed__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_uncompressed</code></td>
+<td>timing sign</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level1-eff_uncompressed__sign.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_uncompressed</code></td>
+<td>timing verify</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level1-eff_uncompressed__verify.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_uncompressed</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level1-eff_uncompressed__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_uncompressed</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level1-eff_uncompressed__sign.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-eff_uncompressed</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level1-eff_uncompressed__verify.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_compressed</code></td>
+<td>KAT log (sha256 <code>42e996000006eb7d…</code>)</td>
+<td><code>kat/sign-25/SQISign2Dsquare-Level1-sec_compressed.log</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_compressed</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level1-sec_compressed__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_compressed</code></td>
+<td>timing sign</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level1-sec_compressed__sign.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_compressed</code></td>
+<td>timing verify</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level1-sec_compressed__verify.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_compressed</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level1-sec_compressed__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_compressed</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level1-sec_compressed__sign.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_compressed</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level1-sec_compressed__verify.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_uncompressed</code></td>
+<td>KAT log (sha256 <code>f3eeb0dfa059b3ef…</code>)</td>
+<td><code>kat/sign-25/SQISign2Dsquare-Level1-sec_uncompressed.log</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_uncompressed</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level1-sec_uncompressed__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_uncompressed</code></td>
+<td>timing sign</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level1-sec_uncompressed__sign.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_uncompressed</code></td>
+<td>timing verify</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level1-sec_uncompressed__verify.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_uncompressed</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level1-sec_uncompressed__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_uncompressed</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level1-sec_uncompressed__sign.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level1-sec_uncompressed</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level1-sec_uncompressed__verify.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_compressed</code></td>
+<td>KAT log (sha256 <code>35a55a2943bd8ffe…</code>)</td>
+<td><code>kat/sign-25/SQISign2Dsquare-Level2-eff_compressed.log</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_compressed</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level2-eff_compressed__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_compressed</code></td>
+<td>timing sign</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level2-eff_compressed__sign.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_compressed</code></td>
+<td>timing verify</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level2-eff_compressed__verify.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_compressed</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level2-eff_compressed__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_compressed</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level2-eff_compressed__sign.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_compressed</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level2-eff_compressed__verify.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_uncompressed</code></td>
+<td>KAT log (sha256 <code>b9d3e5cebc4cca2b…</code>)</td>
+<td><code>kat/sign-25/SQISign2Dsquare-Level2-eff_uncompressed.log</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_uncompressed</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level2-eff_uncompressed__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_uncompressed</code></td>
+<td>timing sign</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level2-eff_uncompressed__sign.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_uncompressed</code></td>
+<td>timing verify</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level2-eff_uncompressed__verify.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_uncompressed</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level2-eff_uncompressed__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_uncompressed</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level2-eff_uncompressed__sign.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-eff_uncompressed</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level2-eff_uncompressed__verify.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_compressed</code></td>
+<td>KAT log (sha256 <code>53672d9ecdbb8769…</code>)</td>
+<td><code>kat/sign-25/SQISign2Dsquare-Level2-sec_compressed.log</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_compressed</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level2-sec_compressed__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_compressed</code></td>
+<td>timing sign</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level2-sec_compressed__sign.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_compressed</code></td>
+<td>timing verify</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level2-sec_compressed__verify.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_compressed</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level2-sec_compressed__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_compressed</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level2-sec_compressed__sign.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_compressed</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level2-sec_compressed__verify.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_uncompressed</code></td>
+<td>KAT log (sha256 <code>090070761f5e825a…</code>)</td>
+<td><code>kat/sign-25/SQISign2Dsquare-Level2-sec_uncompressed.log</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_uncompressed</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level2-sec_uncompressed__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_uncompressed</code></td>
+<td>timing sign</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level2-sec_uncompressed__sign.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_uncompressed</code></td>
+<td>timing verify</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level2-sec_uncompressed__verify.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_uncompressed</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level2-sec_uncompressed__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_uncompressed</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level2-sec_uncompressed__sign.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level2-sec_uncompressed</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level2-sec_uncompressed__verify.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_compressed</code></td>
+<td>KAT log (sha256 <code>971e729d9baf58f2…</code>)</td>
+<td><code>kat/sign-25/SQISign2Dsquare-Level3-eff_compressed.log</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_compressed</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level3-eff_compressed__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_compressed</code></td>
+<td>timing sign</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level3-eff_compressed__sign.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_compressed</code></td>
+<td>timing verify</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level3-eff_compressed__verify.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_compressed</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level3-eff_compressed__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_compressed</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level3-eff_compressed__sign.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_compressed</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level3-eff_compressed__verify.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_uncompressed</code></td>
+<td>KAT log (sha256 <code>68144b96157acabd…</code>)</td>
+<td><code>kat/sign-25/SQISign2Dsquare-Level3-eff_uncompressed.log</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_uncompressed</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level3-eff_uncompressed__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_uncompressed</code></td>
+<td>timing sign</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level3-eff_uncompressed__sign.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_uncompressed</code></td>
+<td>timing verify</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level3-eff_uncompressed__verify.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_uncompressed</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level3-eff_uncompressed__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_uncompressed</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level3-eff_uncompressed__sign.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-eff_uncompressed</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level3-eff_uncompressed__verify.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_compressed</code></td>
+<td>KAT log (sha256 <code>17edb2c11994c4d9…</code>)</td>
+<td><code>kat/sign-25/SQISign2Dsquare-Level3-sec_compressed.log</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_compressed</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level3-sec_compressed__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_compressed</code></td>
+<td>timing sign</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level3-sec_compressed__sign.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_compressed</code></td>
+<td>timing verify</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level3-sec_compressed__verify.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_compressed</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level3-sec_compressed__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_compressed</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level3-sec_compressed__sign.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_compressed</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level3-sec_compressed__verify.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_uncompressed</code></td>
+<td>KAT log (sha256 <code>1233c671b3737ab3…</code>)</td>
+<td><code>kat/sign-25/SQISign2Dsquare-Level3-sec_uncompressed.log</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_uncompressed</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level3-sec_uncompressed__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_uncompressed</code></td>
+<td>timing sign</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level3-sec_uncompressed__sign.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_uncompressed</code></td>
+<td>timing verify</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level3-sec_uncompressed__verify.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_uncompressed</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level3-sec_uncompressed__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_uncompressed</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level3-sec_uncompressed__sign.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level3-sec_uncompressed</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level3-sec_uncompressed__verify.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_compressed</code></td>
+<td>KAT log (sha256 <code>ae094d284f37edd1…</code>)</td>
+<td><code>kat/sign-25/SQISign2Dsquare-Level5-eff_compressed.log</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_compressed</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level5-eff_compressed__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_compressed</code></td>
+<td>timing sign</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level5-eff_compressed__sign.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_compressed</code></td>
+<td>timing verify</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level5-eff_compressed__verify.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_compressed</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level5-eff_compressed__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_compressed</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level5-eff_compressed__sign.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_compressed</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level5-eff_compressed__verify.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_uncompressed</code></td>
+<td>KAT log (sha256 <code>faeea9df987c95f7…</code>)</td>
+<td><code>kat/sign-25/SQISign2Dsquare-Level5-eff_uncompressed.log</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_uncompressed</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level5-eff_uncompressed__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_uncompressed</code></td>
+<td>timing sign</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level5-eff_uncompressed__sign.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_uncompressed</code></td>
+<td>timing verify</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level5-eff_uncompressed__verify.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_uncompressed</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level5-eff_uncompressed__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_uncompressed</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level5-eff_uncompressed__sign.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-eff_uncompressed</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level5-eff_uncompressed__verify.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_compressed</code></td>
+<td>KAT log (sha256 <code>0166dfec32c1bf31…</code>)</td>
+<td><code>kat/sign-25/SQISign2Dsquare-Level5-sec_compressed.log</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_compressed</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level5-sec_compressed__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_compressed</code></td>
+<td>timing sign</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level5-sec_compressed__sign.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_compressed</code></td>
+<td>timing verify</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level5-sec_compressed__verify.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_compressed</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level5-sec_compressed__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_compressed</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level5-sec_compressed__sign.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_compressed</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level5-sec_compressed__verify.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_uncompressed</code></td>
+<td>KAT log (sha256 <code>738bd2ee8cf1c6df…</code>)</td>
+<td><code>kat/sign-25/SQISign2Dsquare-Level5-sec_uncompressed.log</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_uncompressed</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level5-sec_uncompressed__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_uncompressed</code></td>
+<td>timing sign</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level5-sec_uncompressed__sign.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_uncompressed</code></td>
+<td>timing verify</td>
+<td><code>records/sign-25/SQISign2Dsquare-Level5-sec_uncompressed__verify.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_uncompressed</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level5-sec_uncompressed__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_uncompressed</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level5-sec_uncompressed__sign.json</code></td>
+</tr>
+<tr>
+<td><code>SQISign2Dsquare-Level5-sec_uncompressed</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-25/SQISign2Dsquare-Level5-sec_uncompressed__verify.json</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Scripts: <code>performance/campaign.py</code>, <code>performance/ngcc_perf.c</code>, <code>performance/hashprof/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

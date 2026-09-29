@@ -3,6 +3,8 @@
 
 [Performance x86_1](index.md) › `sign-30` · [method](method.md) · [NICCS page](https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561105463201792.html)
 
+**Systems:** **x86_1** · [arm_1](../arm_1/sign-30.md)
+
 Independent measurement following the structure of the NICCS x86 self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.
 
 ## 1. Basic information
@@ -36,7 +38,7 @@ Each library was checked against the submitted KAT vectors (SHA-256 manifest `si
 | `TRINE-512-Balanced` | harness-default | TIMEOUT [1] |
 | `TRINE-512-ShortSig` | harness-default | TIMEOUT [1] |
 
-[1] KAT TIMEOUT only: the ICCS build buffers the whole signing transcript and hashes it at the end (hundreds of MB per signature at level 512, sign-30/pseudocode.md), so even the reduced KAT runs exceed their time limits on a loaded machine These instances are timed anyway; their output is not validated.
+[1] KAT TIMEOUT only: the ICCS build buffers the whole signing transcript and hashes it at the end (hundreds of MB per signature at level 512, sign-30/pseudocode.md), so even the reduced KAT runs exceed their time limits on a loaded machine; the other three TRINE instances pass. One-record checks with a 4-hour limit reproduced the first submitted KAT record of all three (PASS; logs in performance/data/x86_1/katcheck/). On arm_1 only TRINE-512-Balanced exceeds its limit; the same one-record check passes there too (performance/data/arm_1/katcheck/). These instances are timed anyway; their output is not validated.
 
 ## 4. Performance
 

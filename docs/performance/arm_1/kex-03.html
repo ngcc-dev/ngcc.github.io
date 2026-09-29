@@ -1,0 +1,4587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: kex-03 CreTAKE — performance on AArch64 (system arm1)</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=808fa5e8">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
+<nav><a href="../../index.html">Home</a><a href="../../reports/index.html">Security</a><a href="../../performance/index.html">Performance</a><a href="../../constant-time/index.html">Side-Channel</a></nav>
+</header>
+<main class="">
+<!-- synchronized from harness: kex-03/perf_arm_1.md -->
+<h1 id="kex-03-cretake-performance-on-aarch64-system-arm_1">kex-03 CreTAKE — performance on AArch64 (system arm_1)</h1>
+<p><a href="index.html">Performance arm_1</a> › <code>kex-03</code> · <a href="method.html">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560625517383680.html">NICCS page</a></p>
+<p><strong>Systems:</strong> <a href="../x86_1/kex-03.html">x86_1</a> · <strong>arm_1</strong></p>
+<p>Independent measurement following the structure of the NICCS ARM self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.</p>
+<h2 id="1-basic-information">1. Basic information</h2>
+<ul>
+<li>Category: public-key algorithm; function: key exchange</li>
+<li>Algorithm: CreTAKE</li>
+<li>Implementation versions measured: reference</li>
+<li>Parameter sets: <code>CreTAKE-K2K-PLAC128</code>, <code>CreTAKE-K2K-PLAC256</code>, <code>CreTAKE-K2K-PLAC512</code>, <code>CreTAKE-K2K-PLAC512Star</code>, <code>CreTAKE-K2K-ZEN128</code>, <code>CreTAKE-K2K-ZEN256</code>, <code>CreTAKE-K2K-ZEN512</code>, <code>CreTAKE-K2S-PLAC128-BiT128</code>, <code>CreTAKE-K2S-PLAC256-BiT256</code>, <code>CreTAKE-K2S-PLAC512-BiT512</code>, <code>CreTAKE-K2S-ZEN128-BiT128</code>, <code>CreTAKE-K2S-ZEN256-BiT256</code>, <code>CreTAKE-K2S-ZEN512-BiT512</code>, <code>CreTAKE-S2K-BiT128-PLAC128</code>, <code>CreTAKE-S2K-BiT128-ZEN128</code>, <code>CreTAKE-S2K-BiT256-PLAC256</code>, <code>CreTAKE-S2K-BiT256-ZEN256</code>, <code>CreTAKE-S2K-BiT512-PLAC512</code>, <code>CreTAKE-S2K-BiT512-ZEN512</code>, <code>CreTAKE-S2S-BiT128-ePLAC128</code>, <code>CreTAKE-S2S-BiT128-eZEN128</code>, <code>CreTAKE-S2S-BiT256-ePLAC256</code>, <code>CreTAKE-S2S-BiT256-eZEN256</code>, <code>CreTAKE-S2S-BiT512-ePLAC512</code>, <code>CreTAKE-S2S-BiT512-eZEN512</code></li>
+</ul>
+<h2 id="2-assessment-environment">2. Assessment environment</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>item</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>processor</td>
+<td>Qualcomm Oryon (CPU 2, one core)</td>
+</tr>
+<tr>
+<td>machine</td>
+<td>ASUS Vivobook S 15</td>
+</tr>
+<tr>
+<td>clock</td>
+<td>fixed 2.71 GHz (governor performance, minimum = maximum), boost off, SMT none</td>
+</tr>
+<tr>
+<td>memory</td>
+<td>30562 MiB</td>
+</tr>
+<tr>
+<td>OS / kernel</td>
+<td>Ubuntu 26.04.1 LTS / 7.0.0-34-generic</td>
+</tr>
+<tr>
+<td>compiler / build tool</td>
+<td>gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0 / cmake version 4.2.3</td>
+</tr>
+<tr>
+<td>campaign start / end (UTC)</td>
+<td>2026-09-28T15:05:46 / 2026-09-29T08:43:52</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="3-functional-testing-kat">3. Functional testing (KAT)</h2>
+<p>Each library was checked against the submitted KAT vectors (SHA-256 manifest <code>kex-03/kat.sha256</code> in the harness) before timing.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>build flags</th>
+<th>KAT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CreTAKE-K2K-PLAC128</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC256</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512Star</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN128</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN256</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN512</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC128-BiT128</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC256-BiT256</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC512-BiT512</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN128-BiT128</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN256-BiT256</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN512-BiT512</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-PLAC128</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-ZEN128</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-PLAC256</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-ZEN256</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-PLAC512</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-ZEN512</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-ePLAC128</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-eZEN128</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-ePLAC256</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-eZEN256</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-ePLAC512</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-eZEN512</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="4-performance">4. Performance</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>mean cycles</th>
+<th>mean time</th>
+<th>ops/s</th>
+<th>median trial</th>
+<th>n (trials × iters)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CreTAKE-K2K-PLAC128</code></td>
+<td>exchange</td>
+<td>1.69 M</td>
+<td>626 µs</td>
+<td>1.6e+03</td>
+<td>626 µs</td>
+<td>5055 (5 × 1011)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC128</code></td>
+<td>init_a</td>
+<td>135.1 k</td>
+<td>50.1 µs</td>
+<td>2e+04</td>
+<td>50.1 µs</td>
+<td>5055 (5 × 1011)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC128</code></td>
+<td>init_b</td>
+<td>136.0 k</td>
+<td>50.4 µs</td>
+<td>1.98e+04</td>
+<td>50.2 µs</td>
+<td>5055 (5 × 1011)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC128</code></td>
+<td>pass1</td>
+<td>325.4 k</td>
+<td>121 µs</td>
+<td>8.29e+03</td>
+<td>121 µs</td>
+<td>5055 (5 × 1011)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC128</code></td>
+<td>pass2</td>
+<td>621.9 k</td>
+<td>231 µs</td>
+<td>4.33e+03</td>
+<td>230 µs</td>
+<td>5055 (5 × 1011)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC128</code></td>
+<td>derive_a</td>
+<td>470.0 k</td>
+<td>174 µs</td>
+<td>5.74e+03</td>
+<td>174 µs</td>
+<td>5055 (5 × 1011)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC128</code></td>
+<td>derive_b</td>
+<td>217</td>
+<td>32.2 ns</td>
+<td>3.11e+07</td>
+<td>32.2 ns</td>
+<td>5055 (5 × 1011)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC256</code></td>
+<td>exchange</td>
+<td>3.39 M</td>
+<td>1.26 ms</td>
+<td>795</td>
+<td>1.26 ms</td>
+<td>2390 (5 × 478)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC256</code></td>
+<td>init_a</td>
+<td>234.2 k</td>
+<td>86.9 µs</td>
+<td>1.15e+04</td>
+<td>86.8 µs</td>
+<td>2390 (5 × 478)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC256</code></td>
+<td>init_b</td>
+<td>235.7 k</td>
+<td>87.4 µs</td>
+<td>1.14e+04</td>
+<td>86.9 µs</td>
+<td>2390 (5 × 478)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC256</code></td>
+<td>pass1</td>
+<td>582.3 k</td>
+<td>216 µs</td>
+<td>4.63e+03</td>
+<td>216 µs</td>
+<td>2390 (5 × 478)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC256</code></td>
+<td>pass2</td>
+<td>1.31 M</td>
+<td>487 µs</td>
+<td>2.05e+03</td>
+<td>485 µs</td>
+<td>2390 (5 × 478)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC256</code></td>
+<td>derive_a</td>
+<td>1.03 M</td>
+<td>382 µs</td>
+<td>2.62e+03</td>
+<td>381 µs</td>
+<td>2390 (5 × 478)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC256</code></td>
+<td>derive_b</td>
+<td>282</td>
+<td>49.5 ns</td>
+<td>2.02e+07</td>
+<td>47.5 ns</td>
+<td>2390 (5 × 478)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512</code></td>
+<td>exchange</td>
+<td>12.12 M</td>
+<td>4.5 ms</td>
+<td>222</td>
+<td>4.49 ms</td>
+<td>700 (5 × 140)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512</code></td>
+<td>init_a</td>
+<td>835.6 k</td>
+<td>310 µs</td>
+<td>3.22e+03</td>
+<td>308 µs</td>
+<td>700 (5 × 140)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512</code></td>
+<td>init_b</td>
+<td>830.9 k</td>
+<td>308 µs</td>
+<td>3.24e+03</td>
+<td>308 µs</td>
+<td>700 (5 × 140)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512</code></td>
+<td>pass1</td>
+<td>1.98 M</td>
+<td>735 µs</td>
+<td>1.36e+03</td>
+<td>734 µs</td>
+<td>700 (5 × 140)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512</code></td>
+<td>pass2</td>
+<td>4.38 M</td>
+<td>1.63 ms</td>
+<td>615</td>
+<td>1.62 ms</td>
+<td>700 (5 × 140)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512</code></td>
+<td>derive_a</td>
+<td>4.10 M</td>
+<td>1.52 ms</td>
+<td>657</td>
+<td>1.52 ms</td>
+<td>700 (5 × 140)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512</code></td>
+<td>derive_b</td>
+<td>333</td>
+<td>75.7 ns</td>
+<td>1.32e+07</td>
+<td>77.7 ns</td>
+<td>700 (5 × 140)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512Star</code></td>
+<td>exchange</td>
+<td>12.13 M</td>
+<td>4.5 ms</td>
+<td>222</td>
+<td>4.49 ms</td>
+<td>705 (5 × 141)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512Star</code></td>
+<td>init_a</td>
+<td>810.5 k</td>
+<td>301 µs</td>
+<td>3.33e+03</td>
+<td>301 µs</td>
+<td>705 (5 × 141)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512Star</code></td>
+<td>init_b</td>
+<td>809.3 k</td>
+<td>300 µs</td>
+<td>3.33e+03</td>
+<td>300 µs</td>
+<td>705 (5 × 141)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512Star</code></td>
+<td>pass1</td>
+<td>1.95 M</td>
+<td>722 µs</td>
+<td>1.38e+03</td>
+<td>721 µs</td>
+<td>705 (5 × 141)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512Star</code></td>
+<td>pass2</td>
+<td>4.44 M</td>
+<td>1.65 ms</td>
+<td>607</td>
+<td>1.65 ms</td>
+<td>705 (5 × 141)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512Star</code></td>
+<td>derive_a</td>
+<td>4.13 M</td>
+<td>1.53 ms</td>
+<td>653</td>
+<td>1.53 ms</td>
+<td>705 (5 × 141)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512Star</code></td>
+<td>derive_b</td>
+<td>330</td>
+<td>82.7 ns</td>
+<td>1.21e+07</td>
+<td>76.8 ns</td>
+<td>705 (5 × 141)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN128</code></td>
+<td>exchange</td>
+<td>1.43 M</td>
+<td>530 µs</td>
+<td>1.89e+03</td>
+<td>530 µs</td>
+<td>6080 (5 × 1216)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN128</code></td>
+<td>init_a</td>
+<td>153.5 k</td>
+<td>56.9 µs</td>
+<td>1.76e+04</td>
+<td>56.8 µs</td>
+<td>6080 (5 × 1216)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN128</code></td>
+<td>init_b</td>
+<td>153.5 k</td>
+<td>56.9 µs</td>
+<td>1.76e+04</td>
+<td>56.9 µs</td>
+<td>6080 (5 × 1216)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN128</code></td>
+<td>pass1</td>
+<td>271.8 k</td>
+<td>101 µs</td>
+<td>9.92e+03</td>
+<td>101 µs</td>
+<td>6080 (5 × 1216)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN128</code></td>
+<td>pass2</td>
+<td>447.5 k</td>
+<td>166 µs</td>
+<td>6.03e+03</td>
+<td>166 µs</td>
+<td>6080 (5 × 1216)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN128</code></td>
+<td>derive_a</td>
+<td>401.7 k</td>
+<td>149 µs</td>
+<td>6.71e+03</td>
+<td>149 µs</td>
+<td>6080 (5 × 1216)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN128</code></td>
+<td>derive_b</td>
+<td>215</td>
+<td>33.4 ns</td>
+<td>2.99e+07</td>
+<td>33 ns</td>
+<td>6080 (5 × 1216)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN256</code></td>
+<td>exchange</td>
+<td>2.54 M</td>
+<td>943 µs</td>
+<td>1.06e+03</td>
+<td>942 µs</td>
+<td>3240 (5 × 648)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN256</code></td>
+<td>init_a</td>
+<td>268.2 k</td>
+<td>99.5 µs</td>
+<td>1.01e+04</td>
+<td>99.5 µs</td>
+<td>3240 (5 × 648)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN256</code></td>
+<td>init_b</td>
+<td>264.7 k</td>
+<td>98.2 µs</td>
+<td>1.02e+04</td>
+<td>98.1 µs</td>
+<td>3240 (5 × 648)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN256</code></td>
+<td>pass1</td>
+<td>407.6 k</td>
+<td>151 µs</td>
+<td>6.61e+03</td>
+<td>151 µs</td>
+<td>3240 (5 × 648)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN256</code></td>
+<td>pass2</td>
+<td>775.8 k</td>
+<td>288 µs</td>
+<td>3.47e+03</td>
+<td>288 µs</td>
+<td>3240 (5 × 648)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN256</code></td>
+<td>derive_a</td>
+<td>827.8 k</td>
+<td>307 µs</td>
+<td>3.26e+03</td>
+<td>307 µs</td>
+<td>3240 (5 × 648)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN256</code></td>
+<td>derive_b</td>
+<td>345</td>
+<td>65.5 ns</td>
+<td>1.53e+07</td>
+<td>68.6 ns</td>
+<td>3240 (5 × 648)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN512</code></td>
+<td>exchange</td>
+<td>7.65 M</td>
+<td>2.84 ms</td>
+<td>352</td>
+<td>2.84 ms</td>
+<td>1165 (5 × 233)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN512</code></td>
+<td>init_a</td>
+<td>747.1 k</td>
+<td>277 µs</td>
+<td>3.61e+03</td>
+<td>276 µs</td>
+<td>1165 (5 × 233)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN512</code></td>
+<td>init_b</td>
+<td>729.9 k</td>
+<td>271 µs</td>
+<td>3.69e+03</td>
+<td>271 µs</td>
+<td>1165 (5 × 233)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN512</code></td>
+<td>pass1</td>
+<td>1.09 M</td>
+<td>404 µs</td>
+<td>2.47e+03</td>
+<td>404 µs</td>
+<td>1165 (5 × 233)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN512</code></td>
+<td>pass2</td>
+<td>2.48 M</td>
+<td>921 µs</td>
+<td>1.09e+03</td>
+<td>921 µs</td>
+<td>1165 (5 × 233)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN512</code></td>
+<td>derive_a</td>
+<td>2.59 M</td>
+<td>962 µs</td>
+<td>1.04e+03</td>
+<td>961 µs</td>
+<td>1165 (5 × 233)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN512</code></td>
+<td>derive_b</td>
+<td>402</td>
+<td>95.6 ns</td>
+<td>1.05e+07</td>
+<td>88.5 ns</td>
+<td>1165 (5 × 233)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC128-BiT128</code></td>
+<td>exchange</td>
+<td>3.62 M</td>
+<td>1.34 ms</td>
+<td>746</td>
+<td>1.34 ms</td>
+<td>1950 (5 × 390)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC128-BiT128</code></td>
+<td>init_a</td>
+<td>135.5 k</td>
+<td>50.3 µs</td>
+<td>1.99e+04</td>
+<td>50.1 µs</td>
+<td>1950 (5 × 390)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC128-BiT128</code></td>
+<td>init_b</td>
+<td>409.3 k</td>
+<td>152 µs</td>
+<td>6.59e+03</td>
+<td>152 µs</td>
+<td>1950 (5 × 390)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC128-BiT128</code></td>
+<td>pass1</td>
+<td>131.7 k</td>
+<td>48.8 µs</td>
+<td>2.05e+04</td>
+<td>48.7 µs</td>
+<td>1950 (5 × 390)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC128-BiT128</code></td>
+<td>pass2</td>
+<td>2.19 M</td>
+<td>811 µs</td>
+<td>1.23e+03</td>
+<td>809 µs</td>
+<td>1950 (5 × 390)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC128-BiT128</code></td>
+<td>derive_a</td>
+<td>752.4 k</td>
+<td>279 µs</td>
+<td>3.58e+03</td>
+<td>278 µs</td>
+<td>1950 (5 × 390)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC128-BiT128</code></td>
+<td>derive_b</td>
+<td>211</td>
+<td>33 ns</td>
+<td>3.03e+07</td>
+<td>34.2 ns</td>
+<td>1950 (5 × 390)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC256-BiT256</code></td>
+<td>exchange</td>
+<td>7.19 M</td>
+<td>2.67 ms</td>
+<td>375</td>
+<td>2.66 ms</td>
+<td>1015 (5 × 203)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC256-BiT256</code></td>
+<td>init_a</td>
+<td>234.8 k</td>
+<td>87.1 µs</td>
+<td>1.15e+04</td>
+<td>87 µs</td>
+<td>1015 (5 × 203)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC256-BiT256</code></td>
+<td>init_b</td>
+<td>1.12 M</td>
+<td>416 µs</td>
+<td>2.41e+03</td>
+<td>416 µs</td>
+<td>1015 (5 × 203)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC256-BiT256</code></td>
+<td>pass1</td>
+<td>230.7 k</td>
+<td>85.6 µs</td>
+<td>1.17e+04</td>
+<td>85.6 µs</td>
+<td>1015 (5 × 203)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC256-BiT256</code></td>
+<td>pass2</td>
+<td>3.52 M</td>
+<td>1.31 ms</td>
+<td>766</td>
+<td>1.31 ms</td>
+<td>1015 (5 × 203)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC256-BiT256</code></td>
+<td>derive_a</td>
+<td>2.07 M</td>
+<td>769 µs</td>
+<td>1.3e+03</td>
+<td>769 µs</td>
+<td>1015 (5 × 203)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC256-BiT256</code></td>
+<td>derive_b</td>
+<td>238</td>
+<td>44.2 ns</td>
+<td>2.26e+07</td>
+<td>43.1 ns</td>
+<td>1015 (5 × 203)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC512-BiT512</code></td>
+<td>exchange</td>
+<td>25.06 M</td>
+<td>9.3 ms</td>
+<td>108</td>
+<td>9.29 ms</td>
+<td>335 (5 × 67)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC512-BiT512</code></td>
+<td>init_a</td>
+<td>824.4 k</td>
+<td>306 µs</td>
+<td>3.27e+03</td>
+<td>305 µs</td>
+<td>335 (5 × 67)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC512-BiT512</code></td>
+<td>init_b</td>
+<td>3.33 M</td>
+<td>1.24 ms</td>
+<td>809</td>
+<td>1.24 ms</td>
+<td>335 (5 × 67)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC512-BiT512</code></td>
+<td>pass1</td>
+<td>825.0 k</td>
+<td>306 µs</td>
+<td>3.27e+03</td>
+<td>303 µs</td>
+<td>335 (5 × 67)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC512-BiT512</code></td>
+<td>pass2</td>
+<td>13.85 M</td>
+<td>5.14 ms</td>
+<td>195</td>
+<td>5.12 ms</td>
+<td>335 (5 × 67)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC512-BiT512</code></td>
+<td>derive_a</td>
+<td>6.24 M</td>
+<td>2.31 ms</td>
+<td>432</td>
+<td>2.31 ms</td>
+<td>335 (5 × 67)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC512-BiT512</code></td>
+<td>derive_b</td>
+<td>361</td>
+<td>86 ns</td>
+<td>1.16e+07</td>
+<td>84.7 ns</td>
+<td>335 (5 × 67)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN128-BiT128</code></td>
+<td>exchange</td>
+<td>3.40 M</td>
+<td>1.26 ms</td>
+<td>792</td>
+<td>1.26 ms</td>
+<td>2440 (5 × 488)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN128-BiT128</code></td>
+<td>init_a</td>
+<td>153.4 k</td>
+<td>56.9 µs</td>
+<td>1.76e+04</td>
+<td>56.9 µs</td>
+<td>2440 (5 × 488)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN128-BiT128</code></td>
+<td>init_b</td>
+<td>408.2 k</td>
+<td>151 µs</td>
+<td>6.6e+03</td>
+<td>151 µs</td>
+<td>2440 (5 × 488)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN128-BiT128</code></td>
+<td>pass1</td>
+<td>136.1 k</td>
+<td>50.5 µs</td>
+<td>1.98e+04</td>
+<td>50.5 µs</td>
+<td>2440 (5 × 488)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN128-BiT128</code></td>
+<td>pass2</td>
+<td>2.03 M</td>
+<td>752 µs</td>
+<td>1.33e+03</td>
+<td>752 µs</td>
+<td>2440 (5 × 488)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN128-BiT128</code></td>
+<td>derive_a</td>
+<td>679.8 k</td>
+<td>252 µs</td>
+<td>3.96e+03</td>
+<td>251 µs</td>
+<td>2440 (5 × 488)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN128-BiT128</code></td>
+<td>derive_b</td>
+<td>215</td>
+<td>34.1 ns</td>
+<td>2.93e+07</td>
+<td>34.1 ns</td>
+<td>2440 (5 × 488)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN256-BiT256</code></td>
+<td>exchange</td>
+<td>6.80 M</td>
+<td>2.52 ms</td>
+<td>397</td>
+<td>2.52 ms</td>
+<td>1380 (5 × 276)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN256-BiT256</code></td>
+<td>init_a</td>
+<td>267.2 k</td>
+<td>99.1 µs</td>
+<td>1.01e+04</td>
+<td>98.5 µs</td>
+<td>1380 (5 × 276)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN256-BiT256</code></td>
+<td>init_b</td>
+<td>1.12 M</td>
+<td>416 µs</td>
+<td>2.41e+03</td>
+<td>415 µs</td>
+<td>1380 (5 × 276)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN256-BiT256</code></td>
+<td>pass1</td>
+<td>234.6 k</td>
+<td>86.9 µs</td>
+<td>1.15e+04</td>
+<td>86.5 µs</td>
+<td>1380 (5 × 276)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN256-BiT256</code></td>
+<td>pass2</td>
+<td>3.29 M</td>
+<td>1.22 ms</td>
+<td>818</td>
+<td>1.22 ms</td>
+<td>1380 (5 × 276)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN256-BiT256</code></td>
+<td>derive_a</td>
+<td>1.86 M</td>
+<td>690 µs</td>
+<td>1.45e+03</td>
+<td>690 µs</td>
+<td>1380 (5 × 276)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN256-BiT256</code></td>
+<td>derive_b</td>
+<td>246</td>
+<td>44.8 ns</td>
+<td>2.23e+07</td>
+<td>46.4 ns</td>
+<td>1380 (5 × 276)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN512-BiT512</code></td>
+<td>exchange</td>
+<td>22.34 M</td>
+<td>8.29 ms</td>
+<td>121</td>
+<td>8.29 ms</td>
+<td>400 (5 × 80)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN512-BiT512</code></td>
+<td>init_a</td>
+<td>751.3 k</td>
+<td>279 µs</td>
+<td>3.59e+03</td>
+<td>278 µs</td>
+<td>400 (5 × 80)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN512-BiT512</code></td>
+<td>init_b</td>
+<td>3.33 M</td>
+<td>1.24 ms</td>
+<td>809</td>
+<td>1.24 ms</td>
+<td>400 (5 × 80)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN512-BiT512</code></td>
+<td>pass1</td>
+<td>640.6 k</td>
+<td>237 µs</td>
+<td>4.21e+03</td>
+<td>237 µs</td>
+<td>400 (5 × 80)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN512-BiT512</code></td>
+<td>pass2</td>
+<td>12.05 M</td>
+<td>4.47 ms</td>
+<td>224</td>
+<td>4.47 ms</td>
+<td>400 (5 × 80)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN512-BiT512</code></td>
+<td>derive_a</td>
+<td>5.48 M</td>
+<td>2.03 ms</td>
+<td>492</td>
+<td>2.02 ms</td>
+<td>400 (5 × 80)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN512-BiT512</code></td>
+<td>derive_b</td>
+<td>381</td>
+<td>91 ns</td>
+<td>1.1e+07</td>
+<td>91.2 ns</td>
+<td>400 (5 × 80)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-PLAC128</code></td>
+<td>exchange</td>
+<td>3.66 M</td>
+<td>1.36 ms</td>
+<td>736</td>
+<td>1.36 ms</td>
+<td>3175 (5 × 635)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-PLAC128</code></td>
+<td>init_a</td>
+<td>408.5 k</td>
+<td>152 µs</td>
+<td>6.6e+03</td>
+<td>151 µs</td>
+<td>3175 (5 × 635)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-PLAC128</code></td>
+<td>init_b</td>
+<td>135.4 k</td>
+<td>50.2 µs</td>
+<td>1.99e+04</td>
+<td>50.1 µs</td>
+<td>3175 (5 × 635)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-PLAC128</code></td>
+<td>pass1</td>
+<td>2.03 M</td>
+<td>752 µs</td>
+<td>1.33e+03</td>
+<td>748 µs</td>
+<td>3175 (5 × 635)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-PLAC128</code></td>
+<td>pass2</td>
+<td>859.3 k</td>
+<td>319 µs</td>
+<td>3.14e+03</td>
+<td>317 µs</td>
+<td>3175 (5 × 635)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-PLAC128</code></td>
+<td>derive_a</td>
+<td>241.0 k</td>
+<td>89.4 µs</td>
+<td>1.12e+04</td>
+<td>89.3 µs</td>
+<td>3175 (5 × 635)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-PLAC128</code></td>
+<td>derive_b</td>
+<td>206</td>
+<td>30.6 ns</td>
+<td>3.26e+07</td>
+<td>31.2 ns</td>
+<td>3175 (5 × 635)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-ZEN128</code></td>
+<td>exchange</td>
+<td>3.56 M</td>
+<td>1.32 ms</td>
+<td>758</td>
+<td>1.32 ms</td>
+<td>2110 (5 × 422)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-ZEN128</code></td>
+<td>init_a</td>
+<td>407.9 k</td>
+<td>151 µs</td>
+<td>6.61e+03</td>
+<td>151 µs</td>
+<td>2110 (5 × 422)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-ZEN128</code></td>
+<td>init_b</td>
+<td>154.5 k</td>
+<td>57.3 µs</td>
+<td>1.75e+04</td>
+<td>57.3 µs</td>
+<td>2110 (5 × 422)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-ZEN128</code></td>
+<td>pass1</td>
+<td>2.01 M</td>
+<td>747 µs</td>
+<td>1.34e+03</td>
+<td>746 µs</td>
+<td>2110 (5 × 422)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-ZEN128</code></td>
+<td>pass2</td>
+<td>734.7 k</td>
+<td>273 µs</td>
+<td>3.67e+03</td>
+<td>273 µs</td>
+<td>2110 (5 × 422)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-ZEN128</code></td>
+<td>derive_a</td>
+<td>245.0 k</td>
+<td>90.9 µs</td>
+<td>1.1e+04</td>
+<td>90.8 µs</td>
+<td>2110 (5 × 422)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-ZEN128</code></td>
+<td>derive_b</td>
+<td>345</td>
+<td>42.1 ns</td>
+<td>2.37e+07</td>
+<td>41.5 ns</td>
+<td>2110 (5 × 422)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-PLAC256</code></td>
+<td>exchange</td>
+<td>7.41 M</td>
+<td>2.75 ms</td>
+<td>364</td>
+<td>2.75 ms</td>
+<td>1235 (5 × 247)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-PLAC256</code></td>
+<td>init_a</td>
+<td>1.12 M</td>
+<td>416 µs</td>
+<td>2.4e+03</td>
+<td>416 µs</td>
+<td>1235 (5 × 247)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-PLAC256</code></td>
+<td>init_b</td>
+<td>234.3 k</td>
+<td>86.8 µs</td>
+<td>1.15e+04</td>
+<td>86.8 µs</td>
+<td>1235 (5 × 247)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-PLAC256</code></td>
+<td>pass1</td>
+<td>3.25 M</td>
+<td>1.21 ms</td>
+<td>829</td>
+<td>1.2 ms</td>
+<td>1235 (5 × 247)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-PLAC256</code></td>
+<td>pass2</td>
+<td>2.22 M</td>
+<td>825 µs</td>
+<td>1.21e+03</td>
+<td>825 µs</td>
+<td>1235 (5 × 247)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-PLAC256</code></td>
+<td>derive_a</td>
+<td>593.2 k</td>
+<td>220 µs</td>
+<td>4.55e+03</td>
+<td>220 µs</td>
+<td>1235 (5 × 247)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-PLAC256</code></td>
+<td>derive_b</td>
+<td>257</td>
+<td>49.6 ns</td>
+<td>2.02e+07</td>
+<td>49.8 ns</td>
+<td>1235 (5 × 247)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-ZEN256</code></td>
+<td>exchange</td>
+<td>6.95 M</td>
+<td>2.58 ms</td>
+<td>388</td>
+<td>2.58 ms</td>
+<td>1075 (5 × 215)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-ZEN256</code></td>
+<td>init_a</td>
+<td>1.12 M</td>
+<td>417 µs</td>
+<td>2.4e+03</td>
+<td>416 µs</td>
+<td>1075 (5 × 215)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-ZEN256</code></td>
+<td>init_b</td>
+<td>262.2 k</td>
+<td>97.3 µs</td>
+<td>1.03e+04</td>
+<td>97.4 µs</td>
+<td>1075 (5 × 215)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-ZEN256</code></td>
+<td>pass1</td>
+<td>3.09 M</td>
+<td>1.15 ms</td>
+<td>872</td>
+<td>1.15 ms</td>
+<td>1075 (5 × 215)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-ZEN256</code></td>
+<td>pass2</td>
+<td>1.86 M</td>
+<td>691 µs</td>
+<td>1.45e+03</td>
+<td>691 µs</td>
+<td>1075 (5 × 215)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-ZEN256</code></td>
+<td>derive_a</td>
+<td>594.1 k</td>
+<td>220 µs</td>
+<td>4.54e+03</td>
+<td>220 µs</td>
+<td>1075 (5 × 215)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-ZEN256</code></td>
+<td>derive_b</td>
+<td>247</td>
+<td>46.5 ns</td>
+<td>2.15e+07</td>
+<td>45.3 ns</td>
+<td>1075 (5 × 215)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-PLAC512</code></td>
+<td>exchange</td>
+<td>27.37 M</td>
+<td>10.2 ms</td>
+<td>98.5</td>
+<td>10.2 ms</td>
+<td>385 (5 × 77)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-PLAC512</code></td>
+<td>init_a</td>
+<td>3.33 M</td>
+<td>1.24 ms</td>
+<td>808</td>
+<td>1.24 ms</td>
+<td>385 (5 × 77)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-PLAC512</code></td>
+<td>init_b</td>
+<td>828.9 k</td>
+<td>308 µs</td>
+<td>3.25e+03</td>
+<td>307 µs</td>
+<td>385 (5 × 77)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-PLAC512</code></td>
+<td>pass1</td>
+<td>14.07 M</td>
+<td>5.22 ms</td>
+<td>192</td>
+<td>5.21 ms</td>
+<td>385 (5 × 77)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-PLAC512</code></td>
+<td>pass2</td>
+<td>6.95 M</td>
+<td>2.58 ms</td>
+<td>387</td>
+<td>2.57 ms</td>
+<td>385 (5 × 77)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-PLAC512</code></td>
+<td>derive_a</td>
+<td>2.16 M</td>
+<td>803 µs</td>
+<td>1.24e+03</td>
+<td>803 µs</td>
+<td>385 (5 × 77)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-PLAC512</code></td>
+<td>derive_b</td>
+<td>370</td>
+<td>91.4 ns</td>
+<td>1.09e+07</td>
+<td>88.6 ns</td>
+<td>385 (5 × 77)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-ZEN512</code></td>
+<td>exchange</td>
+<td>23.45 M</td>
+<td>8.7 ms</td>
+<td>115</td>
+<td>8.7 ms</td>
+<td>435 (5 × 87)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-ZEN512</code></td>
+<td>init_a</td>
+<td>3.36 M</td>
+<td>1.25 ms</td>
+<td>802</td>
+<td>1.24 ms</td>
+<td>435 (5 × 87)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-ZEN512</code></td>
+<td>init_b</td>
+<td>737.1 k</td>
+<td>274 µs</td>
+<td>3.65e+03</td>
+<td>273 µs</td>
+<td>435 (5 × 87)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-ZEN512</code></td>
+<td>pass1</td>
+<td>11.95 M</td>
+<td>4.43 ms</td>
+<td>226</td>
+<td>4.43 ms</td>
+<td>435 (5 × 87)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-ZEN512</code></td>
+<td>pass2</td>
+<td>5.47 M</td>
+<td>2.03 ms</td>
+<td>492</td>
+<td>2.03 ms</td>
+<td>435 (5 × 87)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-ZEN512</code></td>
+<td>derive_a</td>
+<td>1.97 M</td>
+<td>729 µs</td>
+<td>1.37e+03</td>
+<td>728 µs</td>
+<td>435 (5 × 87)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-ZEN512</code></td>
+<td>derive_b</td>
+<td>367</td>
+<td>90.7 ns</td>
+<td>1.1e+07</td>
+<td>89.2 ns</td>
+<td>435 (5 × 87)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-ePLAC128</code></td>
+<td>exchange</td>
+<td>5.73 M</td>
+<td>2.13 ms</td>
+<td>470</td>
+<td>2.13 ms</td>
+<td>1640 (5 × 328)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-ePLAC128</code></td>
+<td>init_a</td>
+<td>408.2 k</td>
+<td>151 µs</td>
+<td>6.6e+03</td>
+<td>151 µs</td>
+<td>1640 (5 × 328)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-ePLAC128</code></td>
+<td>init_b</td>
+<td>408.8 k</td>
+<td>152 µs</td>
+<td>6.6e+03</td>
+<td>151 µs</td>
+<td>1640 (5 × 328)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-ePLAC128</code></td>
+<td>pass1</td>
+<td>1.90 M</td>
+<td>706 µs</td>
+<td>1.42e+03</td>
+<td>705 µs</td>
+<td>1640 (5 × 328)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-ePLAC128</code></td>
+<td>pass2</td>
+<td>2.34 M</td>
+<td>869 µs</td>
+<td>1.15e+03</td>
+<td>866 µs</td>
+<td>1640 (5 × 328)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-ePLAC128</code></td>
+<td>derive_a</td>
+<td>663.3 k</td>
+<td>246 µs</td>
+<td>4.06e+03</td>
+<td>246 µs</td>
+<td>1640 (5 × 328)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-ePLAC128</code></td>
+<td>derive_b</td>
+<td>360</td>
+<td>46.9 ns</td>
+<td>2.13e+07</td>
+<td>45.2 ns</td>
+<td>1640 (5 × 328)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-eZEN128</code></td>
+<td>exchange</td>
+<td>5.67 M</td>
+<td>2.1 ms</td>
+<td>475</td>
+<td>2.1 ms</td>
+<td>1615 (5 × 323)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-eZEN128</code></td>
+<td>init_a</td>
+<td>413.6 k</td>
+<td>153 µs</td>
+<td>6.52e+03</td>
+<td>152 µs</td>
+<td>1615 (5 × 323)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-eZEN128</code></td>
+<td>init_b</td>
+<td>410.6 k</td>
+<td>152 µs</td>
+<td>6.57e+03</td>
+<td>151 µs</td>
+<td>1615 (5 × 323)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-eZEN128</code></td>
+<td>pass1</td>
+<td>1.99 M</td>
+<td>739 µs</td>
+<td>1.35e+03</td>
+<td>739 µs</td>
+<td>1615 (5 × 323)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-eZEN128</code></td>
+<td>pass2</td>
+<td>2.19 M</td>
+<td>813 µs</td>
+<td>1.23e+03</td>
+<td>812 µs</td>
+<td>1615 (5 × 323)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-eZEN128</code></td>
+<td>derive_a</td>
+<td>667.9 k</td>
+<td>248 µs</td>
+<td>4.04e+03</td>
+<td>248 µs</td>
+<td>1615 (5 × 323)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-eZEN128</code></td>
+<td>derive_b</td>
+<td>255</td>
+<td>51.1 ns</td>
+<td>1.96e+07</td>
+<td>49.3 ns</td>
+<td>1615 (5 × 323)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-ePLAC256</code></td>
+<td>exchange</td>
+<td>11.34 M</td>
+<td>4.21 ms</td>
+<td>238</td>
+<td>4.2 ms</td>
+<td>715 (5 × 143)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-ePLAC256</code></td>
+<td>init_a</td>
+<td>1.12 M</td>
+<td>416 µs</td>
+<td>2.4e+03</td>
+<td>416 µs</td>
+<td>715 (5 × 143)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-ePLAC256</code></td>
+<td>init_b</td>
+<td>1.12 M</td>
+<td>416 µs</td>
+<td>2.4e+03</td>
+<td>416 µs</td>
+<td>715 (5 × 143)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-ePLAC256</code></td>
+<td>pass1</td>
+<td>2.83 M</td>
+<td>1.05 ms</td>
+<td>953</td>
+<td>1.05 ms</td>
+<td>715 (5 × 143)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-ePLAC256</code></td>
+<td>pass2</td>
+<td>4.41 M</td>
+<td>1.64 ms</td>
+<td>611</td>
+<td>1.63 ms</td>
+<td>715 (5 × 143)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-ePLAC256</code></td>
+<td>derive_a</td>
+<td>1.86 M</td>
+<td>689 µs</td>
+<td>1.45e+03</td>
+<td>688 µs</td>
+<td>715 (5 × 143)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-ePLAC256</code></td>
+<td>derive_b</td>
+<td>271</td>
+<td>55.9 ns</td>
+<td>1.79e+07</td>
+<td>57.2 ns</td>
+<td>715 (5 × 143)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-eZEN256</code></td>
+<td>exchange</td>
+<td>11.27 M</td>
+<td>4.18 ms</td>
+<td>239</td>
+<td>4.18 ms</td>
+<td>705 (5 × 141)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-eZEN256</code></td>
+<td>init_a</td>
+<td>1.13 M</td>
+<td>418 µs</td>
+<td>2.39e+03</td>
+<td>416 µs</td>
+<td>705 (5 × 141)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-eZEN256</code></td>
+<td>init_b</td>
+<td>1.13 M</td>
+<td>417 µs</td>
+<td>2.4e+03</td>
+<td>415 µs</td>
+<td>705 (5 × 141)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-eZEN256</code></td>
+<td>pass1</td>
+<td>2.89 M</td>
+<td>1.07 ms</td>
+<td>931</td>
+<td>1.07 ms</td>
+<td>705 (5 × 141)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-eZEN256</code></td>
+<td>pass2</td>
+<td>4.28 M</td>
+<td>1.59 ms</td>
+<td>630</td>
+<td>1.59 ms</td>
+<td>705 (5 × 141)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-eZEN256</code></td>
+<td>derive_a</td>
+<td>1.87 M</td>
+<td>693 µs</td>
+<td>1.44e+03</td>
+<td>689 µs</td>
+<td>705 (5 × 141)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-eZEN256</code></td>
+<td>derive_b</td>
+<td>323</td>
+<td>60.3 ns</td>
+<td>1.66e+07</td>
+<td>59.8 ns</td>
+<td>705 (5 × 141)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-ePLAC512</code></td>
+<td>exchange</td>
+<td>38.72 M</td>
+<td>14.4 ms</td>
+<td>69.6</td>
+<td>14.4 ms</td>
+<td>210 (5 × 42)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-ePLAC512</code></td>
+<td>init_a</td>
+<td>3.34 M</td>
+<td>1.24 ms</td>
+<td>806</td>
+<td>1.24 ms</td>
+<td>210 (5 × 42)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-ePLAC512</code></td>
+<td>init_b</td>
+<td>3.34 M</td>
+<td>1.24 ms</td>
+<td>808</td>
+<td>1.24 ms</td>
+<td>210 (5 × 42)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-ePLAC512</code></td>
+<td>pass1</td>
+<td>10.98 M</td>
+<td>4.07 ms</td>
+<td>245</td>
+<td>4.06 ms</td>
+<td>210 (5 × 42)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-ePLAC512</code></td>
+<td>pass2</td>
+<td>15.42 M</td>
+<td>5.72 ms</td>
+<td>175</td>
+<td>5.71 ms</td>
+<td>210 (5 × 42)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-ePLAC512</code></td>
+<td>derive_a</td>
+<td>5.68 M</td>
+<td>2.11 ms</td>
+<td>475</td>
+<td>2.11 ms</td>
+<td>210 (5 × 42)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-ePLAC512</code></td>
+<td>derive_b</td>
+<td>378</td>
+<td>88.8 ns</td>
+<td>1.13e+07</td>
+<td>88 ns</td>
+<td>210 (5 × 42)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-eZEN512</code></td>
+<td>exchange</td>
+<td>41.77 M</td>
+<td>15.5 ms</td>
+<td>64.5</td>
+<td>15.5 ms</td>
+<td>200 (5 × 40)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-eZEN512</code></td>
+<td>init_a</td>
+<td>3.33 M</td>
+<td>1.24 ms</td>
+<td>809</td>
+<td>1.24 ms</td>
+<td>200 (5 × 40)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-eZEN512</code></td>
+<td>init_b</td>
+<td>3.36 M</td>
+<td>1.25 ms</td>
+<td>803</td>
+<td>1.24 ms</td>
+<td>200 (5 × 40)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-eZEN512</code></td>
+<td>pass1</td>
+<td>11.79 M</td>
+<td>4.37 ms</td>
+<td>229</td>
+<td>4.36 ms</td>
+<td>200 (5 × 40)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-eZEN512</code></td>
+<td>pass2</td>
+<td>17.88 M</td>
+<td>6.63 ms</td>
+<td>151</td>
+<td>6.63 ms</td>
+<td>200 (5 × 40)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-eZEN512</code></td>
+<td>derive_a</td>
+<td>5.52 M</td>
+<td>2.05 ms</td>
+<td>488</td>
+<td>2.03 ms</td>
+<td>200 (5 × 40)</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-eZEN512</code></td>
+<td>derive_b</td>
+<td>432</td>
+<td>73.2 ns</td>
+<td>1.37e+07</td>
+<td>70.3 ns</td>
+<td>200 (5 × 40)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-resource-consumption">5. Resource consumption</h2>
+<p>Static memory is approximated by the library's loadable ELF segments; peak memory is the process high-water mark (VmHWM) including the benchmark driver and libc, so both are upper-bound proxies rather than isolated algorithm memory.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>static: ELF image (bytes)</th>
+<th>baseline RSS</th>
+<th>peak RSS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CreTAKE-K2K-PLAC128</code></td>
+<td>exchange</td>
+<td>54740</td>
+<td>3528 KiB</td>
+<td>3592 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC128</code></td>
+<td>init_a</td>
+<td>54740</td>
+<td>3540 KiB</td>
+<td>3604 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC128</code></td>
+<td>init_b</td>
+<td>54740</td>
+<td>1504 KiB</td>
+<td>1568 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC128</code></td>
+<td>pass1</td>
+<td>54740</td>
+<td>1504 KiB</td>
+<td>1568 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC128</code></td>
+<td>pass2</td>
+<td>54740</td>
+<td>3512 KiB</td>
+<td>3576 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC128</code></td>
+<td>derive_a</td>
+<td>54740</td>
+<td>1504 KiB</td>
+<td>1568 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC128</code></td>
+<td>derive_b</td>
+<td>54740</td>
+<td>1508 KiB</td>
+<td>1572 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC256</code></td>
+<td>exchange</td>
+<td>62596</td>
+<td>1576 KiB</td>
+<td>1648 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC256</code></td>
+<td>init_a</td>
+<td>62596</td>
+<td>1576 KiB</td>
+<td>1648 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC256</code></td>
+<td>init_b</td>
+<td>62596</td>
+<td>1576 KiB</td>
+<td>1648 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC256</code></td>
+<td>pass1</td>
+<td>62596</td>
+<td>1576 KiB</td>
+<td>1648 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC256</code></td>
+<td>pass2</td>
+<td>62596</td>
+<td>1572 KiB</td>
+<td>1644 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC256</code></td>
+<td>derive_a</td>
+<td>62596</td>
+<td>1572 KiB</td>
+<td>1644 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC256</code></td>
+<td>derive_b</td>
+<td>62596</td>
+<td>3544 KiB</td>
+<td>3608 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512</code></td>
+<td>exchange</td>
+<td>76532</td>
+<td>1740 KiB</td>
+<td>3848 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512</code></td>
+<td>init_a</td>
+<td>76532</td>
+<td>1736 KiB</td>
+<td>1804 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512</code></td>
+<td>init_b</td>
+<td>76532</td>
+<td>1736 KiB</td>
+<td>1804 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512</code></td>
+<td>pass1</td>
+<td>76532</td>
+<td>3784 KiB</td>
+<td>3848 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512</code></td>
+<td>pass2</td>
+<td>76532</td>
+<td>3756 KiB</td>
+<td>3820 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512</code></td>
+<td>derive_a</td>
+<td>76532</td>
+<td>1740 KiB</td>
+<td>1808 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512</code></td>
+<td>derive_b</td>
+<td>76532</td>
+<td>1740 KiB</td>
+<td>1808 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512Star</code></td>
+<td>exchange</td>
+<td>81300</td>
+<td>3664 KiB</td>
+<td>3728 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512Star</code></td>
+<td>init_a</td>
+<td>81300</td>
+<td>3712 KiB</td>
+<td>3776 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512Star</code></td>
+<td>init_b</td>
+<td>81300</td>
+<td>3804 KiB</td>
+<td>3868 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512Star</code></td>
+<td>pass1</td>
+<td>81300</td>
+<td>3676 KiB</td>
+<td>3740 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512Star</code></td>
+<td>pass2</td>
+<td>81300</td>
+<td>3604 KiB</td>
+<td>3668 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512Star</code></td>
+<td>derive_a</td>
+<td>81300</td>
+<td>1784 KiB</td>
+<td>1852 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512Star</code></td>
+<td>derive_b</td>
+<td>81300</td>
+<td>1784 KiB</td>
+<td>1852 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN128</code></td>
+<td>exchange</td>
+<td>39204</td>
+<td>1484 KiB</td>
+<td>1552 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN128</code></td>
+<td>init_a</td>
+<td>39204</td>
+<td>1488 KiB</td>
+<td>1556 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN128</code></td>
+<td>init_b</td>
+<td>39204</td>
+<td>3504 KiB</td>
+<td>3568 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN128</code></td>
+<td>pass1</td>
+<td>39204</td>
+<td>1484 KiB</td>
+<td>1552 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN128</code></td>
+<td>pass2</td>
+<td>39204</td>
+<td>1484 KiB</td>
+<td>1552 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN128</code></td>
+<td>derive_a</td>
+<td>39204</td>
+<td>1484 KiB</td>
+<td>1552 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN128</code></td>
+<td>derive_b</td>
+<td>39204</td>
+<td>1488 KiB</td>
+<td>1556 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN256</code></td>
+<td>exchange</td>
+<td>44672</td>
+<td>1536 KiB</td>
+<td>1608 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN256</code></td>
+<td>init_a</td>
+<td>44672</td>
+<td>3568 KiB</td>
+<td>3632 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN256</code></td>
+<td>init_b</td>
+<td>44672</td>
+<td>1536 KiB</td>
+<td>1608 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN256</code></td>
+<td>pass1</td>
+<td>44672</td>
+<td>3560 KiB</td>
+<td>3624 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN256</code></td>
+<td>pass2</td>
+<td>44672</td>
+<td>1536 KiB</td>
+<td>1608 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN256</code></td>
+<td>derive_a</td>
+<td>44672</td>
+<td>3492 KiB</td>
+<td>3556 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN256</code></td>
+<td>derive_b</td>
+<td>44672</td>
+<td>1536 KiB</td>
+<td>1608 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN512</code></td>
+<td>exchange</td>
+<td>51456</td>
+<td>1660 KiB</td>
+<td>1728 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN512</code></td>
+<td>init_a</td>
+<td>51456</td>
+<td>1660 KiB</td>
+<td>1728 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN512</code></td>
+<td>init_b</td>
+<td>51456</td>
+<td>1660 KiB</td>
+<td>1728 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN512</code></td>
+<td>pass1</td>
+<td>51456</td>
+<td>1660 KiB</td>
+<td>1728 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN512</code></td>
+<td>pass2</td>
+<td>51456</td>
+<td>1660 KiB</td>
+<td>1728 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN512</code></td>
+<td>derive_a</td>
+<td>51456</td>
+<td>3604 KiB</td>
+<td>3668 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN512</code></td>
+<td>derive_b</td>
+<td>51456</td>
+<td>3608 KiB</td>
+<td>3672 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC128-BiT128</code></td>
+<td>exchange</td>
+<td>87036</td>
+<td>1580 KiB</td>
+<td>1648 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC128-BiT128</code></td>
+<td>init_a</td>
+<td>87036</td>
+<td>1580 KiB</td>
+<td>1648 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC128-BiT128</code></td>
+<td>init_b</td>
+<td>87036</td>
+<td>3604 KiB</td>
+<td>3668 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC128-BiT128</code></td>
+<td>pass1</td>
+<td>87036</td>
+<td>1576 KiB</td>
+<td>1644 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC128-BiT128</code></td>
+<td>pass2</td>
+<td>87036</td>
+<td>1580 KiB</td>
+<td>1648 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC128-BiT128</code></td>
+<td>derive_a</td>
+<td>87036</td>
+<td>3568 KiB</td>
+<td>3632 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC128-BiT128</code></td>
+<td>derive_b</td>
+<td>87036</td>
+<td>1576 KiB</td>
+<td>1644 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC256-BiT256</code></td>
+<td>exchange</td>
+<td>95812</td>
+<td>1768 KiB</td>
+<td>1836 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC256-BiT256</code></td>
+<td>init_a</td>
+<td>95812</td>
+<td>1764 KiB</td>
+<td>1832 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC256-BiT256</code></td>
+<td>init_b</td>
+<td>95812</td>
+<td>1768 KiB</td>
+<td>1836 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC256-BiT256</code></td>
+<td>pass1</td>
+<td>95812</td>
+<td>3680 KiB</td>
+<td>3744 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC256-BiT256</code></td>
+<td>pass2</td>
+<td>95812</td>
+<td>3776 KiB</td>
+<td>3840 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC256-BiT256</code></td>
+<td>derive_a</td>
+<td>95812</td>
+<td>1768 KiB</td>
+<td>1836 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC256-BiT256</code></td>
+<td>derive_b</td>
+<td>95812</td>
+<td>3720 KiB</td>
+<td>3784 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC512-BiT512</code></td>
+<td>exchange</td>
+<td>113604</td>
+<td>2080 KiB</td>
+<td>2152 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC512-BiT512</code></td>
+<td>init_a</td>
+<td>113604</td>
+<td>3852 KiB</td>
+<td>3916 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC512-BiT512</code></td>
+<td>init_b</td>
+<td>113604</td>
+<td>2076 KiB</td>
+<td>2148 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC512-BiT512</code></td>
+<td>pass1</td>
+<td>113604</td>
+<td>3972 KiB</td>
+<td>4036 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC512-BiT512</code></td>
+<td>pass2</td>
+<td>113604</td>
+<td>2076 KiB</td>
+<td>2148 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC512-BiT512</code></td>
+<td>derive_a</td>
+<td>113604</td>
+<td>2080 KiB</td>
+<td>2152 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC512-BiT512</code></td>
+<td>derive_b</td>
+<td>113604</td>
+<td>2076 KiB</td>
+<td>2148 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN128-BiT128</code></td>
+<td>exchange</td>
+<td>71308</td>
+<td>1556 KiB</td>
+<td>1624 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN128-BiT128</code></td>
+<td>init_a</td>
+<td>71308</td>
+<td>1556 KiB</td>
+<td>1624 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN128-BiT128</code></td>
+<td>init_b</td>
+<td>71308</td>
+<td>1556 KiB</td>
+<td>1624 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN128-BiT128</code></td>
+<td>pass1</td>
+<td>71308</td>
+<td>3548 KiB</td>
+<td>3612 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN128-BiT128</code></td>
+<td>pass2</td>
+<td>71308</td>
+<td>3528 KiB</td>
+<td>3592 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN128-BiT128</code></td>
+<td>derive_a</td>
+<td>71308</td>
+<td>1552 KiB</td>
+<td>1620 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN128-BiT128</code></td>
+<td>derive_b</td>
+<td>71308</td>
+<td>1552 KiB</td>
+<td>1620 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN256-BiT256</code></td>
+<td>exchange</td>
+<td>81828</td>
+<td>1748 KiB</td>
+<td>1816 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN256-BiT256</code></td>
+<td>init_a</td>
+<td>81828</td>
+<td>1748 KiB</td>
+<td>1816 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN256-BiT256</code></td>
+<td>init_b</td>
+<td>81828</td>
+<td>1748 KiB</td>
+<td>1816 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN256-BiT256</code></td>
+<td>pass1</td>
+<td>81828</td>
+<td>1748 KiB</td>
+<td>1816 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN256-BiT256</code></td>
+<td>pass2</td>
+<td>81828</td>
+<td>1748 KiB</td>
+<td>1816 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN256-BiT256</code></td>
+<td>derive_a</td>
+<td>81828</td>
+<td>1748 KiB</td>
+<td>1816 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN256-BiT256</code></td>
+<td>derive_b</td>
+<td>81828</td>
+<td>1748 KiB</td>
+<td>1816 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN512-BiT512</code></td>
+<td>exchange</td>
+<td>90772</td>
+<td>3792 KiB</td>
+<td>3856 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN512-BiT512</code></td>
+<td>init_a</td>
+<td>90772</td>
+<td>2040 KiB</td>
+<td>2112 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN512-BiT512</code></td>
+<td>init_b</td>
+<td>90772</td>
+<td>3848 KiB</td>
+<td>3912 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN512-BiT512</code></td>
+<td>pass1</td>
+<td>90772</td>
+<td>4052 KiB</td>
+<td>4116 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN512-BiT512</code></td>
+<td>pass2</td>
+<td>90772</td>
+<td>2044 KiB</td>
+<td>2116 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN512-BiT512</code></td>
+<td>derive_a</td>
+<td>90772</td>
+<td>2044 KiB</td>
+<td>2116 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN512-BiT512</code></td>
+<td>derive_b</td>
+<td>90772</td>
+<td>3988 KiB</td>
+<td>4052 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-PLAC128</code></td>
+<td>exchange</td>
+<td>87044</td>
+<td>1580 KiB</td>
+<td>1644 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-PLAC128</code></td>
+<td>init_a</td>
+<td>87044</td>
+<td>1580 KiB</td>
+<td>1644 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-PLAC128</code></td>
+<td>init_b</td>
+<td>87044</td>
+<td>1580 KiB</td>
+<td>1644 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-PLAC128</code></td>
+<td>pass1</td>
+<td>87044</td>
+<td>1576 KiB</td>
+<td>1640 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-PLAC128</code></td>
+<td>pass2</td>
+<td>87044</td>
+<td>1580 KiB</td>
+<td>1644 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-PLAC128</code></td>
+<td>derive_a</td>
+<td>87044</td>
+<td>1580 KiB</td>
+<td>1644 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-PLAC128</code></td>
+<td>derive_b</td>
+<td>87044</td>
+<td>1576 KiB</td>
+<td>1640 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-ZEN128</code></td>
+<td>exchange</td>
+<td>75484</td>
+<td>1556 KiB</td>
+<td>1624 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-ZEN128</code></td>
+<td>init_a</td>
+<td>75484</td>
+<td>1552 KiB</td>
+<td>1620 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-ZEN128</code></td>
+<td>init_b</td>
+<td>75484</td>
+<td>1556 KiB</td>
+<td>1624 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-ZEN128</code></td>
+<td>pass1</td>
+<td>75484</td>
+<td>1556 KiB</td>
+<td>1624 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-ZEN128</code></td>
+<td>pass2</td>
+<td>75484</td>
+<td>1552 KiB</td>
+<td>1620 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-ZEN128</code></td>
+<td>derive_a</td>
+<td>75484</td>
+<td>1556 KiB</td>
+<td>1624 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-ZEN128</code></td>
+<td>derive_b</td>
+<td>75484</td>
+<td>1556 KiB</td>
+<td>1624 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-PLAC256</code></td>
+<td>exchange</td>
+<td>95876</td>
+<td>1768 KiB</td>
+<td>1836 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-PLAC256</code></td>
+<td>init_a</td>
+<td>95876</td>
+<td>1768 KiB</td>
+<td>1836 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-PLAC256</code></td>
+<td>init_b</td>
+<td>95876</td>
+<td>1768 KiB</td>
+<td>1836 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-PLAC256</code></td>
+<td>pass1</td>
+<td>95876</td>
+<td>3732 KiB</td>
+<td>3796 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-PLAC256</code></td>
+<td>pass2</td>
+<td>95876</td>
+<td>1768 KiB</td>
+<td>1836 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-PLAC256</code></td>
+<td>derive_a</td>
+<td>95876</td>
+<td>3748 KiB</td>
+<td>3812 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-PLAC256</code></td>
+<td>derive_b</td>
+<td>95876</td>
+<td>1768 KiB</td>
+<td>1836 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-ZEN256</code></td>
+<td>exchange</td>
+<td>77868</td>
+<td>1740 KiB</td>
+<td>1808 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-ZEN256</code></td>
+<td>init_a</td>
+<td>77868</td>
+<td>3780 KiB</td>
+<td>3844 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-ZEN256</code></td>
+<td>init_b</td>
+<td>77868</td>
+<td>1740 KiB</td>
+<td>1808 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-ZEN256</code></td>
+<td>pass1</td>
+<td>77868</td>
+<td>1740 KiB</td>
+<td>1808 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-ZEN256</code></td>
+<td>pass2</td>
+<td>77868</td>
+<td>3712 KiB</td>
+<td>3776 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-ZEN256</code></td>
+<td>derive_a</td>
+<td>77868</td>
+<td>1744 KiB</td>
+<td>1812 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-ZEN256</code></td>
+<td>derive_b</td>
+<td>77868</td>
+<td>1740 KiB</td>
+<td>1808 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-PLAC512</code></td>
+<td>exchange</td>
+<td>113604</td>
+<td>2068 KiB</td>
+<td>2136 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-PLAC512</code></td>
+<td>init_a</td>
+<td>113604</td>
+<td>4048 KiB</td>
+<td>4112 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-PLAC512</code></td>
+<td>init_b</td>
+<td>113604</td>
+<td>2068 KiB</td>
+<td>2136 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-PLAC512</code></td>
+<td>pass1</td>
+<td>113604</td>
+<td>3904 KiB</td>
+<td>3968 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-PLAC512</code></td>
+<td>pass2</td>
+<td>113604</td>
+<td>2068 KiB</td>
+<td>2136 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-PLAC512</code></td>
+<td>derive_a</td>
+<td>113604</td>
+<td>4008 KiB</td>
+<td>4072 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-PLAC512</code></td>
+<td>derive_b</td>
+<td>113604</td>
+<td>2068 KiB</td>
+<td>2136 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-ZEN512</code></td>
+<td>exchange</td>
+<td>90844</td>
+<td>2032 KiB</td>
+<td>2100 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-ZEN512</code></td>
+<td>init_a</td>
+<td>90844</td>
+<td>3880 KiB</td>
+<td>3944 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-ZEN512</code></td>
+<td>init_b</td>
+<td>90844</td>
+<td>2032 KiB</td>
+<td>2100 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-ZEN512</code></td>
+<td>pass1</td>
+<td>90844</td>
+<td>2028 KiB</td>
+<td>2096 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-ZEN512</code></td>
+<td>pass2</td>
+<td>90844</td>
+<td>3980 KiB</td>
+<td>4044 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-ZEN512</code></td>
+<td>derive_a</td>
+<td>90844</td>
+<td>3988 KiB</td>
+<td>4052 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-ZEN512</code></td>
+<td>derive_b</td>
+<td>90844</td>
+<td>4056 KiB</td>
+<td>4120 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-ePLAC128</code></td>
+<td>exchange</td>
+<td>86964</td>
+<td>1588 KiB</td>
+<td>1656 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-ePLAC128</code></td>
+<td>init_a</td>
+<td>86964</td>
+<td>1588 KiB</td>
+<td>1656 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-ePLAC128</code></td>
+<td>init_b</td>
+<td>86964</td>
+<td>1588 KiB</td>
+<td>1656 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-ePLAC128</code></td>
+<td>pass1</td>
+<td>86964</td>
+<td>1588 KiB</td>
+<td>1656 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-ePLAC128</code></td>
+<td>pass2</td>
+<td>86964</td>
+<td>1588 KiB</td>
+<td>1656 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-ePLAC128</code></td>
+<td>derive_a</td>
+<td>86964</td>
+<td>1584 KiB</td>
+<td>1652 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-ePLAC128</code></td>
+<td>derive_b</td>
+<td>86964</td>
+<td>3608 KiB</td>
+<td>3672 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-eZEN128</code></td>
+<td>exchange</td>
+<td>71324</td>
+<td>3540 KiB</td>
+<td>3604 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-eZEN128</code></td>
+<td>init_a</td>
+<td>71324</td>
+<td>1564 KiB</td>
+<td>1632 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-eZEN128</code></td>
+<td>init_b</td>
+<td>71324</td>
+<td>1564 KiB</td>
+<td>1632 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-eZEN128</code></td>
+<td>pass1</td>
+<td>71324</td>
+<td>1568 KiB</td>
+<td>1636 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-eZEN128</code></td>
+<td>pass2</td>
+<td>71324</td>
+<td>3524 KiB</td>
+<td>3588 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-eZEN128</code></td>
+<td>derive_a</td>
+<td>71324</td>
+<td>1568 KiB</td>
+<td>1636 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-eZEN128</code></td>
+<td>derive_b</td>
+<td>71324</td>
+<td>3576 KiB</td>
+<td>3640 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-ePLAC256</code></td>
+<td>exchange</td>
+<td>95796</td>
+<td>3784 KiB</td>
+<td>3848 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-ePLAC256</code></td>
+<td>init_a</td>
+<td>95796</td>
+<td>1800 KiB</td>
+<td>1868 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-ePLAC256</code></td>
+<td>init_b</td>
+<td>95796</td>
+<td>1800 KiB</td>
+<td>1868 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-ePLAC256</code></td>
+<td>pass1</td>
+<td>95796</td>
+<td>1796 KiB</td>
+<td>1864 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-ePLAC256</code></td>
+<td>pass2</td>
+<td>95796</td>
+<td>1796 KiB</td>
+<td>1864 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-ePLAC256</code></td>
+<td>derive_a</td>
+<td>95796</td>
+<td>1800 KiB</td>
+<td>1868 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-ePLAC256</code></td>
+<td>derive_b</td>
+<td>95796</td>
+<td>1796 KiB</td>
+<td>1864 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-eZEN256</code></td>
+<td>exchange</td>
+<td>77812</td>
+<td>3780 KiB</td>
+<td>3844 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-eZEN256</code></td>
+<td>init_a</td>
+<td>77812</td>
+<td>3640 KiB</td>
+<td>3704 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-eZEN256</code></td>
+<td>init_b</td>
+<td>77812</td>
+<td>1764 KiB</td>
+<td>1836 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-eZEN256</code></td>
+<td>pass1</td>
+<td>77812</td>
+<td>1764 KiB</td>
+<td>1836 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-eZEN256</code></td>
+<td>pass2</td>
+<td>77812</td>
+<td>1764 KiB</td>
+<td>1836 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-eZEN256</code></td>
+<td>derive_a</td>
+<td>77812</td>
+<td>1764 KiB</td>
+<td>1836 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-eZEN256</code></td>
+<td>derive_b</td>
+<td>77812</td>
+<td>1768 KiB</td>
+<td>1840 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-ePLAC512</code></td>
+<td>exchange</td>
+<td>113524</td>
+<td>3996 KiB</td>
+<td>4060 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-ePLAC512</code></td>
+<td>init_a</td>
+<td>113524</td>
+<td>4148 KiB</td>
+<td>4212 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-ePLAC512</code></td>
+<td>init_b</td>
+<td>113524</td>
+<td>4076 KiB</td>
+<td>4140 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-ePLAC512</code></td>
+<td>pass1</td>
+<td>113524</td>
+<td>2128 KiB</td>
+<td>2200 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-ePLAC512</code></td>
+<td>pass2</td>
+<td>113524</td>
+<td>3908 KiB</td>
+<td>3972 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-ePLAC512</code></td>
+<td>derive_a</td>
+<td>113524</td>
+<td>3948 KiB</td>
+<td>4012 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-ePLAC512</code></td>
+<td>derive_b</td>
+<td>113524</td>
+<td>4056 KiB</td>
+<td>4244 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-eZEN512</code></td>
+<td>exchange</td>
+<td>90788</td>
+<td>4064 KiB</td>
+<td>4128 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-eZEN512</code></td>
+<td>init_a</td>
+<td>90788</td>
+<td>2100 KiB</td>
+<td>2172 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-eZEN512</code></td>
+<td>init_b</td>
+<td>90788</td>
+<td>4032 KiB</td>
+<td>4096 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-eZEN512</code></td>
+<td>pass1</td>
+<td>90788</td>
+<td>2096 KiB</td>
+<td>2168 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-eZEN512</code></td>
+<td>pass2</td>
+<td>90788</td>
+<td>4044 KiB</td>
+<td>4108 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-eZEN512</code></td>
+<td>derive_a</td>
+<td>90788</td>
+<td>3952 KiB</td>
+<td>4016 KiB</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-eZEN512</code></td>
+<td>derive_b</td>
+<td>90788</td>
+<td>2100 KiB</td>
+<td>2172 KiB</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="6-transmission-and-storage-overhead">6. Transmission and storage overhead</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>passes</th>
+<th>messages (bytes)</th>
+<th>total</th>
+<th>long-term pk / sk</th>
+<th>shared secret</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CreTAKE-K2K-PLAC128</code></td>
+<td>2</td>
+<td>1170 / 1280</td>
+<td>2450</td>
+<td>530 / 1570</td>
+<td>32</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC256</code></td>
+<td>2</td>
+<td>2340 / 2560</td>
+<td>4900</td>
+<td>1060 / 3140</td>
+<td>64</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512</code></td>
+<td>2</td>
+<td>4676 / 4608</td>
+<td>9284</td>
+<td>2116 / 6276</td>
+<td>128</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512Star</code></td>
+<td>2</td>
+<td>5492 / 5428</td>
+<td>10920</td>
+<td>2522 / 6682</td>
+<td>128</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN128</code></td>
+<td>2</td>
+<td>1127 / 1024</td>
+<td>2151</td>
+<td>615 / 1303</td>
+<td>32</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN256</code></td>
+<td>2</td>
+<td>2253 / 2048</td>
+<td>4301</td>
+<td>1229 / 2605</td>
+<td>64</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN512</code></td>
+<td>2</td>
+<td>4506 / 4096</td>
+<td>8602</td>
+<td>2458 / 5210</td>
+<td>128</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC128-BiT128</code></td>
+<td>2</td>
+<td>530 / 2784</td>
+<td>3314</td>
+<td>1048 / 1864</td>
+<td>32</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC256-BiT256</code></td>
+<td>2</td>
+<td>1060 / 6016</td>
+<td>7076</td>
+<td>2144 / 4160</td>
+<td>64</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC512-BiT512</code></td>
+<td>2</td>
+<td>2116 / 11815</td>
+<td>13931</td>
+<td>5056 / 9024</td>
+<td>128</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN128-BiT128</code></td>
+<td>2</td>
+<td>615 / 2528</td>
+<td>3143</td>
+<td>1048 / 1864</td>
+<td>32</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN256-BiT256</code></td>
+<td>2</td>
+<td>1229 / 5504</td>
+<td>6733</td>
+<td>2144 / 4160</td>
+<td>64</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN512-BiT512</code></td>
+<td>2</td>
+<td>2458 / 10791</td>
+<td>13249</td>
+<td>5056 / 9024</td>
+<td>128</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-PLAC128</code></td>
+<td>2</td>
+<td>2674 / 640</td>
+<td>3314</td>
+<td>1048 / 1864</td>
+<td>32</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-ZEN128</code></td>
+<td>2</td>
+<td>2631 / 512</td>
+<td>3143</td>
+<td>1048 / 1864</td>
+<td>32</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-PLAC256</code></td>
+<td>2</td>
+<td>5796 / 1280</td>
+<td>7076</td>
+<td>2144 / 4160</td>
+<td>64</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-ZEN256</code></td>
+<td>2</td>
+<td>5709 / 1024</td>
+<td>6733</td>
+<td>2144 / 4160</td>
+<td>64</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-PLAC512</code></td>
+<td>2</td>
+<td>11371 / 2560</td>
+<td>13931</td>
+<td>5056 / 9024</td>
+<td>128</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-ZEN512</code></td>
+<td>2</td>
+<td>11201 / 2048</td>
+<td>13249</td>
+<td>5056 / 9024</td>
+<td>128</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-ePLAC128</code></td>
+<td>2</td>
+<td>2034 / 2144</td>
+<td>4178</td>
+<td>1048 / 1864</td>
+<td>32</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-eZEN128</code></td>
+<td>2</td>
+<td>2119 / 2016</td>
+<td>4135</td>
+<td>1048 / 1864</td>
+<td>32</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-ePLAC256</code></td>
+<td>2</td>
+<td>4516 / 4736</td>
+<td>9252</td>
+<td>2144 / 4160</td>
+<td>64</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-eZEN256</code></td>
+<td>2</td>
+<td>4685 / 4480</td>
+<td>9165</td>
+<td>2144 / 4160</td>
+<td>64</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-ePLAC512</code></td>
+<td>2</td>
+<td>8811 / 9255</td>
+<td>18066</td>
+<td>5056 / 9024</td>
+<td>128</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-eZEN512</code></td>
+<td>2</td>
+<td>9153 / 8743</td>
+<td>17896</td>
+<td>5056 / 9024</td>
+<td>128</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="symmetric-primitives">Symmetric primitives</h2>
+<p><a href="../symmetric-survey.html">Survey</a> verdict: <strong>ICCS-only</strong> — PolarLAC/ZEN/BiT components; Keccak only if BIT_USE_SHAKE=1</p>
+<p>Share of each operation spent in the ICCS placeholder hash functions and in the ICCS DRNG (reference build, measured in the same run with link-time wrappers):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>pseudohash/XOF/sm3</th>
+<th>DRNG</th>
+<th>calls per operation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CreTAKE-K2K-PLAC128</code></td>
+<td>exchange</td>
+<td>74%</td>
+<td>2.3%</td>
+<td>drng 8, pseudoXOF 92.4, pseudohash 2</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC256</code></td>
+<td>exchange</td>
+<td>74%</td>
+<td>1.2%</td>
+<td>drng 8, pseudoXOF 92.4, pseudohash 2</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512</code></td>
+<td>exchange</td>
+<td>82%</td>
+<td>0.3%</td>
+<td>drng 7, pseudoXOF 98.7, pseudohash 4</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512Star</code></td>
+<td>exchange</td>
+<td>84%</td>
+<td>0.3%</td>
+<td>drng 7, pseudoXOF 139, pseudohash 4</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN128</code></td>
+<td>exchange</td>
+<td>59%</td>
+<td>2.8%</td>
+<td>drng 8, pseudoXOF 26.8, pseudohash 6, sm3hash 6</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN256</code></td>
+<td>exchange</td>
+<td>60%</td>
+<td>1.6%</td>
+<td>drng 8, pseudoXOF 27.1, pseudohash 6, sm3hash 6</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN512</code></td>
+<td>exchange</td>
+<td>68%</td>
+<td>0.6%</td>
+<td>drng 8, pseudoXOF 29.1, pseudohash 10</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC128-BiT128</code></td>
+<td>exchange</td>
+<td>72%</td>
+<td>1.2%</td>
+<td>drng 9, pseudoXOF 146, sm3hash 11</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC256-BiT256</code></td>
+<td>exchange</td>
+<td>75%</td>
+<td>0.6%</td>
+<td>drng 9, pseudoXOF 170, pseudohash 6.79</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC512-BiT512</code></td>
+<td>exchange</td>
+<td>79%</td>
+<td>0.2%</td>
+<td>drng 9, pseudoXOF 250, pseudohash 7.78</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN128-BiT128</code></td>
+<td>exchange</td>
+<td>69%</td>
+<td>1.2%</td>
+<td>drng 9, pseudoXOF 108, pseudohash 2, sm3hash 13.7</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN256-BiT256</code></td>
+<td>exchange</td>
+<td>72%</td>
+<td>0.6%</td>
+<td>drng 9, pseudoXOF 137, pseudohash 8.99, sm3hash 3</td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN512-BiT512</code></td>
+<td>exchange</td>
+<td>76%</td>
+<td>0.2%</td>
+<td>drng 9, pseudoXOF 212, pseudohash 11.6</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-PLAC128</code></td>
+<td>exchange</td>
+<td>72%</td>
+<td>1.2%</td>
+<td>drng 9, pseudoXOF 152, pseudohash 2, sm3hash 10.5</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-ZEN128</code></td>
+<td>exchange</td>
+<td>68%</td>
+<td>1.2%</td>
+<td>drng 9, pseudoXOF 112, pseudohash 4, sm3hash 13.8</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-PLAC256</code></td>
+<td>exchange</td>
+<td>74%</td>
+<td>0.6%</td>
+<td>drng 9, pseudoXOF 182, pseudohash 8.98</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-ZEN256</code></td>
+<td>exchange</td>
+<td>71%</td>
+<td>0.6%</td>
+<td>drng 9, pseudoXOF 139, pseudohash 10.9, sm3hash 3</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-PLAC512</code></td>
+<td>exchange</td>
+<td>78%</td>
+<td>0.2%</td>
+<td>drng 9, pseudoXOF 271, pseudohash 10.6</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-ZEN512</code></td>
+<td>exchange</td>
+<td>75%</td>
+<td>0.2%</td>
+<td>drng 9, pseudoXOF 219, pseudohash 13.9</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-ePLAC128</code></td>
+<td>exchange</td>
+<td>72%</td>
+<td>0.8%</td>
+<td>drng 10, pseudoXOF 216, pseudohash 2, sm3hash 21.4</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-eZEN128</code></td>
+<td>exchange</td>
+<td>70%</td>
+<td>0.8%</td>
+<td>drng 10, pseudoXOF 197, pseudohash 2, sm3hash 21.3</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-ePLAC256</code></td>
+<td>exchange</td>
+<td>74%</td>
+<td>0.4%</td>
+<td>drng 10, pseudoXOF 271, pseudohash 15.8</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-eZEN256</code></td>
+<td>exchange</td>
+<td>73%</td>
+<td>0.4%</td>
+<td>drng 10, pseudoXOF 252, pseudohash 15.8</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-ePLAC512</code></td>
+<td>exchange</td>
+<td>78%</td>
+<td>0.1%</td>
+<td>drng 10, pseudoXOF 435, pseudohash 18</td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-eZEN512</code></td>
+<td>exchange</td>
+<td>77%</td>
+<td>0.1%</td>
+<td>drng 10, pseudoXOF 416, pseudohash 18.1</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="7-raw-evidence-index">7. Raw evidence index</h2>
+<p>Paths are relative to <code>performance/data/arm_1/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>; each JSON file records its commands, environment and trials.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>item</th>
+<th>file</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CreTAKE-K2K-PLAC128</code></td>
+<td>KAT log (sha256 <code>e08c8cb6e89c1938…</code>)</td>
+<td><code>kat/kex-03/CreTAKE-K2K-PLAC128.log</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC128</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-03/CreTAKE-K2K-PLAC128__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC128</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-03/CreTAKE-K2K-PLAC128__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC128</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-03/CreTAKE-K2K-PLAC128__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC128</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-03/CreTAKE-K2K-PLAC128__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC128</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-03/CreTAKE-K2K-PLAC128__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC128</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-03/CreTAKE-K2K-PLAC128__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC128</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-03/CreTAKE-K2K-PLAC128__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC128</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-03/CreTAKE-K2K-PLAC128__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC256</code></td>
+<td>KAT log (sha256 <code>6776cc92dfcb13ff…</code>)</td>
+<td><code>kat/kex-03/CreTAKE-K2K-PLAC256.log</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC256</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-03/CreTAKE-K2K-PLAC256__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC256</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-03/CreTAKE-K2K-PLAC256__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC256</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-03/CreTAKE-K2K-PLAC256__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC256</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-03/CreTAKE-K2K-PLAC256__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC256</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-03/CreTAKE-K2K-PLAC256__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC256</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-03/CreTAKE-K2K-PLAC256__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC256</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-03/CreTAKE-K2K-PLAC256__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC256</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-03/CreTAKE-K2K-PLAC256__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512</code></td>
+<td>KAT log (sha256 <code>0ec0534550ac2d11…</code>)</td>
+<td><code>kat/kex-03/CreTAKE-K2K-PLAC512.log</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-03/CreTAKE-K2K-PLAC512__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-03/CreTAKE-K2K-PLAC512__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-03/CreTAKE-K2K-PLAC512__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-03/CreTAKE-K2K-PLAC512__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-03/CreTAKE-K2K-PLAC512__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-03/CreTAKE-K2K-PLAC512__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-03/CreTAKE-K2K-PLAC512__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-03/CreTAKE-K2K-PLAC512__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512Star</code></td>
+<td>KAT log (sha256 <code>378269af4e456bd7…</code>)</td>
+<td><code>kat/kex-03/CreTAKE-K2K-PLAC512Star.log</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512Star</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-03/CreTAKE-K2K-PLAC512Star__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512Star</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-03/CreTAKE-K2K-PLAC512Star__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512Star</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-03/CreTAKE-K2K-PLAC512Star__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512Star</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-03/CreTAKE-K2K-PLAC512Star__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512Star</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-03/CreTAKE-K2K-PLAC512Star__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512Star</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-03/CreTAKE-K2K-PLAC512Star__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512Star</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-03/CreTAKE-K2K-PLAC512Star__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-PLAC512Star</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-03/CreTAKE-K2K-PLAC512Star__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN128</code></td>
+<td>KAT log (sha256 <code>b8e449db5fef1505…</code>)</td>
+<td><code>kat/kex-03/CreTAKE-K2K-ZEN128.log</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN128</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-03/CreTAKE-K2K-ZEN128__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN128</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-03/CreTAKE-K2K-ZEN128__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN128</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-03/CreTAKE-K2K-ZEN128__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN128</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-03/CreTAKE-K2K-ZEN128__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN128</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-03/CreTAKE-K2K-ZEN128__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN128</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-03/CreTAKE-K2K-ZEN128__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN128</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-03/CreTAKE-K2K-ZEN128__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN128</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-03/CreTAKE-K2K-ZEN128__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN256</code></td>
+<td>KAT log (sha256 <code>8f56d874af2c7b47…</code>)</td>
+<td><code>kat/kex-03/CreTAKE-K2K-ZEN256.log</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN256</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-03/CreTAKE-K2K-ZEN256__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN256</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-03/CreTAKE-K2K-ZEN256__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN256</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-03/CreTAKE-K2K-ZEN256__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN256</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-03/CreTAKE-K2K-ZEN256__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN256</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-03/CreTAKE-K2K-ZEN256__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN256</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-03/CreTAKE-K2K-ZEN256__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN256</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-03/CreTAKE-K2K-ZEN256__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN256</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-03/CreTAKE-K2K-ZEN256__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN512</code></td>
+<td>KAT log (sha256 <code>da7237ab1b7c88f3…</code>)</td>
+<td><code>kat/kex-03/CreTAKE-K2K-ZEN512.log</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN512</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-03/CreTAKE-K2K-ZEN512__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN512</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-03/CreTAKE-K2K-ZEN512__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN512</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-03/CreTAKE-K2K-ZEN512__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN512</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-03/CreTAKE-K2K-ZEN512__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN512</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-03/CreTAKE-K2K-ZEN512__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN512</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-03/CreTAKE-K2K-ZEN512__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN512</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-03/CreTAKE-K2K-ZEN512__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2K-ZEN512</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-03/CreTAKE-K2K-ZEN512__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC128-BiT128</code></td>
+<td>KAT log (sha256 <code>c127506dbf55c8b1…</code>)</td>
+<td><code>kat/kex-03/CreTAKE-K2S-PLAC128-BiT128.log</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC128-BiT128</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-03/CreTAKE-K2S-PLAC128-BiT128__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC128-BiT128</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-03/CreTAKE-K2S-PLAC128-BiT128__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC128-BiT128</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-03/CreTAKE-K2S-PLAC128-BiT128__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC128-BiT128</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-03/CreTAKE-K2S-PLAC128-BiT128__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC128-BiT128</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-03/CreTAKE-K2S-PLAC128-BiT128__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC128-BiT128</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-03/CreTAKE-K2S-PLAC128-BiT128__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC128-BiT128</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-03/CreTAKE-K2S-PLAC128-BiT128__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC128-BiT128</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-03/CreTAKE-K2S-PLAC128-BiT128__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC256-BiT256</code></td>
+<td>KAT log (sha256 <code>ef71b168b004d4fa…</code>)</td>
+<td><code>kat/kex-03/CreTAKE-K2S-PLAC256-BiT256.log</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC256-BiT256</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-03/CreTAKE-K2S-PLAC256-BiT256__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC256-BiT256</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-03/CreTAKE-K2S-PLAC256-BiT256__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC256-BiT256</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-03/CreTAKE-K2S-PLAC256-BiT256__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC256-BiT256</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-03/CreTAKE-K2S-PLAC256-BiT256__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC256-BiT256</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-03/CreTAKE-K2S-PLAC256-BiT256__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC256-BiT256</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-03/CreTAKE-K2S-PLAC256-BiT256__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC256-BiT256</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-03/CreTAKE-K2S-PLAC256-BiT256__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC256-BiT256</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-03/CreTAKE-K2S-PLAC256-BiT256__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC512-BiT512</code></td>
+<td>KAT log (sha256 <code>a2decb7b0885e271…</code>)</td>
+<td><code>kat/kex-03/CreTAKE-K2S-PLAC512-BiT512.log</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC512-BiT512</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-03/CreTAKE-K2S-PLAC512-BiT512__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC512-BiT512</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-03/CreTAKE-K2S-PLAC512-BiT512__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC512-BiT512</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-03/CreTAKE-K2S-PLAC512-BiT512__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC512-BiT512</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-03/CreTAKE-K2S-PLAC512-BiT512__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC512-BiT512</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-03/CreTAKE-K2S-PLAC512-BiT512__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC512-BiT512</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-03/CreTAKE-K2S-PLAC512-BiT512__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC512-BiT512</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-03/CreTAKE-K2S-PLAC512-BiT512__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-PLAC512-BiT512</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-03/CreTAKE-K2S-PLAC512-BiT512__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN128-BiT128</code></td>
+<td>KAT log (sha256 <code>1bef2d516968f06b…</code>)</td>
+<td><code>kat/kex-03/CreTAKE-K2S-ZEN128-BiT128.log</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN128-BiT128</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-03/CreTAKE-K2S-ZEN128-BiT128__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN128-BiT128</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-03/CreTAKE-K2S-ZEN128-BiT128__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN128-BiT128</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-03/CreTAKE-K2S-ZEN128-BiT128__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN128-BiT128</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-03/CreTAKE-K2S-ZEN128-BiT128__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN128-BiT128</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-03/CreTAKE-K2S-ZEN128-BiT128__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN128-BiT128</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-03/CreTAKE-K2S-ZEN128-BiT128__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN128-BiT128</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-03/CreTAKE-K2S-ZEN128-BiT128__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN128-BiT128</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-03/CreTAKE-K2S-ZEN128-BiT128__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN256-BiT256</code></td>
+<td>KAT log (sha256 <code>9aa8912c0d728f73…</code>)</td>
+<td><code>kat/kex-03/CreTAKE-K2S-ZEN256-BiT256.log</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN256-BiT256</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-03/CreTAKE-K2S-ZEN256-BiT256__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN256-BiT256</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-03/CreTAKE-K2S-ZEN256-BiT256__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN256-BiT256</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-03/CreTAKE-K2S-ZEN256-BiT256__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN256-BiT256</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-03/CreTAKE-K2S-ZEN256-BiT256__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN256-BiT256</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-03/CreTAKE-K2S-ZEN256-BiT256__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN256-BiT256</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-03/CreTAKE-K2S-ZEN256-BiT256__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN256-BiT256</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-03/CreTAKE-K2S-ZEN256-BiT256__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN256-BiT256</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-03/CreTAKE-K2S-ZEN256-BiT256__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN512-BiT512</code></td>
+<td>KAT log (sha256 <code>5a2924e0a9ced0b2…</code>)</td>
+<td><code>kat/kex-03/CreTAKE-K2S-ZEN512-BiT512.log</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN512-BiT512</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-03/CreTAKE-K2S-ZEN512-BiT512__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN512-BiT512</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-03/CreTAKE-K2S-ZEN512-BiT512__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN512-BiT512</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-03/CreTAKE-K2S-ZEN512-BiT512__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN512-BiT512</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-03/CreTAKE-K2S-ZEN512-BiT512__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN512-BiT512</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-03/CreTAKE-K2S-ZEN512-BiT512__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN512-BiT512</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-03/CreTAKE-K2S-ZEN512-BiT512__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN512-BiT512</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-03/CreTAKE-K2S-ZEN512-BiT512__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-K2S-ZEN512-BiT512</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-03/CreTAKE-K2S-ZEN512-BiT512__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-PLAC128</code></td>
+<td>KAT log (sha256 <code>eba54c20bd004e92…</code>)</td>
+<td><code>kat/kex-03/CreTAKE-S2K-BiT128-PLAC128.log</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-PLAC128</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT128-PLAC128__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-PLAC128</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT128-PLAC128__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-PLAC128</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT128-PLAC128__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-PLAC128</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT128-PLAC128__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-PLAC128</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT128-PLAC128__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-PLAC128</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT128-PLAC128__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-PLAC128</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT128-PLAC128__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-PLAC128</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-03/CreTAKE-S2K-BiT128-PLAC128__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-ZEN128</code></td>
+<td>KAT log (sha256 <code>7c70f751e9045bb1…</code>)</td>
+<td><code>kat/kex-03/CreTAKE-S2K-BiT128-ZEN128.log</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-ZEN128</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT128-ZEN128__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-ZEN128</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT128-ZEN128__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-ZEN128</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT128-ZEN128__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-ZEN128</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT128-ZEN128__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-ZEN128</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT128-ZEN128__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-ZEN128</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT128-ZEN128__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-ZEN128</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT128-ZEN128__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT128-ZEN128</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-03/CreTAKE-S2K-BiT128-ZEN128__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-PLAC256</code></td>
+<td>KAT log (sha256 <code>ecf73bcc0dedc46a…</code>)</td>
+<td><code>kat/kex-03/CreTAKE-S2K-BiT256-PLAC256.log</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-PLAC256</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT256-PLAC256__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-PLAC256</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT256-PLAC256__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-PLAC256</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT256-PLAC256__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-PLAC256</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT256-PLAC256__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-PLAC256</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT256-PLAC256__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-PLAC256</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT256-PLAC256__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-PLAC256</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT256-PLAC256__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-PLAC256</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-03/CreTAKE-S2K-BiT256-PLAC256__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-ZEN256</code></td>
+<td>KAT log (sha256 <code>b044568978fddfeb…</code>)</td>
+<td><code>kat/kex-03/CreTAKE-S2K-BiT256-ZEN256.log</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-ZEN256</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT256-ZEN256__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-ZEN256</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT256-ZEN256__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-ZEN256</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT256-ZEN256__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-ZEN256</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT256-ZEN256__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-ZEN256</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT256-ZEN256__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-ZEN256</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT256-ZEN256__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-ZEN256</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT256-ZEN256__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT256-ZEN256</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-03/CreTAKE-S2K-BiT256-ZEN256__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-PLAC512</code></td>
+<td>KAT log (sha256 <code>18c7adc0437c6810…</code>)</td>
+<td><code>kat/kex-03/CreTAKE-S2K-BiT512-PLAC512.log</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-PLAC512</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT512-PLAC512__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-PLAC512</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT512-PLAC512__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-PLAC512</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT512-PLAC512__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-PLAC512</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT512-PLAC512__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-PLAC512</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT512-PLAC512__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-PLAC512</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT512-PLAC512__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-PLAC512</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT512-PLAC512__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-PLAC512</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-03/CreTAKE-S2K-BiT512-PLAC512__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-ZEN512</code></td>
+<td>KAT log (sha256 <code>444722ec478abd82…</code>)</td>
+<td><code>kat/kex-03/CreTAKE-S2K-BiT512-ZEN512.log</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-ZEN512</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT512-ZEN512__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-ZEN512</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT512-ZEN512__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-ZEN512</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT512-ZEN512__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-ZEN512</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT512-ZEN512__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-ZEN512</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT512-ZEN512__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-ZEN512</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT512-ZEN512__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-ZEN512</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-03/CreTAKE-S2K-BiT512-ZEN512__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2K-BiT512-ZEN512</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-03/CreTAKE-S2K-BiT512-ZEN512__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-ePLAC128</code></td>
+<td>KAT log (sha256 <code>bdfe37ee747482cd…</code>)</td>
+<td><code>kat/kex-03/CreTAKE-S2S-BiT128-ePLAC128.log</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-ePLAC128</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT128-ePLAC128__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-ePLAC128</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT128-ePLAC128__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-ePLAC128</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT128-ePLAC128__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-ePLAC128</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT128-ePLAC128__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-ePLAC128</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT128-ePLAC128__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-ePLAC128</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT128-ePLAC128__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-ePLAC128</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT128-ePLAC128__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-ePLAC128</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-03/CreTAKE-S2S-BiT128-ePLAC128__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-eZEN128</code></td>
+<td>KAT log (sha256 <code>d94d4349927a132d…</code>)</td>
+<td><code>kat/kex-03/CreTAKE-S2S-BiT128-eZEN128.log</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-eZEN128</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT128-eZEN128__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-eZEN128</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT128-eZEN128__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-eZEN128</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT128-eZEN128__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-eZEN128</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT128-eZEN128__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-eZEN128</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT128-eZEN128__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-eZEN128</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT128-eZEN128__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-eZEN128</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT128-eZEN128__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT128-eZEN128</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-03/CreTAKE-S2S-BiT128-eZEN128__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-ePLAC256</code></td>
+<td>KAT log (sha256 <code>a81cb58d084b18a6…</code>)</td>
+<td><code>kat/kex-03/CreTAKE-S2S-BiT256-ePLAC256.log</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-ePLAC256</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT256-ePLAC256__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-ePLAC256</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT256-ePLAC256__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-ePLAC256</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT256-ePLAC256__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-ePLAC256</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT256-ePLAC256__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-ePLAC256</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT256-ePLAC256__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-ePLAC256</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT256-ePLAC256__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-ePLAC256</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT256-ePLAC256__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-ePLAC256</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-03/CreTAKE-S2S-BiT256-ePLAC256__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-eZEN256</code></td>
+<td>KAT log (sha256 <code>ba1cecee5537b330…</code>)</td>
+<td><code>kat/kex-03/CreTAKE-S2S-BiT256-eZEN256.log</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-eZEN256</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT256-eZEN256__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-eZEN256</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT256-eZEN256__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-eZEN256</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT256-eZEN256__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-eZEN256</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT256-eZEN256__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-eZEN256</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT256-eZEN256__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-eZEN256</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT256-eZEN256__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-eZEN256</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT256-eZEN256__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT256-eZEN256</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-03/CreTAKE-S2S-BiT256-eZEN256__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-ePLAC512</code></td>
+<td>KAT log (sha256 <code>65e997e6fca4bf28…</code>)</td>
+<td><code>kat/kex-03/CreTAKE-S2S-BiT512-ePLAC512.log</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-ePLAC512</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT512-ePLAC512__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-ePLAC512</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT512-ePLAC512__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-ePLAC512</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT512-ePLAC512__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-ePLAC512</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT512-ePLAC512__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-ePLAC512</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT512-ePLAC512__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-ePLAC512</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT512-ePLAC512__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-ePLAC512</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT512-ePLAC512__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-ePLAC512</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-03/CreTAKE-S2S-BiT512-ePLAC512__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-eZEN512</code></td>
+<td>KAT log (sha256 <code>0255bcde72116a9f…</code>)</td>
+<td><code>kat/kex-03/CreTAKE-S2S-BiT512-eZEN512.log</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-eZEN512</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT512-eZEN512__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-eZEN512</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT512-eZEN512__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-eZEN512</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT512-eZEN512__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-eZEN512</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT512-eZEN512__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-eZEN512</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT512-eZEN512__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-eZEN512</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT512-eZEN512__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-eZEN512</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-03/CreTAKE-S2S-BiT512-eZEN512__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>CreTAKE-S2S-BiT512-eZEN512</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-03/CreTAKE-S2S-BiT512-eZEN512__exchange.json</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Scripts: <code>performance/campaign.py</code>, <code>performance/ngcc_perf.c</code>, <code>performance/hashprof/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

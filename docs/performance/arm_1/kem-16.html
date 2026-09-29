@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: kem-16 HARE — performance on AArch64 (system arm1)</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=808fa5e8">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
+<nav><a href="../../index.html">Home</a><a href="../../reports/index.html">Security</a><a href="../../performance/index.html">Performance</a><a href="../../constant-time/index.html">Side-Channel</a></nav>
+</header>
+<main class="">
+<!-- synchronized from harness: kem-16/perf_arm_1.md -->
+<h1 id="kem-16-hare-performance-on-aarch64-system-arm_1">kem-16 HARE — performance on AArch64 (system arm_1)</h1>
+<p><a href="index.html">Performance arm_1</a> › <code>kem-16</code> · <a href="method.html">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560844942397440.html">NICCS page</a></p>
+<p><strong>Systems:</strong> <a href="../x86_1/kem-16.html">x86_1</a> · <strong>arm_1</strong></p>
+<p>Independent measurement following the structure of the NICCS ARM self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.</p>
+<h2 id="1-basic-information">1. Basic information</h2>
+<ul>
+<li>Category: public-key algorithm; function: key encapsulation</li>
+<li>Algorithm: HARE</li>
+<li>Implementation versions measured: reference</li>
+<li>Parameter sets: <code>HARE-128-kr</code>, <code>HARE-256-kr</code>, <code>HARE-384-kr</code>, <code>HARE-512-kr</code></li>
+</ul>
+<h2 id="2-assessment-environment">2. Assessment environment</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>item</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>processor</td>
+<td>Qualcomm Oryon (CPU 2, one core)</td>
+</tr>
+<tr>
+<td>machine</td>
+<td>ASUS Vivobook S 15</td>
+</tr>
+<tr>
+<td>clock</td>
+<td>fixed 2.71 GHz (governor performance, minimum = maximum), boost off, SMT none</td>
+</tr>
+<tr>
+<td>memory</td>
+<td>30562 MiB</td>
+</tr>
+<tr>
+<td>OS / kernel</td>
+<td>Ubuntu 26.04.1 LTS / 7.0.0-34-generic</td>
+</tr>
+<tr>
+<td>compiler / build tool</td>
+<td>gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0 / cmake version 4.2.3</td>
+</tr>
+<tr>
+<td>campaign start / end (UTC)</td>
+<td>2026-09-28T15:05:46 / 2026-09-29T08:43:52</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="3-functional-testing-kat">3. Functional testing (KAT)</h2>
+<p>Each library was checked against the submitted KAT vectors (SHA-256 manifest <code>kem-16/kat.sha256</code> in the harness) before timing.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>build flags</th>
+<th>KAT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>HARE-128-kr</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>HARE-256-kr</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>HARE-384-kr</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>HARE-512-kr</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="4-performance">4. Performance</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>mean cycles</th>
+<th>mean time</th>
+<th>ops/s</th>
+<th>median trial</th>
+<th>n (trials × iters)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>HARE-128-kr</code></td>
+<td>keygen</td>
+<td>4.13 M</td>
+<td>1.53 ms</td>
+<td>652</td>
+<td>1.53 ms</td>
+<td>1905 (5 × 381)</td>
+</tr>
+<tr>
+<td><code>HARE-128-kr</code></td>
+<td>enc</td>
+<td>9.54 M</td>
+<td>3.54 ms</td>
+<td>283</td>
+<td>3.54 ms</td>
+<td>875 (5 × 175)</td>
+</tr>
+<tr>
+<td><code>HARE-128-kr</code></td>
+<td>dec</td>
+<td>14.16 M</td>
+<td>5.25 ms</td>
+<td>190</td>
+<td>5.25 ms</td>
+<td>600 (5 × 120)</td>
+</tr>
+<tr>
+<td><code>HARE-256-kr</code></td>
+<td>keygen</td>
+<td>15.89 M</td>
+<td>5.9 ms</td>
+<td>170</td>
+<td>5.89 ms</td>
+<td>530 (5 × 106)</td>
+</tr>
+<tr>
+<td><code>HARE-256-kr</code></td>
+<td>enc</td>
+<td>34.95 M</td>
+<td>13 ms</td>
+<td>77.1</td>
+<td>13 ms</td>
+<td>245 (5 × 49)</td>
+</tr>
+<tr>
+<td><code>HARE-256-kr</code></td>
+<td>dec</td>
+<td>53.12 M</td>
+<td>19.7 ms</td>
+<td>50.7</td>
+<td>19.7 ms</td>
+<td>165 (5 × 33)</td>
+</tr>
+<tr>
+<td><code>HARE-384-kr</code></td>
+<td>keygen</td>
+<td>47.23 M</td>
+<td>17.5 ms</td>
+<td>57.1</td>
+<td>17.5 ms</td>
+<td>180 (5 × 36)</td>
+</tr>
+<tr>
+<td><code>HARE-384-kr</code></td>
+<td>enc</td>
+<td>100.50 M</td>
+<td>37.3 ms</td>
+<td>26.8</td>
+<td>37.3 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>HARE-384-kr</code></td>
+<td>dec</td>
+<td>150.39 M</td>
+<td>55.8 ms</td>
+<td>17.9</td>
+<td>55.8 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>HARE-512-kr</code></td>
+<td>keygen</td>
+<td>100.69 M</td>
+<td>37.4 ms</td>
+<td>26.8</td>
+<td>37.4 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>HARE-512-kr</code></td>
+<td>enc</td>
+<td>210.06 M</td>
+<td>77.9 ms</td>
+<td>12.8</td>
+<td>77.9 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>HARE-512-kr</code></td>
+<td>dec</td>
+<td>316.46 M</td>
+<td>117 ms</td>
+<td>8.52</td>
+<td>117 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-resource-consumption">5. Resource consumption</h2>
+<p>Static memory is approximated by the library's loadable ELF segments; peak memory is the process high-water mark (VmHWM) including the benchmark driver and libc, so both are upper-bound proxies rather than isolated algorithm memory.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>static: ELF image (bytes)</th>
+<th>baseline RSS</th>
+<th>peak RSS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>HARE-128-kr</code></td>
+<td>keygen</td>
+<td>46944</td>
+<td>1448 KiB</td>
+<td>1576 KiB</td>
+</tr>
+<tr>
+<td><code>HARE-128-kr</code></td>
+<td>enc</td>
+<td>46944</td>
+<td>1516 KiB</td>
+<td>1584 KiB</td>
+</tr>
+<tr>
+<td><code>HARE-128-kr</code></td>
+<td>dec</td>
+<td>46944</td>
+<td>1532 KiB</td>
+<td>1600 KiB</td>
+</tr>
+<tr>
+<td><code>HARE-256-kr</code></td>
+<td>keygen</td>
+<td>51664</td>
+<td>1464 KiB</td>
+<td>1684 KiB</td>
+</tr>
+<tr>
+<td><code>HARE-256-kr</code></td>
+<td>enc</td>
+<td>51664</td>
+<td>1644 KiB</td>
+<td>3756 KiB</td>
+</tr>
+<tr>
+<td><code>HARE-256-kr</code></td>
+<td>dec</td>
+<td>51664</td>
+<td>1684 KiB</td>
+<td>1752 KiB</td>
+</tr>
+<tr>
+<td><code>HARE-384-kr</code></td>
+<td>keygen</td>
+<td>52304</td>
+<td>1492 KiB</td>
+<td>1836 KiB</td>
+</tr>
+<tr>
+<td><code>HARE-384-kr</code></td>
+<td>enc</td>
+<td>52304</td>
+<td>1844 KiB</td>
+<td>1916 KiB</td>
+</tr>
+<tr>
+<td><code>HARE-384-kr</code></td>
+<td>dec</td>
+<td>52304</td>
+<td>1932 KiB</td>
+<td>2000 KiB</td>
+</tr>
+<tr>
+<td><code>HARE-512-kr</code></td>
+<td>keygen</td>
+<td>52824</td>
+<td>3488 KiB</td>
+<td>4032 KiB</td>
+</tr>
+<tr>
+<td><code>HARE-512-kr</code></td>
+<td>enc</td>
+<td>52824</td>
+<td>4080 KiB</td>
+<td>4144 KiB</td>
+</tr>
+<tr>
+<td><code>HARE-512-kr</code></td>
+<td>dec</td>
+<td>52824</td>
+<td>4232 KiB</td>
+<td>4296 KiB</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="6-transmission-and-storage-overhead">6. Transmission and storage overhead</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>public key</th>
+<th>secret key</th>
+<th>ciphertext</th>
+<th>shared secret</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>HARE-128-kr</code></td>
+<td>2629</td>
+<td>2677</td>
+<td>4688</td>
+<td>16</td>
+</tr>
+<tr>
+<td><code>HARE-256-kr</code></td>
+<td>6580</td>
+<td>6676</td>
+<td>11790</td>
+<td>32</td>
+</tr>
+<tr>
+<td><code>HARE-384-kr</code></td>
+<td>13157</td>
+<td>13301</td>
+<td>23693</td>
+<td>48</td>
+</tr>
+<tr>
+<td><code>HARE-512-kr</code></td>
+<td>21812</td>
+<td>22004</td>
+<td>39294</td>
+<td>64</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="symmetric-primitives">Symmetric primitives</h2>
+<p><a href="../symmetric-survey.html">Survey</a> verdict: <strong>ICCS-only</strong> — pseudoXOF only (recomputes prefix per call); lives under _shared/</p>
+<p>Share of each operation spent in the ICCS placeholder hash functions and in the ICCS DRNG (reference build, measured in the same run with link-time wrappers):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>pseudohash/XOF/sm3</th>
+<th>DRNG</th>
+<th>calls per operation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>HARE-128-kr</code></td>
+<td>keygen</td>
+<td>4.5%</td>
+<td>0.1%</td>
+<td>drng 1, pseudoXOF 6.39</td>
+</tr>
+<tr>
+<td><code>HARE-128-kr</code></td>
+<td>enc</td>
+<td>3.2%</td>
+<td>0.1%</td>
+<td>drng 2, pseudoXOF 6</td>
+</tr>
+<tr>
+<td><code>HARE-128-kr</code></td>
+<td>dec</td>
+<td>3.0%</td>
+<td>0.0%</td>
+<td>pseudoXOF 8</td>
+</tr>
+<tr>
+<td><code>HARE-256-kr</code></td>
+<td>keygen</td>
+<td>2.4%</td>
+<td>0.0%</td>
+<td>drng 1, pseudoXOF 6.55</td>
+</tr>
+<tr>
+<td><code>HARE-256-kr</code></td>
+<td>enc</td>
+<td>1.7%</td>
+<td>0.0%</td>
+<td>drng 2, pseudoXOF 6</td>
+</tr>
+<tr>
+<td><code>HARE-256-kr</code></td>
+<td>dec</td>
+<td>1.6%</td>
+<td>0.0%</td>
+<td>pseudoXOF 8</td>
+</tr>
+<tr>
+<td><code>HARE-384-kr</code></td>
+<td>keygen</td>
+<td>1.7%</td>
+<td>0.0%</td>
+<td>drng 1, pseudoXOF 7.58</td>
+</tr>
+<tr>
+<td><code>HARE-384-kr</code></td>
+<td>enc</td>
+<td>1.4%</td>
+<td>0.0%</td>
+<td>drng 2, pseudoXOF 6</td>
+</tr>
+<tr>
+<td><code>HARE-384-kr</code></td>
+<td>dec</td>
+<td>1.6%</td>
+<td>0.0%</td>
+<td>pseudoXOF 9</td>
+</tr>
+<tr>
+<td><code>HARE-512-kr</code></td>
+<td>keygen</td>
+<td>2.4%</td>
+<td>0.0%</td>
+<td>drng 1, pseudoXOF 7.53</td>
+</tr>
+<tr>
+<td><code>HARE-512-kr</code></td>
+<td>enc</td>
+<td>1.6%</td>
+<td>0.0%</td>
+<td>drng 2, pseudoXOF 6</td>
+</tr>
+<tr>
+<td><code>HARE-512-kr</code></td>
+<td>dec</td>
+<td>1.6%</td>
+<td>0.0%</td>
+<td>pseudoXOF 9</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="7-raw-evidence-index">7. Raw evidence index</h2>
+<p>Paths are relative to <code>performance/data/arm_1/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>; each JSON file records its commands, environment and trials.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>item</th>
+<th>file</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>HARE-128-kr</code></td>
+<td>KAT log (sha256 <code>6e3ec02996e97149…</code>)</td>
+<td><code>kat/kem-16/HARE-128-kr.log</code></td>
+</tr>
+<tr>
+<td><code>HARE-128-kr</code></td>
+<td>timing dec</td>
+<td><code>records/kem-16/HARE-128-kr__dec.json</code></td>
+</tr>
+<tr>
+<td><code>HARE-128-kr</code></td>
+<td>timing enc</td>
+<td><code>records/kem-16/HARE-128-kr__enc.json</code></td>
+</tr>
+<tr>
+<td><code>HARE-128-kr</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-16/HARE-128-kr__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>HARE-128-kr</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-16/HARE-128-kr__dec.json</code></td>
+</tr>
+<tr>
+<td><code>HARE-128-kr</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-16/HARE-128-kr__enc.json</code></td>
+</tr>
+<tr>
+<td><code>HARE-128-kr</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-16/HARE-128-kr__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>HARE-256-kr</code></td>
+<td>KAT log (sha256 <code>9c49f57f0f59e50d…</code>)</td>
+<td><code>kat/kem-16/HARE-256-kr.log</code></td>
+</tr>
+<tr>
+<td><code>HARE-256-kr</code></td>
+<td>timing dec</td>
+<td><code>records/kem-16/HARE-256-kr__dec.json</code></td>
+</tr>
+<tr>
+<td><code>HARE-256-kr</code></td>
+<td>timing enc</td>
+<td><code>records/kem-16/HARE-256-kr__enc.json</code></td>
+</tr>
+<tr>
+<td><code>HARE-256-kr</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-16/HARE-256-kr__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>HARE-256-kr</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-16/HARE-256-kr__dec.json</code></td>
+</tr>
+<tr>
+<td><code>HARE-256-kr</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-16/HARE-256-kr__enc.json</code></td>
+</tr>
+<tr>
+<td><code>HARE-256-kr</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-16/HARE-256-kr__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>HARE-384-kr</code></td>
+<td>KAT log (sha256 <code>c8b7e261ad1aea7b…</code>)</td>
+<td><code>kat/kem-16/HARE-384-kr.log</code></td>
+</tr>
+<tr>
+<td><code>HARE-384-kr</code></td>
+<td>timing dec</td>
+<td><code>records/kem-16/HARE-384-kr__dec.json</code></td>
+</tr>
+<tr>
+<td><code>HARE-384-kr</code></td>
+<td>timing enc</td>
+<td><code>records/kem-16/HARE-384-kr__enc.json</code></td>
+</tr>
+<tr>
+<td><code>HARE-384-kr</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-16/HARE-384-kr__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>HARE-384-kr</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-16/HARE-384-kr__dec.json</code></td>
+</tr>
+<tr>
+<td><code>HARE-384-kr</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-16/HARE-384-kr__enc.json</code></td>
+</tr>
+<tr>
+<td><code>HARE-384-kr</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-16/HARE-384-kr__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>HARE-512-kr</code></td>
+<td>KAT log (sha256 <code>5378649b0f3e29f7…</code>)</td>
+<td><code>kat/kem-16/HARE-512-kr.log</code></td>
+</tr>
+<tr>
+<td><code>HARE-512-kr</code></td>
+<td>timing dec</td>
+<td><code>records/kem-16/HARE-512-kr__dec.json</code></td>
+</tr>
+<tr>
+<td><code>HARE-512-kr</code></td>
+<td>timing enc</td>
+<td><code>records/kem-16/HARE-512-kr__enc.json</code></td>
+</tr>
+<tr>
+<td><code>HARE-512-kr</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-16/HARE-512-kr__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>HARE-512-kr</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-16/HARE-512-kr__dec.json</code></td>
+</tr>
+<tr>
+<td><code>HARE-512-kr</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-16/HARE-512-kr__enc.json</code></td>
+</tr>
+<tr>
+<td><code>HARE-512-kr</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-16/HARE-512-kr__keygen.json</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Scripts: <code>performance/campaign.py</code>, <code>performance/ngcc_perf.c</code>, <code>performance/hashprof/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

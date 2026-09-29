@@ -20,9 +20,13 @@ NTRE-512's reference key generator samples the private NTRU polynomial `f = 2f' 
 This is an implementation-instantiation weakness, not a claim that the specification's ideal `Sample(n)` has only 256 bits of entropy. The full 2^256 search is far beyond available resources. A scaled public-key attack enumerates 2^12 planted seed candidates, finds the unique matching `f`, reconstructs the official secret-key layout and correctly decapsulates ten fresh ciphertexts; ten deliberately wrong-key controls fail.
 
 The NTRE team confirms that `NTRE_SYMBYTES` is 32 in every reference and
-optimized parameter-set copy, while Algorithm 5 requires 64 bytes, and plans
-to correct the macro and regenerate the KATs. The 256-bit root does not miss
-the lower sets' classical targets; this report remains scoped to NTRE-512.
+optimized parameter-set copy, while Algorithm 5 requires 64 bytes. The 256-bit
+root does not miss the lower sets' classical targets; this report remains
+scoped to NTRE-512.
+
+### Proposed fixes
+
+The [NTRE team's response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/OAGYDCAYEJTJ6WE5PHBNNCTAGDZ57LXD/) proposes correcting `NTRE_SYMBYTES` and regenerating the KATs. This section records the proposal without evaluating it.
 
 ### Reproducing
 

@@ -22,7 +22,11 @@ As a concrete collision, let `M` be 120 zero bytes and let `M'` set bytes 40--47
 
 Further analysis: [Yufei Yuan et al., *Structural Analysis of Seven Hash Functions Submitted to the NGCC*](https://eprint.iacr.org/2026/2152), Section 3 (2026-09-23), proves the cancellation for the fixed-output and XOF variants.
 
-The MoFang team subsequently changed the key expansion so that the later block's S-box consumes the second row rather than the first, breaking the shared untouched-word symmetry, and regenerated all implementations and KATs. Its erratum also corrects an Algorithm 4 assignment typo that did not affect the submitted source. These are repairs to the revision; the frozen Round 1 archive above remains affected.
+The frozen Round 1 archive above remains the target of this finding.
+
+### Proposed fixes
+
+The [MoFang team's revision notice](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/MKUGDOEMKQFY4M7UWJT5EF5AMOCUKITQ/) proposes making the later block's S-box consume the second row rather than the first, regenerating the implementations and KATs, and correcting an Algorithm 4 assignment typo. This section records the proposal without evaluating it.
 
 ### Reproducing
 

@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: kem-26 NSS-HQC — performance on AArch64 (system arm1)</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=808fa5e8">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
+<nav><a href="../../index.html">Home</a><a href="../../reports/index.html">Security</a><a href="../../performance/index.html">Performance</a><a href="../../constant-time/index.html">Side-Channel</a></nav>
+</header>
+<main class="">
+<!-- synchronized from harness: kem-26/perf_arm_1.md -->
+<h1 id="kem-26-nss-hqc-performance-on-aarch64-system-arm_1">kem-26 NSS-HQC — performance on AArch64 (system arm_1)</h1>
+<p><a href="index.html">Performance arm_1</a> › <code>kem-26</code> · <a href="method.html">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560863191814144.html">NICCS page</a></p>
+<p><strong>Systems:</strong> <a href="../x86_1/kem-26.html">x86_1</a> · <strong>arm_1</strong></p>
+<p>Independent measurement following the structure of the NICCS ARM self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.</p>
+<h2 id="1-basic-information">1. Basic information</h2>
+<ul>
+<li>Category: public-key algorithm; function: key encapsulation</li>
+<li>Algorithm: NSS-HQC</li>
+<li>Implementation versions measured: reference</li>
+<li>Parameter sets: <code>HQC-128</code>, <code>HQC-256</code>, <code>HQC-384</code>, <code>HQC-512</code></li>
+</ul>
+<h2 id="2-assessment-environment">2. Assessment environment</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>item</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>processor</td>
+<td>Qualcomm Oryon (CPU 2, one core)</td>
+</tr>
+<tr>
+<td>machine</td>
+<td>ASUS Vivobook S 15</td>
+</tr>
+<tr>
+<td>clock</td>
+<td>fixed 2.71 GHz (governor performance, minimum = maximum), boost off, SMT none</td>
+</tr>
+<tr>
+<td>memory</td>
+<td>30562 MiB</td>
+</tr>
+<tr>
+<td>OS / kernel</td>
+<td>Ubuntu 26.04.1 LTS / 7.0.0-34-generic</td>
+</tr>
+<tr>
+<td>compiler / build tool</td>
+<td>gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0 / cmake version 4.2.3</td>
+</tr>
+<tr>
+<td>campaign start / end (UTC)</td>
+<td>2026-09-28T15:05:46 / 2026-09-29T08:43:52</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="3-functional-testing-kat">3. Functional testing (KAT)</h2>
+<p>Each library was checked against the submitted KAT vectors (SHA-256 manifest <code>kem-26/kat.sha256</code> in the harness) before timing.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>build flags</th>
+<th>KAT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>HQC-128</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>HQC-256</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>HQC-384</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>HQC-512</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="4-performance">4. Performance</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>mean cycles</th>
+<th>mean time</th>
+<th>ops/s</th>
+<th>median trial</th>
+<th>n (trials × iters)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>HQC-128</code></td>
+<td>keygen</td>
+<td>26.00 M</td>
+<td>9.65 ms</td>
+<td>104</td>
+<td>9.65 ms</td>
+<td>345 (5 × 69)</td>
+</tr>
+<tr>
+<td><code>HQC-128</code></td>
+<td>enc</td>
+<td>46.47 M</td>
+<td>17.2 ms</td>
+<td>58</td>
+<td>17.3 ms</td>
+<td>185 (5 × 37)</td>
+</tr>
+<tr>
+<td><code>HQC-128</code></td>
+<td>dec</td>
+<td>92.01 M</td>
+<td>34.1 ms</td>
+<td>29.3</td>
+<td>34.1 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>HQC-256</code></td>
+<td>keygen</td>
+<td>76.97 M</td>
+<td>28.6 ms</td>
+<td>35</td>
+<td>28.6 ms</td>
+<td>115 (5 × 23)</td>
+</tr>
+<tr>
+<td><code>HQC-256</code></td>
+<td>enc</td>
+<td>139.39 M</td>
+<td>51.7 ms</td>
+<td>19.3</td>
+<td>51.8 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>HQC-256</code></td>
+<td>dec</td>
+<td>246.34 M</td>
+<td>91.4 ms</td>
+<td>10.9</td>
+<td>91.4 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>HQC-384</code></td>
+<td>keygen</td>
+<td>258.98 M</td>
+<td>96.1 ms</td>
+<td>10.4</td>
+<td>96.1 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>HQC-384</code></td>
+<td>enc</td>
+<td>469.63 M</td>
+<td>174 ms</td>
+<td>5.74</td>
+<td>174 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>HQC-384</code></td>
+<td>dec</td>
+<td>775.08 M</td>
+<td>288 ms</td>
+<td>3.48</td>
+<td>288 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>HQC-512</code></td>
+<td>keygen</td>
+<td>614.26 M</td>
+<td>228 ms</td>
+<td>4.39</td>
+<td>228 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>HQC-512</code></td>
+<td>enc</td>
+<td>1.12 G</td>
+<td>416 ms</td>
+<td>2.4</td>
+<td>416 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>HQC-512</code></td>
+<td>dec</td>
+<td>1.80 G</td>
+<td>667 ms</td>
+<td>1.5</td>
+<td>667 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-resource-consumption">5. Resource consumption</h2>
+<p>Static memory is approximated by the library's loadable ELF segments; peak memory is the process high-water mark (VmHWM) including the benchmark driver and libc, so both are upper-bound proxies rather than isolated algorithm memory.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>static: ELF image (bytes)</th>
+<th>baseline RSS</th>
+<th>peak RSS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>HQC-128</code></td>
+<td>keygen</td>
+<td>39852</td>
+<td>3468 KiB</td>
+<td>3532 KiB</td>
+</tr>
+<tr>
+<td><code>HQC-128</code></td>
+<td>enc</td>
+<td>39852</td>
+<td>3484 KiB</td>
+<td>3548 KiB</td>
+</tr>
+<tr>
+<td><code>HQC-128</code></td>
+<td>dec</td>
+<td>39852</td>
+<td>3584 KiB</td>
+<td>3648 KiB</td>
+</tr>
+<tr>
+<td><code>HQC-256</code></td>
+<td>keygen</td>
+<td>44408</td>
+<td>1452 KiB</td>
+<td>3680 KiB</td>
+</tr>
+<tr>
+<td><code>HQC-256</code></td>
+<td>enc</td>
+<td>44408</td>
+<td>1708 KiB</td>
+<td>3760 KiB</td>
+</tr>
+<tr>
+<td><code>HQC-256</code></td>
+<td>dec</td>
+<td>44408</td>
+<td>1740 KiB</td>
+<td>1804 KiB</td>
+</tr>
+<tr>
+<td><code>HQC-384</code></td>
+<td>keygen</td>
+<td>40932</td>
+<td>1472 KiB</td>
+<td>4004 KiB</td>
+</tr>
+<tr>
+<td><code>HQC-384</code></td>
+<td>enc</td>
+<td>40932</td>
+<td>3688 KiB</td>
+<td>3976 KiB</td>
+</tr>
+<tr>
+<td><code>HQC-384</code></td>
+<td>dec</td>
+<td>40932</td>
+<td>3548 KiB</td>
+<td>3924 KiB</td>
+</tr>
+<tr>
+<td><code>HQC-512</code></td>
+<td>keygen</td>
+<td>41076</td>
+<td>1508 KiB</td>
+<td>3888 KiB</td>
+</tr>
+<tr>
+<td><code>HQC-512</code></td>
+<td>enc</td>
+<td>41076</td>
+<td>2516 KiB</td>
+<td>4456 KiB</td>
+</tr>
+<tr>
+<td><code>HQC-512</code></td>
+<td>dec</td>
+<td>41076</td>
+<td>3680 KiB</td>
+<td>4604 KiB</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="6-transmission-and-storage-overhead">6. Transmission and storage overhead</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>public key</th>
+<th>secret key</th>
+<th>ciphertext</th>
+<th>shared secret</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>HQC-128</code></td>
+<td>3713</td>
+<td>3777</td>
+<td>5185</td>
+<td>32</td>
+</tr>
+<tr>
+<td><code>HQC-256</code></td>
+<td>6844</td>
+<td>6908</td>
+<td>9084</td>
+<td>32</td>
+</tr>
+<tr>
+<td><code>HQC-384</code></td>
+<td>15371</td>
+<td>15467</td>
+<td>18571</td>
+<td>48</td>
+</tr>
+<tr>
+<td><code>HQC-512</code></td>
+<td>27302</td>
+<td>27430</td>
+<td>31462</td>
+<td>64</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="symmetric-primitives">Symmetric primitives</h2>
+<p><a href="../symmetric-survey.html">Survey</a> verdict: <strong>bypass</strong> — own inline Keccak (SHA3-512, SHAKE256) for everything; DRNG for randomness</p>
+<p>Share of each operation spent in the ICCS placeholder hash functions and in the ICCS DRNG (reference build, measured in the same run with link-time wrappers):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>pseudohash/XOF/sm3</th>
+<th>DRNG</th>
+<th>calls per operation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>HQC-128</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>0.0%</td>
+<td>drng 3</td>
+</tr>
+<tr>
+<td><code>HQC-128</code></td>
+<td>enc</td>
+<td>0.0%</td>
+<td>0.0%</td>
+<td>drng 2</td>
+</tr>
+<tr>
+<td><code>HQC-128</code></td>
+<td>dec</td>
+<td>0.0%</td>
+<td>0.0%</td>
+<td>–</td>
+</tr>
+<tr>
+<td><code>HQC-256</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>0.0%</td>
+<td>drng 3</td>
+</tr>
+<tr>
+<td><code>HQC-256</code></td>
+<td>enc</td>
+<td>0.0%</td>
+<td>0.0%</td>
+<td>drng 2</td>
+</tr>
+<tr>
+<td><code>HQC-256</code></td>
+<td>dec</td>
+<td>0.0%</td>
+<td>0.0%</td>
+<td>–</td>
+</tr>
+<tr>
+<td><code>HQC-384</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>0.0%</td>
+<td>drng 3</td>
+</tr>
+<tr>
+<td><code>HQC-384</code></td>
+<td>enc</td>
+<td>0.0%</td>
+<td>0.0%</td>
+<td>drng 2</td>
+</tr>
+<tr>
+<td><code>HQC-384</code></td>
+<td>dec</td>
+<td>0.0%</td>
+<td>0.0%</td>
+<td>–</td>
+</tr>
+<tr>
+<td><code>HQC-512</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>0.0%</td>
+<td>drng 3</td>
+</tr>
+<tr>
+<td><code>HQC-512</code></td>
+<td>enc</td>
+<td>0.0%</td>
+<td>0.0%</td>
+<td>drng 2</td>
+</tr>
+<tr>
+<td><code>HQC-512</code></td>
+<td>dec</td>
+<td>0.0%</td>
+<td>0.0%</td>
+<td>–</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="7-raw-evidence-index">7. Raw evidence index</h2>
+<p>Paths are relative to <code>performance/data/arm_1/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>; each JSON file records its commands, environment and trials.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>item</th>
+<th>file</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>HQC-128</code></td>
+<td>KAT log (sha256 <code>c620e4db85598389…</code>)</td>
+<td><code>kat/kem-26/HQC-128.log</code></td>
+</tr>
+<tr>
+<td><code>HQC-128</code></td>
+<td>timing dec</td>
+<td><code>records/kem-26/HQC-128__dec.json</code></td>
+</tr>
+<tr>
+<td><code>HQC-128</code></td>
+<td>timing enc</td>
+<td><code>records/kem-26/HQC-128__enc.json</code></td>
+</tr>
+<tr>
+<td><code>HQC-128</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-26/HQC-128__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>HQC-128</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-26/HQC-128__dec.json</code></td>
+</tr>
+<tr>
+<td><code>HQC-128</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-26/HQC-128__enc.json</code></td>
+</tr>
+<tr>
+<td><code>HQC-128</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-26/HQC-128__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>HQC-256</code></td>
+<td>KAT log (sha256 <code>5db1c6724d4a0538…</code>)</td>
+<td><code>kat/kem-26/HQC-256.log</code></td>
+</tr>
+<tr>
+<td><code>HQC-256</code></td>
+<td>timing dec</td>
+<td><code>records/kem-26/HQC-256__dec.json</code></td>
+</tr>
+<tr>
+<td><code>HQC-256</code></td>
+<td>timing enc</td>
+<td><code>records/kem-26/HQC-256__enc.json</code></td>
+</tr>
+<tr>
+<td><code>HQC-256</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-26/HQC-256__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>HQC-256</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-26/HQC-256__dec.json</code></td>
+</tr>
+<tr>
+<td><code>HQC-256</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-26/HQC-256__enc.json</code></td>
+</tr>
+<tr>
+<td><code>HQC-256</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-26/HQC-256__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>HQC-384</code></td>
+<td>KAT log (sha256 <code>2d5f3b2fd30882ea…</code>)</td>
+<td><code>kat/kem-26/HQC-384.log</code></td>
+</tr>
+<tr>
+<td><code>HQC-384</code></td>
+<td>timing dec</td>
+<td><code>records/kem-26/HQC-384__dec.json</code></td>
+</tr>
+<tr>
+<td><code>HQC-384</code></td>
+<td>timing enc</td>
+<td><code>records/kem-26/HQC-384__enc.json</code></td>
+</tr>
+<tr>
+<td><code>HQC-384</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-26/HQC-384__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>HQC-384</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-26/HQC-384__dec.json</code></td>
+</tr>
+<tr>
+<td><code>HQC-384</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-26/HQC-384__enc.json</code></td>
+</tr>
+<tr>
+<td><code>HQC-384</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-26/HQC-384__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>HQC-512</code></td>
+<td>KAT log (sha256 <code>d581449c9afccafb…</code>)</td>
+<td><code>kat/kem-26/HQC-512.log</code></td>
+</tr>
+<tr>
+<td><code>HQC-512</code></td>
+<td>timing dec</td>
+<td><code>records/kem-26/HQC-512__dec.json</code></td>
+</tr>
+<tr>
+<td><code>HQC-512</code></td>
+<td>timing enc</td>
+<td><code>records/kem-26/HQC-512__enc.json</code></td>
+</tr>
+<tr>
+<td><code>HQC-512</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-26/HQC-512__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>HQC-512</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-26/HQC-512__dec.json</code></td>
+</tr>
+<tr>
+<td><code>HQC-512</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-26/HQC-512__enc.json</code></td>
+</tr>
+<tr>
+<td><code>HQC-512</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-26/HQC-512__keygen.json</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Scripts: <code>performance/campaign.py</code>, <code>performance/ngcc_perf.c</code>, <code>performance/hashprof/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

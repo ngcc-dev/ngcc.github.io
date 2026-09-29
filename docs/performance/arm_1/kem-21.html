@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: kem-21 MAMBA-Viper — performance on AArch64 (system arm1)</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=808fa5e8">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
+<nav><a href="../../index.html">Home</a><a href="../../reports/index.html">Security</a><a href="../../performance/index.html">Performance</a><a href="../../constant-time/index.html">Side-Channel</a></nav>
+</header>
+<main class="">
+<!-- synchronized from harness: kem-21/perf_arm_1.md -->
+<h1 id="kem-21-mamba-viper-performance-on-aarch64-system-arm_1">kem-21 MAMBA-Viper — performance on AArch64 (system arm_1)</h1>
+<p><a href="index.html">Performance arm_1</a> › <code>kem-21</code> · <a href="method.html">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560854052425728.html">NICCS page</a></p>
+<p><strong>Systems:</strong> <a href="../x86_1/kem-21.html">x86_1</a> · <strong>arm_1</strong></p>
+<p>Independent measurement following the structure of the NICCS ARM self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.</p>
+<h2 id="1-basic-information">1. Basic information</h2>
+<ul>
+<li>Category: public-key algorithm; function: key encapsulation</li>
+<li>Algorithm: MAMBA-Viper</li>
+<li>Implementation versions measured: reference</li>
+<li>Parameter sets: <code>MAMBA-Viper-128</code>, <code>MAMBA-Viper-192</code>, <code>MAMBA-Viper-256</code>, <code>MAMBA-Viper-384</code>, <code>MAMBA-Viper-512</code></li>
+</ul>
+<h2 id="2-assessment-environment">2. Assessment environment</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>item</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>processor</td>
+<td>Qualcomm Oryon (CPU 2, one core)</td>
+</tr>
+<tr>
+<td>machine</td>
+<td>ASUS Vivobook S 15</td>
+</tr>
+<tr>
+<td>clock</td>
+<td>fixed 2.71 GHz (governor performance, minimum = maximum), boost off, SMT none</td>
+</tr>
+<tr>
+<td>memory</td>
+<td>30562 MiB</td>
+</tr>
+<tr>
+<td>OS / kernel</td>
+<td>Ubuntu 26.04.1 LTS / 7.0.0-34-generic</td>
+</tr>
+<tr>
+<td>compiler / build tool</td>
+<td>gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0 / cmake version 4.2.3</td>
+</tr>
+<tr>
+<td>campaign start / end (UTC)</td>
+<td>2026-09-28T15:05:46 / 2026-09-29T08:43:52</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="3-functional-testing-kat">3. Functional testing (KAT)</h2>
+<p>Each library was checked against the submitted KAT vectors (SHA-256 manifest <code>kem-21/kat.sha256</code> in the harness) before timing.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>build flags</th>
+<th>KAT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MAMBA-Viper-128</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-192</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-256</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-384</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-512</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="4-performance">4. Performance</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>mean cycles</th>
+<th>mean time</th>
+<th>ops/s</th>
+<th>median trial</th>
+<th>n (trials × iters)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MAMBA-Viper-128</code></td>
+<td>keygen</td>
+<td>174.9 k</td>
+<td>64.9 µs</td>
+<td>1.54e+04</td>
+<td>64.9 µs</td>
+<td>41380 (5 × 8276)</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-128</code></td>
+<td>enc</td>
+<td>271.4 k</td>
+<td>101 µs</td>
+<td>9.93e+03</td>
+<td>101 µs</td>
+<td>30890 (5 × 6178)</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-128</code></td>
+<td>dec</td>
+<td>319.1 k</td>
+<td>118 µs</td>
+<td>8.45e+03</td>
+<td>118 µs</td>
+<td>24595 (5 × 4919)</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-192</code></td>
+<td>keygen</td>
+<td>375.1 k</td>
+<td>139 µs</td>
+<td>7.18e+03</td>
+<td>139 µs</td>
+<td>19090 (5 × 3818)</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-192</code></td>
+<td>enc</td>
+<td>506.2 k</td>
+<td>188 µs</td>
+<td>5.32e+03</td>
+<td>188 µs</td>
+<td>16430 (5 × 3286)</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-192</code></td>
+<td>dec</td>
+<td>568.6 k</td>
+<td>211 µs</td>
+<td>4.74e+03</td>
+<td>211 µs</td>
+<td>14535 (5 × 2907)</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-256</code></td>
+<td>keygen</td>
+<td>625.2 k</td>
+<td>232 µs</td>
+<td>4.31e+03</td>
+<td>231 µs</td>
+<td>12965 (5 × 2593)</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-256</code></td>
+<td>enc</td>
+<td>781.4 k</td>
+<td>290 µs</td>
+<td>3.45e+03</td>
+<td>290 µs</td>
+<td>10615 (5 × 2123)</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-256</code></td>
+<td>dec</td>
+<td>862.3 k</td>
+<td>320 µs</td>
+<td>3.13e+03</td>
+<td>316 µs</td>
+<td>9805 (5 × 1961)</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-384</code></td>
+<td>keygen</td>
+<td>1.83 M</td>
+<td>678 µs</td>
+<td>1.48e+03</td>
+<td>677 µs</td>
+<td>4355 (5 × 871)</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-384</code></td>
+<td>enc</td>
+<td>2.10 M</td>
+<td>780 µs</td>
+<td>1.28e+03</td>
+<td>779 µs</td>
+<td>4065 (5 × 813)</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-384</code></td>
+<td>dec</td>
+<td>2.23 M</td>
+<td>826 µs</td>
+<td>1.21e+03</td>
+<td>823 µs</td>
+<td>3800 (5 × 760)</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-512</code></td>
+<td>keygen</td>
+<td>2.94 M</td>
+<td>1.09 ms</td>
+<td>915</td>
+<td>1.09 ms</td>
+<td>2585 (5 × 517)</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-512</code></td>
+<td>enc</td>
+<td>3.29 M</td>
+<td>1.22 ms</td>
+<td>818</td>
+<td>1.22 ms</td>
+<td>2565 (5 × 513)</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-512</code></td>
+<td>dec</td>
+<td>3.43 M</td>
+<td>1.27 ms</td>
+<td>786</td>
+<td>1.27 ms</td>
+<td>2470 (5 × 494)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-resource-consumption">5. Resource consumption</h2>
+<p>Static memory is approximated by the library's loadable ELF segments; peak memory is the process high-water mark (VmHWM) including the benchmark driver and libc, so both are upper-bound proxies rather than isolated algorithm memory.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>static: ELF image (bytes)</th>
+<th>baseline RSS</th>
+<th>peak RSS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MAMBA-Viper-128</code></td>
+<td>keygen</td>
+<td>36344</td>
+<td>1428 KiB</td>
+<td>1504 KiB</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-128</code></td>
+<td>enc</td>
+<td>36344</td>
+<td>1440 KiB</td>
+<td>1504 KiB</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-128</code></td>
+<td>dec</td>
+<td>36344</td>
+<td>1444 KiB</td>
+<td>1508 KiB</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-192</code></td>
+<td>keygen</td>
+<td>36432</td>
+<td>1428 KiB</td>
+<td>1508 KiB</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-192</code></td>
+<td>enc</td>
+<td>36432</td>
+<td>1448 KiB</td>
+<td>1516 KiB</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-192</code></td>
+<td>dec</td>
+<td>36432</td>
+<td>1448 KiB</td>
+<td>1516 KiB</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-256</code></td>
+<td>keygen</td>
+<td>35984</td>
+<td>1432 KiB</td>
+<td>1520 KiB</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-256</code></td>
+<td>enc</td>
+<td>35984</td>
+<td>1456 KiB</td>
+<td>1524 KiB</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-256</code></td>
+<td>dec</td>
+<td>35984</td>
+<td>1456 KiB</td>
+<td>1524 KiB</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-384</code></td>
+<td>keygen</td>
+<td>36192</td>
+<td>1436 KiB</td>
+<td>1556 KiB</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-384</code></td>
+<td>enc</td>
+<td>36192</td>
+<td>1496 KiB</td>
+<td>1568 KiB</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-384</code></td>
+<td>dec</td>
+<td>36192</td>
+<td>1496 KiB</td>
+<td>1568 KiB</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-512</code></td>
+<td>keygen</td>
+<td>36376</td>
+<td>1440 KiB</td>
+<td>1592 KiB</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-512</code></td>
+<td>enc</td>
+<td>36376</td>
+<td>1536 KiB</td>
+<td>1608 KiB</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-512</code></td>
+<td>dec</td>
+<td>36376</td>
+<td>1536 KiB</td>
+<td>1608 KiB</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="6-transmission-and-storage-overhead">6. Transmission and storage overhead</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>public key</th>
+<th>secret key</th>
+<th>ciphertext</th>
+<th>shared secret</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MAMBA-Viper-128</code></td>
+<td>608</td>
+<td>1424</td>
+<td>736</td>
+<td>16</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-192</code></td>
+<td>992</td>
+<td>2200</td>
+<td>1088</td>
+<td>24</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-256</code></td>
+<td>1312</td>
+<td>2912</td>
+<td>1472</td>
+<td>32</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-384</code></td>
+<td>2496</td>
+<td>5488</td>
+<td>2656</td>
+<td>48</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-512</code></td>
+<td>3200</td>
+<td>7040</td>
+<td>3456</td>
+<td>64</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="symmetric-primitives">Symmetric primitives</h2>
+<p><a href="../symmetric-survey.html">Survey</a> verdict: <strong>ICCS-only</strong> — <code>shake*</code> names are shims over pseudoXOF</p>
+<p>Share of each operation spent in the ICCS placeholder hash functions and in the ICCS DRNG (reference build, measured in the same run with link-time wrappers):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>pseudohash/XOF/sm3</th>
+<th>DRNG</th>
+<th>calls per operation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MAMBA-Viper-128</code></td>
+<td>keygen</td>
+<td>55%</td>
+<td>7.3%</td>
+<td>drng 3, pseudoXOF 8</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-128</code></td>
+<td>enc</td>
+<td>59%</td>
+<td>1.6%</td>
+<td>drng 1, pseudoXOF 14</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-128</code></td>
+<td>dec</td>
+<td>57%</td>
+<td>0.0%</td>
+<td>pseudoXOF 12</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-192</code></td>
+<td>keygen</td>
+<td>57%</td>
+<td>3.4%</td>
+<td>drng 3, pseudoXOF 14</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-192</code></td>
+<td>enc</td>
+<td>57%</td>
+<td>0.8%</td>
+<td>drng 1, pseudoXOF 20</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-192</code></td>
+<td>dec</td>
+<td>54%</td>
+<td>0.0%</td>
+<td>pseudoXOF 18</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-256</code></td>
+<td>keygen</td>
+<td>56%</td>
+<td>2.0%</td>
+<td>drng 3, pseudoXOF 22</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-256</code></td>
+<td>enc</td>
+<td>55%</td>
+<td>0.5%</td>
+<td>drng 1, pseudoXOF 28</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-256</code></td>
+<td>dec</td>
+<td>52%</td>
+<td>0.0%</td>
+<td>pseudoXOF 26</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-384</code></td>
+<td>keygen</td>
+<td>57%</td>
+<td>0.8%</td>
+<td>drng 3, pseudoXOF 58</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-384</code></td>
+<td>enc</td>
+<td>56%</td>
+<td>0.3%</td>
+<td>drng 1, pseudoXOF 64</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-384</code></td>
+<td>dec</td>
+<td>53%</td>
+<td>0.0%</td>
+<td>pseudoXOF 62</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-512</code></td>
+<td>keygen</td>
+<td>56%</td>
+<td>0.5%</td>
+<td>drng 3, pseudoXOF 92</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-512</code></td>
+<td>enc</td>
+<td>55%</td>
+<td>0.2%</td>
+<td>drng 1, pseudoXOF 98</td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-512</code></td>
+<td>dec</td>
+<td>53%</td>
+<td>0.0%</td>
+<td>pseudoXOF 96</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="7-raw-evidence-index">7. Raw evidence index</h2>
+<p>Paths are relative to <code>performance/data/arm_1/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>; each JSON file records its commands, environment and trials.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>item</th>
+<th>file</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MAMBA-Viper-128</code></td>
+<td>KAT log (sha256 <code>3d04b7000fb8fbd8…</code>)</td>
+<td><code>kat/kem-21/MAMBA-Viper-128.log</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-128</code></td>
+<td>timing dec</td>
+<td><code>records/kem-21/MAMBA-Viper-128__dec.json</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-128</code></td>
+<td>timing enc</td>
+<td><code>records/kem-21/MAMBA-Viper-128__enc.json</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-128</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-21/MAMBA-Viper-128__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-128</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-21/MAMBA-Viper-128__dec.json</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-128</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-21/MAMBA-Viper-128__enc.json</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-128</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-21/MAMBA-Viper-128__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-192</code></td>
+<td>KAT log (sha256 <code>a449fd93f0139985…</code>)</td>
+<td><code>kat/kem-21/MAMBA-Viper-192.log</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-192</code></td>
+<td>timing dec</td>
+<td><code>records/kem-21/MAMBA-Viper-192__dec.json</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-192</code></td>
+<td>timing enc</td>
+<td><code>records/kem-21/MAMBA-Viper-192__enc.json</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-192</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-21/MAMBA-Viper-192__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-192</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-21/MAMBA-Viper-192__dec.json</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-192</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-21/MAMBA-Viper-192__enc.json</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-192</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-21/MAMBA-Viper-192__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-256</code></td>
+<td>KAT log (sha256 <code>38cc69f4ca95b0f0…</code>)</td>
+<td><code>kat/kem-21/MAMBA-Viper-256.log</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-256</code></td>
+<td>timing dec</td>
+<td><code>records/kem-21/MAMBA-Viper-256__dec.json</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-256</code></td>
+<td>timing enc</td>
+<td><code>records/kem-21/MAMBA-Viper-256__enc.json</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-256</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-21/MAMBA-Viper-256__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-256</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-21/MAMBA-Viper-256__dec.json</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-256</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-21/MAMBA-Viper-256__enc.json</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-256</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-21/MAMBA-Viper-256__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-384</code></td>
+<td>KAT log (sha256 <code>1b41d53bacd29e46…</code>)</td>
+<td><code>kat/kem-21/MAMBA-Viper-384.log</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-384</code></td>
+<td>timing dec</td>
+<td><code>records/kem-21/MAMBA-Viper-384__dec.json</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-384</code></td>
+<td>timing enc</td>
+<td><code>records/kem-21/MAMBA-Viper-384__enc.json</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-384</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-21/MAMBA-Viper-384__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-384</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-21/MAMBA-Viper-384__dec.json</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-384</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-21/MAMBA-Viper-384__enc.json</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-384</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-21/MAMBA-Viper-384__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-512</code></td>
+<td>KAT log (sha256 <code>cce2cbae77f855c5…</code>)</td>
+<td><code>kat/kem-21/MAMBA-Viper-512.log</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-512</code></td>
+<td>timing dec</td>
+<td><code>records/kem-21/MAMBA-Viper-512__dec.json</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-512</code></td>
+<td>timing enc</td>
+<td><code>records/kem-21/MAMBA-Viper-512__enc.json</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-512</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-21/MAMBA-Viper-512__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-512</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-21/MAMBA-Viper-512__dec.json</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-512</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-21/MAMBA-Viper-512__enc.json</code></td>
+</tr>
+<tr>
+<td><code>MAMBA-Viper-512</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-21/MAMBA-Viper-512__keygen.json</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Scripts: <code>performance/campaign.py</code>, <code>performance/ngcc_perf.c</code>, <code>performance/hashprof/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

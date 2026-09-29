@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: kex-08 NIIKE — performance on AArch64 (system arm1)</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=808fa5e8">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
+<nav><a href="../../index.html">Home</a><a href="../../reports/index.html">Security</a><a href="../../performance/index.html">Performance</a><a href="../../constant-time/index.html">Side-Channel</a></nav>
+</header>
+<main class="">
+<!-- synchronized from harness: kex-08/perf_arm_1.md -->
+<h1 id="kex-08-niike-performance-on-aarch64-system-arm_1">kex-08 NIIKE — performance on AArch64 (system arm_1)</h1>
+<p><a href="index.html">Performance arm_1</a> › <code>kex-08</code> · <a href="method.html">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560626184278016.html">NICCS page</a></p>
+<p><strong>Systems:</strong> <a href="../x86_1/kex-08.html">x86_1</a> · <strong>arm_1</strong></p>
+<p>Independent measurement following the structure of the NICCS ARM self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.</p>
+<h2 id="1-basic-information">1. Basic information</h2>
+<ul>
+<li>Category: public-key algorithm; function: key exchange</li>
+<li>Algorithm: NIIKE</li>
+<li>Implementation versions measured: reference</li>
+<li>Parameter sets: <code>NIIKE-lv128</code>, <code>NIIKE-lv256</code></li>
+</ul>
+<h2 id="2-assessment-environment">2. Assessment environment</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>item</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>processor</td>
+<td>Qualcomm Oryon (CPU 2, one core)</td>
+</tr>
+<tr>
+<td>machine</td>
+<td>ASUS Vivobook S 15</td>
+</tr>
+<tr>
+<td>clock</td>
+<td>fixed 2.71 GHz (governor performance, minimum = maximum), boost off, SMT none</td>
+</tr>
+<tr>
+<td>memory</td>
+<td>30562 MiB</td>
+</tr>
+<tr>
+<td>OS / kernel</td>
+<td>Ubuntu 26.04.1 LTS / 7.0.0-34-generic</td>
+</tr>
+<tr>
+<td>compiler / build tool</td>
+<td>gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0 / cmake version 4.2.3</td>
+</tr>
+<tr>
+<td>campaign start / end (UTC)</td>
+<td>2026-09-28T15:05:46 / 2026-09-29T08:43:52</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="3-functional-testing-kat">3. Functional testing (KAT)</h2>
+<p>Each library was checked against the submitted KAT vectors (SHA-256 manifest <code>kex-08/kat.sha256</code> in the harness) before timing.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>build flags</th>
+<th>KAT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NIIKE-lv128</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>NIIKE-lv256</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="4-performance">4. Performance</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>mean cycles</th>
+<th>mean time</th>
+<th>ops/s</th>
+<th>median trial</th>
+<th>n (trials × iters)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NIIKE-lv128</code></td>
+<td>exchange</td>
+<td>53.18 G</td>
+<td>19.7 s</td>
+<td>0.0507</td>
+<td>19.7 s</td>
+<td>15 (5 × 3)</td>
+</tr>
+<tr>
+<td><code>NIIKE-lv128</code></td>
+<td>init_a</td>
+<td>14.53 G</td>
+<td>5.39 s</td>
+<td>0.185</td>
+<td>5.38 s</td>
+<td>15 (5 × 3)</td>
+</tr>
+<tr>
+<td><code>NIIKE-lv128</code></td>
+<td>init_b</td>
+<td>14.68 G</td>
+<td>5.45 s</td>
+<td>0.184</td>
+<td>5.41 s</td>
+<td>15 (5 × 3)</td>
+</tr>
+<tr>
+<td><code>NIIKE-lv128</code></td>
+<td>derive_a</td>
+<td>12.06 G</td>
+<td>4.47 s</td>
+<td>0.223</td>
+<td>4.47 s</td>
+<td>15 (5 × 3)</td>
+</tr>
+<tr>
+<td><code>NIIKE-lv128</code></td>
+<td>derive_b</td>
+<td>12.15 G</td>
+<td>4.51 s</td>
+<td>0.222</td>
+<td>4.49 s</td>
+<td>15 (5 × 3)</td>
+</tr>
+<tr>
+<td><code>NIIKE-lv256</code></td>
+<td>exchange</td>
+<td>848.72 G</td>
+<td>315 s</td>
+<td>0.00317</td>
+<td>315 s</td>
+<td>1 (1 × 1)</td>
+</tr>
+<tr>
+<td><code>NIIKE-lv256</code></td>
+<td>init_a</td>
+<td>222.60 G</td>
+<td>83 s</td>
+<td>0.012</td>
+<td>83 s</td>
+<td>1 (1 × 1)</td>
+</tr>
+<tr>
+<td><code>NIIKE-lv256</code></td>
+<td>init_b</td>
+<td>222.69 G</td>
+<td>83.1 s</td>
+<td>0.012</td>
+<td>83.1 s</td>
+<td>1 (1 × 1)</td>
+</tr>
+<tr>
+<td><code>NIIKE-lv256</code></td>
+<td>derive_a</td>
+<td>201.98 G</td>
+<td>75 s</td>
+<td>0.0133</td>
+<td>75 s</td>
+<td>1 (1 × 1)</td>
+</tr>
+<tr>
+<td><code>NIIKE-lv256</code></td>
+<td>derive_b</td>
+<td>202.12 G</td>
+<td>75 s</td>
+<td>0.0133</td>
+<td>75 s</td>
+<td>1 (1 × 1)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-resource-consumption">5. Resource consumption</h2>
+<p>Static memory is approximated by the library's loadable ELF segments; peak memory is the process high-water mark (VmHWM) including the benchmark driver and libc, so both are upper-bound proxies rather than isolated algorithm memory.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>static: ELF image (bytes)</th>
+<th>baseline RSS</th>
+<th>peak RSS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NIIKE-lv128</code></td>
+<td>exchange</td>
+<td>692528</td>
+<td>2580 KiB</td>
+<td>2652 KiB</td>
+</tr>
+<tr>
+<td><code>NIIKE-lv128</code></td>
+<td>init_a</td>
+<td>692528</td>
+<td>2580 KiB</td>
+<td>2652 KiB</td>
+</tr>
+<tr>
+<td><code>NIIKE-lv128</code></td>
+<td>init_b</td>
+<td>692528</td>
+<td>2580 KiB</td>
+<td>4580 KiB</td>
+</tr>
+<tr>
+<td><code>NIIKE-lv128</code></td>
+<td>derive_a</td>
+<td>692528</td>
+<td>2576 KiB</td>
+<td>2648 KiB</td>
+</tr>
+<tr>
+<td><code>NIIKE-lv128</code></td>
+<td>derive_b</td>
+<td>692528</td>
+<td>2580 KiB</td>
+<td>2652 KiB</td>
+</tr>
+<tr>
+<td><code>NIIKE-lv256</code></td>
+<td>exchange</td>
+<td>997992</td>
+<td>4820 KiB</td>
+<td>4888 KiB</td>
+</tr>
+<tr>
+<td><code>NIIKE-lv256</code></td>
+<td>init_a</td>
+<td>997992</td>
+<td>4308 KiB</td>
+<td>6356 KiB</td>
+</tr>
+<tr>
+<td><code>NIIKE-lv256</code></td>
+<td>init_b</td>
+<td>997992</td>
+<td>4248 KiB</td>
+<td>6360 KiB</td>
+</tr>
+<tr>
+<td><code>NIIKE-lv256</code></td>
+<td>derive_a</td>
+<td>997992</td>
+<td>4820 KiB</td>
+<td>4888 KiB</td>
+</tr>
+<tr>
+<td><code>NIIKE-lv256</code></td>
+<td>derive_b</td>
+<td>997992</td>
+<td>4632 KiB</td>
+<td>6680 KiB</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="6-transmission-and-storage-overhead">6. Transmission and storage overhead</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>passes</th>
+<th>messages (bytes)</th>
+<th>total</th>
+<th>long-term pk / sk</th>
+<th>shared secret</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NIIKE-lv128</code></td>
+<td>0</td>
+<td>0 / 0 / 0</td>
+<td>0</td>
+<td>4160 / 196</td>
+<td>64</td>
+</tr>
+<tr>
+<td><code>NIIKE-lv256</code></td>
+<td>0</td>
+<td>0 / 0 / 0</td>
+<td>0</td>
+<td>8960 / 336</td>
+<td>128</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="symmetric-primitives">Symmetric primitives</h2>
+<p><a href="../symmetric-survey.html">Survey</a> verdict: <strong>bypass</strong> — no hash or KDF at all: raw j-invariant (known kex-08-1)</p>
+<p>Share of each operation spent in the ICCS placeholder hash functions and in the ICCS DRNG (reference build, measured in the same run with link-time wrappers):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>pseudohash/XOF/sm3</th>
+<th>DRNG</th>
+<th>calls per operation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NIIKE-lv128</code></td>
+<td>exchange</td>
+<td>0.0%</td>
+<td>0.0%</td>
+<td>drng 174</td>
+</tr>
+<tr>
+<td><code>NIIKE-lv256</code></td>
+<td>exchange</td>
+<td>0.0%</td>
+<td>0.0%</td>
+<td>drng 296</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="7-raw-evidence-index">7. Raw evidence index</h2>
+<p>Paths are relative to <code>performance/data/arm_1/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>; each JSON file records its commands, environment and trials.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>item</th>
+<th>file</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NIIKE-lv128</code></td>
+<td>KAT log (sha256 <code>9f077a258eb6d903…</code>)</td>
+<td><code>kat/kex-08/NIIKE-lv128.log</code></td>
+</tr>
+<tr>
+<td><code>NIIKE-lv128</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-08/NIIKE-lv128__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>NIIKE-lv128</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-08/NIIKE-lv128__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>NIIKE-lv128</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-08/NIIKE-lv128__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>NIIKE-lv128</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-08/NIIKE-lv128__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>NIIKE-lv128</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-08/NIIKE-lv128__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>NIIKE-lv128</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-08/NIIKE-lv128__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>NIIKE-lv256</code></td>
+<td>KAT log (sha256 <code>de0f3d574c7621e6…</code>)</td>
+<td><code>kat/kex-08/NIIKE-lv256.log</code></td>
+</tr>
+<tr>
+<td><code>NIIKE-lv256</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-08/NIIKE-lv256__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>NIIKE-lv256</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-08/NIIKE-lv256__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>NIIKE-lv256</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-08/NIIKE-lv256__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>NIIKE-lv256</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-08/NIIKE-lv256__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>NIIKE-lv256</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-08/NIIKE-lv256__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>NIIKE-lv256</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-08/NIIKE-lv256__exchange.json</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Scripts: <code>performance/campaign.py</code>, <code>performance/ngcc_perf.c</code>, <code>performance/hashprof/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

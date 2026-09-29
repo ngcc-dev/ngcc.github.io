@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: sign-11 FlexTree — performance on AArch64 (system arm1)</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=808fa5e8">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
+<nav><a href="../../index.html">Home</a><a href="../../reports/index.html">Security</a><a href="../../performance/index.html">Performance</a><a href="../../constant-time/index.html">Side-Channel</a></nav>
+</header>
+<main class="">
+<!-- synchronized from harness: sign-11/perf_arm_1.md -->
+<h1 id="sign-11-flextree-performance-on-aarch64-system-arm_1">sign-11 FlexTree — performance on AArch64 (system arm_1)</h1>
+<p><a href="index.html">Performance arm_1</a> › <code>sign-11</code> · <a href="method.html">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561077587857408.html">NICCS page</a></p>
+<p><strong>Systems:</strong> <a href="../x86_1/sign-11.html">x86_1</a> · <strong>arm_1</strong></p>
+<p>Independent measurement following the structure of the NICCS ARM self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.</p>
+<h2 id="1-basic-information">1. Basic information</h2>
+<ul>
+<li>Category: public-key algorithm; function: digital signature</li>
+<li>Algorithm: FlexTree</li>
+<li>Implementation versions measured: reference</li>
+<li>Parameter sets: <code>Flextree-160f</code>, <code>Flextree-160s</code>, <code>Flextree-256f</code>, <code>Flextree-256s</code>, <code>Flextree-384f</code>, <code>Flextree-384s</code>, <code>Flextree-512f</code>, <code>Flextree-512s</code></li>
+</ul>
+<h2 id="2-assessment-environment">2. Assessment environment</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>item</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>processor</td>
+<td>Qualcomm Oryon (CPU 2, one core)</td>
+</tr>
+<tr>
+<td>machine</td>
+<td>ASUS Vivobook S 15</td>
+</tr>
+<tr>
+<td>clock</td>
+<td>fixed 2.71 GHz (governor performance, minimum = maximum), boost off, SMT none</td>
+</tr>
+<tr>
+<td>memory</td>
+<td>30562 MiB</td>
+</tr>
+<tr>
+<td>OS / kernel</td>
+<td>Ubuntu 26.04.1 LTS / 7.0.0-34-generic</td>
+</tr>
+<tr>
+<td>compiler / build tool</td>
+<td>gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0 / cmake version 4.2.3</td>
+</tr>
+<tr>
+<td>campaign start / end (UTC)</td>
+<td>2026-09-28T15:05:46 / 2026-09-29T08:43:52</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="3-functional-testing-kat">3. Functional testing (KAT)</h2>
+<p>Each library was checked against the submitted KAT vectors (SHA-256 manifest <code>sign-11/kat.sha256</code> in the harness) before timing.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>build flags</th>
+<th>KAT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Flextree-160f</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>Flextree-160s</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>Flextree-256f</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>Flextree-256s</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>Flextree-384f</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>Flextree-384s</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>Flextree-512f</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>Flextree-512s</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="4-performance">4. Performance</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>mean cycles</th>
+<th>mean time</th>
+<th>ops/s</th>
+<th>median trial</th>
+<th>n (trials × iters)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Flextree-160f</code></td>
+<td>keygen</td>
+<td>13.81 M</td>
+<td>5.12 ms</td>
+<td>195</td>
+<td>5.12 ms</td>
+<td>615 (5 × 123)</td>
+</tr>
+<tr>
+<td><code>Flextree-160f</code></td>
+<td>sign</td>
+<td>532.03 M</td>
+<td>197 ms</td>
+<td>5.07</td>
+<td>197 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Flextree-160f</code></td>
+<td>verify</td>
+<td>14.81 M</td>
+<td>5.5 ms</td>
+<td>182</td>
+<td>5.45 ms</td>
+<td>580 (5 × 116)</td>
+</tr>
+<tr>
+<td><code>Flextree-160s</code></td>
+<td>keygen</td>
+<td>565.27 M</td>
+<td>210 ms</td>
+<td>4.77</td>
+<td>210 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Flextree-160s</code></td>
+<td>sign</td>
+<td>7.88 G</td>
+<td>2.92 s</td>
+<td>0.342</td>
+<td>2.92 s</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Flextree-160s</code></td>
+<td>verify</td>
+<td>20.31 M</td>
+<td>7.53 ms</td>
+<td>133</td>
+<td>7.53 ms</td>
+<td>420 (5 × 84)</td>
+</tr>
+<tr>
+<td><code>Flextree-256f</code></td>
+<td>keygen</td>
+<td>44.08 M</td>
+<td>16.3 ms</td>
+<td>61.2</td>
+<td>16.3 ms</td>
+<td>185 (5 × 37)</td>
+</tr>
+<tr>
+<td><code>Flextree-256f</code></td>
+<td>sign</td>
+<td>918.11 M</td>
+<td>341 ms</td>
+<td>2.94</td>
+<td>340 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Flextree-256f</code></td>
+<td>verify</td>
+<td>24.21 M</td>
+<td>8.98 ms</td>
+<td>111</td>
+<td>8.9 ms</td>
+<td>350 (5 × 70)</td>
+</tr>
+<tr>
+<td><code>Flextree-256s</code></td>
+<td>keygen</td>
+<td>460.08 M</td>
+<td>171 ms</td>
+<td>5.86</td>
+<td>171 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Flextree-256s</code></td>
+<td>sign</td>
+<td>8.79 G</td>
+<td>3.26 s</td>
+<td>0.307</td>
+<td>3.24 s</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Flextree-256s</code></td>
+<td>verify</td>
+<td>37.08 M</td>
+<td>13.8 ms</td>
+<td>72.7</td>
+<td>13.8 ms</td>
+<td>230 (5 × 46)</td>
+</tr>
+<tr>
+<td><code>Flextree-384f</code></td>
+<td>keygen</td>
+<td>623.94 M</td>
+<td>231 ms</td>
+<td>4.32</td>
+<td>229 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Flextree-384f</code></td>
+<td>sign</td>
+<td>11.73 G</td>
+<td>4.35 s</td>
+<td>0.23</td>
+<td>4.34 s</td>
+<td>85 (5 × 17)</td>
+</tr>
+<tr>
+<td><code>Flextree-384f</code></td>
+<td>verify</td>
+<td>118.76 M</td>
+<td>44.1 ms</td>
+<td>22.7</td>
+<td>44 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Flextree-384s</code></td>
+<td>keygen</td>
+<td>3.10 G</td>
+<td>1.15 s</td>
+<td>0.87</td>
+<td>1.15 s</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Flextree-384s</code></td>
+<td>sign</td>
+<td>42.86 G</td>
+<td>15.9 s</td>
+<td>0.0629</td>
+<td>15.9 s</td>
+<td>20 (5 × 4)</td>
+</tr>
+<tr>
+<td><code>Flextree-384s</code></td>
+<td>verify</td>
+<td>51.41 M</td>
+<td>19.1 ms</td>
+<td>52.4</td>
+<td>18.9 ms</td>
+<td>160 (5 × 32)</td>
+</tr>
+<tr>
+<td><code>Flextree-512f</code></td>
+<td>keygen</td>
+<td>1.67 G</td>
+<td>619 ms</td>
+<td>1.62</td>
+<td>619 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Flextree-512f</code></td>
+<td>sign</td>
+<td>23.54 G</td>
+<td>8.73 s</td>
+<td>0.114</td>
+<td>8.69 s</td>
+<td>40 (5 × 8)</td>
+</tr>
+<tr>
+<td><code>Flextree-512f</code></td>
+<td>verify</td>
+<td>152.42 M</td>
+<td>56.6 ms</td>
+<td>17.7</td>
+<td>55.8 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Flextree-512s</code></td>
+<td>keygen</td>
+<td>6.65 G</td>
+<td>2.47 s</td>
+<td>0.406</td>
+<td>2.46 s</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Flextree-512s</code></td>
+<td>sign</td>
+<td>80.79 G</td>
+<td>30 s</td>
+<td>0.0334</td>
+<td>29.7 s</td>
+<td>10 (5 × 2)</td>
+</tr>
+<tr>
+<td><code>Flextree-512s</code></td>
+<td>verify</td>
+<td>111.38 M</td>
+<td>41.3 ms</td>
+<td>24.2</td>
+<td>41.3 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-resource-consumption">5. Resource consumption</h2>
+<p>Static memory is approximated by the library's loadable ELF segments; peak memory is the process high-water mark (VmHWM) including the benchmark driver and libc, so both are upper-bound proxies rather than isolated algorithm memory.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>static: ELF image (bytes)</th>
+<th>baseline RSS</th>
+<th>peak RSS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Flextree-160f</code></td>
+<td>keygen</td>
+<td>3180096</td>
+<td>1476 KiB</td>
+<td>1572 KiB</td>
+</tr>
+<tr>
+<td><code>Flextree-160f</code></td>
+<td>sign</td>
+<td>3180096</td>
+<td>1508 KiB</td>
+<td>4764 KiB</td>
+</tr>
+<tr>
+<td><code>Flextree-160f</code></td>
+<td>verify</td>
+<td>3180096</td>
+<td>4696 KiB</td>
+<td>4764 KiB</td>
+</tr>
+<tr>
+<td><code>Flextree-160s</code></td>
+<td>keygen</td>
+<td>1821632</td>
+<td>1468 KiB</td>
+<td>1584 KiB</td>
+</tr>
+<tr>
+<td><code>Flextree-160s</code></td>
+<td>sign</td>
+<td>1821632</td>
+<td>1520 KiB</td>
+<td>6608 KiB</td>
+</tr>
+<tr>
+<td><code>Flextree-160s</code></td>
+<td>verify</td>
+<td>1821632</td>
+<td>4836 KiB</td>
+<td>4900 KiB</td>
+</tr>
+<tr>
+<td><code>Flextree-256f</code></td>
+<td>keygen</td>
+<td>3120784</td>
+<td>1500 KiB</td>
+<td>1612 KiB</td>
+</tr>
+<tr>
+<td><code>Flextree-256f</code></td>
+<td>sign</td>
+<td>3120784</td>
+<td>1548 KiB</td>
+<td>6836 KiB</td>
+</tr>
+<tr>
+<td><code>Flextree-256f</code></td>
+<td>verify</td>
+<td>3120784</td>
+<td>5544 KiB</td>
+<td>5612 KiB</td>
+</tr>
+<tr>
+<td><code>Flextree-256s</code></td>
+<td>keygen</td>
+<td>14745816</td>
+<td>1484 KiB</td>
+<td>1616 KiB</td>
+</tr>
+<tr>
+<td><code>Flextree-256s</code></td>
+<td>sign</td>
+<td>14745816</td>
+<td>1548 KiB</td>
+<td>19660 KiB</td>
+</tr>
+<tr>
+<td><code>Flextree-256s</code></td>
+<td>verify</td>
+<td>14745816</td>
+<td>9536 KiB</td>
+<td>14480 KiB</td>
+</tr>
+<tr>
+<td><code>Flextree-384f</code></td>
+<td>keygen</td>
+<td>5291912</td>
+<td>1528 KiB</td>
+<td>1652 KiB</td>
+</tr>
+<tr>
+<td><code>Flextree-384f</code></td>
+<td>sign</td>
+<td>5291912</td>
+<td>1584 KiB</td>
+<td>15332 KiB</td>
+</tr>
+<tr>
+<td><code>Flextree-384f</code></td>
+<td>verify</td>
+<td>5291912</td>
+<td>6648 KiB</td>
+<td>13252 KiB</td>
+</tr>
+<tr>
+<td><code>Flextree-384s</code></td>
+<td>keygen</td>
+<td>4420016</td>
+<td>1516 KiB</td>
+<td>1624 KiB</td>
+</tr>
+<tr>
+<td><code>Flextree-384s</code></td>
+<td>sign</td>
+<td>4420016</td>
+<td>3596 KiB</td>
+<td>31304 KiB</td>
+</tr>
+<tr>
+<td><code>Flextree-384s</code></td>
+<td>verify</td>
+<td>4420016</td>
+<td>5780 KiB</td>
+<td>29132 KiB</td>
+</tr>
+<tr>
+<td><code>Flextree-512f</code></td>
+<td>keygen</td>
+<td>8126040</td>
+<td>3512 KiB</td>
+<td>3656 KiB</td>
+</tr>
+<tr>
+<td><code>Flextree-512f</code></td>
+<td>sign</td>
+<td>8126040</td>
+<td>1656 KiB</td>
+<td>32984 KiB</td>
+</tr>
+<tr>
+<td><code>Flextree-512f</code></td>
+<td>verify</td>
+<td>8126040</td>
+<td>9468 KiB</td>
+<td>32080 KiB</td>
+</tr>
+<tr>
+<td><code>Flextree-512s</code></td>
+<td>keygen</td>
+<td>7443216</td>
+<td>1552 KiB</td>
+<td>1676 KiB</td>
+</tr>
+<tr>
+<td><code>Flextree-512s</code></td>
+<td>sign</td>
+<td>7443216</td>
+<td>1608 KiB</td>
+<td>62444 KiB</td>
+</tr>
+<tr>
+<td><code>Flextree-512s</code></td>
+<td>verify</td>
+<td>7443216</td>
+<td>10692 KiB</td>
+<td>64224 KiB</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="6-transmission-and-storage-overhead">6. Transmission and storage overhead</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>public key</th>
+<th>secret key</th>
+<th>signature</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Flextree-160f</code></td>
+<td>40</td>
+<td>80</td>
+<td>18672</td>
+</tr>
+<tr>
+<td><code>Flextree-160s</code></td>
+<td>40</td>
+<td>80</td>
+<td>9580</td>
+</tr>
+<tr>
+<td><code>Flextree-256f</code></td>
+<td>64</td>
+<td>128</td>
+<td>46856</td>
+</tr>
+<tr>
+<td><code>Flextree-256s</code></td>
+<td>64</td>
+<td>128</td>
+<td>25420</td>
+</tr>
+<tr>
+<td><code>Flextree-384f</code></td>
+<td>96</td>
+<td>192</td>
+<td>73396</td>
+</tr>
+<tr>
+<td><code>Flextree-384s</code></td>
+<td>96</td>
+<td>192</td>
+<td>60180</td>
+</tr>
+<tr>
+<td><code>Flextree-512f</code></td>
+<td>128</td>
+<td>256</td>
+<td>117296</td>
+</tr>
+<tr>
+<td><code>Flextree-512s</code></td>
+<td>128</td>
+<td>256</td>
+<td>94948</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="symmetric-primitives">Symmetric primitives</h2>
+<p><a href="../symmetric-survey.html">Survey</a> verdict: <strong>ICCS-only</strong></p>
+<p>Share of each operation spent in the ICCS placeholder hash functions and in the ICCS DRNG (reference build, measured in the same run with link-time wrappers):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>pseudohash/XOF/sm3</th>
+<th>DRNG</th>
+<th>calls per operation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Flextree-160f</code></td>
+<td>keygen</td>
+<td>97%</td>
+<td>0.0%</td>
+<td>drng 1, sm3hash 5.07e+03</td>
+</tr>
+<tr>
+<td><code>Flextree-160f</code></td>
+<td>sign</td>
+<td>91%</td>
+<td>0.0%</td>
+<td>drng 1, pseudoXOF 1.52e+03, sm3hash 1.84e+05</td>
+</tr>
+<tr>
+<td><code>Flextree-160f</code></td>
+<td>verify</td>
+<td>97%</td>
+<td>0.0%</td>
+<td>pseudoXOF 2, sm3hash 5.34e+03</td>
+</tr>
+<tr>
+<td><code>Flextree-160s</code></td>
+<td>keygen</td>
+<td>97%</td>
+<td>0.0%</td>
+<td>drng 1, sm3hash 2.09e+05</td>
+</tr>
+<tr>
+<td><code>Flextree-160s</code></td>
+<td>sign</td>
+<td>97%</td>
+<td>0.0%</td>
+<td>drng 1, pseudoXOF 2.33, sm3hash 2.94e+06</td>
+</tr>
+<tr>
+<td><code>Flextree-160s</code></td>
+<td>verify</td>
+<td>97%</td>
+<td>0.0%</td>
+<td>pseudoXOF 2, sm3hash 7.49e+03</td>
+</tr>
+<tr>
+<td><code>Flextree-256f</code></td>
+<td>keygen</td>
+<td>97%</td>
+<td>0.0%</td>
+<td>drng 1, sm3hash 1.63e+04</td>
+</tr>
+<tr>
+<td><code>Flextree-256f</code></td>
+<td>sign</td>
+<td>97%</td>
+<td>0.0%</td>
+<td>drng 1, pseudoXOF 15.5, sm3hash 3.31e+05</td>
+</tr>
+<tr>
+<td><code>Flextree-256f</code></td>
+<td>verify</td>
+<td>97%</td>
+<td>0.0%</td>
+<td>pseudoXOF 2, sm3hash 8.53e+03</td>
+</tr>
+<tr>
+<td><code>Flextree-256s</code></td>
+<td>keygen</td>
+<td>97%</td>
+<td>0.0%</td>
+<td>drng 1, sm3hash 1.72e+05</td>
+</tr>
+<tr>
+<td><code>Flextree-256s</code></td>
+<td>sign</td>
+<td>97%</td>
+<td>0.0%</td>
+<td>drng 1, pseudoXOF 2, sm3hash 3.21e+06</td>
+</tr>
+<tr>
+<td><code>Flextree-256s</code></td>
+<td>verify</td>
+<td>97%</td>
+<td>0.0%</td>
+<td>pseudoXOF 2, sm3hash 1.36e+04</td>
+</tr>
+<tr>
+<td><code>Flextree-384f</code></td>
+<td>keygen</td>
+<td>99%</td>
+<td>0.0%</td>
+<td>drng 1, pseudoXOF 7.74e+04</td>
+</tr>
+<tr>
+<td><code>Flextree-384f</code></td>
+<td>sign</td>
+<td>99%</td>
+<td>0.0%</td>
+<td>drng 1, pseudoXOF 1.47e+06</td>
+</tr>
+<tr>
+<td><code>Flextree-384f</code></td>
+<td>verify</td>
+<td>99%</td>
+<td>0.0%</td>
+<td>pseudoXOF 1.47e+04</td>
+</tr>
+<tr>
+<td><code>Flextree-384s</code></td>
+<td>keygen</td>
+<td>99%</td>
+<td>0.0%</td>
+<td>drng 1, pseudoXOF 3.86e+05</td>
+</tr>
+<tr>
+<td><code>Flextree-384s</code></td>
+<td>sign</td>
+<td>99%</td>
+<td>0.0%</td>
+<td>drng 1, pseudoXOF 5.34e+06</td>
+</tr>
+<tr>
+<td><code>Flextree-384s</code></td>
+<td>verify</td>
+<td>98%</td>
+<td>0.0%</td>
+<td>pseudoXOF 6.18e+03</td>
+</tr>
+<tr>
+<td><code>Flextree-512f</code></td>
+<td>keygen</td>
+<td>99%</td>
+<td>0.0%</td>
+<td>drng 1, pseudoXOF 2.08e+05</td>
+</tr>
+<tr>
+<td><code>Flextree-512f</code></td>
+<td>sign</td>
+<td>99%</td>
+<td>0.0%</td>
+<td>drng 1, pseudoXOF 2.85e+06</td>
+</tr>
+<tr>
+<td><code>Flextree-512f</code></td>
+<td>verify</td>
+<td>98%</td>
+<td>0.0%</td>
+<td>pseudoXOF 1.81e+04</td>
+</tr>
+<tr>
+<td><code>Flextree-512s</code></td>
+<td>keygen</td>
+<td>99%</td>
+<td>0.0%</td>
+<td>drng 1, pseudoXOF 8.28e+05</td>
+</tr>
+<tr>
+<td><code>Flextree-512s</code></td>
+<td>sign</td>
+<td>99%</td>
+<td>0.0%</td>
+<td>drng 1, pseudoXOF 9.81e+06</td>
+</tr>
+<tr>
+<td><code>Flextree-512s</code></td>
+<td>verify</td>
+<td>97%</td>
+<td>0.0%</td>
+<td>pseudoXOF 1.33e+04</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="7-raw-evidence-index">7. Raw evidence index</h2>
+<p>Paths are relative to <code>performance/data/arm_1/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>; each JSON file records its commands, environment and trials.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>item</th>
+<th>file</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Flextree-160f</code></td>
+<td>KAT log (sha256 <code>b4cfaeeec6af47f8…</code>)</td>
+<td><code>kat/sign-11/Flextree-160f.log</code></td>
+</tr>
+<tr>
+<td><code>Flextree-160f</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-11/Flextree-160f__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-160f</code></td>
+<td>timing sign</td>
+<td><code>records/sign-11/Flextree-160f__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-160f</code></td>
+<td>timing verify</td>
+<td><code>records/sign-11/Flextree-160f__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-160f</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-11/Flextree-160f__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-160f</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-11/Flextree-160f__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-160f</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-11/Flextree-160f__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-160s</code></td>
+<td>KAT log (sha256 <code>3ed46dcc8f6c3c5a…</code>)</td>
+<td><code>kat/sign-11/Flextree-160s.log</code></td>
+</tr>
+<tr>
+<td><code>Flextree-160s</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-11/Flextree-160s__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-160s</code></td>
+<td>timing sign</td>
+<td><code>records/sign-11/Flextree-160s__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-160s</code></td>
+<td>timing verify</td>
+<td><code>records/sign-11/Flextree-160s__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-160s</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-11/Flextree-160s__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-160s</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-11/Flextree-160s__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-160s</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-11/Flextree-160s__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-256f</code></td>
+<td>KAT log (sha256 <code>bd6ed98d67e30c6a…</code>)</td>
+<td><code>kat/sign-11/Flextree-256f.log</code></td>
+</tr>
+<tr>
+<td><code>Flextree-256f</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-11/Flextree-256f__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-256f</code></td>
+<td>timing sign</td>
+<td><code>records/sign-11/Flextree-256f__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-256f</code></td>
+<td>timing verify</td>
+<td><code>records/sign-11/Flextree-256f__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-256f</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-11/Flextree-256f__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-256f</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-11/Flextree-256f__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-256f</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-11/Flextree-256f__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-256s</code></td>
+<td>KAT log (sha256 <code>1778240adcb6db56…</code>)</td>
+<td><code>kat/sign-11/Flextree-256s.log</code></td>
+</tr>
+<tr>
+<td><code>Flextree-256s</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-11/Flextree-256s__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-256s</code></td>
+<td>timing sign</td>
+<td><code>records/sign-11/Flextree-256s__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-256s</code></td>
+<td>timing verify</td>
+<td><code>records/sign-11/Flextree-256s__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-256s</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-11/Flextree-256s__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-256s</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-11/Flextree-256s__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-256s</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-11/Flextree-256s__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-384f</code></td>
+<td>KAT log (sha256 <code>9c994b6646786a07…</code>)</td>
+<td><code>kat/sign-11/Flextree-384f.log</code></td>
+</tr>
+<tr>
+<td><code>Flextree-384f</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-11/Flextree-384f__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-384f</code></td>
+<td>timing sign</td>
+<td><code>records/sign-11/Flextree-384f__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-384f</code></td>
+<td>timing verify</td>
+<td><code>records/sign-11/Flextree-384f__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-384f</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-11/Flextree-384f__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-384f</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-11/Flextree-384f__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-384f</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-11/Flextree-384f__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-384s</code></td>
+<td>KAT log (sha256 <code>7956cd9032b7ad59…</code>)</td>
+<td><code>kat/sign-11/Flextree-384s.log</code></td>
+</tr>
+<tr>
+<td><code>Flextree-384s</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-11/Flextree-384s__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-384s</code></td>
+<td>timing sign</td>
+<td><code>records/sign-11/Flextree-384s__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-384s</code></td>
+<td>timing verify</td>
+<td><code>records/sign-11/Flextree-384s__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-384s</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-11/Flextree-384s__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-384s</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-11/Flextree-384s__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-384s</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-11/Flextree-384s__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-512f</code></td>
+<td>KAT log (sha256 <code>47b8bb871fdefe6b…</code>)</td>
+<td><code>kat/sign-11/Flextree-512f.log</code></td>
+</tr>
+<tr>
+<td><code>Flextree-512f</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-11/Flextree-512f__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-512f</code></td>
+<td>timing sign</td>
+<td><code>records/sign-11/Flextree-512f__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-512f</code></td>
+<td>timing verify</td>
+<td><code>records/sign-11/Flextree-512f__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-512f</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-11/Flextree-512f__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-512f</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-11/Flextree-512f__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-512f</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-11/Flextree-512f__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-512s</code></td>
+<td>KAT log (sha256 <code>d0015a195318a7b7…</code>)</td>
+<td><code>kat/sign-11/Flextree-512s.log</code></td>
+</tr>
+<tr>
+<td><code>Flextree-512s</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-11/Flextree-512s__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-512s</code></td>
+<td>timing sign</td>
+<td><code>records/sign-11/Flextree-512s__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-512s</code></td>
+<td>timing verify</td>
+<td><code>records/sign-11/Flextree-512s__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-512s</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-11/Flextree-512s__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-512s</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-11/Flextree-512s__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Flextree-512s</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-11/Flextree-512s__verify.json</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Scripts: <code>performance/campaign.py</code>, <code>performance/ngcc_perf.c</code>, <code>performance/hashprof/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

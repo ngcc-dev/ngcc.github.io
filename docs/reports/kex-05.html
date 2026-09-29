@@ -10,10 +10,10 @@
 <body>
 <header class="site-header">
 <a class="brand" href="../index.html"><img class="brand-icon" src="../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
-<nav><a href="../index.html">Home</a><a href="../reports/index.html">Security</a><a href="../performance/x86_1/index.html">Performance</a><a href="../constant-time/index.html">Side-Channel</a></nav>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Security</a><a href="../performance/index.html">Performance</a><a href="../constant-time/index.html">Side-Channel</a></nav>
 </header>
 <main class="">
-<p class="crumb"><a href="../reports/index.html">Security</a> › <code>kex-05</code> · <a href="../constant-time/kex-05.html">Constant-time review</a> · <a href="../performance/x86_1/kex-05.html">Performance</a></p>
+<p class="crumb"><a href="../reports/index.html">Security</a> › <code>kex-05</code> · <a href="../constant-time/kex-05.html">Constant-time review</a> · Performance: <a href="../performance/x86_1/kex-05.html">x86_1</a> · <a href="../performance/arm_1/kex-05.html">arm_1</a></p>
 
 <h1 id="loom-kex-05">Loom (kex-05)</h1>
 <div class="table-wrap"><table class="meta">
@@ -26,20 +26,20 @@
 <h2 class="issue-heading issue-heading-first" id="kex-05-1-the-specified-decryption-failure-rate-causes-honest-session-aborts">kex-05-1: The specified decryption-failure rate causes honest-session aborts</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
 <tr><th>Scope</th><td>design</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>LoomKEX-256 construction and submitted reference implementation</td></tr>
 <tr><th>Discovery</th><td>Non-trivial</td></tr>
-<tr><th>Exploitation</th><td>Observable honest-session failure; this witness alone does not recover a key (see the separate state-rollback finding <code>kex-05-2</code>)</td></tr>
+<tr><th>Exploitation</th><td>Observable honest-session abort at the specified rate; no confidentiality, authentication, or key-recovery consequence</td></tr>
 <tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
 <tr><th>Date</th><td>2026-09-21</td></tr>
 </table></div>
 
-<p>The Loom specification reports a decryption-failure rate of <code>2^-18.9</code> for LoomKEX-256. Its four-pass AKE treats rigid KEM decapsulation failure as a protocol abort rather than recovering or retrying internally, so the stated rate predicts failures in complete honest exchanges.</p>
-<p>A deterministic whole-scheme search found such an exchange at global trial index <code>136129</code>. Both parties generate honest long-term keys, pass 1 produces 1,352 bytes, and pass 2 produces 1,384 bytes. The initiator's <code>kex_generate_pass3_msg_a</code> then returns <code>-3</code> because it cannot decapsulate the responder's honestly generated KEM ciphertext. Messages 3 and 4 remain absent and neither party produces a shared secret.</p>
+<p>The Loom specification states a decryption-failure rate of <code>2^-18.9</code> for LoomKEX-256 (Table 4, physical PDF page 17) and chooses it deliberately to keep first-flight messages below common MTUs (§1.1, pages 3–5). Its four-pass AKE treats rigid KEM decapsulation failure as a protocol abort, to be handled by a protocol-level retry, rather than recovering internally. The NGCC call sets no numeric failure-rate threshold; it requires an analysis of the failure probability and its security impact (<a href="https://www.niccs.org.cn/niccs/Notice/lDop1mav.pdf">Submission Requirements</a> §3.3.2(3)), which the specification provides.</p>
+<p>A deterministic whole-scheme search found such an abort at global trial index <code>136129</code>. Both parties generate honest long-term keys, pass 1 produces 1,352 bytes, and pass 2 produces 1,384 bytes. The initiator's <code>kex_generate_pass3_msg_a</code> then returns <code>-3</code> because it cannot decapsulate the responder's honestly generated KEM ciphertext. Messages 3 and 4 remain absent and neither party produces a shared secret.</p>
 <p>The submitted scalar reference implementation reproduces the recorded seed, keys, states, pass-1/pass-2 messages, failure stage, and return code exactly. The separately submitted optimized implementation produces the same transcript and failure, but it is not required to reproduce this finding.</p>
-<p>This is a confirmed specification-level correctness and reliability defect with an observable failure surface. This honest-failure witness alone does not establish confidentiality loss, authentication failure, or key recovery. The separate <code>kex-05-2</code> finding demonstrates key recovery when the serialized pass-1 state can be rolled back.</p>
+<p>This confirms the specified correctness/bandwidth trade-off in the submitted code: honest sessions abort at the stated rate. It is a reliability property, not a confidentiality, authentication, or key-recovery result, hence Low.</p>
 <p>The complete witness is <code>security/loom256_failure_witness.txt</code>; its SHA-256 digest is <code>b957dac32f2b3dfd0e689c0ea47bf7281cdc1bebbf48303e491be052a9067168</code>.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
@@ -49,24 +49,25 @@ kex-05/reproduce_failure 136129 1 1 /tmp/loom-witness.txt 0
 sha256sum /tmp/loom-witness.txt
 </code></pre>
 <p>The replay reports <code>stage=pass3 code=-3</code>. The generated reference witness differs from the retained optimized witness only in its <code>implementation=</code> metadata line; all cryptographic and protocol fields are byte-identical. The longer deterministic search procedure and cross-check are documented in <code>security/LOOM_FAILURE_SEARCH.md</code>.</p>
-<h2 class="issue-heading" id="kex-05-2-resettable-pass-1-state-enables-ephemeral-key-recovery">kex-05-2: Resettable pass-1 state enables ephemeral-key recovery</h2>
+<h2 class="issue-heading" id="kex-05-2-ephemeral-key-reuse-recovers-the-complete-loom-kem-secret-key">kex-05-2: Ephemeral-key reuse recovers the complete Loom-KEM secret key</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
 <tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
-<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Scope</th><td>design</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
-<tr><th>Affected</th><td>LoomKEX-256 reference and optimized implementations when a pass-1 state can be snapshotted, rolled back, or evaluated concurrently</td></tr>
+<tr><th>Affected</th><td>LoomKEX-256 construction; demonstrated with the reference and optimized implementations</td></tr>
 <tr><th>Discovery</th><td>Non-trivial</td></tr>
-<tr><th>Exploitation</th><td>4,532 chosen pass-2 queries in the deterministic witness</td></tr>
+<tr><th>Exploitation</th><td>4,532 pass-2 messages processed under one pass-1 state in the deterministic witness; requires reuse of the ephemeral key, which the specification excludes</td></tr>
 <tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
 <tr><th>Date</th><td>2026-09-21</td></tr>
 </table></div>
-
-<p>Loom's security argument says an attacker observes at most one failure bit for each ephemeral KEM key. The submitted API does not cryptographically enforce that condition: the complete ephemeral KEM secret is held in a caller-managed serialized state, and <code>kex_generate_pass3_msg_a</code> reconstructs its working context from that byte string on every call. A caller or deployment that snapshots the pass-1 byte string can therefore evaluate arbitrarily many chosen pass-2 messages under the same ephemeral secret.</p>
-<p>The exploit creates tagged Loom-KEM ciphertexts whose message is known and whose <code>u</code> component contains one sparse coefficient. It places one <code>v</code> coefficient exactly at the message-decoder boundary. Pass 3 emits a message precisely when the corresponding signed secret coefficient lies on the selected side of that boundary. Two probes identify whether each coefficient is positive, negative, or zero; three further threshold probes recover the magnitude of every nonzero CBD-8 coefficient in <code>{1,...,8}</code>. The remaining output coefficients are placed safely within the expected decoding region, so each answer isolates the intended coefficient.</p>
-<p>The deterministic run recovers all 1,024 coefficients of the four-polynomial ephemeral secret after 4,532 complete <code>kex_generate_pass3_msg_a</code> calls. The recovered key successfully decapsulates an independently generated honest pass-2 ciphertext. The exploit then completes honest passes 3 and 4 and derives both parties' shared secrets; independently applying Loom's KDF to the attacker-recovered KEM key produces the identical 32-byte AKE shared secret. The submitted scalar and AVX2 implementations reproduce the same recovered-key digest, query counts, transcript result, and shared secret.</p>
-<p>As a control against a seed-specific construction, the reference exploit was also run with <code>LOOM_ATTACK_SEED_TWEAK=0</code> through <code>7</code>. All eight independently generated ephemeral keys were recovered and all eight completed-session secrets matched; the query counts ranged from 4,481 to 4,592 according to the number of zero CBD coefficients.</p>
-<p>This is a concrete key-recovery attack under state rollback, snapshot restoration, or sufficiently concurrent evaluation of the same serialized pass-1 state. It does <strong>not</strong> establish that a strictly linear deployment which irreversibly commits the state after the first accepted pass-2 message is remotely exploitable: an accepted probe advances the live state, so the proof of concept restores its saved snapshot before every query. Deployments must therefore make the state non-clonable and anti-rollback, atomically consume it before decapsulation, and erase it on every success or failure. Merely wiping the temporary unpacked context is insufficient.</p>
+<p>Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/IYWTI3KKQX26OFA7AGT5OJ7L6D5UWUQ2/">Loom team's 2026-09-29 response</a></p>
+<p>Loom's ephemeral KEM is IND-CPAF secure: it tolerates the adversary observing at most one decapsulation-failure event per key pair (pages 4 and 20), and it omits the Fujisaki–Okamoto re-encryption check. The specification states that the KEM "is intended only for strictly ephemeral use and is not claimed to be secure under static or reused decapsulation keys" (page 33), and its CK-model proof assumes single use. The NGCC evaluation nevertheless takes "security in the case of (temporary) key reuse" into consideration (<a href="https://www.niccs.org.cn/niccs/Notice/tT7TSQiz.pdf">Evaluation Criteria</a> §1(3)). This finding quantifies that property: if one pass-1 state processes many chosen pass-2 messages, the ephemeral secret is recovered completely.</p>
+<p>Loom itself describes the mechanism in §4.4 (physical PDF page 48): reuse exposes an explicit failure oracle, and the text warns that established failure-boundary techniques can recover the reused decapsulation key. The contribution here is a concrete whole-scheme recovery for the submitted LoomKEX-256 implementation, requiring 4,532 chosen pass-2 queries in the deterministic witness.</p>
+<p>The attack uses tagged Loom-KEM ciphertexts whose message is known and whose <code>u</code> component contains one sparse coefficient. It places one <code>v</code> coefficient exactly at the message-decoder boundary. Pass 3 emits a message precisely when the corresponding signed secret coefficient lies on the selected side of that boundary. Two probes identify whether each coefficient is positive, negative, or zero; three further threshold probes recover the magnitude of every nonzero CBD-8 coefficient in <code>{1,...,8}</code>. The remaining output coefficients are placed safely within the expected decoding region, so each answer isolates the intended coefficient.</p>
+<p>The deterministic run recovers all 1,024 coefficients of the four-polynomial ephemeral secret after 4,532 complete <code>kex_generate_pass3_msg_a</code> calls. The recovered key decapsulates an independently generated honest pass-2 ciphertext. The witness then completes honest passes 3 and 4 and derives both parties' shared secrets; applying Loom's KDF to the recovered KEM key produces the identical 32-byte AKE shared secret. The submitted scalar and AVX2 implementations reproduce the same recovered-key digest, query counts, transcript result, and shared secret. With <code>LOOM_ATTACK_SEED_TWEAK=0</code> through <code>7</code>, all eight independently generated ephemeral keys were recovered and all eight completed-session secrets matched; query counts ranged from 4,481 to 4,592.</p>
+<p>The witness reuses the key by restoring a saved copy of the serialized pass-1 state before each query; the NGCC key-exchange API keeps that state in a caller-held buffer for every multi-pass submission. A deployment that consumes each pass-1 state exactly once is not affected. The result shows that Loom provides no security under temporary ephemeral-key reuse: about 4,500 reuses suffice for full recovery, whereas a KEM with a re-encryption check would not leak this way. The NGCC evaluation explicitly takes security under temporary key reuse into consideration (<a href="https://www.niccs.org.cn/niccs/Notice/tT7TSQiz.pdf">Evaluation Criteria</a> §1(3)); a submission cannot narrow that evaluation target through its own security-model disclaimer. The demonstrated full recovery is therefore High. The additional rollback/snapshot precondition keeps it below Critical.</p>
+<p>Follow-up response: the <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/IYWTI3KKQX26OFA7AGT5OJ7L6D5UWUQ2/">Loom team's 2026-09-29 post</a> says the decryption-failure rate is an intentional bandwidth trade-off and treats rollback and state restoration as outside its claimed model. The archived result and NGCC evaluation scope above are unchanged.</p>
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">make -C kex-05 exploit
@@ -82,6 +83,29 @@ shared_secret=2acee149b895cace5f7ebf94aa6ea9e2c504c7411b6e2e15edb4ad8e40b541f7
 The optimized implementation was independently cross-checked during analysis,
 but its separate witness build is not included in the public harness and is not
 needed to reproduce this finding.</p>
+<h2 class="issue-heading" id="kex-05-3-shuttle-signing-key-leakage-enables-permanent-responder-impersonation">kex-05-3: Shuttle signing-key leakage enables permanent responder impersonation</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>LoomKEX-128, LoomKEX-256, and LoomKEX-512</td></tr>
+<tr><th>Discovery</th><td>Non-trivial</td></tr>
+<tr><th>Exploitation</th><td>175,000/275,000/300,000 accepted handshakes for full identity-key recovery</td></tr>
+<tr><th>Credit</th><td>Sun Shuzhou, with GLM-5.3 assistance</td></tr>
+<tr><th>Date</th><td>2026-09-29</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/2OIYBCQOZQCKMO2DCKFMD2A4GE4RR5RM/">Sun's PKC Forum post</a></p>
+<p>Loom embeds Shuttle as its long-term authentication mechanism. At every level, the 13 source files implementing signing, sampling, and response encoding are byte-identical to the corresponding submitted Shuttle reference files. Figure 1, Eq. (8), and §4.1.1 define the transition as returning <code>y−v</code> on its selected interval, while Algorithm 22 and <code>irs.c:382–399</code> return <code>y+v</code> for that event. This reversed sign leaves secret-dependent covariance in accepted responses, and the signing secret's constant first component provides a public anchor for estimating the remaining coefficients. Loom's <code>loom.c</code> calls this signer for authentication and verifies the resulting signature in <code>loom_auth_ver</code>.</p>
+<p>The reported formal-parameter experiment used 175,000, 275,000, and 300,000 accepted handshakes, recovered all 768, 1,536, and 3,072 identity-key coefficients exactly, and impersonated the responder in 20 of 20 fresh handshakes at each level. Restoring the transition sign makes the same estimator fail. We independently verified the byte-for-byte embedding and protocol call path. An independent public driver obtains ordinary signatures, estimates the challenge-conditioned covariance, checks the recovered coefficients through the public-key relation and key-generation bounds, and produces an accepted fresh-message signature using the resulting equivalent key.</p>
+<p>Recovering the responder's long-term authentication key yields fresh-session impersonation and directly violates Loom's AKE authentication claim, hence Critical. A submitter response states that decryption-failure behavior and rollback security are out of scope; that position does not affect this independent identity-key recovery.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kex-05/validate_shuttle_embedding.py
+make -C sign-23 exploit
+tools/reproduce.sh sign-23
+</code></pre>
+<p>The first command checks the exact three-level source embedding and Loom authentication calls. The remaining commands run the public signature-only recovery and accepted-forgery witness against the byte-identical signing module; the original post reports the additional complete Loom handshake and impersonation trials.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: sign-30 TRINE — performance on AArch64 (system arm1)</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=808fa5e8">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
+<nav><a href="../../index.html">Home</a><a href="../../reports/index.html">Security</a><a href="../../performance/index.html">Performance</a><a href="../../constant-time/index.html">Side-Channel</a></nav>
+</header>
+<main class="">
+<!-- synchronized from harness: sign-30/perf_arm_1.md -->
+<h1 id="sign-30-trine-performance-on-aarch64-system-arm_1">sign-30 TRINE — performance on AArch64 (system arm_1)</h1>
+<p><a href="index.html">Performance arm_1</a> › <code>sign-30</code> · <a href="method.html">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561105463201792.html">NICCS page</a></p>
+<p><strong>Systems:</strong> <a href="../x86_1/sign-30.html">x86_1</a> · <strong>arm_1</strong></p>
+<p>Independent measurement following the structure of the NICCS ARM self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.</p>
+<h2 id="1-basic-information">1. Basic information</h2>
+<ul>
+<li>Category: public-key algorithm; function: digital signature</li>
+<li>Algorithm: TRINE</li>
+<li>Implementation versions measured: reference</li>
+<li>Parameter sets: <code>TRINE-128-Balanced</code>, <code>TRINE-128-ShortSig</code>, <code>TRINE-256-Balanced</code>, <code>TRINE-256-ShortSig</code>, <code>TRINE-512-Balanced</code>, <code>TRINE-512-ShortSig</code></li>
+</ul>
+<h2 id="2-assessment-environment">2. Assessment environment</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>item</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>processor</td>
+<td>Qualcomm Oryon (CPU 2, one core)</td>
+</tr>
+<tr>
+<td>machine</td>
+<td>ASUS Vivobook S 15</td>
+</tr>
+<tr>
+<td>clock</td>
+<td>fixed 2.71 GHz (governor performance, minimum = maximum), boost off, SMT none</td>
+</tr>
+<tr>
+<td>memory</td>
+<td>30562 MiB</td>
+</tr>
+<tr>
+<td>OS / kernel</td>
+<td>Ubuntu 26.04.1 LTS / 7.0.0-34-generic</td>
+</tr>
+<tr>
+<td>compiler / build tool</td>
+<td>gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0 / cmake version 4.2.3</td>
+</tr>
+<tr>
+<td>campaign start / end (UTC)</td>
+<td>2026-09-28T15:05:46 / 2026-09-29T08:43:52</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="3-functional-testing-kat">3. Functional testing (KAT)</h2>
+<p>Each library was checked against the submitted KAT vectors (SHA-256 manifest <code>sign-30/kat.sha256</code> in the harness) before timing.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>build flags</th>
+<th>KAT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TRINE-128-Balanced</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>TRINE-128-ShortSig</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>TRINE-256-Balanced</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>TRINE-256-ShortSig</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>TRINE-512-Balanced</code></td>
+<td>harness-default</td>
+<td class="st warn">TIMEOUT [1]</td>
+</tr>
+<tr>
+<td><code>TRINE-512-ShortSig</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+</tbody>
+</table></div>
+<p>[1] KAT TIMEOUT only: the ICCS build buffers the whole signing transcript and hashes it at the end (hundreds of MB per signature at level 512, sign-30/pseudocode.md), so even the reduced KAT runs exceed their time limits on a loaded machine; the other three TRINE instances pass. One-record checks with a 4-hour limit reproduced the first submitted KAT record of all three (PASS; logs in performance/data/x86_1/katcheck/). On arm_1 only TRINE-512-Balanced exceeds its limit; the same one-record check passes there too (performance/data/arm_1/katcheck/). These instances are timed anyway; their output is not validated.</p>
+<h2 id="4-performance">4. Performance</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>mean cycles</th>
+<th>mean time</th>
+<th>ops/s</th>
+<th>median trial</th>
+<th>n (trials × iters)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TRINE-128-Balanced</code></td>
+<td>keygen</td>
+<td>8.49 M</td>
+<td>3.15 ms</td>
+<td>318</td>
+<td>3.15 ms</td>
+<td>965 (5 × 193)</td>
+</tr>
+<tr>
+<td><code>TRINE-128-Balanced</code></td>
+<td>sign</td>
+<td>31.87 G</td>
+<td>11.8 s</td>
+<td>0.0846</td>
+<td>11.8 s</td>
+<td>30 (5 × 6)</td>
+</tr>
+<tr>
+<td><code>TRINE-128-Balanced</code></td>
+<td>verify</td>
+<td>20.38 G</td>
+<td>7.56 s</td>
+<td>0.132</td>
+<td>7.56 s</td>
+<td>50 (5 × 10)</td>
+</tr>
+<tr>
+<td><code>TRINE-128-ShortSig</code></td>
+<td>keygen</td>
+<td>16.64 M</td>
+<td>6.17 ms</td>
+<td>162</td>
+<td>6.15 ms</td>
+<td>495 (5 × 99)</td>
+</tr>
+<tr>
+<td><code>TRINE-128-ShortSig</code></td>
+<td>sign</td>
+<td>14.43 G</td>
+<td>5.36 s</td>
+<td>0.187</td>
+<td>5.33 s</td>
+<td>60 (5 × 12)</td>
+</tr>
+<tr>
+<td><code>TRINE-128-ShortSig</code></td>
+<td>verify</td>
+<td>7.05 G</td>
+<td>2.62 s</td>
+<td>0.382</td>
+<td>2.61 s</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>TRINE-256-Balanced</code></td>
+<td>keygen</td>
+<td>45.79 M</td>
+<td>17 ms</td>
+<td>58.8</td>
+<td>17 ms</td>
+<td>185 (5 × 37)</td>
+</tr>
+<tr>
+<td><code>TRINE-256-Balanced</code></td>
+<td>sign</td>
+<td>330.30 G</td>
+<td>123 s</td>
+<td>0.00816</td>
+<td>123 s</td>
+<td>2 (2 × 1)</td>
+</tr>
+<tr>
+<td><code>TRINE-256-Balanced</code></td>
+<td>verify</td>
+<td>213.24 G</td>
+<td>79.1 s</td>
+<td>0.0126</td>
+<td>79.1 s</td>
+<td>3 (3 × 1)</td>
+</tr>
+<tr>
+<td><code>TRINE-256-ShortSig</code></td>
+<td>keygen</td>
+<td>111.66 M</td>
+<td>41.4 ms</td>
+<td>24.1</td>
+<td>41.4 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>TRINE-256-ShortSig</code></td>
+<td>sign</td>
+<td>134.44 G</td>
+<td>49.9 s</td>
+<td>0.02</td>
+<td>49.9 s</td>
+<td>5 (5 × 1)</td>
+</tr>
+<tr>
+<td><code>TRINE-256-ShortSig</code></td>
+<td>verify</td>
+<td>50.92 G</td>
+<td>18.9 s</td>
+<td>0.0529</td>
+<td>18.9 s</td>
+<td>15 (5 × 3)</td>
+</tr>
+<tr>
+<td><code>TRINE-512-Balanced</code></td>
+<td>keygen</td>
+<td>862.57 M</td>
+<td>320 ms</td>
+<td>3.12</td>
+<td>321 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>TRINE-512-Balanced</code></td>
+<td>sign</td>
+<td>6234.95 G</td>
+<td>2.31e+03 s</td>
+<td>0.000432</td>
+<td>2.31e+03 s</td>
+<td>1 (1 × 1)</td>
+</tr>
+<tr>
+<td><code>TRINE-512-Balanced</code></td>
+<td>verify</td>
+<td>4120.90 G</td>
+<td>1.53e+03 s</td>
+<td>0.000654</td>
+<td>1.53e+03 s</td>
+<td>1 (1 × 1)</td>
+</tr>
+<tr>
+<td><code>TRINE-512-ShortSig</code></td>
+<td>keygen</td>
+<td>1.85 G</td>
+<td>688 ms</td>
+<td>1.45</td>
+<td>687 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>TRINE-512-ShortSig</code></td>
+<td>sign</td>
+<td>2508.52 G</td>
+<td>931 s</td>
+<td>0.00107</td>
+<td>931 s</td>
+<td>1 (1 × 1)</td>
+</tr>
+<tr>
+<td><code>TRINE-512-ShortSig</code></td>
+<td>verify</td>
+<td>1150.27 G</td>
+<td>427 s</td>
+<td>0.00234</td>
+<td>427 s</td>
+<td>1 (1 × 1)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-resource-consumption">5. Resource consumption</h2>
+<p>Static memory is approximated by the library's loadable ELF segments; peak memory is the process high-water mark (VmHWM) including the benchmark driver and libc, so both are upper-bound proxies rather than isolated algorithm memory.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>static: ELF image (bytes)</th>
+<th>baseline RSS</th>
+<th>peak RSS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TRINE-128-Balanced</code></td>
+<td>keygen</td>
+<td>49048</td>
+<td>1456 KiB</td>
+<td>3632 KiB</td>
+</tr>
+<tr>
+<td><code>TRINE-128-Balanced</code></td>
+<td>sign</td>
+<td>49048</td>
+<td>1584 KiB</td>
+<td>9580 KiB</td>
+</tr>
+<tr>
+<td><code>TRINE-128-Balanced</code></td>
+<td>verify</td>
+<td>49048</td>
+<td>3060 KiB</td>
+<td>8816 KiB</td>
+</tr>
+<tr>
+<td><code>TRINE-128-ShortSig</code></td>
+<td>keygen</td>
+<td>53848</td>
+<td>3480 KiB</td>
+<td>3548 KiB</td>
+</tr>
+<tr>
+<td><code>TRINE-128-ShortSig</code></td>
+<td>sign</td>
+<td>53848</td>
+<td>1740 KiB</td>
+<td>7884 KiB</td>
+</tr>
+<tr>
+<td><code>TRINE-128-ShortSig</code></td>
+<td>verify</td>
+<td>53848</td>
+<td>3384 KiB</td>
+<td>6480 KiB</td>
+</tr>
+<tr>
+<td><code>TRINE-256-Balanced</code></td>
+<td>keygen</td>
+<td>49488</td>
+<td>1548 KiB</td>
+<td>4152 KiB</td>
+</tr>
+<tr>
+<td><code>TRINE-256-Balanced</code></td>
+<td>sign</td>
+<td>49488</td>
+<td>2160 KiB</td>
+<td>88408 KiB</td>
+</tr>
+<tr>
+<td><code>TRINE-256-Balanced</code></td>
+<td>verify</td>
+<td>49488</td>
+<td>28244 KiB</td>
+<td>89068 KiB</td>
+</tr>
+<tr>
+<td><code>TRINE-256-ShortSig</code></td>
+<td>keygen</td>
+<td>50168</td>
+<td>1824 KiB</td>
+<td>4892 KiB</td>
+</tr>
+<tr>
+<td><code>TRINE-256-ShortSig</code></td>
+<td>sign</td>
+<td>50168</td>
+<td>4412 KiB</td>
+<td>42856 KiB</td>
+</tr>
+<tr>
+<td><code>TRINE-256-ShortSig</code></td>
+<td>verify</td>
+<td>50168</td>
+<td>15496 KiB</td>
+<td>43224 KiB</td>
+</tr>
+<tr>
+<td><code>TRINE-512-Balanced</code></td>
+<td>keygen</td>
+<td>49672</td>
+<td>2264 KiB</td>
+<td>11188 KiB</td>
+</tr>
+<tr>
+<td><code>TRINE-512-Balanced</code></td>
+<td>sign</td>
+<td>49672</td>
+<td>2476 KiB</td>
+<td>1372492 KiB</td>
+</tr>
+<tr>
+<td><code>TRINE-512-Balanced</code></td>
+<td>verify</td>
+<td>49672</td>
+<td>16944 KiB</td>
+<td>1374600 KiB</td>
+</tr>
+<tr>
+<td><code>TRINE-512-ShortSig</code></td>
+<td>keygen</td>
+<td>50720</td>
+<td>1468 KiB</td>
+<td>18428 KiB</td>
+</tr>
+<tr>
+<td><code>TRINE-512-ShortSig</code></td>
+<td>sign</td>
+<td>50720</td>
+<td>6212 KiB</td>
+<td>633708 KiB</td>
+</tr>
+<tr>
+<td><code>TRINE-512-ShortSig</code></td>
+<td>verify</td>
+<td>50720</td>
+<td>11724 KiB</td>
+<td>639188 KiB</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="6-transmission-and-storage-overhead">6. Transmission and storage overhead</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>public key</th>
+<th>secret key</th>
+<th>signature</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TRINE-128-Balanced</code></td>
+<td>16004</td>
+<td>32</td>
+<td>3156</td>
+</tr>
+<tr>
+<td><code>TRINE-128-ShortSig</code></td>
+<td>63920</td>
+<td>32</td>
+<td>1652</td>
+</tr>
+<tr>
+<td><code>TRINE-256-Balanced</code></td>
+<td>96064</td>
+<td>64</td>
+<td>11712</td>
+</tr>
+<tr>
+<td><code>TRINE-256-ShortSig</code></td>
+<td>384064</td>
+<td>64</td>
+<td>5968</td>
+</tr>
+<tr>
+<td><code>TRINE-512-Balanced</code></td>
+<td>797290</td>
+<td>128</td>
+<td>46565</td>
+</tr>
+<tr>
+<td><code>TRINE-512-ShortSig</code></td>
+<td>3188776</td>
+<td>128</td>
+<td>23672</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="symmetric-primitives">Symmetric primitives</h2>
+<p><a href="../symmetric-survey.html">Survey</a> verdict: <strong>ICCS-only</strong> — with -DUSE_ICCS (SHA3 build selectable)</p>
+<p>Share of each operation spent in the ICCS placeholder hash functions and in the ICCS DRNG (reference build, measured in the same run with link-time wrappers):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>pseudohash/XOF/sm3</th>
+<th>DRNG</th>
+<th>calls per operation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TRINE-128-Balanced</code></td>
+<td>keygen</td>
+<td>68%</td>
+<td>0.1%</td>
+<td>drng 1, pseudoXOF 29</td>
+</tr>
+<tr>
+<td><code>TRINE-128-Balanced</code></td>
+<td>sign</td>
+<td>19%</td>
+<td>0.0%</td>
+<td>drng 2, pseudoXOF 1.7e+03, sm3hash 1</td>
+</tr>
+<tr>
+<td><code>TRINE-128-Balanced</code></td>
+<td>verify</td>
+<td>19%</td>
+<td>0.0%</td>
+<td>pseudoXOF 1.06e+03, sm3hash 1</td>
+</tr>
+<tr>
+<td><code>TRINE-128-ShortSig</code></td>
+<td>keygen</td>
+<td>40%</td>
+<td>0.0%</td>
+<td>drng 1, pseudoXOF 83</td>
+</tr>
+<tr>
+<td><code>TRINE-128-ShortSig</code></td>
+<td>sign</td>
+<td>20%</td>
+<td>0.0%</td>
+<td>drng 2, pseudoXOF 772, sm3hash 1</td>
+</tr>
+<tr>
+<td><code>TRINE-128-ShortSig</code></td>
+<td>verify</td>
+<td>19%</td>
+<td>0.0%</td>
+<td>pseudoXOF 326, sm3hash 1</td>
+</tr>
+<tr>
+<td><code>TRINE-256-Balanced</code></td>
+<td>keygen</td>
+<td>53%</td>
+<td>0.0%</td>
+<td>drng 1, pseudoXOF 37</td>
+</tr>
+<tr>
+<td><code>TRINE-256-Balanced</code></td>
+<td>sign</td>
+<td>10%</td>
+<td>0.0%</td>
+<td>drng 2, pseudoXOF 3.54e+03, pseudohash 1</td>
+</tr>
+<tr>
+<td><code>TRINE-256-Balanced</code></td>
+<td>verify</td>
+<td>10%</td>
+<td>0.0%</td>
+<td>pseudoXOF 2.19e+03, pseudohash 1</td>
+</tr>
+<tr>
+<td><code>TRINE-256-ShortSig</code></td>
+<td>keygen</td>
+<td>27%</td>
+<td>0.0%</td>
+<td>drng 1, pseudoXOF 109</td>
+</tr>
+<tr>
+<td><code>TRINE-256-ShortSig</code></td>
+<td>sign</td>
+<td>10%</td>
+<td>0.0%</td>
+<td>drng 2, pseudoXOF 1.58e+03, pseudohash 1</td>
+</tr>
+<tr>
+<td><code>TRINE-256-ShortSig</code></td>
+<td>verify</td>
+<td>10%</td>
+<td>0.0%</td>
+<td>pseudoXOF 533, pseudohash 1</td>
+</tr>
+<tr>
+<td><code>TRINE-512-Balanced</code></td>
+<td>keygen</td>
+<td>61%</td>
+<td>0.0%</td>
+<td>drng 1, pseudoXOF 47</td>
+</tr>
+<tr>
+<td><code>TRINE-512-Balanced</code></td>
+<td>sign</td>
+<td>3.0%</td>
+<td>0.0%</td>
+<td>drng 2, pseudoXOF 7.56e+03, pseudohash 1</td>
+</tr>
+<tr>
+<td><code>TRINE-512-Balanced</code></td>
+<td>verify</td>
+<td>3.0%</td>
+<td>0.0%</td>
+<td>pseudoXOF 4.6e+03, pseudohash 1</td>
+</tr>
+<tr>
+<td><code>TRINE-512-ShortSig</code></td>
+<td>keygen</td>
+<td>30%</td>
+<td>0.0%</td>
+<td>drng 1, pseudoXOF 137</td>
+</tr>
+<tr>
+<td><code>TRINE-512-ShortSig</code></td>
+<td>sign</td>
+<td>3.1%</td>
+<td>0.0%</td>
+<td>drng 2, pseudoXOF 3.31e+03, pseudohash 1</td>
+</tr>
+<tr>
+<td><code>TRINE-512-ShortSig</code></td>
+<td>verify</td>
+<td>3.1%</td>
+<td>0.0%</td>
+<td>pseudoXOF 1.21e+03, pseudohash 1</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="7-raw-evidence-index">7. Raw evidence index</h2>
+<p>Paths are relative to <code>performance/data/arm_1/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>; each JSON file records its commands, environment and trials.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>item</th>
+<th>file</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TRINE-128-Balanced</code></td>
+<td>KAT log (sha256 <code>51c2205aeca42e5f…</code>)</td>
+<td><code>kat/sign-30/TRINE-128-Balanced.log</code></td>
+</tr>
+<tr>
+<td><code>TRINE-128-Balanced</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-30/TRINE-128-Balanced__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-128-Balanced</code></td>
+<td>timing sign</td>
+<td><code>records/sign-30/TRINE-128-Balanced__sign.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-128-Balanced</code></td>
+<td>timing verify</td>
+<td><code>records/sign-30/TRINE-128-Balanced__verify.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-128-Balanced</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-30/TRINE-128-Balanced__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-128-Balanced</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-30/TRINE-128-Balanced__sign.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-128-Balanced</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-30/TRINE-128-Balanced__verify.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-128-ShortSig</code></td>
+<td>KAT log (sha256 <code>90c834996d3377b2…</code>)</td>
+<td><code>kat/sign-30/TRINE-128-ShortSig.log</code></td>
+</tr>
+<tr>
+<td><code>TRINE-128-ShortSig</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-30/TRINE-128-ShortSig__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-128-ShortSig</code></td>
+<td>timing sign</td>
+<td><code>records/sign-30/TRINE-128-ShortSig__sign.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-128-ShortSig</code></td>
+<td>timing verify</td>
+<td><code>records/sign-30/TRINE-128-ShortSig__verify.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-128-ShortSig</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-30/TRINE-128-ShortSig__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-128-ShortSig</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-30/TRINE-128-ShortSig__sign.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-128-ShortSig</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-30/TRINE-128-ShortSig__verify.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-256-Balanced</code></td>
+<td>KAT log (sha256 <code>109e6e055d9448b2…</code>)</td>
+<td><code>kat/sign-30/TRINE-256-Balanced.log</code></td>
+</tr>
+<tr>
+<td><code>TRINE-256-Balanced</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-30/TRINE-256-Balanced__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-256-Balanced</code></td>
+<td>timing sign</td>
+<td><code>records/sign-30/TRINE-256-Balanced__sign.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-256-Balanced</code></td>
+<td>timing verify</td>
+<td><code>records/sign-30/TRINE-256-Balanced__verify.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-256-Balanced</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-30/TRINE-256-Balanced__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-256-Balanced</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-30/TRINE-256-Balanced__sign.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-256-Balanced</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-30/TRINE-256-Balanced__verify.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-256-ShortSig</code></td>
+<td>KAT log (sha256 <code>b2e38ee0bf2612d7…</code>)</td>
+<td><code>kat/sign-30/TRINE-256-ShortSig.log</code></td>
+</tr>
+<tr>
+<td><code>TRINE-256-ShortSig</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-30/TRINE-256-ShortSig__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-256-ShortSig</code></td>
+<td>timing sign</td>
+<td><code>records/sign-30/TRINE-256-ShortSig__sign.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-256-ShortSig</code></td>
+<td>timing verify</td>
+<td><code>records/sign-30/TRINE-256-ShortSig__verify.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-256-ShortSig</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-30/TRINE-256-ShortSig__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-256-ShortSig</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-30/TRINE-256-ShortSig__sign.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-256-ShortSig</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-30/TRINE-256-ShortSig__verify.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-512-Balanced</code></td>
+<td>KAT log (sha256 <code>3c856110aefec347…</code>)</td>
+<td><code>kat/sign-30/TRINE-512-Balanced.log</code></td>
+</tr>
+<tr>
+<td><code>TRINE-512-Balanced</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-30/TRINE-512-Balanced__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-512-Balanced</code></td>
+<td>timing sign</td>
+<td><code>records/sign-30/TRINE-512-Balanced__sign.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-512-Balanced</code></td>
+<td>timing verify</td>
+<td><code>records/sign-30/TRINE-512-Balanced__verify.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-512-Balanced</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-30/TRINE-512-Balanced__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-512-Balanced</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-30/TRINE-512-Balanced__sign.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-512-Balanced</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-30/TRINE-512-Balanced__verify.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-512-ShortSig</code></td>
+<td>KAT log (sha256 <code>017d43d0061955ce…</code>)</td>
+<td><code>kat/sign-30/TRINE-512-ShortSig.log</code></td>
+</tr>
+<tr>
+<td><code>TRINE-512-ShortSig</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-30/TRINE-512-ShortSig__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-512-ShortSig</code></td>
+<td>timing sign</td>
+<td><code>records/sign-30/TRINE-512-ShortSig__sign.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-512-ShortSig</code></td>
+<td>timing verify</td>
+<td><code>records/sign-30/TRINE-512-ShortSig__verify.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-512-ShortSig</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-30/TRINE-512-ShortSig__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-512-ShortSig</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-30/TRINE-512-ShortSig__sign.json</code></td>
+</tr>
+<tr>
+<td><code>TRINE-512-ShortSig</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-30/TRINE-512-ShortSig__verify.json</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Scripts: <code>performance/campaign.py</code>, <code>performance/ngcc_perf.c</code>, <code>performance/hashprof/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

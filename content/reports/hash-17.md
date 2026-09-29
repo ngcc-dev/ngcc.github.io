@@ -28,7 +28,11 @@ The implementation attempts to apply `pad10*1` in a single rate block. When the 
 
 Consequently, for any prefix `P` of length `r-2 mod r`, the implementation gives `H(P) = H(P || 1)`. The same defect was reproduced at 702/703 bits for MasterCube-768 and 446/447 bits for MasterCube-1024. It directly violates the claimed 256-, 384-, and 512-bit collision strengths and is an implementation error rather than an attack on the specified permutation.
 
-The MasterCube team subsequently confirmed the one-bit padding error and published a corrected implementation and clarified specification. The archived Round 1 implementation assessed here remains affected.
+The MasterCube team subsequently confirmed the one-bit padding error. The archived Round 1 implementation assessed here remains affected.
+
+### Proposed fixes
+
+The [MasterCube team's response](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/IG2TAQNA7YHL4JLOOWBTJGKBVVVESWZK/) proposes emitting an additional block when only one bit remains for `10*1` padding and adding that case to the specification. This section records the proposal without evaluating it.
 
 ### Reproducing
 
@@ -59,7 +63,11 @@ As [reported on the CryptHash mailing list](https://list.niccs.org.cn/archives/l
 
 This matters to the complete hash: MasterCube's `Cube-f` transformation XORs the forward branch with a branch explicitly designed as its inverse, while the reference and optimized hashing paths execute the defective branch. Correcting the two operations changes the transformation and resulting digests. The finding invalidates conformance and the archived inverse-branch description, but it does not establish noninjectivity of the forward permutation or by itself give a hash collision or preimage attack.
 
-The MasterCube team confirmed that the old Algorithm 2 was not a genuine inverse because its pseudocode omitted the slice swap. Its revision corrects Algorithm 2 and explains how to reuse `MixColumns` for the inverse; the team states that the change does not affect its proofs or underlying design rationale.
+The MasterCube team confirmed that the old Algorithm 2 was not a genuine inverse because its pseudocode omitted the slice swap.
+
+### Proposed fixes
+
+The [MasterCube team's response](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/IG2TAQNA7YHL4JLOOWBTJGKBVVVESWZK/) proposes adding the missing slice swap to Algorithm 2 and explaining how to reuse `MixColumns` for the inverse. This section records the proposal without evaluating the team's further claims about its effect on proofs, design rationale, or performance.
 
 ### Reproducing
 

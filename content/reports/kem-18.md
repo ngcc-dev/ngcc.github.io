@@ -72,3 +72,42 @@ LATTICE_ESTIMATOR_PATH=/path/to/lattice-estimator \
 ```
 
 The script checks the integer factorizations, coprimality modulo 8191, quotient homomorphisms, CRT reconstruction, and exact covariance matrices before reproducing the six MATZOV BDD estimates. Its final `LIMITATION` line records the correlation not modeled by those estimates.
+
+## kem-18-3: Public consistency equations recover a Loong128 shared secret
+
+Severity: Critical
+Status: Confirmed
+Layer: Design
+Affected: Loong128; the higher parameter sets were not evaluated
+Discovery: Non-trivial
+Exploitation: Practical 48-variable lattice recovery followed by 2^12 public re-encryptions
+Credit: Tianyuan Xie, on behalf of the openHiTLS team, with GPT-5.5 assistance
+Date: 2026-09-29
+Original source: [Xie's PKC Forum post and PoC](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/VBOUFRS2CDGNLPEAR4ZBKZM4U5YHBTZY/)
+
+Loong128 publishes the structured matrix equation, naming the matrix `U0` in Algorithm 19; the reference implementation calls the corresponding buffer `U2`:
+
+```text
+U0 = Block(r1*A2) + R2*A4 + E4.
+```
+
+Negacyclic consistency eliminates the first term and gives 528 public equations in the 48 short coefficients of `r2`. A small Kannan-embedding/BKZ instance recovers one candidate. Subtracting `R2*B2` from the second ciphertext component leaves two plausible message patterns per negacyclic diagonal, or only `2^12 = 4096` messages. Public FO re-encryption identifies the unique message and derives the encapsulated shared secret.
+
+We independently generated a fresh submitted-API key and ciphertext, then gave the attack only the 1,472-byte public key and 1,512-byte ciphertext. It recovered one `r2` candidate and the secret `6ece998be1b9b297d88833700a1c5221`; a separate encapsulation/decapsulation control outside the attack input produced the identical value. A second fresh transcript also reached a unique FO match. This is a public-only recovery of an honest session key and directly violates Loong128's IND-CCA claim, hence Critical.
+
+### Reproducing
+
+The forum attachment `poc2.zip` has SHA-256 `a358cef75d5ad1b801300fad4a70ab24dfc513ec9bacb2cb8c0e467e3d6ae951`. With Python `fpylll` installed, download and verify it, unpack it, then build its public-input helper against the archived Loong128 source:
+
+```sh
+curl -fLO 'https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/VBOUFRS2CDGNLPEAR4ZBKZM4U5YHBTZY/attachment/4/poc2.zip'
+printf '%s  %s\n' a358cef75d5ad1b801300fad4a70ab24dfc513ec9bacb2cb8c0e467e3d6ae951 poc2.zip | sha256sum -c -
+unzip -q poc2.zip
+gcc -O2 -Ikem-18/Implementations/Reference_Implementation/Loong128 \
+  -o /tmp/dump_loong128_pkct poc2/dump_loong128_pkct.c \
+  kem-18/Implementations/Reference_Implementation/Loong128/{KEM_Loong.c,poly.c,auxfunc.c,drng.c}
+/tmp/dump_loong128_pkct 66 > /tmp/loong128-pkct.txt
+python3 poc2/attack_public_only.py /tmp/loong128-pkct.txt --m 90 --block 40
+```
+
+The input file contains exactly `PK` and `CT` lines. The PoC refuses `SK` or expected-`SS` lines and derives the printed shared secret from its recovered message and public key.

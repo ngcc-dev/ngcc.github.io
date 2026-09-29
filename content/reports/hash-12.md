@@ -19,9 +19,13 @@ The Iphe Algorithm Group reported this relation on 2026-09-22. The archived prof
 
 Further extension to the Iphe Algorithm Group's analysis: the local witness finds padding-compatible blocks after seven trials and confirms the relation through both submitted `CryptHash` libraries on 2878- and 4414-bit messages. A one-bit changed-message control does not satisfy it. This is a cross-profile distinguisher, **not** a collision or preimage attack against either profile alone.
 
-The [Iphe Algorithm Group subsequently revised the profiles](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/3NHT6MB6FTPF63JO7YXX3Y6HH422SQGC/) to use distinct IVs; this report applies to the archived, SHA-256-pinned submission, not the revised one.
+The report applies to the archived, SHA-256-pinned submission.
 
 Follow-up analysis: the [group's cross-rate note, posted by 崔灏睿 on 2026-09-23](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/BWXG6OPAIQL32FMWWYJ3C4D6QMRGHGP4/), gives the general feed-forward construction and an independent full-round Iphe witness. Its distinct-IV caveat agrees with the revised-profile scope above.
+
+### Proposed fixes
+
+The [Iphe Algorithm Group's follow-up](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/3NHT6MB6FTPF63JO7YXX3Y6HH422SQGC/) proposes distinct IVs for the two profiles. This section records the proposal without evaluating it.
 
 ### Reproducing
 

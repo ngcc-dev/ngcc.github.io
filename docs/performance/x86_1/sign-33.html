@@ -10,12 +10,13 @@
 <body>
 <header class="site-header">
 <a class="brand" href="../../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
-<nav><a href="../../index.html">Home</a><a href="../../reports/index.html">Security</a><a href="../../performance/x86_1/index.html">Performance</a><a href="../../constant-time/index.html">Side-Channel</a></nav>
+<nav><a href="../../index.html">Home</a><a href="../../reports/index.html">Security</a><a href="../../performance/index.html">Performance</a><a href="../../constant-time/index.html">Side-Channel</a></nav>
 </header>
 <main class="">
 <!-- synchronized from harness: sign-33/perf_x86_1.md -->
 <h1 id="sign-33-vdoo-vinegar-diagonal-oil-oil-performance-on-x86-64-system-x86_1">sign-33 VDOO: Vinegar-Diagonal-Oil-Oil — performance on x86-64 (system x86_1)</h1>
 <p><a href="index.html">Performance x86_1</a> › <code>sign-33</code> · <a href="method.html">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561114325766144.html">NICCS page</a></p>
+<p><strong>Systems:</strong> <strong>x86_1</strong> · <a href="../arm_1/sign-33.html">arm_1</a></p>
 <p>Independent measurement following the structure of the NICCS x86 self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.</p>
 <h2 id="1-basic-information">1. Basic information</h2>
 <ul>
@@ -87,7 +88,7 @@
 </tr>
 </tbody>
 </table></div>
-<p>[1] KAT TIMEOUT only: with a 20 MB public key, ten KAT records exceed the harness's 900 s limit (VDOO-128/256 pass). A separate one-record run with a 4-hour limit reproduced the first official KAT record byte for byte (81,408,662 bytes, compared against the verified archive) These instances are timed anyway; their output is not validated.</p>
+<p>[1] KAT TIMEOUT only: with a 20 MB public key, ten KAT records exceed the harness's 900 s limit (VDOO-128/256 pass). A separate one-record run with a 4-hour limit reproduced the first official KAT record byte for byte (81,408,662 bytes, compared against the verified archive); correctness is therefore established on record 0 (performance/data/x86_1/katcheck/vdoo_512-record0.log). These instances are timed anyway; their output is not validated.</p>
 <h2 id="4-performance">4. Performance</h2>
 <div class="table-wrap"><table>
 <thead>

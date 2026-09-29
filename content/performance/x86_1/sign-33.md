@@ -3,6 +3,8 @@
 
 [Performance x86_1](index.md) › `sign-33` · [method](method.md) · [NICCS page](https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561114325766144.html)
 
+**Systems:** **x86_1** · [arm_1](../arm_1/sign-33.md)
+
 Independent measurement following the structure of the NICCS x86 self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.
 
 ## 1. Basic information
@@ -33,7 +35,7 @@ Each library was checked against the submitted KAT vectors (SHA-256 manifest `si
 | `vdoo_256` | guide | PASS |
 | `vdoo_512` | harness-default | TIMEOUT [1] |
 
-[1] KAT TIMEOUT only: with a 20 MB public key, ten KAT records exceed the harness's 900 s limit (VDOO-128/256 pass). A separate one-record run with a 4-hour limit reproduced the first official KAT record byte for byte (81,408,662 bytes, compared against the verified archive) These instances are timed anyway; their output is not validated.
+[1] KAT TIMEOUT only: with a 20 MB public key, ten KAT records exceed the harness's 900 s limit (VDOO-128/256 pass). A separate one-record run with a 4-hour limit reproduced the first official KAT record byte for byte (81,408,662 bytes, compared against the verified archive); correctness is therefore established on record 0 (performance/data/x86_1/katcheck/vdoo_512-record0.log). These instances are timed anyway; their output is not validated.
 
 ## 4. Performance
 

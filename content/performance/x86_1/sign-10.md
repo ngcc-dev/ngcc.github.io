@@ -3,6 +3,8 @@
 
 [Performance x86_1](index.md) › `sign-10` · [method](method.md) · [NICCS page](https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561077457833984.html)
 
+**Systems:** **x86_1** · [arm_1](../arm_1/sign-10.md)
+
 Independent measurement following the structure of the NICCS x86 self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.
 
 ## 1. Basic information
@@ -33,7 +35,7 @@ Each library was checked against the submitted KAT vectors (SHA-256 manifest `si
 | `Facto-DSA-256` | guide | PASS |
 | `Facto-DSA-512` | harness-default | NOKAT [1] |
 
-[1] NOKAT: the submission contains no KAT file for Facto-DSA-512, so its output cannot be checked against submitted vectors These instances are timed anyway; their output is not validated.
+[1] NOKAT: the submission contains no KAT file for Facto-DSA-512, so its output cannot be checked against submitted vectors; the other Facto-DSA instances pass. These instances are timed anyway; their output is not validated.
 
 ## 4. Performance
 

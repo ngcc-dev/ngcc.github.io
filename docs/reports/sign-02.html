@@ -10,10 +10,10 @@
 <body>
 <header class="site-header">
 <a class="brand" href="../index.html"><img class="brand-icon" src="../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
-<nav><a href="../index.html">Home</a><a href="../reports/index.html">Security</a><a href="../performance/x86_1/index.html">Performance</a><a href="../constant-time/index.html">Side-Channel</a></nav>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Security</a><a href="../performance/index.html">Performance</a><a href="../constant-time/index.html">Side-Channel</a></nav>
 </header>
 <main class="">
-<p class="crumb"><a href="../reports/index.html">Security</a> › <code>sign-02</code> · <a href="../constant-time/sign-02.html">Constant-time review</a> · <a href="../performance/x86_1/sign-02.html">Performance</a></p>
+<p class="crumb"><a href="../reports/index.html">Security</a> › <code>sign-02</code> · <a href="../constant-time/sign-02.html">Constant-time review</a> · Performance: <a href="../performance/x86_1/sign-02.html">x86_1</a> · <a href="../performance/arm_1/sign-02.html">arm_1</a></p>
 
 <h1 id="bit-sign-02">BiT (sign-02)</h1>
 <div class="table-wrap"><table class="meta">
@@ -59,6 +59,7 @@
 <p>Original source: <a href="https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/84_EKMOtk_M/m/ZNMqLQ07BAAJ">Feussner's pqc-forum post and attached analysis</a></p>
 <p>Additional reference: <a href="https://eprint.iacr.org/archive/2026/2232/1790653241.pdf">Xiong and Wang, ePrint 2026/2232, 2026-09-29 revision, §8</a></p>
 <p>BiT uses one hidden sign for the entire response, but its rejection rule corrects each coefficient against a <em>scalar</em> mixture. The joint response remains a mixture of two product distributions and retains secret-dependent cross-coordinate correlations even when the individual marginals have the intended distribution. The response to the known constant component gives an observation of the common sign, allowing the remaining response components to reveal the signing secret statistically. Figures 2 and 4 specify a single sign bit per signature with coefficientwise rejection; §3.1.3’s assertion that “z is independent of b” fails for the joint response. The BiT-128 source checkout shows the same pattern (<code>sign.c:134–153</code>, <code>sample.c:124–259</code>), but those BiT-128 files are absent from the harness. The retained BiT-512 <code>sign.c:130–150</code> independently shows the shared-sign construction. The posted analysis reports full equivalent-key recovery and an accepted fresh-message forgery for four independently generated keys; its attack code and those runtime results have not been independently checked here. The mechanism does not depend on a hash weakness.</p>
+<p>Follow-up analysis: the <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/74QWBAYF4KZYN5HDHM2ROENQUDVWAUGT/">BiT team's 2026-09-29 response</a> confirms this shared-sign issue and says that the distinct compressed-public-key leakage reported for CS also applies to the earlier BiT version. No BiT-specific derivation, transcript, or witness for that second route accompanied the response. Since the confirmed shared-sign route already yields equivalent-key recovery and forgery, the additional statement is retained as follow-up evidence rather than assigned a separate vulnerability ID.</p>
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>Compare the specification's common bimodal bit and coefficientwise RejectSample with the cited source. The <a href="https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/84_EKMOtk_M/m/ZNMqLQ07BAAJ">posted analysis</a> gives the statistical derivation and experimental results; an independent full-scheme witness remains to be added.</p>

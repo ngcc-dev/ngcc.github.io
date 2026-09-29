@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: hash-23 QILIN — performance on AArch64 (system arm1)</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=808fa5e8">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
+<nav><a href="../../index.html">Home</a><a href="../../reports/index.html">Security</a><a href="../../performance/index.html">Performance</a><a href="../../constant-time/index.html">Side-Channel</a></nav>
+</header>
+<main class="">
+<!-- synchronized from harness: hash-23/perf_arm_1.md -->
+<h1 id="hash-23-qilin-performance-on-aarch64-system-arm_1">hash-23 QILIN — performance on AArch64 (system arm_1)</h1>
+<p><a href="index.html">Performance arm_1</a> › <code>hash-23</code> · <a href="method.html">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101536372126470144.html">NICCS page</a></p>
+<p><strong>Systems:</strong> <a href="../x86_1/hash-23.html">x86_1</a> · <strong>arm_1</strong></p>
+<p>Independent measurement following the structure of the NICCS ARM self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.</p>
+<h2 id="1-basic-information">1. Basic information</h2>
+<ul>
+<li>Category: cryptographic hash algorithm; function: hash</li>
+<li>Algorithm: QILIN</li>
+<li>Implementation versions measured: reference</li>
+<li>Parameter sets: <code>QILIN-512</code>, <code>QILIN-768</code>, <code>QILIN-1024</code></li>
+</ul>
+<h2 id="2-assessment-environment">2. Assessment environment</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>item</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>processor</td>
+<td>Qualcomm Oryon (CPU 2, one core)</td>
+</tr>
+<tr>
+<td>machine</td>
+<td>ASUS Vivobook S 15</td>
+</tr>
+<tr>
+<td>clock</td>
+<td>fixed 2.71 GHz (governor performance, minimum = maximum), boost off, SMT none</td>
+</tr>
+<tr>
+<td>memory</td>
+<td>30562 MiB</td>
+</tr>
+<tr>
+<td>OS / kernel</td>
+<td>Ubuntu 26.04.1 LTS / 7.0.0-34-generic</td>
+</tr>
+<tr>
+<td>compiler / build tool</td>
+<td>gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0 / cmake version 4.2.3</td>
+</tr>
+<tr>
+<td>campaign start / end (UTC)</td>
+<td>2026-09-28T15:05:46 / 2026-09-29T08:43:52</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="3-functional-testing-kat">3. Functional testing (KAT)</h2>
+<p>Each library was checked against the submitted KAT vectors (SHA-256 manifest <code>hash-23/kat.sha256</code> in the harness) before timing.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>build flags</th>
+<th>KAT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>QILIN-512</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>QILIN-768</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>QILIN-1024</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="4-performance">4. Performance</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>message</th>
+<th>mean cycles</th>
+<th>cycles/byte</th>
+<th>mean time</th>
+<th>MB/s</th>
+<th>n</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>QILIN-512</code></td>
+<td>32 B</td>
+<td>13.0 k</td>
+<td>406.2</td>
+<td>4.82 µs</td>
+<td>6.6</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>QILIN-512</code></td>
+<td>128 B</td>
+<td>13.0 k</td>
+<td>101.6</td>
+<td>4.83 µs</td>
+<td>26.5</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>QILIN-512</code></td>
+<td>512 B</td>
+<td>26.0 k</td>
+<td>50.8</td>
+<td>9.65 µs</td>
+<td>53.1</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>QILIN-512</code></td>
+<td>1024 B</td>
+<td>51.9 k</td>
+<td>50.7</td>
+<td>19.3 µs</td>
+<td>53.2</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>QILIN-512</code></td>
+<td>4096 B</td>
+<td>207.4 k</td>
+<td>50.6</td>
+<td>76.9 µs</td>
+<td>53.2</td>
+<td>40205 (5 × 8041)</td>
+</tr>
+<tr>
+<td><code>QILIN-512</code></td>
+<td>8192 B</td>
+<td>415.1 k</td>
+<td>50.7</td>
+<td>154 µs</td>
+<td>53.2</td>
+<td>20255 (5 × 4051)</td>
+</tr>
+<tr>
+<td><code>QILIN-512</code></td>
+<td>16384 B</td>
+<td>817.4 k</td>
+<td>49.9</td>
+<td>303 µs</td>
+<td>54.0</td>
+<td>10400 (5 × 2080)</td>
+</tr>
+<tr>
+<td><code>QILIN-512</code></td>
+<td>65536 B</td>
+<td>3.23 M</td>
+<td>49.2</td>
+<td>1.2 ms</td>
+<td>54.7</td>
+<td>2470 (5 × 494)</td>
+</tr>
+<tr>
+<td><code>QILIN-768</code></td>
+<td>32 B</td>
+<td>15.1 k</td>
+<td>473.3</td>
+<td>5.62 µs</td>
+<td>5.7</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>QILIN-768</code></td>
+<td>128 B</td>
+<td>15.1 k</td>
+<td>118.3</td>
+<td>5.62 µs</td>
+<td>22.8</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>QILIN-768</code></td>
+<td>512 B</td>
+<td>45.3 k</td>
+<td>88.4</td>
+<td>16.8 µs</td>
+<td>30.5</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>QILIN-768</code></td>
+<td>1024 B</td>
+<td>90.7 k</td>
+<td>88.6</td>
+<td>33.7 µs</td>
+<td>30.4</td>
+<td>89385 (5 × 17877)</td>
+</tr>
+<tr>
+<td><code>QILIN-768</code></td>
+<td>4096 B</td>
+<td>316.4 k</td>
+<td>77.3</td>
+<td>117 µs</td>
+<td>34.9</td>
+<td>26535 (5 × 5307)</td>
+</tr>
+<tr>
+<td><code>QILIN-768</code></td>
+<td>8192 B</td>
+<td>616.9 k</td>
+<td>75.3</td>
+<td>229 µs</td>
+<td>35.8</td>
+<td>13805 (5 × 2761)</td>
+</tr>
+<tr>
+<td><code>QILIN-768</code></td>
+<td>16384 B</td>
+<td>1.23 M</td>
+<td>75.3</td>
+<td>457 µs</td>
+<td>35.8</td>
+<td>6915 (5 × 1383)</td>
+</tr>
+<tr>
+<td><code>QILIN-768</code></td>
+<td>65536 B</td>
+<td>4.95 M</td>
+<td>75.5</td>
+<td>1.84 ms</td>
+<td>35.7</td>
+<td>1640 (5 × 328)</td>
+</tr>
+<tr>
+<td><code>QILIN-1024</code></td>
+<td>32 B</td>
+<td>17.2 k</td>
+<td>537.9</td>
+<td>6.39 µs</td>
+<td>5.0</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>QILIN-1024</code></td>
+<td>128 B</td>
+<td>17.2 k</td>
+<td>134.7</td>
+<td>6.4 µs</td>
+<td>20.0</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>QILIN-1024</code></td>
+<td>512 B</td>
+<td>68.9 k</td>
+<td>134.6</td>
+<td>25.6 µs</td>
+<td>20.0</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>QILIN-1024</code></td>
+<td>1024 B</td>
+<td>137.3 k</td>
+<td>134.1</td>
+<td>50.9 µs</td>
+<td>20.1</td>
+<td>58900 (5 × 11780)</td>
+</tr>
+<tr>
+<td><code>QILIN-1024</code></td>
+<td>4096 B</td>
+<td>531.5 k</td>
+<td>129.8</td>
+<td>197 µs</td>
+<td>20.8</td>
+<td>15920 (5 × 3184)</td>
+</tr>
+<tr>
+<td><code>QILIN-1024</code></td>
+<td>8192 B</td>
+<td>1.05 M</td>
+<td>127.7</td>
+<td>388 µs</td>
+<td>21.1</td>
+<td>8130 (5 × 1626)</td>
+</tr>
+<tr>
+<td><code>QILIN-1024</code></td>
+<td>16384 B</td>
+<td>2.07 M</td>
+<td>126.6</td>
+<td>770 µs</td>
+<td>21.3</td>
+<td>4045 (5 × 809)</td>
+</tr>
+<tr>
+<td><code>QILIN-1024</code></td>
+<td>65536 B</td>
+<td>8.28 M</td>
+<td>126.4</td>
+<td>3.07 ms</td>
+<td>21.3</td>
+<td>1005 (5 × 201)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-resource-consumption">5. Resource consumption</h2>
+<p>Static memory is approximated by the library's loadable ELF segments; peak memory is the process high-water mark (VmHWM) including the benchmark driver and libc, so both are upper-bound proxies rather than isolated algorithm memory.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>static: ELF image (bytes)</th>
+<th>baseline RSS</th>
+<th>peak RSS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>QILIN-512</code></td>
+<td>hash_32</td>
+<td>11860</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>QILIN-512</code></td>
+<td>hash_128</td>
+<td>11860</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>QILIN-512</code></td>
+<td>hash_512</td>
+<td>11860</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>QILIN-512</code></td>
+<td>hash_1024</td>
+<td>11860</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>QILIN-512</code></td>
+<td>hash_4096</td>
+<td>11860</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>QILIN-512</code></td>
+<td>hash_8192</td>
+<td>11860</td>
+<td>1408 KiB</td>
+<td>1472 KiB</td>
+</tr>
+<tr>
+<td><code>QILIN-512</code></td>
+<td>hash_16384</td>
+<td>11860</td>
+<td>3448 KiB</td>
+<td>3512 KiB</td>
+</tr>
+<tr>
+<td><code>QILIN-512</code></td>
+<td>hash_65536</td>
+<td>11860</td>
+<td>1464 KiB</td>
+<td>1528 KiB</td>
+</tr>
+<tr>
+<td><code>QILIN-768</code></td>
+<td>hash_32</td>
+<td>11860</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>QILIN-768</code></td>
+<td>hash_128</td>
+<td>11860</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>QILIN-768</code></td>
+<td>hash_512</td>
+<td>11860</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>QILIN-768</code></td>
+<td>hash_1024</td>
+<td>11860</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>QILIN-768</code></td>
+<td>hash_4096</td>
+<td>11860</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>QILIN-768</code></td>
+<td>hash_8192</td>
+<td>11860</td>
+<td>1408 KiB</td>
+<td>1472 KiB</td>
+</tr>
+<tr>
+<td><code>QILIN-768</code></td>
+<td>hash_16384</td>
+<td>11860</td>
+<td>3428 KiB</td>
+<td>3492 KiB</td>
+</tr>
+<tr>
+<td><code>QILIN-768</code></td>
+<td>hash_65536</td>
+<td>11860</td>
+<td>1464 KiB</td>
+<td>1528 KiB</td>
+</tr>
+<tr>
+<td><code>QILIN-1024</code></td>
+<td>hash_32</td>
+<td>11796</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>QILIN-1024</code></td>
+<td>hash_128</td>
+<td>11796</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>QILIN-1024</code></td>
+<td>hash_512</td>
+<td>11796</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>QILIN-1024</code></td>
+<td>hash_1024</td>
+<td>11796</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>QILIN-1024</code></td>
+<td>hash_4096</td>
+<td>11796</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>QILIN-1024</code></td>
+<td>hash_8192</td>
+<td>11796</td>
+<td>1408 KiB</td>
+<td>1472 KiB</td>
+</tr>
+<tr>
+<td><code>QILIN-1024</code></td>
+<td>hash_16384</td>
+<td>11796</td>
+<td>1416 KiB</td>
+<td>1480 KiB</td>
+</tr>
+<tr>
+<td><code>QILIN-1024</code></td>
+<td>hash_65536</td>
+<td>11796</td>
+<td>1464 KiB</td>
+<td>1528 KiB</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="7-raw-evidence-index">7. Raw evidence index</h2>
+<p>Paths are relative to <code>performance/data/arm_1/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>; each JSON file records its commands, environment and trials.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>item</th>
+<th>file</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>QILIN-512</code></td>
+<td>KAT log (sha256 <code>b9364416b131c647…</code>)</td>
+<td><code>kat/hash-23/QILIN-512.log</code></td>
+</tr>
+<tr>
+<td><code>QILIN-512</code></td>
+<td>timing hash_1024</td>
+<td><code>records/hash-23/QILIN-512__hash_1024.json</code></td>
+</tr>
+<tr>
+<td><code>QILIN-512</code></td>
+<td>timing hash_128</td>
+<td><code>records/hash-23/QILIN-512__hash_128.json</code></td>
+</tr>
+<tr>
+<td><code>QILIN-512</code></td>
+<td>timing hash_16384</td>
+<td><code>records/hash-23/QILIN-512__hash_16384.json</code></td>
+</tr>
+<tr>
+<td><code>QILIN-512</code></td>
+<td>timing hash_32</td>
+<td><code>records/hash-23/QILIN-512__hash_32.json</code></td>
+</tr>
+<tr>
+<td><code>QILIN-512</code></td>
+<td>timing hash_4096</td>
+<td><code>records/hash-23/QILIN-512__hash_4096.json</code></td>
+</tr>
+<tr>
+<td><code>QILIN-512</code></td>
+<td>timing hash_512</td>
+<td><code>records/hash-23/QILIN-512__hash_512.json</code></td>
+</tr>
+<tr>
+<td><code>QILIN-512</code></td>
+<td>timing hash_65536</td>
+<td><code>records/hash-23/QILIN-512__hash_65536.json</code></td>
+</tr>
+<tr>
+<td><code>QILIN-512</code></td>
+<td>timing hash_8192</td>
+<td><code>records/hash-23/QILIN-512__hash_8192.json</code></td>
+</tr>
+<tr>
+<td><code>QILIN-768</code></td>
+<td>KAT log (sha256 <code>76bceb630c950d62…</code>)</td>
+<td><code>kat/hash-23/QILIN-768.log</code></td>
+</tr>
+<tr>
+<td><code>QILIN-768</code></td>
+<td>timing hash_1024</td>
+<td><code>records/hash-23/QILIN-768__hash_1024.json</code></td>
+</tr>
+<tr>
+<td><code>QILIN-768</code></td>
+<td>timing hash_128</td>
+<td><code>records/hash-23/QILIN-768__hash_128.json</code></td>
+</tr>
+<tr>
+<td><code>QILIN-768</code></td>
+<td>timing hash_16384</td>
+<td><code>records/hash-23/QILIN-768__hash_16384.json</code></td>
+</tr>
+<tr>
+<td><code>QILIN-768</code></td>
+<td>timing hash_32</td>
+<td><code>records/hash-23/QILIN-768__hash_32.json</code></td>
+</tr>
+<tr>
+<td><code>QILIN-768</code></td>
+<td>timing hash_4096</td>
+<td><code>records/hash-23/QILIN-768__hash_4096.json</code></td>
+</tr>
+<tr>
+<td><code>QILIN-768</code></td>
+<td>timing hash_512</td>
+<td><code>records/hash-23/QILIN-768__hash_512.json</code></td>
+</tr>
+<tr>
+<td><code>QILIN-768</code></td>
+<td>timing hash_65536</td>
+<td><code>records/hash-23/QILIN-768__hash_65536.json</code></td>
+</tr>
+<tr>
+<td><code>QILIN-768</code></td>
+<td>timing hash_8192</td>
+<td><code>records/hash-23/QILIN-768__hash_8192.json</code></td>
+</tr>
+<tr>
+<td><code>QILIN-1024</code></td>
+<td>KAT log (sha256 <code>df58e3c7abfc8432…</code>)</td>
+<td><code>kat/hash-23/QILIN-1024.log</code></td>
+</tr>
+<tr>
+<td><code>QILIN-1024</code></td>
+<td>timing hash_1024</td>
+<td><code>records/hash-23/QILIN-1024__hash_1024.json</code></td>
+</tr>
+<tr>
+<td><code>QILIN-1024</code></td>
+<td>timing hash_128</td>
+<td><code>records/hash-23/QILIN-1024__hash_128.json</code></td>
+</tr>
+<tr>
+<td><code>QILIN-1024</code></td>
+<td>timing hash_16384</td>
+<td><code>records/hash-23/QILIN-1024__hash_16384.json</code></td>
+</tr>
+<tr>
+<td><code>QILIN-1024</code></td>
+<td>timing hash_32</td>
+<td><code>records/hash-23/QILIN-1024__hash_32.json</code></td>
+</tr>
+<tr>
+<td><code>QILIN-1024</code></td>
+<td>timing hash_4096</td>
+<td><code>records/hash-23/QILIN-1024__hash_4096.json</code></td>
+</tr>
+<tr>
+<td><code>QILIN-1024</code></td>
+<td>timing hash_512</td>
+<td><code>records/hash-23/QILIN-1024__hash_512.json</code></td>
+</tr>
+<tr>
+<td><code>QILIN-1024</code></td>
+<td>timing hash_65536</td>
+<td><code>records/hash-23/QILIN-1024__hash_65536.json</code></td>
+</tr>
+<tr>
+<td><code>QILIN-1024</code></td>
+<td>timing hash_8192</td>
+<td><code>records/hash-23/QILIN-1024__hash_8192.json</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Scripts: <code>performance/campaign.py</code>, <code>performance/ngcc_perf.c</code>, <code>performance/hashprof/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

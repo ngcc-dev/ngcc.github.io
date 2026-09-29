@@ -10,10 +10,10 @@
 <body>
 <header class="site-header">
 <a class="brand" href="../index.html"><img class="brand-icon" src="../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
-<nav><a href="../index.html">Home</a><a href="../reports/index.html">Security</a><a href="../performance/x86_1/index.html">Performance</a><a href="../constant-time/index.html">Side-Channel</a></nav>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Security</a><a href="../performance/index.html">Performance</a><a href="../constant-time/index.html">Side-Channel</a></nav>
 </header>
 <main class="">
-<p class="crumb"><a href="../reports/index.html">Security</a> › <code>sign-08</code> · <a href="../constant-time/sign-08.html">Constant-time review</a> · <a href="../performance/x86_1/sign-08.html">Performance</a></p>
+<p class="crumb"><a href="../reports/index.html">Security</a> › <code>sign-08</code> · <a href="../constant-time/sign-08.html">Constant-time review</a> · Performance: <a href="../performance/x86_1/sign-08.html">x86_1</a> · <a href="../performance/arm_1/sign-08.html">arm_1</a></p>
 
 <h1 id="darts-sign-08">DARTS (sign-08)</h1>
 <div class="table-wrap"><table class="meta">
@@ -59,7 +59,9 @@
 Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/J7RWJSD6H5IBCXDBD2XSHKCKGARBT6TA/">Martin Feussner's independent DARTS-128 recovery</a> and <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/3XGOCUUIBO5UJ5C4GQKIIWR3AHAQNI2X/">the DARTS team's confirmation</a></p>
 <p>Step 9 of Algorithm 7 accepts every signing attempt when the hidden branch bit is <code>b=1</code>, but for <code>b=0</code> accepts only when <code>Comp_d(omega) = Comp_d(omega+c alpha)</code>. Because <code>omega=A round(y)</code>, this asymmetric restart tilts the joint distribution of the published challenge and rounded response by a small key-dependent multiple of the sparse secret. Shi separates that impulse train from a smooth fixed bias, then enumerates the few uncertain coefficients and checks candidates with the exact public relation <code>e=(q+1)/2 beta-A s mod q</code>, requiring ternary <code>e</code>.</p>
 <p>We replayed the pinned PoC's accumulators from 20,000,000 DARTS-128 signatures. The collector derives them only from decoded public signature fields. The full data estimated 19,983,582 samples, measured a <code>656.87</code>-sigma signal, and recovered all secret polynomials after 40,342 public-relation candidates. The recovered bytes before the independent signing seed matched the submitted secret-key control exactly. Setting that irrelevant seed to zero still produced a fresh-message signature accepted by the untouched submitted verifier; changing one message byte was rejected. This is therefore equivalent signing-key recovery and an EUF-CMA forgery, not merely a distinguisher.</p>
-<p>Feussner independently reports full DARTS-128 recovery and fresh-message forgery from 17,000,000 signatures using negacyclic normal equations, ternary classification, and Kannan/BKZ completion. The DARTS team confirms that both attacks exploit the same omitted factor <code>2</code> in Step 9: the submitted comparison uses <code>(1-b)c*alpha</code> where the intended symmetric test uses <code>(1-2b)c*alpha</code>.</p>
+<p>Feussner independently reports full DARTS-128 recovery and fresh-message forgery from 17,000,000 signatures using negacyclic normal equations, ternary classification, and Kannan/BKZ completion. The DARTS team confirms that both attacks exploit the same omitted factor <code>2</code> in Step 9.</p>
+<h3 id="proposed-fixes">Proposed fixes</h3>
+<p>The <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/3XGOCUUIBO5UJ5C4GQKIIWR3AHAQNI2X/">DARTS team's response</a> proposes replacing the submitted <code>(1-b)c*alpha</code> comparison term by <code>(1-2b)c*alpha</code>. This section records the proposal without evaluating it.</p>
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">make -C sign-08 exploit-key-recovery

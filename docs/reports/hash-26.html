@@ -10,10 +10,10 @@
 <body>
 <header class="site-header">
 <a class="brand" href="../index.html"><img class="brand-icon" src="../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
-<nav><a href="../index.html">Home</a><a href="../reports/index.html">Security</a><a href="../performance/x86_1/index.html">Performance</a><a href="../constant-time/index.html">Side-Channel</a></nav>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Security</a><a href="../performance/index.html">Performance</a><a href="../constant-time/index.html">Side-Channel</a></nav>
 </header>
 <main class="">
-<p class="crumb"><a href="../reports/index.html">Security</a> › <code>hash-26</code> · <a href="../constant-time/hash-26.html">Constant-time review</a> · <a href="../performance/x86_1/hash-26.html">Performance</a></p>
+<p class="crumb"><a href="../reports/index.html">Security</a> › <code>hash-26</code> · <a href="../constant-time/hash-26.html">Constant-time review</a> · Performance: <a href="../performance/x86_1/hash-26.html">x86_1</a> · <a href="../performance/arm_1/hash-26.html">arm_1</a></p>
 
 <h1 id="the-hash-function-chime-hash-26">The Hash Function CHIME (hash-26)</h1>
 <div class="table-wrap"><table class="meta">
@@ -38,8 +38,10 @@
 <p>Original source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/5UIMK76TG55NELJD44XE7QVM2OPURHCK/">CryptHashForum report</a></p>
 <p>In the submitted permutation, each 256-bit array remains in the repeated-word form <code>(x,x,x,x)</code>: every layer preserves it and each round constant repeats one 64-bit word four times. This gives a 384-dimensional invariant subspace for the complete nonlinear, full-round permutation.</p>
 <p>For CHIME-512, a <code>2^240</code>-message family remains in the subspace through ordinary padding, while its digest contains only two independent 64-bit words. Sampling this family therefore gives a classical collision upper bound of about <code>2^64</code>, rather than the claimed 256 bits. For CHIME-1024, eight controlled blocks encode <code>2^512</code> distinct messages but reach at most <code>2^448</code> pre-final states; common padding and finalization preserve equality, giving an upper bound of about <code>2^224</code>, rather than 512 bits. These are proof-level squeeze bounds, not computed collisions.</p>
-<p>The submission team subsequently published an <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/HLW3FPCIRT2UIR3YMYJJ5YW7SCGZENUL/">erratum</a> changing the repeated round constants to word-dependent constants. That acknowledges and removes this particular invariant in a revised design; the archived Round 1 submission remains affected.</p>
+<p>The archived Round 1 submission remains the target of this finding.</p>
 <p>Further analysis: <a href="https://eprint.iacr.org/2026/2152">Yufei Yuan et al., <em>Structural Analysis of Seven Hash Functions Submitted to the NGCC</em></a>, Section 5 (2026-09-23), gives a greater-than-0.39 collision probability within <code>2^64</code> evaluations for CHIME-512. The paper does not cover this report's CHIME-1024 extension.</p>
+<h3 id="proposed-fixes">Proposed fixes</h3>
+<p>The submission team's <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/HLW3FPCIRT2UIR3YMYJJ5YW7SCGZENUL/">erratum</a> proposes replacing the repeated round constants with word-dependent constants. This section records the proposal without evaluating it.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>The local check reproduces the reporters' 126-byte CHIME-512 invariant-state witness and digest and recomputes both dimension bounds:</p>

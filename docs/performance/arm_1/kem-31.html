@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: kem-31 QIMEN-PIKE — performance on AArch64 (system arm1)</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=808fa5e8">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
+<nav><a href="../../index.html">Home</a><a href="../../reports/index.html">Security</a><a href="../../performance/index.html">Performance</a><a href="../../constant-time/index.html">Side-Channel</a></nav>
+</header>
+<main class="">
+<!-- synchronized from harness: kem-31/perf_arm_1.md -->
+<h1 id="kem-31-qimen-pike-performance-on-aarch64-system-arm_1">kem-31 QIMEN-PIKE — performance on AArch64 (system arm_1)</h1>
+<p><a href="index.html">Performance arm_1</a> › <code>kem-31</code> · <a href="method.html">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560872306036736.html">NICCS page</a></p>
+<p><strong>Systems:</strong> <a href="../x86_1/kem-31.html">x86_1</a> · <strong>arm_1</strong></p>
+<p>Independent measurement following the structure of the NICCS ARM self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.</p>
+<h2 id="1-basic-information">1. Basic information</h2>
+<ul>
+<li>Category: public-key algorithm; function: key encapsulation</li>
+<li>Algorithm: QIMEN-PIKE</li>
+<li>Implementation versions measured: reference</li>
+<li>Parameter sets: <code>NGCC-1</code>, <code>NGCC-2</code>, <code>NGCC-3</code></li>
+</ul>
+<h2 id="2-assessment-environment">2. Assessment environment</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>item</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>processor</td>
+<td>Qualcomm Oryon (CPU 2, one core)</td>
+</tr>
+<tr>
+<td>machine</td>
+<td>ASUS Vivobook S 15</td>
+</tr>
+<tr>
+<td>clock</td>
+<td>fixed 2.71 GHz (governor performance, minimum = maximum), boost off, SMT none</td>
+</tr>
+<tr>
+<td>memory</td>
+<td>30562 MiB</td>
+</tr>
+<tr>
+<td>OS / kernel</td>
+<td>Ubuntu 26.04.1 LTS / 7.0.0-34-generic</td>
+</tr>
+<tr>
+<td>compiler / build tool</td>
+<td>gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0 / cmake version 4.2.3</td>
+</tr>
+<tr>
+<td>campaign start / end (UTC)</td>
+<td>2026-09-28T15:05:46 / 2026-09-29T08:43:52</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="3-functional-testing-kat">3. Functional testing (KAT)</h2>
+<p>Each library was checked against the submitted KAT vectors (SHA-256 manifest <code>kem-31/kat.sha256</code> in the harness) before timing.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>build flags</th>
+<th>KAT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NGCC-1</code></td>
+<td>harness-default</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>NGCC-2</code></td>
+<td>harness-default</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>NGCC-3</code></td>
+<td>harness-default</td>
+<td class="st ok">PASS</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="4-performance">4. Performance</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>mean cycles</th>
+<th>mean time</th>
+<th>ops/s</th>
+<th>median trial</th>
+<th>n (trials × iters)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NGCC-1</code></td>
+<td>keygen</td>
+<td>348.67 M</td>
+<td>130 ms</td>
+<td>7.7</td>
+<td>130 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>NGCC-1</code></td>
+<td>enc</td>
+<td>112.40 M</td>
+<td>41.7 ms</td>
+<td>24</td>
+<td>41.6 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>NGCC-1</code></td>
+<td>dec</td>
+<td>173.12 M</td>
+<td>64.5 ms</td>
+<td>15.5</td>
+<td>64.3 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>NGCC-2</code></td>
+<td>keygen</td>
+<td>1.13 G</td>
+<td>419 ms</td>
+<td>2.38</td>
+<td>413 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>NGCC-2</code></td>
+<td>enc</td>
+<td>354.46 M</td>
+<td>131 ms</td>
+<td>7.6</td>
+<td>131 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>NGCC-2</code></td>
+<td>dec</td>
+<td>551.85 M</td>
+<td>205 ms</td>
+<td>4.87</td>
+<td>205 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>NGCC-3</code></td>
+<td>keygen</td>
+<td>7.20 G</td>
+<td>2.67 s</td>
+<td>0.374</td>
+<td>2.67 s</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>NGCC-3</code></td>
+<td>enc</td>
+<td>2.69 G</td>
+<td>997 ms</td>
+<td>1</td>
+<td>997 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>NGCC-3</code></td>
+<td>dec</td>
+<td>4.12 G</td>
+<td>1.53 s</td>
+<td>0.655</td>
+<td>1.53 s</td>
+<td>100 (5 × 20)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-resource-consumption">5. Resource consumption</h2>
+<p>Static memory is approximated by the library's loadable ELF segments; peak memory is the process high-water mark (VmHWM) including the benchmark driver and libc, so both are upper-bound proxies rather than isolated algorithm memory.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>static: ELF image (bytes)</th>
+<th>baseline RSS</th>
+<th>peak RSS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NGCC-1</code></td>
+<td>keygen</td>
+<td>380256</td>
+<td>1656 KiB</td>
+<td>32732 KiB</td>
+</tr>
+<tr>
+<td><code>NGCC-1</code></td>
+<td>enc</td>
+<td>380256</td>
+<td>3856 KiB</td>
+<td>3920 KiB</td>
+</tr>
+<tr>
+<td><code>NGCC-1</code></td>
+<td>dec</td>
+<td>380256</td>
+<td>4608 KiB</td>
+<td>19792 KiB</td>
+</tr>
+<tr>
+<td><code>NGCC-2</code></td>
+<td>keygen</td>
+<td>500220</td>
+<td>1660 KiB</td>
+<td>81844 KiB</td>
+</tr>
+<tr>
+<td><code>NGCC-2</code></td>
+<td>enc</td>
+<td>500220</td>
+<td>6396 KiB</td>
+<td>6460 KiB</td>
+</tr>
+<tr>
+<td><code>NGCC-2</code></td>
+<td>dec</td>
+<td>500220</td>
+<td>8388 KiB</td>
+<td>48016 KiB</td>
+</tr>
+<tr>
+<td><code>NGCC-3</code></td>
+<td>keygen</td>
+<td>1013136</td>
+<td>1668 KiB</td>
+<td>317640 KiB</td>
+</tr>
+<tr>
+<td><code>NGCC-3</code></td>
+<td>enc</td>
+<td>1013136</td>
+<td>18148 KiB</td>
+<td>18220 KiB</td>
+</tr>
+<tr>
+<td><code>NGCC-3</code></td>
+<td>dec</td>
+<td>1013136</td>
+<td>25976 KiB</td>
+<td>183216 KiB</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="6-transmission-and-storage-overhead">6. Transmission and storage overhead</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>public key</th>
+<th>secret key</th>
+<th>ciphertext</th>
+<th>shared secret</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NGCC-1</code></td>
+<td>389</td>
+<td>472</td>
+<td>602</td>
+<td>32</td>
+</tr>
+<tr>
+<td><code>NGCC-2</code></td>
+<td>592</td>
+<td>734</td>
+<td>882</td>
+<td>32</td>
+</tr>
+<tr>
+<td><code>NGCC-3</code></td>
+<td>1198</td>
+<td>1497</td>
+<td>1746</td>
+<td>64</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="symmetric-primitives">Symmetric primitives</h2>
+<p><a href="../symmetric-survey.html">Survey</a> verdict: <strong>bypass</strong> — own SM3 + counter XOF (pike_hash.c) for G, KDF and streams; DRNG only</p>
+<p>Share of each operation spent in the ICCS placeholder hash functions and in the ICCS DRNG (reference build, measured in the same run with link-time wrappers):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>pseudohash/XOF/sm3</th>
+<th>DRNG</th>
+<th>calls per operation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NGCC-1</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>2.2%</td>
+<td>drng 1.93e+03</td>
+</tr>
+<tr>
+<td><code>NGCC-1</code></td>
+<td>enc</td>
+<td>0.0%</td>
+<td>0.0%</td>
+<td>drng 1</td>
+</tr>
+<tr>
+<td><code>NGCC-1</code></td>
+<td>dec</td>
+<td>0.0%</td>
+<td>0.0%</td>
+<td>–</td>
+</tr>
+<tr>
+<td><code>NGCC-2</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>0.4%</td>
+<td>drng 1.04e+03</td>
+</tr>
+<tr>
+<td><code>NGCC-2</code></td>
+<td>enc</td>
+<td>0.0%</td>
+<td>0.0%</td>
+<td>drng 1</td>
+</tr>
+<tr>
+<td><code>NGCC-2</code></td>
+<td>dec</td>
+<td>0.0%</td>
+<td>0.0%</td>
+<td>–</td>
+</tr>
+<tr>
+<td><code>NGCC-3</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>0.1%</td>
+<td>drng 1.18e+03</td>
+</tr>
+<tr>
+<td><code>NGCC-3</code></td>
+<td>enc</td>
+<td>0.0%</td>
+<td>0.0%</td>
+<td>drng 1</td>
+</tr>
+<tr>
+<td><code>NGCC-3</code></td>
+<td>dec</td>
+<td>0.0%</td>
+<td>0.0%</td>
+<td>–</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="7-raw-evidence-index">7. Raw evidence index</h2>
+<p>Paths are relative to <code>performance/data/arm_1/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>; each JSON file records its commands, environment and trials.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>item</th>
+<th>file</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NGCC-1</code></td>
+<td>KAT log (sha256 <code>88c74f0596728d5c…</code>)</td>
+<td><code>kat/kem-31/NGCC-1.log</code></td>
+</tr>
+<tr>
+<td><code>NGCC-1</code></td>
+<td>timing dec</td>
+<td><code>records/kem-31/NGCC-1__dec.json</code></td>
+</tr>
+<tr>
+<td><code>NGCC-1</code></td>
+<td>timing enc</td>
+<td><code>records/kem-31/NGCC-1__enc.json</code></td>
+</tr>
+<tr>
+<td><code>NGCC-1</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-31/NGCC-1__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>NGCC-1</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-31/NGCC-1__dec.json</code></td>
+</tr>
+<tr>
+<td><code>NGCC-1</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-31/NGCC-1__enc.json</code></td>
+</tr>
+<tr>
+<td><code>NGCC-1</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-31/NGCC-1__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>NGCC-2</code></td>
+<td>KAT log (sha256 <code>05901ebe10c60488…</code>)</td>
+<td><code>kat/kem-31/NGCC-2.log</code></td>
+</tr>
+<tr>
+<td><code>NGCC-2</code></td>
+<td>timing dec</td>
+<td><code>records/kem-31/NGCC-2__dec.json</code></td>
+</tr>
+<tr>
+<td><code>NGCC-2</code></td>
+<td>timing enc</td>
+<td><code>records/kem-31/NGCC-2__enc.json</code></td>
+</tr>
+<tr>
+<td><code>NGCC-2</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-31/NGCC-2__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>NGCC-2</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-31/NGCC-2__dec.json</code></td>
+</tr>
+<tr>
+<td><code>NGCC-2</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-31/NGCC-2__enc.json</code></td>
+</tr>
+<tr>
+<td><code>NGCC-2</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-31/NGCC-2__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>NGCC-3</code></td>
+<td>KAT log (sha256 <code>566d6f919997e696…</code>)</td>
+<td><code>kat/kem-31/NGCC-3.log</code></td>
+</tr>
+<tr>
+<td><code>NGCC-3</code></td>
+<td>timing dec</td>
+<td><code>records/kem-31/NGCC-3__dec.json</code></td>
+</tr>
+<tr>
+<td><code>NGCC-3</code></td>
+<td>timing enc</td>
+<td><code>records/kem-31/NGCC-3__enc.json</code></td>
+</tr>
+<tr>
+<td><code>NGCC-3</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-31/NGCC-3__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>NGCC-3</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-31/NGCC-3__dec.json</code></td>
+</tr>
+<tr>
+<td><code>NGCC-3</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-31/NGCC-3__enc.json</code></td>
+</tr>
+<tr>
+<td><code>NGCC-3</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-31/NGCC-3__keygen.json</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Scripts: <code>performance/campaign.py</code>, <code>performance/ngcc_perf.c</code>, <code>performance/hashprof/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

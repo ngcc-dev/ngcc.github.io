@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: hash-24 QuantaSylva Hash — performance on AArch64 (system arm1)</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=808fa5e8">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
+<nav><a href="../../index.html">Home</a><a href="../../reports/index.html">Security</a><a href="../../performance/index.html">Performance</a><a href="../../constant-time/index.html">Side-Channel</a></nav>
+</header>
+<main class="">
+<!-- synchronized from harness: hash-24/perf_arm_1.md -->
+<h1 id="hash-24-quantasylva-hash-performance-on-aarch64-system-arm_1">hash-24 QuantaSylva Hash — performance on AArch64 (system arm_1)</h1>
+<p><a href="index.html">Performance arm_1</a> › <code>hash-24</code> · <a href="method.html">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101536223673274368.html">NICCS page</a></p>
+<p><strong>Systems:</strong> <a href="../x86_1/hash-24.html">x86_1</a> · <strong>arm_1</strong></p>
+<p>Independent measurement following the structure of the NICCS ARM self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.</p>
+<h2 id="1-basic-information">1. Basic information</h2>
+<ul>
+<li>Category: cryptographic hash algorithm; function: hash</li>
+<li>Algorithm: QuantaSylva Hash</li>
+<li>Implementation versions measured: reference</li>
+<li>Parameter sets: <code>QSH-512</code>, <code>QSH-768</code>, <code>QSH-1024</code></li>
+</ul>
+<h2 id="2-assessment-environment">2. Assessment environment</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>item</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>processor</td>
+<td>Qualcomm Oryon (CPU 2, one core)</td>
+</tr>
+<tr>
+<td>machine</td>
+<td>ASUS Vivobook S 15</td>
+</tr>
+<tr>
+<td>clock</td>
+<td>fixed 2.71 GHz (governor performance, minimum = maximum), boost off, SMT none</td>
+</tr>
+<tr>
+<td>memory</td>
+<td>30562 MiB</td>
+</tr>
+<tr>
+<td>OS / kernel</td>
+<td>Ubuntu 26.04.1 LTS / 7.0.0-34-generic</td>
+</tr>
+<tr>
+<td>compiler / build tool</td>
+<td>gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0 / cmake version 4.2.3</td>
+</tr>
+<tr>
+<td>campaign start / end (UTC)</td>
+<td>2026-09-28T15:05:46 / 2026-09-29T08:43:52</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="3-functional-testing-kat">3. Functional testing (KAT)</h2>
+<p>Each library was checked against the submitted KAT vectors (SHA-256 manifest <code>hash-24/kat.sha256</code> in the harness) before timing.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>build flags</th>
+<th>KAT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>QSH-512</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>QSH-768</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>QSH-1024</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="4-performance">4. Performance</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>message</th>
+<th>mean cycles</th>
+<th>cycles/byte</th>
+<th>mean time</th>
+<th>MB/s</th>
+<th>n</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>QSH-512</code></td>
+<td>32 B</td>
+<td>66.8 k</td>
+<td>2087.8</td>
+<td>24.8 µs</td>
+<td>1.3</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>QSH-512</code></td>
+<td>128 B</td>
+<td>89.0 k</td>
+<td>695.5</td>
+<td>33 µs</td>
+<td>3.9</td>
+<td>85260 (5 × 17052)</td>
+</tr>
+<tr>
+<td><code>QSH-512</code></td>
+<td>512 B</td>
+<td>155.5 k</td>
+<td>303.7</td>
+<td>57.7 µs</td>
+<td>8.9</td>
+<td>51615 (5 × 10323)</td>
+</tr>
+<tr>
+<td><code>QSH-512</code></td>
+<td>1024 B</td>
+<td>245.0 k</td>
+<td>239.2</td>
+<td>90.9 µs</td>
+<td>11.3</td>
+<td>33640 (5 × 6728)</td>
+</tr>
+<tr>
+<td><code>QSH-512</code></td>
+<td>4096 B</td>
+<td>905.4 k</td>
+<td>221.0</td>
+<td>336 µs</td>
+<td>12.2</td>
+<td>9545 (5 × 1909)</td>
+</tr>
+<tr>
+<td><code>QSH-512</code></td>
+<td>8192 B</td>
+<td>1.66 M</td>
+<td>202.9</td>
+<td>617 µs</td>
+<td>13.3</td>
+<td>4990 (5 × 998)</td>
+</tr>
+<tr>
+<td><code>QSH-512</code></td>
+<td>16384 B</td>
+<td>3.27 M</td>
+<td>199.3</td>
+<td>1.21 ms</td>
+<td>13.5</td>
+<td>2565 (5 × 513)</td>
+</tr>
+<tr>
+<td><code>QSH-512</code></td>
+<td>65536 B</td>
+<td>12.84 M</td>
+<td>195.9</td>
+<td>4.76 ms</td>
+<td>13.8</td>
+<td>645 (5 × 129)</td>
+</tr>
+<tr>
+<td><code>QSH-768</code></td>
+<td>32 B</td>
+<td>131.0 k</td>
+<td>4094.0</td>
+<td>48.6 µs</td>
+<td>0.7</td>
+<td>60455 (5 × 12091)</td>
+</tr>
+<tr>
+<td><code>QSH-768</code></td>
+<td>128 B</td>
+<td>130.5 k</td>
+<td>1019.6</td>
+<td>48.4 µs</td>
+<td>2.6</td>
+<td>60000 (5 × 12000)</td>
+</tr>
+<tr>
+<td><code>QSH-768</code></td>
+<td>512 B</td>
+<td>218.5 k</td>
+<td>426.7</td>
+<td>81.1 µs</td>
+<td>6.3</td>
+<td>37210 (5 × 7442)</td>
+</tr>
+<tr>
+<td><code>QSH-768</code></td>
+<td>1024 B</td>
+<td>319.3 k</td>
+<td>311.8</td>
+<td>119 µs</td>
+<td>8.6</td>
+<td>27030 (5 × 5406)</td>
+</tr>
+<tr>
+<td><code>QSH-768</code></td>
+<td>4096 B</td>
+<td>913.7 k</td>
+<td>223.1</td>
+<td>339 µs</td>
+<td>12.1</td>
+<td>9215 (5 × 1843)</td>
+</tr>
+<tr>
+<td><code>QSH-768</code></td>
+<td>8192 B</td>
+<td>1.70 M</td>
+<td>207.2</td>
+<td>630 µs</td>
+<td>13.0</td>
+<td>4945 (5 × 989)</td>
+</tr>
+<tr>
+<td><code>QSH-768</code></td>
+<td>16384 B</td>
+<td>3.26 M</td>
+<td>198.9</td>
+<td>1.21 ms</td>
+<td>13.6</td>
+<td>2595 (5 × 519)</td>
+</tr>
+<tr>
+<td><code>QSH-768</code></td>
+<td>65536 B</td>
+<td>12.63 M</td>
+<td>192.7</td>
+<td>4.69 ms</td>
+<td>14.0</td>
+<td>660 (5 × 132)</td>
+</tr>
+<tr>
+<td><code>QSH-1024</code></td>
+<td>32 B</td>
+<td>131.2 k</td>
+<td>4099.2</td>
+<td>48.7 µs</td>
+<td>0.7</td>
+<td>59045 (5 × 11809)</td>
+</tr>
+<tr>
+<td><code>QSH-1024</code></td>
+<td>128 B</td>
+<td>130.7 k</td>
+<td>1020.9</td>
+<td>48.5 µs</td>
+<td>2.6</td>
+<td>59410 (5 × 11882)</td>
+</tr>
+<tr>
+<td><code>QSH-1024</code></td>
+<td>512 B</td>
+<td>217.7 k</td>
+<td>425.2</td>
+<td>80.8 µs</td>
+<td>6.3</td>
+<td>30365 (5 × 6073)</td>
+</tr>
+<tr>
+<td><code>QSH-1024</code></td>
+<td>1024 B</td>
+<td>305.5 k</td>
+<td>298.3</td>
+<td>113 µs</td>
+<td>9.0</td>
+<td>27135 (5 × 5427)</td>
+</tr>
+<tr>
+<td><code>QSH-1024</code></td>
+<td>4096 B</td>
+<td>912.9 k</td>
+<td>222.9</td>
+<td>339 µs</td>
+<td>12.1</td>
+<td>9270 (5 × 1854)</td>
+</tr>
+<tr>
+<td><code>QSH-1024</code></td>
+<td>8192 B</td>
+<td>1.69 M</td>
+<td>206.8</td>
+<td>629 µs</td>
+<td>13.0</td>
+<td>4870 (5 × 974)</td>
+</tr>
+<tr>
+<td><code>QSH-1024</code></td>
+<td>16384 B</td>
+<td>3.26 M</td>
+<td>199.0</td>
+<td>1.21 ms</td>
+<td>13.5</td>
+<td>2615 (5 × 523)</td>
+</tr>
+<tr>
+<td><code>QSH-1024</code></td>
+<td>65536 B</td>
+<td>12.64 M</td>
+<td>192.9</td>
+<td>4.69 ms</td>
+<td>14.0</td>
+<td>670 (5 × 134)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-resource-consumption">5. Resource consumption</h2>
+<p>Static memory is approximated by the library's loadable ELF segments; peak memory is the process high-water mark (VmHWM) including the benchmark driver and libc, so both are upper-bound proxies rather than isolated algorithm memory.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>static: ELF image (bytes)</th>
+<th>baseline RSS</th>
+<th>peak RSS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>QSH-512</code></td>
+<td>hash_32</td>
+<td>13420</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>QSH-512</code></td>
+<td>hash_128</td>
+<td>13420</td>
+<td>1396 KiB</td>
+<td>1460 KiB</td>
+</tr>
+<tr>
+<td><code>QSH-512</code></td>
+<td>hash_512</td>
+<td>13420</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>QSH-512</code></td>
+<td>hash_1024</td>
+<td>13420</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>QSH-512</code></td>
+<td>hash_4096</td>
+<td>13420</td>
+<td>3440 KiB</td>
+<td>3504 KiB</td>
+</tr>
+<tr>
+<td><code>QSH-512</code></td>
+<td>hash_8192</td>
+<td>13420</td>
+<td>3444 KiB</td>
+<td>3512 KiB</td>
+</tr>
+<tr>
+<td><code>QSH-512</code></td>
+<td>hash_16384</td>
+<td>13420</td>
+<td>1416 KiB</td>
+<td>1492 KiB</td>
+</tr>
+<tr>
+<td><code>QSH-512</code></td>
+<td>hash_65536</td>
+<td>13420</td>
+<td>1464 KiB</td>
+<td>1544 KiB</td>
+</tr>
+<tr>
+<td><code>QSH-768</code></td>
+<td>hash_32</td>
+<td>13420</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>QSH-768</code></td>
+<td>hash_128</td>
+<td>13420</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>QSH-768</code></td>
+<td>hash_512</td>
+<td>13420</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>QSH-768</code></td>
+<td>hash_1024</td>
+<td>13420</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>QSH-768</code></td>
+<td>hash_4096</td>
+<td>13420</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>QSH-768</code></td>
+<td>hash_8192</td>
+<td>13420</td>
+<td>1408 KiB</td>
+<td>1476 KiB</td>
+</tr>
+<tr>
+<td><code>QSH-768</code></td>
+<td>hash_16384</td>
+<td>13420</td>
+<td>3440 KiB</td>
+<td>3512 KiB</td>
+</tr>
+<tr>
+<td><code>QSH-768</code></td>
+<td>hash_65536</td>
+<td>13420</td>
+<td>3476 KiB</td>
+<td>3548 KiB</td>
+</tr>
+<tr>
+<td><code>QSH-1024</code></td>
+<td>hash_32</td>
+<td>13404</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>QSH-1024</code></td>
+<td>hash_128</td>
+<td>13404</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>QSH-1024</code></td>
+<td>hash_512</td>
+<td>13404</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>QSH-1024</code></td>
+<td>hash_1024</td>
+<td>13404</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>QSH-1024</code></td>
+<td>hash_4096</td>
+<td>13404</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>QSH-1024</code></td>
+<td>hash_8192</td>
+<td>13404</td>
+<td>1408 KiB</td>
+<td>1476 KiB</td>
+</tr>
+<tr>
+<td><code>QSH-1024</code></td>
+<td>hash_16384</td>
+<td>13404</td>
+<td>1416 KiB</td>
+<td>1484 KiB</td>
+</tr>
+<tr>
+<td><code>QSH-1024</code></td>
+<td>hash_65536</td>
+<td>13404</td>
+<td>3480 KiB</td>
+<td>3552 KiB</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="7-raw-evidence-index">7. Raw evidence index</h2>
+<p>Paths are relative to <code>performance/data/arm_1/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>; each JSON file records its commands, environment and trials.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>item</th>
+<th>file</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>QSH-512</code></td>
+<td>KAT log (sha256 <code>f2bd5effe140b5a9…</code>)</td>
+<td><code>kat/hash-24/QSH-512.log</code></td>
+</tr>
+<tr>
+<td><code>QSH-512</code></td>
+<td>timing hash_1024</td>
+<td><code>records/hash-24/QSH-512__hash_1024.json</code></td>
+</tr>
+<tr>
+<td><code>QSH-512</code></td>
+<td>timing hash_128</td>
+<td><code>records/hash-24/QSH-512__hash_128.json</code></td>
+</tr>
+<tr>
+<td><code>QSH-512</code></td>
+<td>timing hash_16384</td>
+<td><code>records/hash-24/QSH-512__hash_16384.json</code></td>
+</tr>
+<tr>
+<td><code>QSH-512</code></td>
+<td>timing hash_32</td>
+<td><code>records/hash-24/QSH-512__hash_32.json</code></td>
+</tr>
+<tr>
+<td><code>QSH-512</code></td>
+<td>timing hash_4096</td>
+<td><code>records/hash-24/QSH-512__hash_4096.json</code></td>
+</tr>
+<tr>
+<td><code>QSH-512</code></td>
+<td>timing hash_512</td>
+<td><code>records/hash-24/QSH-512__hash_512.json</code></td>
+</tr>
+<tr>
+<td><code>QSH-512</code></td>
+<td>timing hash_65536</td>
+<td><code>records/hash-24/QSH-512__hash_65536.json</code></td>
+</tr>
+<tr>
+<td><code>QSH-512</code></td>
+<td>timing hash_8192</td>
+<td><code>records/hash-24/QSH-512__hash_8192.json</code></td>
+</tr>
+<tr>
+<td><code>QSH-768</code></td>
+<td>KAT log (sha256 <code>9345d9fb706dd2c2…</code>)</td>
+<td><code>kat/hash-24/QSH-768.log</code></td>
+</tr>
+<tr>
+<td><code>QSH-768</code></td>
+<td>timing hash_1024</td>
+<td><code>records/hash-24/QSH-768__hash_1024.json</code></td>
+</tr>
+<tr>
+<td><code>QSH-768</code></td>
+<td>timing hash_128</td>
+<td><code>records/hash-24/QSH-768__hash_128.json</code></td>
+</tr>
+<tr>
+<td><code>QSH-768</code></td>
+<td>timing hash_16384</td>
+<td><code>records/hash-24/QSH-768__hash_16384.json</code></td>
+</tr>
+<tr>
+<td><code>QSH-768</code></td>
+<td>timing hash_32</td>
+<td><code>records/hash-24/QSH-768__hash_32.json</code></td>
+</tr>
+<tr>
+<td><code>QSH-768</code></td>
+<td>timing hash_4096</td>
+<td><code>records/hash-24/QSH-768__hash_4096.json</code></td>
+</tr>
+<tr>
+<td><code>QSH-768</code></td>
+<td>timing hash_512</td>
+<td><code>records/hash-24/QSH-768__hash_512.json</code></td>
+</tr>
+<tr>
+<td><code>QSH-768</code></td>
+<td>timing hash_65536</td>
+<td><code>records/hash-24/QSH-768__hash_65536.json</code></td>
+</tr>
+<tr>
+<td><code>QSH-768</code></td>
+<td>timing hash_8192</td>
+<td><code>records/hash-24/QSH-768__hash_8192.json</code></td>
+</tr>
+<tr>
+<td><code>QSH-1024</code></td>
+<td>KAT log (sha256 <code>d12a55414cdc4bab…</code>)</td>
+<td><code>kat/hash-24/QSH-1024.log</code></td>
+</tr>
+<tr>
+<td><code>QSH-1024</code></td>
+<td>timing hash_1024</td>
+<td><code>records/hash-24/QSH-1024__hash_1024.json</code></td>
+</tr>
+<tr>
+<td><code>QSH-1024</code></td>
+<td>timing hash_128</td>
+<td><code>records/hash-24/QSH-1024__hash_128.json</code></td>
+</tr>
+<tr>
+<td><code>QSH-1024</code></td>
+<td>timing hash_16384</td>
+<td><code>records/hash-24/QSH-1024__hash_16384.json</code></td>
+</tr>
+<tr>
+<td><code>QSH-1024</code></td>
+<td>timing hash_32</td>
+<td><code>records/hash-24/QSH-1024__hash_32.json</code></td>
+</tr>
+<tr>
+<td><code>QSH-1024</code></td>
+<td>timing hash_4096</td>
+<td><code>records/hash-24/QSH-1024__hash_4096.json</code></td>
+</tr>
+<tr>
+<td><code>QSH-1024</code></td>
+<td>timing hash_512</td>
+<td><code>records/hash-24/QSH-1024__hash_512.json</code></td>
+</tr>
+<tr>
+<td><code>QSH-1024</code></td>
+<td>timing hash_65536</td>
+<td><code>records/hash-24/QSH-1024__hash_65536.json</code></td>
+</tr>
+<tr>
+<td><code>QSH-1024</code></td>
+<td>timing hash_8192</td>
+<td><code>records/hash-24/QSH-1024__hash_8192.json</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Scripts: <code>performance/campaign.py</code>, <code>performance/ngcc_perf.c</code>, <code>performance/hashprof/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

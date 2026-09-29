@@ -21,7 +21,11 @@ The forum estimates approximately 451 classical and 391 quantum bits for full re
 
 ### Follow-up Analysis
 
-The Lore team's [first response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/KGBWR5YQU6ASUKNVUQEBNNJZ7TWZIOY4/) and [revised-parameter post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/W6XIOQDXGIUZPVKR3MZW4HZCDJEVYRMR/) change Lore-512 to `n=1024`, `k=2`, and the ring `Z_1028[x]/(x^1024+1)`, together with updated fixed-composition and BCH parameters. That removes the particular degree-256/512 quotient projection reported here. This report continues to describe the archived Round 1 submission identified above; it does not apply the same factorization claim to the revised set.
+The Lore team's [first response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/KGBWR5YQU6ASUKNVUQEBNNJZ7TWZIOY4/) and [revised-parameter post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/W6XIOQDXGIUZPVKR3MZW4HZCDJEVYRMR/) concern a revised parameter set. This report continues to describe the archived Round 1 submission identified above and does not apply its factorization claim to a later set.
+
+### Proposed fixes
+
+The Lore team's [revised-parameter post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/W6XIOQDXGIUZPVKR3MZW4HZCDJEVYRMR/) proposes changing Lore-512 to `n=1024`, `k=2`, and `x^1024+1`, while retaining `q=257` and `t=4`, together with revised fixed-composition and BCH parameters. This section records the proposal without evaluating it.
 
 ### Reproducing
 

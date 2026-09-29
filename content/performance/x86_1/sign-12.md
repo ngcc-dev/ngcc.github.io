@@ -3,6 +3,8 @@
 
 [Performance x86_1](index.md) › `sign-12` · [method](method.md) · [NICCS page](https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561077713686528.html)
 
+**Systems:** **x86_1** · [arm_1](../arm_1/sign-12.md)
+
 Independent measurement following the structure of the NICCS x86 self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.
 
 ## 1. Basic information
@@ -38,7 +40,7 @@ Each library was checked against the submitted KAT vectors (SHA-256 manifest `si
 | `Galas-512F` | harness-default | MISMATCH [1] |
 | `Galas-512S` | harness-default | TIMEOUT [1] |
 
-[1] API deviation: sig_keygen does not draw from drng_algorithm but seeds a private DRNG from 32 zero bytes (or from a seed set by a non-API helper used only by the submitters' own KAT generator), so the official KAT flow yields different keys These instances are timed anyway; their output is not validated.
+[1] API deviation: sig_keygen does not draw from drng_algorithm but seeds a private DRNG from 32 zero bytes (or from a seed set by a non-API helper used only by the submitters' own KAT generator), so the official KAT flow yields different keys; with keygen drawing from the DRNG the first KAT records reproduce exactly (sign-12/Makefile). Galas-512S additionally exceeds the 900 s KAT time limit. Timed anyway; note that key generation always produces the same key pair. These instances are timed anyway; their output is not validated.
 
 ## 4. Performance
 

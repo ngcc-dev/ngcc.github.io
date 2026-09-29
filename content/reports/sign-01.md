@@ -13,6 +13,7 @@ Discovery: Trivial
 Exploitation: Trivial
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-09-21
+Follow-up source: [Aigis-Sig+ team's update](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/2BWLA2SMHII22YXJM6EWHVGE26WKG2PG/)
 
 The packed hint has a variable meaningful length inside a fixed-size signature buffer. Verification decodes the meaningful portion but does not require a unique, canonical encoding of the remaining bytes.
 
@@ -20,7 +21,9 @@ Changing a sampled unused packed-hint bit in a valid signature produces a differ
 
 This does not by itself forge a signature for a new message, so it is not an EUF-CMA break. It does directly violate the specification's strong-unforgeability claim, because an attacker transforms one valid signature into a distinct valid signature on the same message.
 
-The decoder must reject noncanonical hint encodings and require every unused byte or bit to have its unique prescribed value.
+### Proposed fixes
+
+The [Aigis-Sig+ team's update](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/2BWLA2SMHII22YXJM6EWHVGE26WKG2PG/) proposes fixed-length signature encoding, zero padding for unused hint bits and bytes, and verification checks for invalid markers, excessive counts, duplicate or out-of-order positions, and nonzero padding. This section records the proposal without evaluating it.
 
 ### Reproducing
 
@@ -44,12 +47,15 @@ Discovery: Trivial
 Exploitation: Unauthenticated denial of service; stronger memory-corruption impact is platform-dependent
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-09-21
+Follow-up source: [Aigis-Sig+ team's update](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/2BWLA2SMHII22YXJM6EWHVGE26WKG2PG/)
 
 `unpack_h` reads the first attacker-controlled hint byte into `max` and uses it without checking the fixed capacity of the stack array `t`. It then sums attacker-controlled decoded counts into `k`, calls `unpack6bits(pos, sm, k)` without checking the `OMEGA`-element stack array `pos`, and uses the decoded positions as coefficient indices.
 
 The exhaustive signature-bit reproducer reaches this field and triggers `*** stack smashing detected ***` during verification; for Aigis-sig1, signature bit 15617 is one confirmed crashing input. Because verification processes unauthenticated signatures, this is a remotely reachable stack-buffer overflow in the submitted API, distinct from the noncanonical-signature malleability in `sign-01-1`.
 
-The decoder must reject `max` beyond `PARAM_K * PARAM_N / SEC`, reject cumulative counts beyond `OMEGA`, validate every encoded position before indexing a polynomial, and validate the encoded input length before every read.
+### Proposed fixes
+
+The [Aigis-Sig+ team's update](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/2BWLA2SMHII22YXJM6EWHVGE26WKG2PG/) proposes checks for invalid hint markers, excessive hint counts, duplicate or out-of-order positions, nonzero padding, and signature lengths. This section records the proposal without evaluating it.
 
 ### Reproducing
 
@@ -71,8 +77,13 @@ Exploitation: Out-of-bounds read or crash on a caller-supplied short key; no dis
 Credit: Askus Li, with Askus Operator (Luna High) assistance
 Date: 2026-09-23
 Original source: [NGCC PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/2ZTM3BMRATA6QTPA2OZSSSEBVBCTPHM6/), [GitHub PR #14](https://github.com/ngcc-dev/ngcc-harness/pull/14)
+Follow-up source: [Aigis-Sig+ team's update](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/2BWLA2SMHII22YXJM6EWHVGE26WKG2PG/)
 
 The submitted `sig_sign` and `sig_verify` wrappers discard `sk_len_bytes` and `pk_len_bytes` before `unpack_sk` and `unpack_pk` read the fixed-size keys. A one-byte key declared with length zero triggers an AddressSanitizer out-of-bounds read in each path. Applications that always pass the advertised key sizes do not encounter this defect; no remote disclosure or stronger exploit is demonstrated.
+
+### Proposed fixes
+
+The [Aigis-Sig+ team's update](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/2BWLA2SMHII22YXJM6EWHVGE26WKG2PG/) proposes checks for key, signature, and message lengths and the signature-length output pointer, plus resetting the output length to zero on signing failure. This section records the proposal without evaluating it.
 
 ### Reproducing
 
@@ -93,8 +104,13 @@ Exploitation: 2,048-byte stack-buffer write on the signer path; controlled corru
 Credit: Askus Li, with Askus Operator (Luna High) assistance
 Date: 2026-09-23
 Original source: [NGCC PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/2ZTM3BMRATA6QTPA2OZSSSEBVBCTPHM6/), [GitHub PR #14](https://github.com/ngcc-dev/ngcc-harness/pull/14)
+Follow-up source: [Aigis-Sig+ team's update](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/2BWLA2SMHII22YXJM6EWHVGE26WKG2PG/)
 
 `polyvecl_uniform_gamma1` fills `PARAM_L` polynomials and then calls `polyz_unpack(v->vec + i, outbuf)` once more after the loop, when `i == PARAM_L`. That writes an entire polynomial past the `polyvecl` object during honest signing. The extra call is present in all three reference sets. AddressSanitizer confirms the out-of-bounds stack write at `polyvec.c:214`; ordinary signing may appear to work because the adjacent stack layout varies. This is separate from `sign-01-2`'s attacker-input overflow in verification.
+
+### Proposed fixes
+
+The [Aigis-Sig+ team's update](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/2BWLA2SMHII22YXJM6EWHVGE26WKG2PG/) proposes removing the extra unpacking call after sampling `y`. This section records the proposal without evaluating it.
 
 ### Reproducing
 
@@ -121,7 +137,11 @@ Algorithm 24 assigns an independent sign to every nonzero challenge coefficient.
 
 `binomial(512,44) * 2^44 = 2^256.4609` possible uniformly signed challenges.
 
-The most likely set-II challenge therefore costs about `2^213.46` work, below its 256-bit claim. Set I similarly has `137.17` bits of min-entropy: this remains above its 128-bit classical claim, but Grover search costs about `2^68.59`, below its claimed 80-bit quantum level. Set III uses a separate branch and is unaffected. The team confirms the error and reports replacing it in updated REF, AVX2, and ARM code.
+The most likely set-II challenge therefore costs about `2^213.46` work, below its 256-bit claim. Set I similarly has `137.17` bits of min-entropy: this remains above its 128-bit classical claim, but Grover search costs about `2^68.59`, below its claimed 80-bit quantum level. Set III uses a separate branch and is unaffected. The team confirms the error.
+
+### Proposed fixes
+
+The [Aigis-Sig+ team's update](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/2BWLA2SMHII22YXJM6EWHVGE26WKG2PG/) proposes changing the random-sign handling for sets I and II in its reference, AVX2, and ARM implementations. This section records the proposal without evaluating it.
 
 ### Reproducing
 

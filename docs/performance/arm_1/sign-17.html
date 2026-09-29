@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: sign-17 OPS Digital Signature Algorithm — performance on AArch64 (system arm1)</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=808fa5e8">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
+<nav><a href="../../index.html">Home</a><a href="../../reports/index.html">Security</a><a href="../../performance/index.html">Performance</a><a href="../../constant-time/index.html">Side-Channel</a></nav>
+</header>
+<main class="">
+<!-- synchronized from harness: sign-17/perf_arm_1.md -->
+<h1 id="sign-17-ops-digital-signature-algorithm-performance-on-aarch64-system-arm_1">sign-17 OPS Digital Signature Algorithm — performance on AArch64 (system arm_1)</h1>
+<p><a href="index.html">Performance arm_1</a> › <code>sign-17</code> · <a href="method.html">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561086848880640.html">NICCS page</a></p>
+<p><strong>Systems:</strong> <a href="../x86_1/sign-17.html">x86_1</a> · <strong>arm_1</strong></p>
+<p>Independent measurement following the structure of the NICCS ARM self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.</p>
+<h2 id="1-basic-information">1. Basic information</h2>
+<ul>
+<li>Category: public-key algorithm; function: digital signature</li>
+<li>Algorithm: OPS Digital Signature Algorithm</li>
+<li>Implementation versions measured: reference</li>
+<li>Parameter sets: <code>OPSsig-128</code>, <code>OPSsig-256</code>, <code>OPSsig-512</code></li>
+</ul>
+<h2 id="2-assessment-environment">2. Assessment environment</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>item</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>processor</td>
+<td>Qualcomm Oryon (CPU 2, one core)</td>
+</tr>
+<tr>
+<td>machine</td>
+<td>ASUS Vivobook S 15</td>
+</tr>
+<tr>
+<td>clock</td>
+<td>fixed 2.71 GHz (governor performance, minimum = maximum), boost off, SMT none</td>
+</tr>
+<tr>
+<td>memory</td>
+<td>30562 MiB</td>
+</tr>
+<tr>
+<td>OS / kernel</td>
+<td>Ubuntu 26.04.1 LTS / 7.0.0-34-generic</td>
+</tr>
+<tr>
+<td>compiler / build tool</td>
+<td>gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0 / cmake version 4.2.3</td>
+</tr>
+<tr>
+<td>campaign start / end (UTC)</td>
+<td>2026-09-28T15:05:46 / 2026-09-29T08:43:52</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="3-functional-testing-kat">3. Functional testing (KAT)</h2>
+<p>Each library was checked against the submitted KAT vectors (SHA-256 manifest <code>sign-17/kat.sha256</code> in the harness) before timing.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>build flags</th>
+<th>KAT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>OPSsig-128</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>OPSsig-256</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>OPSsig-512</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="4-performance">4. Performance</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>mean cycles</th>
+<th>mean time</th>
+<th>ops/s</th>
+<th>median trial</th>
+<th>n (trials × iters)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>OPSsig-128</code></td>
+<td>keygen</td>
+<td>2.22 M</td>
+<td>822 µs</td>
+<td>1.22e+03</td>
+<td>813 µs</td>
+<td>3880 (5 × 776)</td>
+</tr>
+<tr>
+<td><code>OPSsig-128</code></td>
+<td>sign</td>
+<td>2.52 M</td>
+<td>936 µs</td>
+<td>1.07e+03</td>
+<td>935 µs</td>
+<td>3350 (5 × 670)</td>
+</tr>
+<tr>
+<td><code>OPSsig-128</code></td>
+<td>verify</td>
+<td>2.05 M</td>
+<td>759 µs</td>
+<td>1.32e+03</td>
+<td>759 µs</td>
+<td>3960 (5 × 792)</td>
+</tr>
+<tr>
+<td><code>OPSsig-256</code></td>
+<td>keygen</td>
+<td>3.73 M</td>
+<td>1.38 ms</td>
+<td>723</td>
+<td>1.37 ms</td>
+<td>2230 (5 × 446)</td>
+</tr>
+<tr>
+<td><code>OPSsig-256</code></td>
+<td>sign</td>
+<td>4.91 M</td>
+<td>1.82 ms</td>
+<td>549</td>
+<td>1.82 ms</td>
+<td>2035 (5 × 407)</td>
+</tr>
+<tr>
+<td><code>OPSsig-256</code></td>
+<td>verify</td>
+<td>3.47 M</td>
+<td>1.29 ms</td>
+<td>778</td>
+<td>1.29 ms</td>
+<td>2445 (5 × 489)</td>
+</tr>
+<tr>
+<td><code>OPSsig-512</code></td>
+<td>keygen</td>
+<td>7.34 M</td>
+<td>2.72 ms</td>
+<td>367</td>
+<td>2.7 ms</td>
+<td>1155 (5 × 231)</td>
+</tr>
+<tr>
+<td><code>OPSsig-512</code></td>
+<td>sign</td>
+<td>10.06 M</td>
+<td>3.73 ms</td>
+<td>268</td>
+<td>3.73 ms</td>
+<td>685 (5 × 137)</td>
+</tr>
+<tr>
+<td><code>OPSsig-512</code></td>
+<td>verify</td>
+<td>6.89 M</td>
+<td>2.56 ms</td>
+<td>391</td>
+<td>2.55 ms</td>
+<td>1180 (5 × 236)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-resource-consumption">5. Resource consumption</h2>
+<p>Static memory is approximated by the library's loadable ELF segments; peak memory is the process high-water mark (VmHWM) including the benchmark driver and libc, so both are upper-bound proxies rather than isolated algorithm memory.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>static: ELF image (bytes)</th>
+<th>baseline RSS</th>
+<th>peak RSS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>OPSsig-128</code></td>
+<td>keygen</td>
+<td>34288</td>
+<td>1436 KiB</td>
+<td>1556 KiB</td>
+</tr>
+<tr>
+<td><code>OPSsig-128</code></td>
+<td>sign</td>
+<td>34288</td>
+<td>1484 KiB</td>
+<td>1596 KiB</td>
+</tr>
+<tr>
+<td><code>OPSsig-128</code></td>
+<td>verify</td>
+<td>34288</td>
+<td>1532 KiB</td>
+<td>1600 KiB</td>
+</tr>
+<tr>
+<td><code>OPSsig-256</code></td>
+<td>keygen</td>
+<td>34952</td>
+<td>1444 KiB</td>
+<td>1588 KiB</td>
+</tr>
+<tr>
+<td><code>OPSsig-256</code></td>
+<td>sign</td>
+<td>34952</td>
+<td>3552 KiB</td>
+<td>3688 KiB</td>
+</tr>
+<tr>
+<td><code>OPSsig-256</code></td>
+<td>verify</td>
+<td>34952</td>
+<td>1588 KiB</td>
+<td>1660 KiB</td>
+</tr>
+<tr>
+<td><code>OPSsig-512</code></td>
+<td>keygen</td>
+<td>37440</td>
+<td>1456 KiB</td>
+<td>1688 KiB</td>
+</tr>
+<tr>
+<td><code>OPSsig-512</code></td>
+<td>sign</td>
+<td>37440</td>
+<td>1608 KiB</td>
+<td>1820 KiB</td>
+</tr>
+<tr>
+<td><code>OPSsig-512</code></td>
+<td>verify</td>
+<td>37440</td>
+<td>1756 KiB</td>
+<td>1836 KiB</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="6-transmission-and-storage-overhead">6. Transmission and storage overhead</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>public key</th>
+<th>secret key</th>
+<th>signature</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>OPSsig-128</code></td>
+<td>2560</td>
+<td>3840</td>
+<td>4349</td>
+</tr>
+<tr>
+<td><code>OPSsig-256</code></td>
+<td>3392</td>
+<td>5056</td>
+<td>5540</td>
+</tr>
+<tr>
+<td><code>OPSsig-512</code></td>
+<td>6720</td>
+<td>9920</td>
+<td>12021</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="symmetric-primitives">Symmetric primitives</h2>
+<p><a href="../symmetric-survey.html">Survey</a> verdict: <strong>ICCS-only</strong> — optimized AVX2 auxfunc.c adds sm3x4 / pseudoXOF_4x</p>
+<p>Share of each operation spent in the ICCS placeholder hash functions and in the ICCS DRNG (reference build, measured in the same run with link-time wrappers):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>pseudohash/XOF/sm3</th>
+<th>DRNG</th>
+<th>calls per operation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>OPSsig-128</code></td>
+<td>keygen</td>
+<td>92%</td>
+<td>0.6%</td>
+<td>drng 2, pseudoXOF 17, pseudohash 1</td>
+</tr>
+<tr>
+<td><code>OPSsig-128</code></td>
+<td>sign</td>
+<td>90%</td>
+<td>0.3%</td>
+<td>drng 1, pseudoXOF 15.8, pseudohash 1, sm3hash 1.13</td>
+</tr>
+<tr>
+<td><code>OPSsig-128</code></td>
+<td>verify</td>
+<td>87%</td>
+<td>0.0%</td>
+<td>pseudoXOF 12, pseudohash 2, sm3hash 1</td>
+</tr>
+<tr>
+<td><code>OPSsig-256</code></td>
+<td>keygen</td>
+<td>93%</td>
+<td>0.4%</td>
+<td>drng 2, pseudoXOF 27.5, pseudohash 1</td>
+</tr>
+<tr>
+<td><code>OPSsig-256</code></td>
+<td>sign</td>
+<td>89%</td>
+<td>0.2%</td>
+<td>drng 1, pseudoXOF 27.6, pseudohash 2.93</td>
+</tr>
+<tr>
+<td><code>OPSsig-256</code></td>
+<td>verify</td>
+<td>90%</td>
+<td>0.0%</td>
+<td>pseudoXOF 18, pseudohash 3</td>
+</tr>
+<tr>
+<td><code>OPSsig-512</code></td>
+<td>keygen</td>
+<td>92%</td>
+<td>0.2%</td>
+<td>drng 2, pseudoXOF 27.1, pseudohash 1</td>
+</tr>
+<tr>
+<td><code>OPSsig-512</code></td>
+<td>sign</td>
+<td>87%</td>
+<td>0.1%</td>
+<td>drng 1, pseudoXOF 28.6, pseudohash 3.1</td>
+</tr>
+<tr>
+<td><code>OPSsig-512</code></td>
+<td>verify</td>
+<td>89%</td>
+<td>0.0%</td>
+<td>pseudoXOF 18, pseudohash 3</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="7-raw-evidence-index">7. Raw evidence index</h2>
+<p>Paths are relative to <code>performance/data/arm_1/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>; each JSON file records its commands, environment and trials.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>item</th>
+<th>file</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>OPSsig-128</code></td>
+<td>KAT log (sha256 <code>f692d363f21e7d87…</code>)</td>
+<td><code>kat/sign-17/OPSsig-128.log</code></td>
+</tr>
+<tr>
+<td><code>OPSsig-128</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-17/OPSsig-128__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>OPSsig-128</code></td>
+<td>timing sign</td>
+<td><code>records/sign-17/OPSsig-128__sign.json</code></td>
+</tr>
+<tr>
+<td><code>OPSsig-128</code></td>
+<td>timing verify</td>
+<td><code>records/sign-17/OPSsig-128__verify.json</code></td>
+</tr>
+<tr>
+<td><code>OPSsig-128</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-17/OPSsig-128__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>OPSsig-128</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-17/OPSsig-128__sign.json</code></td>
+</tr>
+<tr>
+<td><code>OPSsig-128</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-17/OPSsig-128__verify.json</code></td>
+</tr>
+<tr>
+<td><code>OPSsig-256</code></td>
+<td>KAT log (sha256 <code>3d42fb4c2d7e0fd9…</code>)</td>
+<td><code>kat/sign-17/OPSsig-256.log</code></td>
+</tr>
+<tr>
+<td><code>OPSsig-256</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-17/OPSsig-256__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>OPSsig-256</code></td>
+<td>timing sign</td>
+<td><code>records/sign-17/OPSsig-256__sign.json</code></td>
+</tr>
+<tr>
+<td><code>OPSsig-256</code></td>
+<td>timing verify</td>
+<td><code>records/sign-17/OPSsig-256__verify.json</code></td>
+</tr>
+<tr>
+<td><code>OPSsig-256</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-17/OPSsig-256__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>OPSsig-256</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-17/OPSsig-256__sign.json</code></td>
+</tr>
+<tr>
+<td><code>OPSsig-256</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-17/OPSsig-256__verify.json</code></td>
+</tr>
+<tr>
+<td><code>OPSsig-512</code></td>
+<td>KAT log (sha256 <code>6e2b4228f846b432…</code>)</td>
+<td><code>kat/sign-17/OPSsig-512.log</code></td>
+</tr>
+<tr>
+<td><code>OPSsig-512</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-17/OPSsig-512__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>OPSsig-512</code></td>
+<td>timing sign</td>
+<td><code>records/sign-17/OPSsig-512__sign.json</code></td>
+</tr>
+<tr>
+<td><code>OPSsig-512</code></td>
+<td>timing verify</td>
+<td><code>records/sign-17/OPSsig-512__verify.json</code></td>
+</tr>
+<tr>
+<td><code>OPSsig-512</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-17/OPSsig-512__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>OPSsig-512</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-17/OPSsig-512__sign.json</code></td>
+</tr>
+<tr>
+<td><code>OPSsig-512</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-17/OPSsig-512__verify.json</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Scripts: <code>performance/campaign.py</code>, <code>performance/ngcc_perf.c</code>, <code>performance/hashprof/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

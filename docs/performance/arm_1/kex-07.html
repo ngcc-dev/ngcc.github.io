@@ -1,0 +1,1755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: kex-07 NEV-AKE — performance on AArch64 (system arm1)</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=808fa5e8">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
+<nav><a href="../../index.html">Home</a><a href="../../reports/index.html">Security</a><a href="../../performance/index.html">Performance</a><a href="../../constant-time/index.html">Side-Channel</a></nav>
+</header>
+<main class="">
+<!-- synchronized from harness: kex-07/perf_arm_1.md -->
+<h1 id="kex-07-nev-ake-performance-on-aarch64-system-arm_1">kex-07 NEV-AKE — performance on AArch64 (system arm_1)</h1>
+<p><a href="index.html">Performance arm_1</a> › <code>kex-07</code> · <a href="method.html">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560626045865984.html">NICCS page</a></p>
+<p><strong>Systems:</strong> <a href="../x86_1/kex-07.html">x86_1</a> · <strong>arm_1</strong></p>
+<p>Independent measurement following the structure of the NICCS ARM self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.</p>
+<h2 id="1-basic-information">1. Basic information</h2>
+<ul>
+<li>Category: public-key algorithm; function: key exchange</li>
+<li>Algorithm: NEV-AKE</li>
+<li>Implementation versions measured: reference</li>
+<li>Parameter sets: <code>NEV_AKE_512_769</code>, <code>NEV_AKE_512_769_C</code>, <code>NEV_AKE_512_1409</code>, <code>NEV_AKE_1024_769</code>, <code>NEV_AKE_1024_769_C</code>, <code>NEV_AKE_1024_1409</code>, <code>NEV_AKE_2048_769</code>, <code>NEV_AKE_2048_769_C</code>, <code>NEV_AKE_2048_1409</code></li>
+</ul>
+<h2 id="2-assessment-environment">2. Assessment environment</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>item</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>processor</td>
+<td>Qualcomm Oryon (CPU 2, one core)</td>
+</tr>
+<tr>
+<td>machine</td>
+<td>ASUS Vivobook S 15</td>
+</tr>
+<tr>
+<td>clock</td>
+<td>fixed 2.71 GHz (governor performance, minimum = maximum), boost off, SMT none</td>
+</tr>
+<tr>
+<td>memory</td>
+<td>30562 MiB</td>
+</tr>
+<tr>
+<td>OS / kernel</td>
+<td>Ubuntu 26.04.1 LTS / 7.0.0-34-generic</td>
+</tr>
+<tr>
+<td>compiler / build tool</td>
+<td>gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0 / cmake version 4.2.3</td>
+</tr>
+<tr>
+<td>campaign start / end (UTC)</td>
+<td>2026-09-28T15:05:46 / 2026-09-29T08:43:52</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="3-functional-testing-kat">3. Functional testing (KAT)</h2>
+<p>Each library was checked against the submitted KAT vectors (SHA-256 manifest <code>kex-07/kat.sha256</code> in the harness) before timing.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>build flags</th>
+<th>KAT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NEV_AKE_512_769</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769_C</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_1409</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769_C</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_1409</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769_C</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_1409</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="4-performance">4. Performance</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>mean cycles</th>
+<th>mean time</th>
+<th>ops/s</th>
+<th>median trial</th>
+<th>n (trials × iters)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NEV_AKE_512_769</code></td>
+<td>exchange</td>
+<td>668.8 k</td>
+<td>248 µs</td>
+<td>4.03e+03</td>
+<td>248 µs</td>
+<td>12575 (5 × 2515)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769</code></td>
+<td>init_a</td>
+<td>59.1 k</td>
+<td>21.9 µs</td>
+<td>4.57e+04</td>
+<td>21.9 µs</td>
+<td>12575 (5 × 2515)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769</code></td>
+<td>init_b</td>
+<td>59.1 k</td>
+<td>21.9 µs</td>
+<td>4.57e+04</td>
+<td>21.9 µs</td>
+<td>12575 (5 × 2515)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769</code></td>
+<td>pass1</td>
+<td>99.4 k</td>
+<td>36.8 µs</td>
+<td>2.71e+04</td>
+<td>36.7 µs</td>
+<td>12575 (5 × 2515)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769</code></td>
+<td>pass2</td>
+<td>261.8 k</td>
+<td>97.1 µs</td>
+<td>1.03e+04</td>
+<td>96.8 µs</td>
+<td>12575 (5 × 2515)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769</code></td>
+<td>derive_a</td>
+<td>190.6 k</td>
+<td>70.7 µs</td>
+<td>1.41e+04</td>
+<td>70.7 µs</td>
+<td>12575 (5 × 2515)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769</code></td>
+<td>derive_b</td>
+<td>183</td>
+<td>23.1 ns</td>
+<td>4.33e+07</td>
+<td>23.6 ns</td>
+<td>12575 (5 × 2515)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769_C</code></td>
+<td>exchange</td>
+<td>629.5 k</td>
+<td>234 µs</td>
+<td>4.28e+03</td>
+<td>233 µs</td>
+<td>13345 (5 × 2669)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769_C</code></td>
+<td>init_a</td>
+<td>59.2 k</td>
+<td>21.9 µs</td>
+<td>4.56e+04</td>
+<td>21.9 µs</td>
+<td>13345 (5 × 2669)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769_C</code></td>
+<td>init_b</td>
+<td>58.9 k</td>
+<td>21.8 µs</td>
+<td>4.59e+04</td>
+<td>21.8 µs</td>
+<td>13345 (5 × 2669)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769_C</code></td>
+<td>pass1</td>
+<td>92.7 k</td>
+<td>34.3 µs</td>
+<td>2.91e+04</td>
+<td>34.3 µs</td>
+<td>13345 (5 × 2669)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769_C</code></td>
+<td>pass2</td>
+<td>241.5 k</td>
+<td>89.6 µs</td>
+<td>1.12e+04</td>
+<td>89.4 µs</td>
+<td>13345 (5 × 2669)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769_C</code></td>
+<td>derive_a</td>
+<td>178.8 k</td>
+<td>66.3 µs</td>
+<td>1.51e+04</td>
+<td>66.1 µs</td>
+<td>13345 (5 × 2669)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769_C</code></td>
+<td>derive_b</td>
+<td>182</td>
+<td>23.8 ns</td>
+<td>4.2e+07</td>
+<td>23.6 ns</td>
+<td>13345 (5 × 2669)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_1409</code></td>
+<td>exchange</td>
+<td>825.0 k</td>
+<td>306 µs</td>
+<td>3.27e+03</td>
+<td>306 µs</td>
+<td>10240 (5 × 2048)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_1409</code></td>
+<td>init_a</td>
+<td>85.9 k</td>
+<td>31.8 µs</td>
+<td>3.14e+04</td>
+<td>31.7 µs</td>
+<td>10240 (5 × 2048)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_1409</code></td>
+<td>init_b</td>
+<td>85.6 k</td>
+<td>31.7 µs</td>
+<td>3.15e+04</td>
+<td>31.6 µs</td>
+<td>10240 (5 × 2048)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_1409</code></td>
+<td>pass1</td>
+<td>138.8 k</td>
+<td>51.4 µs</td>
+<td>1.94e+04</td>
+<td>51.4 µs</td>
+<td>10240 (5 × 2048)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_1409</code></td>
+<td>pass2</td>
+<td>306.7 k</td>
+<td>114 µs</td>
+<td>8.79e+03</td>
+<td>114 µs</td>
+<td>10240 (5 × 2048)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_1409</code></td>
+<td>derive_a</td>
+<td>207.9 k</td>
+<td>77.1 µs</td>
+<td>1.3e+04</td>
+<td>77 µs</td>
+<td>10240 (5 × 2048)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_1409</code></td>
+<td>derive_b</td>
+<td>182</td>
+<td>23.5 ns</td>
+<td>4.25e+07</td>
+<td>23.9 ns</td>
+<td>10240 (5 × 2048)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769</code></td>
+<td>exchange</td>
+<td>1.35 M</td>
+<td>502 µs</td>
+<td>1.99e+03</td>
+<td>501 µs</td>
+<td>6215 (5 × 1243)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769</code></td>
+<td>init_a</td>
+<td>126.0 k</td>
+<td>46.7 µs</td>
+<td>2.14e+04</td>
+<td>46.7 µs</td>
+<td>6215 (5 × 1243)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769</code></td>
+<td>init_b</td>
+<td>125.8 k</td>
+<td>46.6 µs</td>
+<td>2.14e+04</td>
+<td>46.7 µs</td>
+<td>6215 (5 × 1243)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769</code></td>
+<td>pass1</td>
+<td>205.3 k</td>
+<td>76.1 µs</td>
+<td>1.31e+04</td>
+<td>76 µs</td>
+<td>6215 (5 × 1243)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769</code></td>
+<td>pass2</td>
+<td>513.5 k</td>
+<td>190 µs</td>
+<td>5.25e+03</td>
+<td>191 µs</td>
+<td>6215 (5 × 1243)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769</code></td>
+<td>derive_a</td>
+<td>384.3 k</td>
+<td>143 µs</td>
+<td>7.01e+03</td>
+<td>143 µs</td>
+<td>6215 (5 × 1243)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769</code></td>
+<td>derive_b</td>
+<td>187</td>
+<td>24.7 ns</td>
+<td>4.05e+07</td>
+<td>25.1 ns</td>
+<td>6215 (5 × 1243)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769_C</code></td>
+<td>exchange</td>
+<td>1.29 M</td>
+<td>478 µs</td>
+<td>2.09e+03</td>
+<td>478 µs</td>
+<td>6500 (5 × 1300)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769_C</code></td>
+<td>init_a</td>
+<td>125.8 k</td>
+<td>46.6 µs</td>
+<td>2.14e+04</td>
+<td>46.7 µs</td>
+<td>6500 (5 × 1300)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769_C</code></td>
+<td>init_b</td>
+<td>125.1 k</td>
+<td>46.4 µs</td>
+<td>2.16e+04</td>
+<td>46.4 µs</td>
+<td>6500 (5 × 1300)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769_C</code></td>
+<td>pass1</td>
+<td>194.2 k</td>
+<td>72 µs</td>
+<td>1.39e+04</td>
+<td>72 µs</td>
+<td>6500 (5 × 1300)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769_C</code></td>
+<td>pass2</td>
+<td>479.7 k</td>
+<td>178 µs</td>
+<td>5.62e+03</td>
+<td>178 µs</td>
+<td>6500 (5 × 1300)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769_C</code></td>
+<td>derive_a</td>
+<td>363.1 k</td>
+<td>135 µs</td>
+<td>7.43e+03</td>
+<td>135 µs</td>
+<td>6500 (5 × 1300)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769_C</code></td>
+<td>derive_b</td>
+<td>186</td>
+<td>25.4 ns</td>
+<td>3.94e+07</td>
+<td>25.3 ns</td>
+<td>6500 (5 × 1300)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_1409</code></td>
+<td>exchange</td>
+<td>1.55 M</td>
+<td>574 µs</td>
+<td>1.74e+03</td>
+<td>573 µs</td>
+<td>5465 (5 × 1093)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_1409</code></td>
+<td>init_a</td>
+<td>165.1 k</td>
+<td>61.2 µs</td>
+<td>1.63e+04</td>
+<td>61.2 µs</td>
+<td>5465 (5 × 1093)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_1409</code></td>
+<td>init_b</td>
+<td>164.9 k</td>
+<td>61.1 µs</td>
+<td>1.64e+04</td>
+<td>61.1 µs</td>
+<td>5465 (5 × 1093)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_1409</code></td>
+<td>pass1</td>
+<td>251.9 k</td>
+<td>93.4 µs</td>
+<td>1.07e+04</td>
+<td>93.3 µs</td>
+<td>5465 (5 × 1093)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_1409</code></td>
+<td>pass2</td>
+<td>553.1 k</td>
+<td>205 µs</td>
+<td>4.87e+03</td>
+<td>205 µs</td>
+<td>5465 (5 × 1093)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_1409</code></td>
+<td>derive_a</td>
+<td>407.9 k</td>
+<td>151 µs</td>
+<td>6.61e+03</td>
+<td>151 µs</td>
+<td>5465 (5 × 1093)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_1409</code></td>
+<td>derive_b</td>
+<td>187</td>
+<td>24.5 ns</td>
+<td>4.08e+07</td>
+<td>24.8 ns</td>
+<td>5465 (5 × 1093)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769</code></td>
+<td>exchange</td>
+<td>4.18 M</td>
+<td>1.55 ms</td>
+<td>645</td>
+<td>1.55 ms</td>
+<td>1995 (5 × 399)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769</code></td>
+<td>init_a</td>
+<td>384.7 k</td>
+<td>143 µs</td>
+<td>7.01e+03</td>
+<td>143 µs</td>
+<td>1995 (5 × 399)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769</code></td>
+<td>init_b</td>
+<td>385.3 k</td>
+<td>143 µs</td>
+<td>7e+03</td>
+<td>143 µs</td>
+<td>1995 (5 × 399)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769</code></td>
+<td>pass1</td>
+<td>569.0 k</td>
+<td>211 µs</td>
+<td>4.74e+03</td>
+<td>211 µs</td>
+<td>1995 (5 × 399)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769</code></td>
+<td>pass2</td>
+<td>1.57 M</td>
+<td>584 µs</td>
+<td>1.71e+03</td>
+<td>581 µs</td>
+<td>1995 (5 × 399)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769</code></td>
+<td>derive_a</td>
+<td>1.28 M</td>
+<td>476 µs</td>
+<td>2.1e+03</td>
+<td>474 µs</td>
+<td>1995 (5 × 399)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769</code></td>
+<td>derive_b</td>
+<td>191</td>
+<td>26.2 ns</td>
+<td>3.81e+07</td>
+<td>24.5 ns</td>
+<td>1995 (5 × 399)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769_C</code></td>
+<td>exchange</td>
+<td>3.91 M</td>
+<td>1.45 ms</td>
+<td>689</td>
+<td>1.45 ms</td>
+<td>2160 (5 × 432)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769_C</code></td>
+<td>init_a</td>
+<td>383.6 k</td>
+<td>142 µs</td>
+<td>7.03e+03</td>
+<td>142 µs</td>
+<td>2160 (5 × 432)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769_C</code></td>
+<td>init_b</td>
+<td>384.5 k</td>
+<td>143 µs</td>
+<td>7.01e+03</td>
+<td>142 µs</td>
+<td>2160 (5 × 432)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769_C</code></td>
+<td>pass1</td>
+<td>534.3 k</td>
+<td>198 µs</td>
+<td>5.05e+03</td>
+<td>198 µs</td>
+<td>2160 (5 × 432)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769_C</code></td>
+<td>pass2</td>
+<td>1.44 M</td>
+<td>534 µs</td>
+<td>1.87e+03</td>
+<td>531 µs</td>
+<td>2160 (5 × 432)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769_C</code></td>
+<td>derive_a</td>
+<td>1.18 M</td>
+<td>438 µs</td>
+<td>2.28e+03</td>
+<td>437 µs</td>
+<td>2160 (5 × 432)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769_C</code></td>
+<td>derive_b</td>
+<td>216</td>
+<td>33.5 ns</td>
+<td>2.98e+07</td>
+<td>29.1 ns</td>
+<td>2160 (5 × 432)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_1409</code></td>
+<td>exchange</td>
+<td>4.69 M</td>
+<td>1.74 ms</td>
+<td>574</td>
+<td>1.74 ms</td>
+<td>1815 (5 × 363)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_1409</code></td>
+<td>init_a</td>
+<td>414.4 k</td>
+<td>154 µs</td>
+<td>6.5e+03</td>
+<td>153 µs</td>
+<td>1815 (5 × 363)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_1409</code></td>
+<td>init_b</td>
+<td>412.7 k</td>
+<td>153 µs</td>
+<td>6.53e+03</td>
+<td>153 µs</td>
+<td>1815 (5 × 363)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_1409</code></td>
+<td>pass1</td>
+<td>648.0 k</td>
+<td>240 µs</td>
+<td>4.16e+03</td>
+<td>240 µs</td>
+<td>1815 (5 × 363)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_1409</code></td>
+<td>pass2</td>
+<td>1.80 M</td>
+<td>669 µs</td>
+<td>1.49e+03</td>
+<td>667 µs</td>
+<td>1815 (5 × 363)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_1409</code></td>
+<td>derive_a</td>
+<td>1.41 M</td>
+<td>523 µs</td>
+<td>1.91e+03</td>
+<td>523 µs</td>
+<td>1815 (5 × 363)</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_1409</code></td>
+<td>derive_b</td>
+<td>189</td>
+<td>25.3 ns</td>
+<td>3.96e+07</td>
+<td>26.2 ns</td>
+<td>1815 (5 × 363)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-resource-consumption">5. Resource consumption</h2>
+<p>Static memory is approximated by the library's loadable ELF segments; peak memory is the process high-water mark (VmHWM) including the benchmark driver and libc, so both are upper-bound proxies rather than isolated algorithm memory.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>static: ELF image (bytes)</th>
+<th>baseline RSS</th>
+<th>peak RSS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NEV_AKE_512_769</code></td>
+<td>exchange</td>
+<td>41852</td>
+<td>1460 KiB</td>
+<td>1528 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769</code></td>
+<td>init_a</td>
+<td>41852</td>
+<td>1460 KiB</td>
+<td>1528 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769</code></td>
+<td>init_b</td>
+<td>41852</td>
+<td>1460 KiB</td>
+<td>1528 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769</code></td>
+<td>pass1</td>
+<td>41852</td>
+<td>1460 KiB</td>
+<td>1528 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769</code></td>
+<td>pass2</td>
+<td>41852</td>
+<td>1460 KiB</td>
+<td>1528 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769</code></td>
+<td>derive_a</td>
+<td>41852</td>
+<td>1460 KiB</td>
+<td>1528 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769</code></td>
+<td>derive_b</td>
+<td>41852</td>
+<td>1456 KiB</td>
+<td>1524 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769_C</code></td>
+<td>exchange</td>
+<td>41884</td>
+<td>3496 KiB</td>
+<td>3560 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769_C</code></td>
+<td>init_a</td>
+<td>41884</td>
+<td>1460 KiB</td>
+<td>1524 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769_C</code></td>
+<td>init_b</td>
+<td>41884</td>
+<td>1460 KiB</td>
+<td>1524 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769_C</code></td>
+<td>pass1</td>
+<td>41884</td>
+<td>1460 KiB</td>
+<td>1524 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769_C</code></td>
+<td>pass2</td>
+<td>41884</td>
+<td>1456 KiB</td>
+<td>1520 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769_C</code></td>
+<td>derive_a</td>
+<td>41884</td>
+<td>1456 KiB</td>
+<td>1520 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769_C</code></td>
+<td>derive_b</td>
+<td>41884</td>
+<td>1460 KiB</td>
+<td>1524 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_1409</code></td>
+<td>exchange</td>
+<td>44060</td>
+<td>1468 KiB</td>
+<td>1536 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_1409</code></td>
+<td>init_a</td>
+<td>44060</td>
+<td>1468 KiB</td>
+<td>1536 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_1409</code></td>
+<td>init_b</td>
+<td>44060</td>
+<td>1468 KiB</td>
+<td>1536 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_1409</code></td>
+<td>pass1</td>
+<td>44060</td>
+<td>1468 KiB</td>
+<td>1536 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_1409</code></td>
+<td>pass2</td>
+<td>44060</td>
+<td>1468 KiB</td>
+<td>1536 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_1409</code></td>
+<td>derive_a</td>
+<td>44060</td>
+<td>1468 KiB</td>
+<td>1536 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_1409</code></td>
+<td>derive_b</td>
+<td>44060</td>
+<td>1468 KiB</td>
+<td>1536 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769</code></td>
+<td>exchange</td>
+<td>44804</td>
+<td>1500 KiB</td>
+<td>1568 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769</code></td>
+<td>init_a</td>
+<td>44804</td>
+<td>1504 KiB</td>
+<td>1572 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769</code></td>
+<td>init_b</td>
+<td>44804</td>
+<td>1500 KiB</td>
+<td>1568 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769</code></td>
+<td>pass1</td>
+<td>44804</td>
+<td>1500 KiB</td>
+<td>1568 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769</code></td>
+<td>pass2</td>
+<td>44804</td>
+<td>1500 KiB</td>
+<td>1568 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769</code></td>
+<td>derive_a</td>
+<td>44804</td>
+<td>3480 KiB</td>
+<td>3544 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769</code></td>
+<td>derive_b</td>
+<td>44804</td>
+<td>1504 KiB</td>
+<td>1572 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769_C</code></td>
+<td>exchange</td>
+<td>44836</td>
+<td>1496 KiB</td>
+<td>1564 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769_C</code></td>
+<td>init_a</td>
+<td>44836</td>
+<td>1492 KiB</td>
+<td>1560 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769_C</code></td>
+<td>init_b</td>
+<td>44836</td>
+<td>1496 KiB</td>
+<td>1564 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769_C</code></td>
+<td>pass1</td>
+<td>44836</td>
+<td>3504 KiB</td>
+<td>3568 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769_C</code></td>
+<td>pass2</td>
+<td>44836</td>
+<td>1496 KiB</td>
+<td>1564 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769_C</code></td>
+<td>derive_a</td>
+<td>44836</td>
+<td>1496 KiB</td>
+<td>1564 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769_C</code></td>
+<td>derive_b</td>
+<td>44836</td>
+<td>1492 KiB</td>
+<td>1560 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_1409</code></td>
+<td>exchange</td>
+<td>47804</td>
+<td>1512 KiB</td>
+<td>1580 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_1409</code></td>
+<td>init_a</td>
+<td>47804</td>
+<td>1512 KiB</td>
+<td>1580 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_1409</code></td>
+<td>init_b</td>
+<td>47804</td>
+<td>1512 KiB</td>
+<td>1580 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_1409</code></td>
+<td>pass1</td>
+<td>47804</td>
+<td>1512 KiB</td>
+<td>1580 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_1409</code></td>
+<td>pass2</td>
+<td>47804</td>
+<td>1512 KiB</td>
+<td>1580 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_1409</code></td>
+<td>derive_a</td>
+<td>47804</td>
+<td>1512 KiB</td>
+<td>1580 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_1409</code></td>
+<td>derive_b</td>
+<td>47804</td>
+<td>1512 KiB</td>
+<td>1580 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769</code></td>
+<td>exchange</td>
+<td>48728</td>
+<td>1584 KiB</td>
+<td>1652 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769</code></td>
+<td>init_a</td>
+<td>48728</td>
+<td>1584 KiB</td>
+<td>1652 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769</code></td>
+<td>init_b</td>
+<td>48728</td>
+<td>3560 KiB</td>
+<td>3624 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769</code></td>
+<td>pass1</td>
+<td>48728</td>
+<td>3600 KiB</td>
+<td>3664 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769</code></td>
+<td>pass2</td>
+<td>48728</td>
+<td>1584 KiB</td>
+<td>1652 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769</code></td>
+<td>derive_a</td>
+<td>48728</td>
+<td>3512 KiB</td>
+<td>3576 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769</code></td>
+<td>derive_b</td>
+<td>48728</td>
+<td>1584 KiB</td>
+<td>1652 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769_C</code></td>
+<td>exchange</td>
+<td>48760</td>
+<td>1572 KiB</td>
+<td>1640 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769_C</code></td>
+<td>init_a</td>
+<td>48760</td>
+<td>1572 KiB</td>
+<td>1640 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769_C</code></td>
+<td>init_b</td>
+<td>48760</td>
+<td>1576 KiB</td>
+<td>1644 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769_C</code></td>
+<td>pass1</td>
+<td>48760</td>
+<td>1576 KiB</td>
+<td>1644 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769_C</code></td>
+<td>pass2</td>
+<td>48760</td>
+<td>1576 KiB</td>
+<td>1644 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769_C</code></td>
+<td>derive_a</td>
+<td>48760</td>
+<td>1572 KiB</td>
+<td>1640 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769_C</code></td>
+<td>derive_b</td>
+<td>48760</td>
+<td>1576 KiB</td>
+<td>1644 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_1409</code></td>
+<td>exchange</td>
+<td>52464</td>
+<td>1600 KiB</td>
+<td>1668 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_1409</code></td>
+<td>init_a</td>
+<td>52464</td>
+<td>1604 KiB</td>
+<td>1672 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_1409</code></td>
+<td>init_b</td>
+<td>52464</td>
+<td>1604 KiB</td>
+<td>1672 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_1409</code></td>
+<td>pass1</td>
+<td>52464</td>
+<td>3616 KiB</td>
+<td>3680 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_1409</code></td>
+<td>pass2</td>
+<td>52464</td>
+<td>1604 KiB</td>
+<td>3716 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_1409</code></td>
+<td>derive_a</td>
+<td>52464</td>
+<td>3600 KiB</td>
+<td>3664 KiB</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_1409</code></td>
+<td>derive_b</td>
+<td>52464</td>
+<td>1600 KiB</td>
+<td>1668 KiB</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="6-transmission-and-storage-overhead">6. Transmission and storage overhead</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>passes</th>
+<th>messages (bytes)</th>
+<th>total</th>
+<th>long-term pk / sk</th>
+<th>shared secret</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NEV_AKE_512_769</code></td>
+<td>2</td>
+<td>1230 / 1230</td>
+<td>2460</td>
+<td>615 / 1246</td>
+<td>16</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769_C</code></td>
+<td>2</td>
+<td>1127 / 1127</td>
+<td>2254</td>
+<td>615 / 1246</td>
+<td>16</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_1409</code></td>
+<td>2</td>
+<td>1344 / 1344</td>
+<td>2688</td>
+<td>672 / 1360</td>
+<td>16</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769</code></td>
+<td>2</td>
+<td>2458 / 2458</td>
+<td>4916</td>
+<td>1229 / 2490</td>
+<td>32</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769_C</code></td>
+<td>2</td>
+<td>2253 / 2253</td>
+<td>4506</td>
+<td>1229 / 2490</td>
+<td>32</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_1409</code></td>
+<td>2</td>
+<td>2688 / 2688</td>
+<td>5376</td>
+<td>1344 / 2720</td>
+<td>32</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769</code></td>
+<td>2</td>
+<td>4916 / 4916</td>
+<td>9832</td>
+<td>2458 / 4980</td>
+<td>64</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769_C</code></td>
+<td>2</td>
+<td>4506 / 4506</td>
+<td>9012</td>
+<td>2458 / 4980</td>
+<td>64</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_1409</code></td>
+<td>2</td>
+<td>5376 / 5376</td>
+<td>10752</td>
+<td>2688 / 5440</td>
+<td>64</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="symmetric-primitives">Symmetric primitives</h2>
+<p><a href="../symmetric-survey.html">Survey</a> verdict: <strong>ICCS-only</strong> — own fips202.c compiled but unreachable</p>
+<p>Share of each operation spent in the ICCS placeholder hash functions and in the ICCS DRNG (reference build, measured in the same run with link-time wrappers):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>pseudohash/XOF/sm3</th>
+<th>DRNG</th>
+<th>calls per operation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NEV_AKE_512_769</code></td>
+<td>exchange</td>
+<td>56%</td>
+<td>5.1%</td>
+<td>drng 8, pseudoXOF 22, sm3hash 25</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769_C</code></td>
+<td>exchange</td>
+<td>53%</td>
+<td>5.4%</td>
+<td>drng 8, pseudoXOF 22, sm3hash 5</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_1409</code></td>
+<td>exchange</td>
+<td>64%</td>
+<td>4.1%</td>
+<td>drng 8, pseudoXOF 27</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769</code></td>
+<td>exchange</td>
+<td>53%</td>
+<td>2.5%</td>
+<td>drng 8, pseudoXOF 19, sm3hash 43</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769_C</code></td>
+<td>exchange</td>
+<td>49%</td>
+<td>2.6%</td>
+<td>drng 8, pseudoXOF 19, sm3hash 11</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_1409</code></td>
+<td>exchange</td>
+<td>56%</td>
+<td>2.2%</td>
+<td>drng 8, pseudoXOF 24, sm3hash 3</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769</code></td>
+<td>exchange</td>
+<td>63%</td>
+<td>1.1%</td>
+<td>drng 8, pseudoXOF 19, pseudohash 3, sm3hash 70</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769_C</code></td>
+<td>exchange</td>
+<td>60%</td>
+<td>1.2%</td>
+<td>drng 8, pseudoXOF 19, pseudohash 3, sm3hash 14</td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_1409</code></td>
+<td>exchange</td>
+<td>61%</td>
+<td>1.0%</td>
+<td>drng 8, pseudoXOF 13, pseudohash 3, sm3hash 154</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="7-raw-evidence-index">7. Raw evidence index</h2>
+<p>Paths are relative to <code>performance/data/arm_1/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>; each JSON file records its commands, environment and trials.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>item</th>
+<th>file</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NEV_AKE_512_769</code></td>
+<td>KAT log (sha256 <code>97715c9472d4d783…</code>)</td>
+<td><code>kat/kex-07/NEV_AKE_512_769.log</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-07/NEV_AKE_512_769__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-07/NEV_AKE_512_769__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-07/NEV_AKE_512_769__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-07/NEV_AKE_512_769__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-07/NEV_AKE_512_769__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-07/NEV_AKE_512_769__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-07/NEV_AKE_512_769__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-07/NEV_AKE_512_769__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769_C</code></td>
+<td>KAT log (sha256 <code>075b11832b1587d9…</code>)</td>
+<td><code>kat/kex-07/NEV_AKE_512_769_C.log</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769_C</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-07/NEV_AKE_512_769_C__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769_C</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-07/NEV_AKE_512_769_C__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769_C</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-07/NEV_AKE_512_769_C__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769_C</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-07/NEV_AKE_512_769_C__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769_C</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-07/NEV_AKE_512_769_C__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769_C</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-07/NEV_AKE_512_769_C__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769_C</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-07/NEV_AKE_512_769_C__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_769_C</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-07/NEV_AKE_512_769_C__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_1409</code></td>
+<td>KAT log (sha256 <code>3ca9300cfc71f629…</code>)</td>
+<td><code>kat/kex-07/NEV_AKE_512_1409.log</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_1409</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-07/NEV_AKE_512_1409__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_1409</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-07/NEV_AKE_512_1409__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_1409</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-07/NEV_AKE_512_1409__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_1409</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-07/NEV_AKE_512_1409__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_1409</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-07/NEV_AKE_512_1409__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_1409</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-07/NEV_AKE_512_1409__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_1409</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-07/NEV_AKE_512_1409__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_512_1409</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-07/NEV_AKE_512_1409__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769</code></td>
+<td>KAT log (sha256 <code>6c9bbcc8d674cd96…</code>)</td>
+<td><code>kat/kex-07/NEV_AKE_1024_769.log</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-07/NEV_AKE_1024_769__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-07/NEV_AKE_1024_769__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-07/NEV_AKE_1024_769__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-07/NEV_AKE_1024_769__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-07/NEV_AKE_1024_769__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-07/NEV_AKE_1024_769__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-07/NEV_AKE_1024_769__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-07/NEV_AKE_1024_769__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769_C</code></td>
+<td>KAT log (sha256 <code>55f96cd88a1f9934…</code>)</td>
+<td><code>kat/kex-07/NEV_AKE_1024_769_C.log</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769_C</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-07/NEV_AKE_1024_769_C__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769_C</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-07/NEV_AKE_1024_769_C__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769_C</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-07/NEV_AKE_1024_769_C__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769_C</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-07/NEV_AKE_1024_769_C__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769_C</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-07/NEV_AKE_1024_769_C__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769_C</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-07/NEV_AKE_1024_769_C__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769_C</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-07/NEV_AKE_1024_769_C__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_769_C</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-07/NEV_AKE_1024_769_C__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_1409</code></td>
+<td>KAT log (sha256 <code>bad981cfb7db65a6…</code>)</td>
+<td><code>kat/kex-07/NEV_AKE_1024_1409.log</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_1409</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-07/NEV_AKE_1024_1409__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_1409</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-07/NEV_AKE_1024_1409__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_1409</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-07/NEV_AKE_1024_1409__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_1409</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-07/NEV_AKE_1024_1409__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_1409</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-07/NEV_AKE_1024_1409__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_1409</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-07/NEV_AKE_1024_1409__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_1409</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-07/NEV_AKE_1024_1409__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_1024_1409</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-07/NEV_AKE_1024_1409__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769</code></td>
+<td>KAT log (sha256 <code>4eb3f32bf690260e…</code>)</td>
+<td><code>kat/kex-07/NEV_AKE_2048_769.log</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-07/NEV_AKE_2048_769__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-07/NEV_AKE_2048_769__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-07/NEV_AKE_2048_769__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-07/NEV_AKE_2048_769__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-07/NEV_AKE_2048_769__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-07/NEV_AKE_2048_769__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-07/NEV_AKE_2048_769__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-07/NEV_AKE_2048_769__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769_C</code></td>
+<td>KAT log (sha256 <code>c69ef84f6adb240f…</code>)</td>
+<td><code>kat/kex-07/NEV_AKE_2048_769_C.log</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769_C</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-07/NEV_AKE_2048_769_C__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769_C</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-07/NEV_AKE_2048_769_C__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769_C</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-07/NEV_AKE_2048_769_C__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769_C</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-07/NEV_AKE_2048_769_C__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769_C</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-07/NEV_AKE_2048_769_C__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769_C</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-07/NEV_AKE_2048_769_C__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769_C</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-07/NEV_AKE_2048_769_C__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_769_C</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-07/NEV_AKE_2048_769_C__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_1409</code></td>
+<td>KAT log (sha256 <code>ba806724bcbe4b85…</code>)</td>
+<td><code>kat/kex-07/NEV_AKE_2048_1409.log</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_1409</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-07/NEV_AKE_2048_1409__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_1409</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-07/NEV_AKE_2048_1409__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_1409</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-07/NEV_AKE_2048_1409__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_1409</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-07/NEV_AKE_2048_1409__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_1409</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-07/NEV_AKE_2048_1409__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_1409</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-07/NEV_AKE_2048_1409__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_1409</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-07/NEV_AKE_2048_1409__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>NEV_AKE_2048_1409</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-07/NEV_AKE_2048_1409__exchange.json</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Scripts: <code>performance/campaign.py</code>, <code>performance/ngcc_perf.c</code>, <code>performance/hashprof/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

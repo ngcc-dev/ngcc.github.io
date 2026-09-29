@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: hash-19 MoFang Hash Function — performance on AArch64 (system arm1)</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=808fa5e8">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
+<nav><a href="../../index.html">Home</a><a href="../../reports/index.html">Security</a><a href="../../performance/index.html">Performance</a><a href="../../constant-time/index.html">Side-Channel</a></nav>
+</header>
+<main class="">
+<!-- synchronized from harness: hash-19/perf_arm_1.md -->
+<h1 id="hash-19-mofang-hash-function-performance-on-aarch64-system-arm_1">hash-19 MoFang Hash Function — performance on AArch64 (system arm_1)</h1>
+<p><a href="index.html">Performance arm_1</a> › <code>hash-19</code> · <a href="method.html">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101537228439769088.html">NICCS page</a></p>
+<p><strong>Systems:</strong> <a href="../x86_1/hash-19.html">x86_1</a> · <strong>arm_1</strong></p>
+<p>Independent measurement following the structure of the NICCS ARM self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.</p>
+<h2 id="1-basic-information">1. Basic information</h2>
+<ul>
+<li>Category: cryptographic hash algorithm; function: hash</li>
+<li>Algorithm: MoFang Hash Function</li>
+<li>Implementation versions measured: reference</li>
+<li>Parameter sets: <code>MoFang-256</code>, <code>MoFang-256-XOF</code>, <code>MoFang-512</code>, <code>MoFang-768</code>, <code>MoFang-768-XOF</code>, <code>MoFang-1024</code></li>
+</ul>
+<h2 id="2-assessment-environment">2. Assessment environment</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>item</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>processor</td>
+<td>Qualcomm Oryon (CPU 2, one core)</td>
+</tr>
+<tr>
+<td>machine</td>
+<td>ASUS Vivobook S 15</td>
+</tr>
+<tr>
+<td>clock</td>
+<td>fixed 2.71 GHz (governor performance, minimum = maximum), boost off, SMT none</td>
+</tr>
+<tr>
+<td>memory</td>
+<td>30562 MiB</td>
+</tr>
+<tr>
+<td>OS / kernel</td>
+<td>Ubuntu 26.04.1 LTS / 7.0.0-34-generic</td>
+</tr>
+<tr>
+<td>compiler / build tool</td>
+<td>gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0 / cmake version 4.2.3</td>
+</tr>
+<tr>
+<td>campaign start / end (UTC)</td>
+<td>2026-09-28T15:05:46 / 2026-09-29T08:43:52</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="3-functional-testing-kat">3. Functional testing (KAT)</h2>
+<p>Each library was checked against the submitted KAT vectors (SHA-256 manifest <code>hash-19/kat.sha256</code> in the harness) before timing.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>build flags</th>
+<th>KAT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MoFang-256</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>MoFang-256-XOF</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>MoFang-512</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>MoFang-768</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>MoFang-768-XOF</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>MoFang-1024</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="4-performance">4. Performance</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>message</th>
+<th>mean cycles</th>
+<th>cycles/byte</th>
+<th>mean time</th>
+<th>MB/s</th>
+<th>n</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MoFang-256</code></td>
+<td>32 B</td>
+<td>1665</td>
+<td>52.0</td>
+<td>619 ns</td>
+<td>51.7</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MoFang-256</code></td>
+<td>128 B</td>
+<td>1662</td>
+<td>13.0</td>
+<td>619 ns</td>
+<td>206.9</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MoFang-256</code></td>
+<td>512 B</td>
+<td>6423</td>
+<td>12.5</td>
+<td>2.39 µs</td>
+<td>214.7</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MoFang-256</code></td>
+<td>1024 B</td>
+<td>12.9 k</td>
+<td>12.6</td>
+<td>4.78 µs</td>
+<td>214.2</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MoFang-256</code></td>
+<td>4096 B</td>
+<td>55.1 k</td>
+<td>13.5</td>
+<td>20.5 µs</td>
+<td>200.2</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MoFang-256</code></td>
+<td>8192 B</td>
+<td>91.9 k</td>
+<td>11.2</td>
+<td>34.1 µs</td>
+<td>240.1</td>
+<td>85870 (5 × 17174)</td>
+</tr>
+<tr>
+<td><code>MoFang-256</code></td>
+<td>16384 B</td>
+<td>183.0 k</td>
+<td>11.2</td>
+<td>67.9 µs</td>
+<td>241.3</td>
+<td>43960 (5 × 8792)</td>
+</tr>
+<tr>
+<td><code>MoFang-256</code></td>
+<td>65536 B</td>
+<td>735.9 k</td>
+<td>11.2</td>
+<td>273 µs</td>
+<td>239.9</td>
+<td>11130 (5 × 2226)</td>
+</tr>
+<tr>
+<td><code>MoFang-256-XOF</code></td>
+<td>32 B</td>
+<td>1775</td>
+<td>55.5</td>
+<td>660 ns</td>
+<td>48.5</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MoFang-256-XOF</code></td>
+<td>128 B</td>
+<td>1881</td>
+<td>14.7</td>
+<td>700 ns</td>
+<td>182.9</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MoFang-256-XOF</code></td>
+<td>512 B</td>
+<td>6581</td>
+<td>12.9</td>
+<td>2.44 µs</td>
+<td>209.5</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MoFang-256-XOF</code></td>
+<td>1024 B</td>
+<td>12.9 k</td>
+<td>12.6</td>
+<td>4.8 µs</td>
+<td>213.3</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MoFang-256-XOF</code></td>
+<td>4096 B</td>
+<td>47.0 k</td>
+<td>11.5</td>
+<td>17.4 µs</td>
+<td>235.0</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MoFang-256-XOF</code></td>
+<td>8192 B</td>
+<td>92.3 k</td>
+<td>11.3</td>
+<td>34.2 µs</td>
+<td>239.3</td>
+<td>84215 (5 × 16843)</td>
+</tr>
+<tr>
+<td><code>MoFang-256-XOF</code></td>
+<td>16384 B</td>
+<td>184.3 k</td>
+<td>11.2</td>
+<td>68.4 µs</td>
+<td>239.6</td>
+<td>43480 (5 × 8696)</td>
+</tr>
+<tr>
+<td><code>MoFang-256-XOF</code></td>
+<td>65536 B</td>
+<td>861.0 k</td>
+<td>13.1</td>
+<td>319 µs</td>
+<td>205.1</td>
+<td>10925 (5 × 2185)</td>
+</tr>
+<tr>
+<td><code>MoFang-512</code></td>
+<td>32 B</td>
+<td>1706</td>
+<td>53.3</td>
+<td>635 ns</td>
+<td>50.4</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MoFang-512</code></td>
+<td>128 B</td>
+<td>1870</td>
+<td>14.6</td>
+<td>695 ns</td>
+<td>184.0</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MoFang-512</code></td>
+<td>512 B</td>
+<td>6446</td>
+<td>12.6</td>
+<td>2.39 µs</td>
+<td>213.9</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MoFang-512</code></td>
+<td>1024 B</td>
+<td>12.9 k</td>
+<td>12.6</td>
+<td>4.79 µs</td>
+<td>213.8</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MoFang-512</code></td>
+<td>4096 B</td>
+<td>46.6 k</td>
+<td>11.4</td>
+<td>17.3 µs</td>
+<td>237.0</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MoFang-512</code></td>
+<td>8192 B</td>
+<td>91.3 k</td>
+<td>11.2</td>
+<td>33.9 µs</td>
+<td>241.6</td>
+<td>73510 (5 × 14702)</td>
+</tr>
+<tr>
+<td><code>MoFang-512</code></td>
+<td>16384 B</td>
+<td>183.4 k</td>
+<td>11.2</td>
+<td>68 µs</td>
+<td>240.8</td>
+<td>21325 (5 × 4265)</td>
+</tr>
+<tr>
+<td><code>MoFang-512</code></td>
+<td>65536 B</td>
+<td>733.3 k</td>
+<td>11.2</td>
+<td>272 µs</td>
+<td>240.8</td>
+<td>10655 (5 × 2131)</td>
+</tr>
+<tr>
+<td><code>MoFang-768</code></td>
+<td>32 B</td>
+<td>3485</td>
+<td>108.9</td>
+<td>1.3 µs</td>
+<td>24.7</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MoFang-768</code></td>
+<td>128 B</td>
+<td>3497</td>
+<td>27.3</td>
+<td>1.3 µs</td>
+<td>98.4</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MoFang-768</code></td>
+<td>512 B</td>
+<td>13.7 k</td>
+<td>26.7</td>
+<td>5.08 µs</td>
+<td>100.8</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MoFang-768</code></td>
+<td>1024 B</td>
+<td>26.8 k</td>
+<td>26.1</td>
+<td>9.94 µs</td>
+<td>103.1</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MoFang-768</code></td>
+<td>4096 B</td>
+<td>99.1 k</td>
+<td>24.2</td>
+<td>36.8 µs</td>
+<td>111.4</td>
+<td>73620 (5 × 14724)</td>
+</tr>
+<tr>
+<td><code>MoFang-768</code></td>
+<td>8192 B</td>
+<td>192.5 k</td>
+<td>23.5</td>
+<td>71.4 µs</td>
+<td>114.7</td>
+<td>42555 (5 × 8511)</td>
+</tr>
+<tr>
+<td><code>MoFang-768</code></td>
+<td>16384 B</td>
+<td>378.9 k</td>
+<td>23.1</td>
+<td>141 µs</td>
+<td>116.5</td>
+<td>20920 (5 × 4184)</td>
+</tr>
+<tr>
+<td><code>MoFang-768</code></td>
+<td>65536 B</td>
+<td>1.55 M</td>
+<td>23.6</td>
+<td>574 µs</td>
+<td>114.1</td>
+<td>5470 (5 × 1094)</td>
+</tr>
+<tr>
+<td><code>MoFang-768-XOF</code></td>
+<td>32 B</td>
+<td>3828</td>
+<td>119.6</td>
+<td>1.43 µs</td>
+<td>22.4</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MoFang-768-XOF</code></td>
+<td>128 B</td>
+<td>3817</td>
+<td>29.8</td>
+<td>1.42 µs</td>
+<td>90.3</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MoFang-768-XOF</code></td>
+<td>512 B</td>
+<td>13.8 k</td>
+<td>26.9</td>
+<td>5.11 µs</td>
+<td>100.1</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MoFang-768-XOF</code></td>
+<td>1024 B</td>
+<td>28.6 k</td>
+<td>27.9</td>
+<td>10.6 µs</td>
+<td>96.4</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MoFang-768-XOF</code></td>
+<td>4096 B</td>
+<td>96.9 k</td>
+<td>23.6</td>
+<td>35.9 µs</td>
+<td>114.0</td>
+<td>81495 (5 × 16299)</td>
+</tr>
+<tr>
+<td><code>MoFang-768-XOF</code></td>
+<td>8192 B</td>
+<td>189.8 k</td>
+<td>23.2</td>
+<td>70.4 µs</td>
+<td>116.3</td>
+<td>38130 (5 × 7626)</td>
+</tr>
+<tr>
+<td><code>MoFang-768-XOF</code></td>
+<td>16384 B</td>
+<td>378.7 k</td>
+<td>23.1</td>
+<td>141 µs</td>
+<td>116.6</td>
+<td>21900 (5 × 4380)</td>
+</tr>
+<tr>
+<td><code>MoFang-768-XOF</code></td>
+<td>65536 B</td>
+<td>1.52 M</td>
+<td>23.1</td>
+<td>563 µs</td>
+<td>116.4</td>
+<td>5505 (5 × 1101)</td>
+</tr>
+<tr>
+<td><code>MoFang-1024</code></td>
+<td>32 B</td>
+<td>3534</td>
+<td>110.4</td>
+<td>1.31 µs</td>
+<td>24.4</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MoFang-1024</code></td>
+<td>128 B</td>
+<td>3527</td>
+<td>27.6</td>
+<td>1.31 µs</td>
+<td>97.7</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MoFang-1024</code></td>
+<td>512 B</td>
+<td>13.5 k</td>
+<td>26.4</td>
+<td>5.01 µs</td>
+<td>102.1</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MoFang-1024</code></td>
+<td>1024 B</td>
+<td>28.5 k</td>
+<td>27.8</td>
+<td>10.6 µs</td>
+<td>97.0</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>MoFang-1024</code></td>
+<td>4096 B</td>
+<td>100.0 k</td>
+<td>24.4</td>
+<td>37.1 µs</td>
+<td>110.4</td>
+<td>82335 (5 × 16467)</td>
+</tr>
+<tr>
+<td><code>MoFang-1024</code></td>
+<td>8192 B</td>
+<td>188.7 k</td>
+<td>23.0</td>
+<td>70 µs</td>
+<td>117.0</td>
+<td>39900 (5 × 7980)</td>
+</tr>
+<tr>
+<td><code>MoFang-1024</code></td>
+<td>16384 B</td>
+<td>476.6 k</td>
+<td>29.1</td>
+<td>177 µs</td>
+<td>92.7</td>
+<td>20900 (5 × 4180)</td>
+</tr>
+<tr>
+<td><code>MoFang-1024</code></td>
+<td>65536 B</td>
+<td>1.59 M</td>
+<td>24.3</td>
+<td>591 µs</td>
+<td>110.9</td>
+<td>5390 (5 × 1078)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-resource-consumption">5. Resource consumption</h2>
+<p>Static memory is approximated by the library's loadable ELF segments; peak memory is the process high-water mark (VmHWM) including the benchmark driver and libc, so both are upper-bound proxies rather than isolated algorithm memory.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>static: ELF image (bytes)</th>
+<th>baseline RSS</th>
+<th>peak RSS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MoFang-256</code></td>
+<td>hash_32</td>
+<td>11620</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-256</code></td>
+<td>hash_128</td>
+<td>11620</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-256</code></td>
+<td>hash_512</td>
+<td>11620</td>
+<td>1400 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-256</code></td>
+<td>hash_1024</td>
+<td>11620</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-256</code></td>
+<td>hash_4096</td>
+<td>11620</td>
+<td>1404 KiB</td>
+<td>1472 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-256</code></td>
+<td>hash_8192</td>
+<td>11620</td>
+<td>1408 KiB</td>
+<td>1480 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-256</code></td>
+<td>hash_16384</td>
+<td>11620</td>
+<td>1416 KiB</td>
+<td>1496 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-256</code></td>
+<td>hash_65536</td>
+<td>11620</td>
+<td>1464 KiB</td>
+<td>1592 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-256-XOF</code></td>
+<td>hash_32</td>
+<td>11756</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-256-XOF</code></td>
+<td>hash_128</td>
+<td>11756</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-256-XOF</code></td>
+<td>hash_512</td>
+<td>11756</td>
+<td>3432 KiB</td>
+<td>3496 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-256-XOF</code></td>
+<td>hash_1024</td>
+<td>11756</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-256-XOF</code></td>
+<td>hash_4096</td>
+<td>11756</td>
+<td>1404 KiB</td>
+<td>1472 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-256-XOF</code></td>
+<td>hash_8192</td>
+<td>11756</td>
+<td>1408 KiB</td>
+<td>1480 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-256-XOF</code></td>
+<td>hash_16384</td>
+<td>11756</td>
+<td>1416 KiB</td>
+<td>1496 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-256-XOF</code></td>
+<td>hash_65536</td>
+<td>11756</td>
+<td>3436 KiB</td>
+<td>3500 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-512</code></td>
+<td>hash_32</td>
+<td>11620</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-512</code></td>
+<td>hash_128</td>
+<td>11620</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-512</code></td>
+<td>hash_512</td>
+<td>11620</td>
+<td>1400 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-512</code></td>
+<td>hash_1024</td>
+<td>11620</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-512</code></td>
+<td>hash_4096</td>
+<td>11620</td>
+<td>1404 KiB</td>
+<td>1472 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-512</code></td>
+<td>hash_8192</td>
+<td>11620</td>
+<td>1408 KiB</td>
+<td>1480 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-512</code></td>
+<td>hash_16384</td>
+<td>11620</td>
+<td>1412 KiB</td>
+<td>1492 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-512</code></td>
+<td>hash_65536</td>
+<td>11620</td>
+<td>3504 KiB</td>
+<td>3568 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-768</code></td>
+<td>hash_32</td>
+<td>12396</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-768</code></td>
+<td>hash_128</td>
+<td>12396</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-768</code></td>
+<td>hash_512</td>
+<td>12396</td>
+<td>1400 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-768</code></td>
+<td>hash_1024</td>
+<td>12396</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-768</code></td>
+<td>hash_4096</td>
+<td>12396</td>
+<td>1404 KiB</td>
+<td>1472 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-768</code></td>
+<td>hash_8192</td>
+<td>12396</td>
+<td>1408 KiB</td>
+<td>1480 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-768</code></td>
+<td>hash_16384</td>
+<td>12396</td>
+<td>1416 KiB</td>
+<td>1496 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-768</code></td>
+<td>hash_65536</td>
+<td>12396</td>
+<td>1464 KiB</td>
+<td>1592 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-768-XOF</code></td>
+<td>hash_32</td>
+<td>12660</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-768-XOF</code></td>
+<td>hash_128</td>
+<td>12660</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-768-XOF</code></td>
+<td>hash_512</td>
+<td>12660</td>
+<td>1400 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-768-XOF</code></td>
+<td>hash_1024</td>
+<td>12660</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-768-XOF</code></td>
+<td>hash_4096</td>
+<td>12660</td>
+<td>1404 KiB</td>
+<td>1472 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-768-XOF</code></td>
+<td>hash_8192</td>
+<td>12660</td>
+<td>1408 KiB</td>
+<td>1480 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-768-XOF</code></td>
+<td>hash_16384</td>
+<td>12660</td>
+<td>1416 KiB</td>
+<td>1496 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-768-XOF</code></td>
+<td>hash_65536</td>
+<td>12660</td>
+<td>1464 KiB</td>
+<td>1592 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-1024</code></td>
+<td>hash_32</td>
+<td>12396</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-1024</code></td>
+<td>hash_128</td>
+<td>12396</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-1024</code></td>
+<td>hash_512</td>
+<td>12396</td>
+<td>1400 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-1024</code></td>
+<td>hash_1024</td>
+<td>12396</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-1024</code></td>
+<td>hash_4096</td>
+<td>12396</td>
+<td>1404 KiB</td>
+<td>1472 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-1024</code></td>
+<td>hash_8192</td>
+<td>12396</td>
+<td>1408 KiB</td>
+<td>1480 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-1024</code></td>
+<td>hash_16384</td>
+<td>12396</td>
+<td>1416 KiB</td>
+<td>1496 KiB</td>
+</tr>
+<tr>
+<td><code>MoFang-1024</code></td>
+<td>hash_65536</td>
+<td>12396</td>
+<td>1464 KiB</td>
+<td>1592 KiB</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="7-raw-evidence-index">7. Raw evidence index</h2>
+<p>Paths are relative to <code>performance/data/arm_1/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>; each JSON file records its commands, environment and trials.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>item</th>
+<th>file</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MoFang-256</code></td>
+<td>KAT log (sha256 <code>1301ce73ce65c4f8…</code>)</td>
+<td><code>kat/hash-19/MoFang-256.log</code></td>
+</tr>
+<tr>
+<td><code>MoFang-256</code></td>
+<td>timing hash_1024</td>
+<td><code>records/hash-19/MoFang-256__hash_1024.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-256</code></td>
+<td>timing hash_128</td>
+<td><code>records/hash-19/MoFang-256__hash_128.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-256</code></td>
+<td>timing hash_16384</td>
+<td><code>records/hash-19/MoFang-256__hash_16384.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-256</code></td>
+<td>timing hash_32</td>
+<td><code>records/hash-19/MoFang-256__hash_32.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-256</code></td>
+<td>timing hash_4096</td>
+<td><code>records/hash-19/MoFang-256__hash_4096.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-256</code></td>
+<td>timing hash_512</td>
+<td><code>records/hash-19/MoFang-256__hash_512.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-256</code></td>
+<td>timing hash_65536</td>
+<td><code>records/hash-19/MoFang-256__hash_65536.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-256</code></td>
+<td>timing hash_8192</td>
+<td><code>records/hash-19/MoFang-256__hash_8192.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-256-XOF</code></td>
+<td>KAT log (sha256 <code>b84814b3f6993d53…</code>)</td>
+<td><code>kat/hash-19/MoFang-256-XOF.log</code></td>
+</tr>
+<tr>
+<td><code>MoFang-256-XOF</code></td>
+<td>timing hash_1024</td>
+<td><code>records/hash-19/MoFang-256-XOF__hash_1024.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-256-XOF</code></td>
+<td>timing hash_128</td>
+<td><code>records/hash-19/MoFang-256-XOF__hash_128.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-256-XOF</code></td>
+<td>timing hash_16384</td>
+<td><code>records/hash-19/MoFang-256-XOF__hash_16384.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-256-XOF</code></td>
+<td>timing hash_32</td>
+<td><code>records/hash-19/MoFang-256-XOF__hash_32.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-256-XOF</code></td>
+<td>timing hash_4096</td>
+<td><code>records/hash-19/MoFang-256-XOF__hash_4096.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-256-XOF</code></td>
+<td>timing hash_512</td>
+<td><code>records/hash-19/MoFang-256-XOF__hash_512.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-256-XOF</code></td>
+<td>timing hash_65536</td>
+<td><code>records/hash-19/MoFang-256-XOF__hash_65536.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-256-XOF</code></td>
+<td>timing hash_8192</td>
+<td><code>records/hash-19/MoFang-256-XOF__hash_8192.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-512</code></td>
+<td>KAT log (sha256 <code>3da7e7b15c02bceb…</code>)</td>
+<td><code>kat/hash-19/MoFang-512.log</code></td>
+</tr>
+<tr>
+<td><code>MoFang-512</code></td>
+<td>timing hash_1024</td>
+<td><code>records/hash-19/MoFang-512__hash_1024.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-512</code></td>
+<td>timing hash_128</td>
+<td><code>records/hash-19/MoFang-512__hash_128.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-512</code></td>
+<td>timing hash_16384</td>
+<td><code>records/hash-19/MoFang-512__hash_16384.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-512</code></td>
+<td>timing hash_32</td>
+<td><code>records/hash-19/MoFang-512__hash_32.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-512</code></td>
+<td>timing hash_4096</td>
+<td><code>records/hash-19/MoFang-512__hash_4096.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-512</code></td>
+<td>timing hash_512</td>
+<td><code>records/hash-19/MoFang-512__hash_512.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-512</code></td>
+<td>timing hash_65536</td>
+<td><code>records/hash-19/MoFang-512__hash_65536.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-512</code></td>
+<td>timing hash_8192</td>
+<td><code>records/hash-19/MoFang-512__hash_8192.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-768</code></td>
+<td>KAT log (sha256 <code>ed0b2cea1412ce09…</code>)</td>
+<td><code>kat/hash-19/MoFang-768.log</code></td>
+</tr>
+<tr>
+<td><code>MoFang-768</code></td>
+<td>timing hash_1024</td>
+<td><code>records/hash-19/MoFang-768__hash_1024.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-768</code></td>
+<td>timing hash_128</td>
+<td><code>records/hash-19/MoFang-768__hash_128.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-768</code></td>
+<td>timing hash_16384</td>
+<td><code>records/hash-19/MoFang-768__hash_16384.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-768</code></td>
+<td>timing hash_32</td>
+<td><code>records/hash-19/MoFang-768__hash_32.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-768</code></td>
+<td>timing hash_4096</td>
+<td><code>records/hash-19/MoFang-768__hash_4096.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-768</code></td>
+<td>timing hash_512</td>
+<td><code>records/hash-19/MoFang-768__hash_512.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-768</code></td>
+<td>timing hash_65536</td>
+<td><code>records/hash-19/MoFang-768__hash_65536.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-768</code></td>
+<td>timing hash_8192</td>
+<td><code>records/hash-19/MoFang-768__hash_8192.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-768-XOF</code></td>
+<td>KAT log (sha256 <code>75e0208400114d1e…</code>)</td>
+<td><code>kat/hash-19/MoFang-768-XOF.log</code></td>
+</tr>
+<tr>
+<td><code>MoFang-768-XOF</code></td>
+<td>timing hash_1024</td>
+<td><code>records/hash-19/MoFang-768-XOF__hash_1024.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-768-XOF</code></td>
+<td>timing hash_128</td>
+<td><code>records/hash-19/MoFang-768-XOF__hash_128.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-768-XOF</code></td>
+<td>timing hash_16384</td>
+<td><code>records/hash-19/MoFang-768-XOF__hash_16384.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-768-XOF</code></td>
+<td>timing hash_32</td>
+<td><code>records/hash-19/MoFang-768-XOF__hash_32.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-768-XOF</code></td>
+<td>timing hash_4096</td>
+<td><code>records/hash-19/MoFang-768-XOF__hash_4096.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-768-XOF</code></td>
+<td>timing hash_512</td>
+<td><code>records/hash-19/MoFang-768-XOF__hash_512.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-768-XOF</code></td>
+<td>timing hash_65536</td>
+<td><code>records/hash-19/MoFang-768-XOF__hash_65536.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-768-XOF</code></td>
+<td>timing hash_8192</td>
+<td><code>records/hash-19/MoFang-768-XOF__hash_8192.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-1024</code></td>
+<td>KAT log (sha256 <code>2c581322d1c6aa95…</code>)</td>
+<td><code>kat/hash-19/MoFang-1024.log</code></td>
+</tr>
+<tr>
+<td><code>MoFang-1024</code></td>
+<td>timing hash_1024</td>
+<td><code>records/hash-19/MoFang-1024__hash_1024.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-1024</code></td>
+<td>timing hash_128</td>
+<td><code>records/hash-19/MoFang-1024__hash_128.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-1024</code></td>
+<td>timing hash_16384</td>
+<td><code>records/hash-19/MoFang-1024__hash_16384.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-1024</code></td>
+<td>timing hash_32</td>
+<td><code>records/hash-19/MoFang-1024__hash_32.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-1024</code></td>
+<td>timing hash_4096</td>
+<td><code>records/hash-19/MoFang-1024__hash_4096.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-1024</code></td>
+<td>timing hash_512</td>
+<td><code>records/hash-19/MoFang-1024__hash_512.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-1024</code></td>
+<td>timing hash_65536</td>
+<td><code>records/hash-19/MoFang-1024__hash_65536.json</code></td>
+</tr>
+<tr>
+<td><code>MoFang-1024</code></td>
+<td>timing hash_8192</td>
+<td><code>records/hash-19/MoFang-1024__hash_8192.json</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Scripts: <code>performance/campaign.py</code>, <code>performance/ngcc_perf.c</code>, <code>performance/hashprof/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

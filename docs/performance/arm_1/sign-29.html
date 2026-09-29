@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: sign-29 Tins — performance on AArch64 (system arm1)</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=808fa5e8">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
+<nav><a href="../../index.html">Home</a><a href="../../reports/index.html">Security</a><a href="../../performance/index.html">Performance</a><a href="../../constant-time/index.html">Side-Channel</a></nav>
+</header>
+<main class="">
+<!-- synchronized from harness: sign-29/perf_arm_1.md -->
+<h1 id="sign-29-tins-performance-on-aarch64-system-arm_1">sign-29 Tins — performance on AArch64 (system arm_1)</h1>
+<p><a href="index.html">Performance arm_1</a> › <code>sign-29</code> · <a href="method.html">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561105320595456.html">NICCS page</a></p>
+<p><strong>Systems:</strong> <a href="../x86_1/sign-29.html">x86_1</a> · <strong>arm_1</strong></p>
+<p>Independent measurement following the structure of the NICCS ARM self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.</p>
+<h2 id="1-basic-information">1. Basic information</h2>
+<ul>
+<li>Category: public-key algorithm; function: digital signature</li>
+<li>Algorithm: Tins</li>
+<li>Implementation versions measured: reference</li>
+<li>Parameter sets: <code>Tins128</code>, <code>Tins256</code>, <code>Tins512</code></li>
+</ul>
+<h2 id="2-assessment-environment">2. Assessment environment</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>item</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>processor</td>
+<td>Qualcomm Oryon (CPU 2, one core)</td>
+</tr>
+<tr>
+<td>machine</td>
+<td>ASUS Vivobook S 15</td>
+</tr>
+<tr>
+<td>clock</td>
+<td>fixed 2.71 GHz (governor performance, minimum = maximum), boost off, SMT none</td>
+</tr>
+<tr>
+<td>memory</td>
+<td>30562 MiB</td>
+</tr>
+<tr>
+<td>OS / kernel</td>
+<td>Ubuntu 26.04.1 LTS / 7.0.0-34-generic</td>
+</tr>
+<tr>
+<td>compiler / build tool</td>
+<td>gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0 / cmake version 4.2.3</td>
+</tr>
+<tr>
+<td>campaign start / end (UTC)</td>
+<td>2026-09-28T15:05:46 / 2026-09-29T08:43:52</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="3-functional-testing-kat">3. Functional testing (KAT)</h2>
+<p>Each library was checked against the submitted KAT vectors (SHA-256 manifest <code>sign-29/kat.sha256</code> in the harness) before timing.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>build flags</th>
+<th>KAT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Tins128</code></td>
+<td>harness-default</td>
+<td class="st bad">CRYPTOFAIL [1]</td>
+</tr>
+<tr>
+<td><code>Tins256</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>Tins512</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+</tbody>
+</table></div>
+<p>[1] CRYPTOFAIL: the Tins128 verifier overwrites the h_piop parsed from the signature with the recomputed hash and then compares it with an uninitialized stack buffer (src/Tins128/SIG_TINS128.c:414-439; Tins256/Tins512 are correct), so its verdict depends on leftover stack contents and honest signatures are rejected in this build (sign-29/pseudocode.md, discrepancy 1). Key generation and signing are timed normally; verification is timed too, but every call rejects the honest signature (counted as verify_rejections), so it measures the flawed verifier. These instances are timed anyway; their output is not validated.</p>
+<h2 id="4-performance">4. Performance</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>mean cycles</th>
+<th>mean time</th>
+<th>ops/s</th>
+<th>median trial</th>
+<th>n (trials × iters)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Tins128</code></td>
+<td>keygen</td>
+<td>1.45 M</td>
+<td>539 µs</td>
+<td>1.86e+03</td>
+<td>537 µs</td>
+<td>5575 (5 × 1115)</td>
+</tr>
+<tr>
+<td><code>Tins128</code></td>
+<td>sign</td>
+<td>1.18 G</td>
+<td>440 ms</td>
+<td>2.27</td>
+<td>440 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Tins128</code></td>
+<td>verify</td>
+<td>1.09 G</td>
+<td>406 ms</td>
+<td>2.46</td>
+<td>406 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Tins256</code></td>
+<td>keygen</td>
+<td>8.17 M</td>
+<td>3.03 ms</td>
+<td>330</td>
+<td>3.03 ms</td>
+<td>1030 (5 × 206)</td>
+</tr>
+<tr>
+<td><code>Tins256</code></td>
+<td>sign</td>
+<td>4.26 G</td>
+<td>1.58 s</td>
+<td>0.632</td>
+<td>1.58 s</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Tins256</code></td>
+<td>verify</td>
+<td>4.19 G</td>
+<td>1.55 s</td>
+<td>0.644</td>
+<td>1.55 s</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Tins512</code></td>
+<td>keygen</td>
+<td>52.77 M</td>
+<td>19.6 ms</td>
+<td>51.1</td>
+<td>19.6 ms</td>
+<td>165 (5 × 33)</td>
+</tr>
+<tr>
+<td><code>Tins512</code></td>
+<td>sign</td>
+<td>18.40 G</td>
+<td>6.83 s</td>
+<td>0.146</td>
+<td>6.81 s</td>
+<td>55 (5 × 11)</td>
+</tr>
+<tr>
+<td><code>Tins512</code></td>
+<td>verify</td>
+<td>18.24 G</td>
+<td>6.78 s</td>
+<td>0.148</td>
+<td>6.77 s</td>
+<td>55 (5 × 11)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-resource-consumption">5. Resource consumption</h2>
+<p>Static memory is approximated by the library's loadable ELF segments; peak memory is the process high-water mark (VmHWM) including the benchmark driver and libc, so both are upper-bound proxies rather than isolated algorithm memory.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>static: ELF image (bytes)</th>
+<th>baseline RSS</th>
+<th>peak RSS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Tins128</code></td>
+<td>keygen</td>
+<td>41136</td>
+<td>1436 KiB</td>
+<td>1520 KiB</td>
+</tr>
+<tr>
+<td><code>Tins128</code></td>
+<td>sign</td>
+<td>41136</td>
+<td>1456 KiB</td>
+<td>16436 KiB</td>
+</tr>
+<tr>
+<td><code>Tins128</code></td>
+<td>verify</td>
+<td>41136</td>
+<td>4520 KiB</td>
+<td>14588 KiB</td>
+</tr>
+<tr>
+<td><code>Tins256</code></td>
+<td>keygen</td>
+<td>41576</td>
+<td>1448 KiB</td>
+<td>1592 KiB</td>
+</tr>
+<tr>
+<td><code>Tins256</code></td>
+<td>sign</td>
+<td>41576</td>
+<td>3568 KiB</td>
+<td>46984 KiB</td>
+</tr>
+<tr>
+<td><code>Tins256</code></td>
+<td>verify</td>
+<td>41576</td>
+<td>15872 KiB</td>
+<td>46724 KiB</td>
+</tr>
+<tr>
+<td><code>Tins512</code></td>
+<td>keygen</td>
+<td>43668</td>
+<td>1488 KiB</td>
+<td>1864 KiB</td>
+</tr>
+<tr>
+<td><code>Tins512</code></td>
+<td>sign</td>
+<td>43668</td>
+<td>1800 KiB</td>
+<td>177820 KiB</td>
+</tr>
+<tr>
+<td><code>Tins512</code></td>
+<td>verify</td>
+<td>43668</td>
+<td>28020 KiB</td>
+<td>138216 KiB</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="6-transmission-and-storage-overhead">6. Transmission and storage overhead</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>public key</th>
+<th>secret key</th>
+<th>signature</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Tins128</code></td>
+<td>51</td>
+<td>32</td>
+<td>3284</td>
+</tr>
+<tr>
+<td><code>Tins256</code></td>
+<td>98</td>
+<td>64</td>
+<td>13012</td>
+</tr>
+<tr>
+<td><code>Tins512</code></td>
+<td>195</td>
+<td>128</td>
+<td>51187</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="symmetric-primitives">Symmetric primitives</h2>
+<p><a href="../symmetric-survey.html">Survey</a> verdict: <strong>ICCS-only</strong></p>
+<p>Share of each operation spent in the ICCS placeholder hash functions and in the ICCS DRNG (reference build, measured in the same run with link-time wrappers):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>pseudohash/XOF/sm3</th>
+<th>DRNG</th>
+<th>calls per operation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Tins128</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>30%</td>
+<td>drng 6</td>
+</tr>
+<tr>
+<td><code>Tins128</code></td>
+<td>sign</td>
+<td>21%</td>
+<td>25%</td>
+<td>drng 5.25e+04, pseudoXOF 9.83e+04, sm3hash 4.92e+04</td>
+</tr>
+<tr>
+<td><code>Tins128</code></td>
+<td>verify</td>
+<td>22%</td>
+<td>25%</td>
+<td>drng 4.91e+04, pseudoXOF 9.8e+04, sm3hash 4.91e+04</td>
+</tr>
+<tr>
+<td><code>Tins256</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>18%</td>
+<td>drng 6</td>
+</tr>
+<tr>
+<td><code>Tins256</code></td>
+<td>sign</td>
+<td>39%</td>
+<td>17%</td>
+<td>drng 1.08e+05, pseudoXOF 1.97e+05, pseudohash 9.83e+04</td>
+</tr>
+<tr>
+<td><code>Tins256</code></td>
+<td>verify</td>
+<td>41%</td>
+<td>16%</td>
+<td>drng 9.83e+04, pseudoXOF 1.96e+05, pseudohash 9.83e+04</td>
+</tr>
+<tr>
+<td><code>Tins512</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>11%</td>
+<td>drng 6</td>
+</tr>
+<tr>
+<td><code>Tins512</code></td>
+<td>sign</td>
+<td>57%</td>
+<td>10%</td>
+<td>drng 1.93e+05, pseudoXOF 3.85e+05, pseudohash 1.93e+05</td>
+</tr>
+<tr>
+<td><code>Tins512</code></td>
+<td>verify</td>
+<td>57%</td>
+<td>10%</td>
+<td>drng 1.92e+05, pseudoXOF 3.84e+05, pseudohash 1.92e+05</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="7-raw-evidence-index">7. Raw evidence index</h2>
+<p>Paths are relative to <code>performance/data/arm_1/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>; each JSON file records its commands, environment and trials.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>item</th>
+<th>file</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Tins128</code></td>
+<td>KAT log (sha256 <code>e93e2f9f45b071cf…</code>)</td>
+<td><code>kat/sign-29/Tins128.log</code></td>
+</tr>
+<tr>
+<td><code>Tins128</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-29/Tins128__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Tins128</code></td>
+<td>timing sign</td>
+<td><code>records/sign-29/Tins128__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Tins128</code></td>
+<td>timing verify</td>
+<td><code>records/sign-29/Tins128__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Tins128</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-29/Tins128__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Tins128</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-29/Tins128__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Tins128</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-29/Tins128__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Tins256</code></td>
+<td>KAT log (sha256 <code>c70f3adbbc00a648…</code>)</td>
+<td><code>kat/sign-29/Tins256.log</code></td>
+</tr>
+<tr>
+<td><code>Tins256</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-29/Tins256__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Tins256</code></td>
+<td>timing sign</td>
+<td><code>records/sign-29/Tins256__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Tins256</code></td>
+<td>timing verify</td>
+<td><code>records/sign-29/Tins256__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Tins256</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-29/Tins256__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Tins256</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-29/Tins256__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Tins256</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-29/Tins256__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Tins512</code></td>
+<td>KAT log (sha256 <code>ffceb53c234fb1e9…</code>)</td>
+<td><code>kat/sign-29/Tins512.log</code></td>
+</tr>
+<tr>
+<td><code>Tins512</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-29/Tins512__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Tins512</code></td>
+<td>timing sign</td>
+<td><code>records/sign-29/Tins512__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Tins512</code></td>
+<td>timing verify</td>
+<td><code>records/sign-29/Tins512__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Tins512</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-29/Tins512__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Tins512</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-29/Tins512__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Tins512</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-29/Tins512__verify.json</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Scripts: <code>performance/campaign.py</code>, <code>performance/ngcc_perf.c</code>, <code>performance/hashprof/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

@@ -94,12 +94,29 @@ def main():
                     f'system: {" · ".join(choices)}</p>\n\n')
         return selector + SUMMARY_ROW_RE.sub(row, text)
 
+    def decorate_detail(text, sid):
+        """Put reciprocal system links beside each candidate measurement page."""
+        choices = []
+        for system in systems:
+            other = system["ID"]
+            choices.append(f"**{other}**" if other == sid else
+                           f"[{other}](perf_{other}.md)")
+        lines = text.splitlines()
+        for i, line in enumerate(lines):
+            if line.startswith(f"[Performance {sid}]"):
+                lines[i + 1:i + 1] = ["", f"**Systems:** {' · '.join(choices)}"]
+                break
+        return "\n".join(lines) + ("\n" if text.endswith("\n") else "")
+
     shutil.rmtree(DEST, ignore_errors=True)
     for src_rel, dst_rel in site_of.items():
         text = (src / src_rel).read_text(encoding="utf-8")
         match = re.fullmatch(r"performance/([^/]+)/index\.md", dst_rel)
         if match:
             text = decorate_summary(text, match.group(1))
+        match = re.fullmatch(r"performance/([^/]+)/((?:sign|kem|kex|hash)-\d\d)\.md", dst_rel)
+        if match:
+            text = decorate_detail(text, match.group(1))
         out = ROOT / "content" / dst_rel
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(f"<!-- synchronized from harness: {src_rel} -->\n" +

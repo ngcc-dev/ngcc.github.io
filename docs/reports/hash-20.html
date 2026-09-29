@@ -10,10 +10,10 @@
 <body>
 <header class="site-header">
 <a class="brand" href="../index.html"><img class="brand-icon" src="../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
-<nav><a href="../index.html">Home</a><a href="../reports/index.html">Security</a><a href="../performance/x86_1/index.html">Performance</a><a href="../constant-time/index.html">Side-Channel</a></nav>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Security</a><a href="../performance/index.html">Performance</a><a href="../constant-time/index.html">Side-Channel</a></nav>
 </header>
 <main class="">
-<p class="crumb"><a href="../reports/index.html">Security</a> › <code>hash-20</code> · <a href="../constant-time/hash-20.html">Constant-time review</a> · <a href="../performance/x86_1/hash-20.html">Performance</a></p>
+<p class="crumb"><a href="../reports/index.html">Security</a> › <code>hash-20</code> · <a href="../constant-time/hash-20.html">Constant-time review</a> · Performance: <a href="../performance/x86_1/hash-20.html">x86_1</a> · <a href="../performance/arm_1/hash-20.html">arm_1</a></p>
 
 <h1 id="mozi-hash-20">MOZI (hash-20)</h1>
 <div class="table-wrap"><table class="meta">
@@ -44,10 +44,9 @@
 <p>The two functions therefore lack cross-variant domain separation and cannot be treated as independent hashes. No explicit specification claim of cross-profile independence was located, so this is reported as a confirmed composition defect rather than a collision-resistance claim violation.</p>
 <p>The same missing domain separation affects the XOF profiles. On the audited short messages, the 384- and 512-profile 256-bit XOF outputs are equal, while shorter outputs are prefixes of the longer XOF streams. This follows from the normative zero initialization, common padding and permutation, and <code>MSB_l</code> output rule; it is not only a wrapper artifact.</p>
 <p>Follow-up analysis: the <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/BWXG6OPAIQL32FMWWYJ3C4D6QMRGHGP4/">Iphe Algorithm Group's cross-rate note, posted by 崔灏睿 on 2026-09-23</a> independently identifies this one-block MOZI-384/MOZI-512 prefix relation.</p>
-<p>The <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/GLMIC7PHESTDBHE76LMHS47QCAI6I2HT/">Mozi team's 2026-09-28 response</a>
-adds a distinct four-bit initialization domain for every revised variant,
-which breaks the shared-state alignment. The archived Round 1 ZIP above is
-unchanged and remains the subject of this report.</p>
+<p>The archived Round 1 ZIP above remains the subject of this report.</p>
+<h3 id="proposed-fixes">Proposed fixes</h3>
+<p>The <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/GLMIC7PHESTDBHE76LMHS47QCAI6I2HT/">Mozi team's 2026-09-28 response</a> proposes a distinct four-bit initialization domain for every variant. This section records the proposal without evaluating it.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>Build the candidate and the reproducer, then run:</p>
@@ -72,10 +71,9 @@ witnesses and their controls. See <code>tools/README.md</code>.</p>
 Follow-up source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/GLMIC7PHESTDBHE76LMHS47QCAI6I2HT/">Mozi team's correction</a></p>
 <p>Algorithm 2 places the final marker at the same absolute state bit for every rate. This permits a three-block suffix under one rate to reproduce the same permutation input as a related suffix under another rate. The submitters report 16/16 cross-rate witnesses in an independent model of the specified construction. This is a relation between different MOZI profiles, not a same-profile collision.</p>
 <p>The reference code instead places the marker at the first capacity bit, which is bit 1216 for MOZI-768 and bit 960 for MOZI-1024 rather than the specification's common bit 2047. That rate-dependent placement blocks the reported construction, but makes the code deterministically incompatible with Algorithm 2. The public report did not include its 16 witness messages, so the local check confirms the exact marker discrepancy rather than claiming an end-to-end collision reproduction.</p>
-<p>The Mozi team reports that its 2026-09-28 revision makes the reference code
-match Algorithm 2, in addition to adding the independent initialization domains
-described above and regenerating the KATs. This does not alter the archived
-submission analyzed here.</p>
+<p>The archived submission remains the target of this finding.</p>
+<h3 id="proposed-fixes_1">Proposed fixes</h3>
+<p>The <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/GLMIC7PHESTDBHE76LMHS47QCAI6I2HT/">Mozi team's 2026-09-28 response</a> proposes making the reference code match Algorithm 2, adding per-variant initialization domains, and regenerating the KATs. This section records the proposal without evaluating it.</p>
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">make -C hash-20 reproduce-forum

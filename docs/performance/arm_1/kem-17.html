@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: kem-17 Hybrid Equivalent Punctured and Quasi-Cyclic — performance on AArch64 (system arm1)</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=808fa5e8">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
+<nav><a href="../../index.html">Home</a><a href="../../reports/index.html">Security</a><a href="../../performance/index.html">Performance</a><a href="../../constant-time/index.html">Side-Channel</a></nav>
+</header>
+<main class="">
+<!-- synchronized from harness: kem-17/perf_arm_1.md -->
+<h1 id="kem-17-hybrid-equivalent-punctured-and-quasi-cyclic-performance-on-aarch64-system-arm_1">kem-17 Hybrid Equivalent Punctured and Quasi-Cyclic — performance on AArch64 (system arm_1)</h1>
+<p><a href="index.html">Performance arm_1</a> › <code>kem-17</code> · <a href="method.html">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560853532332032.html">NICCS page</a></p>
+<p><strong>Systems:</strong> <a href="../x86_1/kem-17.html">x86_1</a> · <strong>arm_1</strong></p>
+<p>Independent measurement following the structure of the NICCS ARM self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.</p>
+<h2 id="1-basic-information">1. Basic information</h2>
+<ul>
+<li>Category: public-key algorithm; function: key encapsulation</li>
+<li>Algorithm: Hybrid Equivalent Punctured and Quasi-Cyclic</li>
+<li>Implementation versions measured: reference</li>
+<li>Parameter sets: <code>hep-qc-1</code>, <code>hep-qc-3</code>, <code>hep-qc-5</code>, <code>hep-qc-7</code></li>
+</ul>
+<h2 id="2-assessment-environment">2. Assessment environment</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>item</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>processor</td>
+<td>Qualcomm Oryon (CPU 2, one core)</td>
+</tr>
+<tr>
+<td>machine</td>
+<td>ASUS Vivobook S 15</td>
+</tr>
+<tr>
+<td>clock</td>
+<td>fixed 2.71 GHz (governor performance, minimum = maximum), boost off, SMT none</td>
+</tr>
+<tr>
+<td>memory</td>
+<td>30562 MiB</td>
+</tr>
+<tr>
+<td>OS / kernel</td>
+<td>Ubuntu 26.04.1 LTS / 7.0.0-34-generic</td>
+</tr>
+<tr>
+<td>compiler / build tool</td>
+<td>gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0 / cmake version 4.2.3</td>
+</tr>
+<tr>
+<td>campaign start / end (UTC)</td>
+<td>2026-09-28T15:05:46 / 2026-09-29T08:43:52</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="3-functional-testing-kat">3. Functional testing (KAT)</h2>
+<p>Each library was checked against the submitted KAT vectors (SHA-256 manifest <code>kem-17/kat.sha256</code> in the harness) before timing.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>build flags</th>
+<th>KAT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>hep-qc-1</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>hep-qc-3</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>hep-qc-5</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>hep-qc-7</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="4-performance">4. Performance</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>mean cycles</th>
+<th>mean time</th>
+<th>ops/s</th>
+<th>median trial</th>
+<th>n (trials × iters)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>hep-qc-1</code></td>
+<td>keygen</td>
+<td>213.62 M</td>
+<td>79.3 ms</td>
+<td>12.6</td>
+<td>79.3 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>hep-qc-1</code></td>
+<td>enc</td>
+<td>11.24 M</td>
+<td>4.19 ms</td>
+<td>239</td>
+<td>4.17 ms</td>
+<td>600 (5 × 120)</td>
+</tr>
+<tr>
+<td><code>hep-qc-1</code></td>
+<td>dec</td>
+<td>227.93 M</td>
+<td>84.6 ms</td>
+<td>11.8</td>
+<td>84.6 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>hep-qc-3</code></td>
+<td>keygen</td>
+<td>454.79 M</td>
+<td>169 ms</td>
+<td>5.93</td>
+<td>169 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>hep-qc-3</code></td>
+<td>enc</td>
+<td>33.33 M</td>
+<td>12.4 ms</td>
+<td>80.8</td>
+<td>12.4 ms</td>
+<td>205 (5 × 41)</td>
+</tr>
+<tr>
+<td><code>hep-qc-3</code></td>
+<td>dec</td>
+<td>443.20 M</td>
+<td>164 ms</td>
+<td>6.08</td>
+<td>164 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>hep-qc-5</code></td>
+<td>keygen</td>
+<td>775.55 M</td>
+<td>288 ms</td>
+<td>3.47</td>
+<td>288 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>hep-qc-5</code></td>
+<td>enc</td>
+<td>75.81 M</td>
+<td>28.2 ms</td>
+<td>35.5</td>
+<td>28.2 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>hep-qc-5</code></td>
+<td>dec</td>
+<td>751.25 M</td>
+<td>279 ms</td>
+<td>3.59</td>
+<td>276 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>hep-qc-7</code></td>
+<td>keygen</td>
+<td>3.57 G</td>
+<td>1.32 s</td>
+<td>0.755</td>
+<td>1.32 s</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>hep-qc-7</code></td>
+<td>enc</td>
+<td>501.64 M</td>
+<td>186 ms</td>
+<td>5.37</td>
+<td>186 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>hep-qc-7</code></td>
+<td>dec</td>
+<td>3.04 G</td>
+<td>1.13 s</td>
+<td>0.887</td>
+<td>1.13 s</td>
+<td>100 (5 × 20)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-resource-consumption">5. Resource consumption</h2>
+<p>Static memory is approximated by the library's loadable ELF segments; peak memory is the process high-water mark (VmHWM) including the benchmark driver and libc, so both are upper-bound proxies rather than isolated algorithm memory.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>static: ELF image (bytes)</th>
+<th>baseline RSS</th>
+<th>peak RSS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>hep-qc-1</code></td>
+<td>keygen</td>
+<td>325320</td>
+<td>1992 KiB</td>
+<td>5012 KiB</td>
+</tr>
+<tr>
+<td><code>hep-qc-1</code></td>
+<td>enc</td>
+<td>325320</td>
+<td>4692 KiB</td>
+<td>37524 KiB</td>
+</tr>
+<tr>
+<td><code>hep-qc-1</code></td>
+<td>dec</td>
+<td>325320</td>
+<td>5164 KiB</td>
+<td>11372 KiB</td>
+</tr>
+<tr>
+<td><code>hep-qc-3</code></td>
+<td>keygen</td>
+<td>905272</td>
+<td>3136 KiB</td>
+<td>8804 KiB</td>
+</tr>
+<tr>
+<td><code>hep-qc-3</code></td>
+<td>enc</td>
+<td>905272</td>
+<td>7052 KiB</td>
+<td>43980 KiB</td>
+</tr>
+<tr>
+<td><code>hep-qc-3</code></td>
+<td>dec</td>
+<td>905272</td>
+<td>8836 KiB</td>
+<td>27332 KiB</td>
+</tr>
+<tr>
+<td><code>hep-qc-5</code></td>
+<td>keygen</td>
+<td>1896344</td>
+<td>1464 KiB</td>
+<td>16600 KiB</td>
+</tr>
+<tr>
+<td><code>hep-qc-5</code></td>
+<td>enc</td>
+<td>1896344</td>
+<td>11052 KiB</td>
+<td>52548 KiB</td>
+</tr>
+<tr>
+<td><code>hep-qc-5</code></td>
+<td>dec</td>
+<td>1896344</td>
+<td>14472 KiB</td>
+<td>52180 KiB</td>
+</tr>
+<tr>
+<td><code>hep-qc-7</code></td>
+<td>keygen</td>
+<td>12729648</td>
+<td>3500 KiB</td>
+<td>91248 KiB</td>
+</tr>
+<tr>
+<td><code>hep-qc-7</code></td>
+<td>enc</td>
+<td>12729648</td>
+<td>54456 KiB</td>
+<td>312844 KiB</td>
+</tr>
+<tr>
+<td><code>hep-qc-7</code></td>
+<td>dec</td>
+<td>12729648</td>
+<td>79036 KiB</td>
+<td>338324 KiB</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="6-transmission-and-storage-overhead">6. Transmission and storage overhead</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>public key</th>
+<th>secret key</th>
+<th>ciphertext</th>
+<th>shared secret</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>hep-qc-1</code></td>
+<td>285889</td>
+<td>285969</td>
+<td>4433</td>
+<td>32</td>
+</tr>
+<tr>
+<td><code>hep-qc-3</code></td>
+<td>866210</td>
+<td>866298</td>
+<td>8978</td>
+<td>32</td>
+</tr>
+<tr>
+<td><code>hep-qc-5</code></td>
+<td>1852485</td>
+<td>1852581</td>
+<td>14421</td>
+<td>32</td>
+</tr>
+<tr>
+<td><code>hep-qc-7</code></td>
+<td>12644449</td>
+<td>12644577</td>
+<td>49297</td>
+<td>32</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="symmetric-primitives">Symmetric primitives</h2>
+<p><a href="../symmetric-survey.html">Survey</a> verdict: <strong>ICCS-only</strong> — never calls the DRNG: zero-initialised PRNG (known kem-17-1/-3)</p>
+<p>Share of each operation spent in the ICCS placeholder hash functions and in the ICCS DRNG (reference build, measured in the same run with link-time wrappers):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>pseudohash/XOF/sm3</th>
+<th>DRNG</th>
+<th>calls per operation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>hep-qc-1</code></td>
+<td>keygen</td>
+<td>90%</td>
+<td>0.0%</td>
+<td>pseudoXOF 3.67e+04, pseudohash 1</td>
+</tr>
+<tr>
+<td><code>hep-qc-1</code></td>
+<td>enc</td>
+<td>55%</td>
+<td>0.0%</td>
+<td>pseudoXOF 14, pseudohash 1, sm3hash 1</td>
+</tr>
+<tr>
+<td><code>hep-qc-1</code></td>
+<td>dec</td>
+<td>90%</td>
+<td>0.0%</td>
+<td>pseudoXOF 3.83e+04, pseudohash 1, sm3hash 4</td>
+</tr>
+<tr>
+<td><code>hep-qc-3</code></td>
+<td>keygen</td>
+<td>85%</td>
+<td>0.0%</td>
+<td>pseudoXOF 7.32e+04, pseudohash 1</td>
+</tr>
+<tr>
+<td><code>hep-qc-3</code></td>
+<td>enc</td>
+<td>54%</td>
+<td>0.0%</td>
+<td>pseudoXOF 14, pseudohash 1, sm3hash 1</td>
+</tr>
+<tr>
+<td><code>hep-qc-3</code></td>
+<td>dec</td>
+<td>90%</td>
+<td>0.0%</td>
+<td>pseudoXOF 7.3e+04, pseudohash 1, sm3hash 4</td>
+</tr>
+<tr>
+<td><code>hep-qc-5</code></td>
+<td>keygen</td>
+<td>80%</td>
+<td>0.0%</td>
+<td>pseudoXOF 1.17e+05, pseudohash 1</td>
+</tr>
+<tr>
+<td><code>hep-qc-5</code></td>
+<td>enc</td>
+<td>50%</td>
+<td>0.0%</td>
+<td>pseudoXOF 14, pseudohash 1, sm3hash 1</td>
+</tr>
+<tr>
+<td><code>hep-qc-5</code></td>
+<td>dec</td>
+<td>87%</td>
+<td>0.0%</td>
+<td>pseudoXOF 1.16e+05, pseudohash 1, sm3hash 4</td>
+</tr>
+<tr>
+<td><code>hep-qc-7</code></td>
+<td>keygen</td>
+<td>55%</td>
+<td>0.0%</td>
+<td>pseudoXOF 4e+05, pseudohash 1</td>
+</tr>
+<tr>
+<td><code>hep-qc-7</code></td>
+<td>enc</td>
+<td>51%</td>
+<td>0.0%</td>
+<td>pseudoXOF 14, pseudohash 1, sm3hash 1</td>
+</tr>
+<tr>
+<td><code>hep-qc-7</code></td>
+<td>dec</td>
+<td>77%</td>
+<td>0.0%</td>
+<td>pseudoXOF 3.97e+05, pseudohash 1, sm3hash 4</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="7-raw-evidence-index">7. Raw evidence index</h2>
+<p>Paths are relative to <code>performance/data/arm_1/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>; each JSON file records its commands, environment and trials.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>item</th>
+<th>file</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>hep-qc-1</code></td>
+<td>KAT log (sha256 <code>6eea8465b3c7593f…</code>)</td>
+<td><code>kat/kem-17/hep-qc-1.log</code></td>
+</tr>
+<tr>
+<td><code>hep-qc-1</code></td>
+<td>timing dec</td>
+<td><code>records/kem-17/hep-qc-1__dec.json</code></td>
+</tr>
+<tr>
+<td><code>hep-qc-1</code></td>
+<td>timing enc</td>
+<td><code>records/kem-17/hep-qc-1__enc.json</code></td>
+</tr>
+<tr>
+<td><code>hep-qc-1</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-17/hep-qc-1__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>hep-qc-1</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-17/hep-qc-1__dec.json</code></td>
+</tr>
+<tr>
+<td><code>hep-qc-1</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-17/hep-qc-1__enc.json</code></td>
+</tr>
+<tr>
+<td><code>hep-qc-1</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-17/hep-qc-1__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>hep-qc-3</code></td>
+<td>KAT log (sha256 <code>a798e2f658d341fd…</code>)</td>
+<td><code>kat/kem-17/hep-qc-3.log</code></td>
+</tr>
+<tr>
+<td><code>hep-qc-3</code></td>
+<td>timing dec</td>
+<td><code>records/kem-17/hep-qc-3__dec.json</code></td>
+</tr>
+<tr>
+<td><code>hep-qc-3</code></td>
+<td>timing enc</td>
+<td><code>records/kem-17/hep-qc-3__enc.json</code></td>
+</tr>
+<tr>
+<td><code>hep-qc-3</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-17/hep-qc-3__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>hep-qc-3</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-17/hep-qc-3__dec.json</code></td>
+</tr>
+<tr>
+<td><code>hep-qc-3</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-17/hep-qc-3__enc.json</code></td>
+</tr>
+<tr>
+<td><code>hep-qc-3</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-17/hep-qc-3__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>hep-qc-5</code></td>
+<td>KAT log (sha256 <code>73aad6621f7563f6…</code>)</td>
+<td><code>kat/kem-17/hep-qc-5.log</code></td>
+</tr>
+<tr>
+<td><code>hep-qc-5</code></td>
+<td>timing dec</td>
+<td><code>records/kem-17/hep-qc-5__dec.json</code></td>
+</tr>
+<tr>
+<td><code>hep-qc-5</code></td>
+<td>timing enc</td>
+<td><code>records/kem-17/hep-qc-5__enc.json</code></td>
+</tr>
+<tr>
+<td><code>hep-qc-5</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-17/hep-qc-5__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>hep-qc-5</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-17/hep-qc-5__dec.json</code></td>
+</tr>
+<tr>
+<td><code>hep-qc-5</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-17/hep-qc-5__enc.json</code></td>
+</tr>
+<tr>
+<td><code>hep-qc-5</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-17/hep-qc-5__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>hep-qc-7</code></td>
+<td>KAT log (sha256 <code>f96dd5e83553d464…</code>)</td>
+<td><code>kat/kem-17/hep-qc-7.log</code></td>
+</tr>
+<tr>
+<td><code>hep-qc-7</code></td>
+<td>timing dec</td>
+<td><code>records/kem-17/hep-qc-7__dec.json</code></td>
+</tr>
+<tr>
+<td><code>hep-qc-7</code></td>
+<td>timing enc</td>
+<td><code>records/kem-17/hep-qc-7__enc.json</code></td>
+</tr>
+<tr>
+<td><code>hep-qc-7</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-17/hep-qc-7__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>hep-qc-7</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-17/hep-qc-7__dec.json</code></td>
+</tr>
+<tr>
+<td><code>hep-qc-7</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-17/hep-qc-7__enc.json</code></td>
+</tr>
+<tr>
+<td><code>hep-qc-7</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-17/hep-qc-7__keygen.json</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Scripts: <code>performance/campaign.py</code>, <code>performance/ngcc_perf.c</code>, <code>performance/hashprof/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

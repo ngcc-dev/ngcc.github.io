@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: sign-14 Lynxer — performance on AArch64 (system arm1)</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=808fa5e8">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
+<nav><a href="../../index.html">Home</a><a href="../../reports/index.html">Security</a><a href="../../performance/index.html">Performance</a><a href="../../constant-time/index.html">Side-Channel</a></nav>
+</header>
+<main class="">
+<!-- synchronized from harness: sign-14/perf_arm_1.md -->
+<h1 id="sign-14-lynxer-performance-on-aarch64-system-arm_1">sign-14 Lynxer — performance on AArch64 (system arm_1)</h1>
+<p><a href="index.html">Performance arm_1</a> › <code>sign-14</code> · <a href="method.html">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561077990510592.html">NICCS page</a></p>
+<p><strong>Systems:</strong> <a href="../x86_1/sign-14.html">x86_1</a> · <strong>arm_1</strong></p>
+<p>Independent measurement following the structure of the NICCS ARM self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.</p>
+<h2 id="1-basic-information">1. Basic information</h2>
+<ul>
+<li>Category: public-key algorithm; function: digital signature</li>
+<li>Algorithm: Lynxer</li>
+<li>Implementation versions measured: reference</li>
+<li>Parameter sets: <code>Lynxer-160f</code>, <code>Lynxer-160s</code>, <code>Lynxer-256f</code>, <code>Lynxer-256s</code>, <code>Lynxer-384f</code>, <code>Lynxer-384s</code>, <code>Lynxer-512f</code>, <code>Lynxer-512s</code></li>
+</ul>
+<h2 id="2-assessment-environment">2. Assessment environment</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>item</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>processor</td>
+<td>Qualcomm Oryon (CPU 2, one core)</td>
+</tr>
+<tr>
+<td>machine</td>
+<td>ASUS Vivobook S 15</td>
+</tr>
+<tr>
+<td>clock</td>
+<td>fixed 2.71 GHz (governor performance, minimum = maximum), boost off, SMT none</td>
+</tr>
+<tr>
+<td>memory</td>
+<td>30562 MiB</td>
+</tr>
+<tr>
+<td>OS / kernel</td>
+<td>Ubuntu 26.04.1 LTS / 7.0.0-34-generic</td>
+</tr>
+<tr>
+<td>compiler / build tool</td>
+<td>gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0 / cmake version 4.2.3</td>
+</tr>
+<tr>
+<td>campaign start / end (UTC)</td>
+<td>2026-09-28T15:05:46 / 2026-09-29T08:43:52</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="3-functional-testing-kat">3. Functional testing (KAT)</h2>
+<p>Each library was checked against the submitted KAT vectors (SHA-256 manifest <code>sign-14/kat.sha256</code> in the harness) before timing.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>build flags</th>
+<th>KAT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Lynxer-160f</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>Lynxer-160s</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>Lynxer-256f</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>Lynxer-256s</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>Lynxer-384f</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>Lynxer-384s</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>Lynxer-512f</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>Lynxer-512s</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="4-performance">4. Performance</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>mean cycles</th>
+<th>mean time</th>
+<th>ops/s</th>
+<th>median trial</th>
+<th>n (trials × iters)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Lynxer-160f</code></td>
+<td>keygen</td>
+<td>22.72 M</td>
+<td>8.43 ms</td>
+<td>119</td>
+<td>8.43 ms</td>
+<td>375 (5 × 75)</td>
+</tr>
+<tr>
+<td><code>Lynxer-160f</code></td>
+<td>sign</td>
+<td>403.20 M</td>
+<td>150 ms</td>
+<td>6.69</td>
+<td>149 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Lynxer-160f</code></td>
+<td>verify</td>
+<td>352.92 M</td>
+<td>131 ms</td>
+<td>7.64</td>
+<td>131 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Lynxer-160s</code></td>
+<td>keygen</td>
+<td>22.74 M</td>
+<td>8.43 ms</td>
+<td>119</td>
+<td>8.43 ms</td>
+<td>370 (5 × 74)</td>
+</tr>
+<tr>
+<td><code>Lynxer-160s</code></td>
+<td>sign</td>
+<td>2.92 G</td>
+<td>1.08 s</td>
+<td>0.924</td>
+<td>1.08 s</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Lynxer-160s</code></td>
+<td>verify</td>
+<td>2.85 G</td>
+<td>1.06 s</td>
+<td>0.947</td>
+<td>1.06 s</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Lynxer-256f</code></td>
+<td>keygen</td>
+<td>167.67 M</td>
+<td>62.2 ms</td>
+<td>16.1</td>
+<td>62 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Lynxer-256f</code></td>
+<td>sign</td>
+<td>1.29 G</td>
+<td>478 ms</td>
+<td>2.09</td>
+<td>477 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Lynxer-256f</code></td>
+<td>verify</td>
+<td>941.25 M</td>
+<td>349 ms</td>
+<td>2.86</td>
+<td>349 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Lynxer-256s</code></td>
+<td>keygen</td>
+<td>167.06 M</td>
+<td>62 ms</td>
+<td>16.1</td>
+<td>62 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Lynxer-256s</code></td>
+<td>sign</td>
+<td>8.36 G</td>
+<td>3.1 s</td>
+<td>0.322</td>
+<td>3.1 s</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Lynxer-256s</code></td>
+<td>verify</td>
+<td>7.97 G</td>
+<td>2.96 s</td>
+<td>0.338</td>
+<td>2.96 s</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Lynxer-384f</code></td>
+<td>keygen</td>
+<td>695.57 M</td>
+<td>258 ms</td>
+<td>3.87</td>
+<td>258 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Lynxer-384f</code></td>
+<td>sign</td>
+<td>4.48 G</td>
+<td>1.66 s</td>
+<td>0.602</td>
+<td>1.66 s</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Lynxer-384f</code></td>
+<td>verify</td>
+<td>3.04 G</td>
+<td>1.13 s</td>
+<td>0.886</td>
+<td>1.13 s</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Lynxer-384s</code></td>
+<td>keygen</td>
+<td>709.99 M</td>
+<td>263 ms</td>
+<td>3.8</td>
+<td>258 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Lynxer-384s</code></td>
+<td>sign</td>
+<td>24.71 G</td>
+<td>9.17 s</td>
+<td>0.109</td>
+<td>9.16 s</td>
+<td>40 (5 × 8)</td>
+</tr>
+<tr>
+<td><code>Lynxer-384s</code></td>
+<td>verify</td>
+<td>23.00 G</td>
+<td>8.53 s</td>
+<td>0.117</td>
+<td>8.53 s</td>
+<td>40 (5 × 8)</td>
+</tr>
+<tr>
+<td><code>Lynxer-512f</code></td>
+<td>keygen</td>
+<td>2.01 G</td>
+<td>745 ms</td>
+<td>1.34</td>
+<td>745 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Lynxer-512f</code></td>
+<td>sign</td>
+<td>6.34 G</td>
+<td>2.35 s</td>
+<td>0.425</td>
+<td>2.35 s</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Lynxer-512f</code></td>
+<td>verify</td>
+<td>2.32 G</td>
+<td>860 ms</td>
+<td>1.16</td>
+<td>860 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Lynxer-512s</code></td>
+<td>keygen</td>
+<td>2.01 G</td>
+<td>745 ms</td>
+<td>1.34</td>
+<td>745 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Lynxer-512s</code></td>
+<td>sign</td>
+<td>8.82 G</td>
+<td>3.27 s</td>
+<td>0.305</td>
+<td>3.27 s</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>Lynxer-512s</code></td>
+<td>verify</td>
+<td>4.55 G</td>
+<td>1.69 s</td>
+<td>0.592</td>
+<td>1.68 s</td>
+<td>100 (5 × 20)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-resource-consumption">5. Resource consumption</h2>
+<p>Static memory is approximated by the library's loadable ELF segments; peak memory is the process high-water mark (VmHWM) including the benchmark driver and libc, so both are upper-bound proxies rather than isolated algorithm memory.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>static: ELF image (bytes)</th>
+<th>baseline RSS</th>
+<th>peak RSS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Lynxer-160f</code></td>
+<td>keygen</td>
+<td>436796</td>
+<td>1528 KiB</td>
+<td>1808 KiB</td>
+</tr>
+<tr>
+<td><code>Lynxer-160f</code></td>
+<td>sign</td>
+<td>436796</td>
+<td>1740 KiB</td>
+<td>4276 KiB</td>
+</tr>
+<tr>
+<td><code>Lynxer-160f</code></td>
+<td>verify</td>
+<td>436796</td>
+<td>4184 KiB</td>
+<td>4248 KiB</td>
+</tr>
+<tr>
+<td><code>Lynxer-160s</code></td>
+<td>keygen</td>
+<td>436796</td>
+<td>1524 KiB</td>
+<td>1808 KiB</td>
+</tr>
+<tr>
+<td><code>Lynxer-160s</code></td>
+<td>sign</td>
+<td>436796</td>
+<td>1740 KiB</td>
+<td>6916 KiB</td>
+</tr>
+<tr>
+<td><code>Lynxer-160s</code></td>
+<td>verify</td>
+<td>436796</td>
+<td>3272 KiB</td>
+<td>6628 KiB</td>
+</tr>
+<tr>
+<td><code>Lynxer-256f</code></td>
+<td>keygen</td>
+<td>436796</td>
+<td>3552 KiB</td>
+<td>3872 KiB</td>
+</tr>
+<tr>
+<td><code>Lynxer-256f</code></td>
+<td>sign</td>
+<td>436796</td>
+<td>1852 KiB</td>
+<td>2920 KiB</td>
+</tr>
+<tr>
+<td><code>Lynxer-256f</code></td>
+<td>verify</td>
+<td>436796</td>
+<td>4880 KiB</td>
+<td>4876 KiB</td>
+</tr>
+<tr>
+<td><code>Lynxer-256s</code></td>
+<td>keygen</td>
+<td>436796</td>
+<td>1532 KiB</td>
+<td>1912 KiB</td>
+</tr>
+<tr>
+<td><code>Lynxer-256s</code></td>
+<td>sign</td>
+<td>436796</td>
+<td>3876 KiB</td>
+<td>12780 KiB</td>
+</tr>
+<tr>
+<td><code>Lynxer-256s</code></td>
+<td>verify</td>
+<td>436796</td>
+<td>5636 KiB</td>
+<td>12480 KiB</td>
+</tr>
+<tr>
+<td><code>Lynxer-384f</code></td>
+<td>keygen</td>
+<td>436796</td>
+<td>1556 KiB</td>
+<td>2008 KiB</td>
+</tr>
+<tr>
+<td><code>Lynxer-384f</code></td>
+<td>sign</td>
+<td>436796</td>
+<td>1944 KiB</td>
+<td>6120 KiB</td>
+</tr>
+<tr>
+<td><code>Lynxer-384f</code></td>
+<td>verify</td>
+<td>436796</td>
+<td>4904 KiB</td>
+<td>5924 KiB</td>
+</tr>
+<tr>
+<td><code>Lynxer-384s</code></td>
+<td>keygen</td>
+<td>436796</td>
+<td>1548 KiB</td>
+<td>2008 KiB</td>
+</tr>
+<tr>
+<td><code>Lynxer-384s</code></td>
+<td>sign</td>
+<td>436796</td>
+<td>3860 KiB</td>
+<td>21632 KiB</td>
+</tr>
+<tr>
+<td><code>Lynxer-384s</code></td>
+<td>verify</td>
+<td>436796</td>
+<td>4644 KiB</td>
+<td>21168 KiB</td>
+</tr>
+<tr>
+<td><code>Lynxer-512f</code></td>
+<td>keygen</td>
+<td>436796</td>
+<td>1580 KiB</td>
+<td>2132 KiB</td>
+</tr>
+<tr>
+<td><code>Lynxer-512f</code></td>
+<td>sign</td>
+<td>436796</td>
+<td>2064 KiB</td>
+<td>7560 KiB</td>
+</tr>
+<tr>
+<td><code>Lynxer-512f</code></td>
+<td>verify</td>
+<td>436796</td>
+<td>6024 KiB</td>
+<td>7344 KiB</td>
+</tr>
+<tr>
+<td><code>Lynxer-512s</code></td>
+<td>keygen</td>
+<td>436796</td>
+<td>1568 KiB</td>
+<td>3992 KiB</td>
+</tr>
+<tr>
+<td><code>Lynxer-512s</code></td>
+<td>sign</td>
+<td>436796</td>
+<td>2052 KiB</td>
+<td>35184 KiB</td>
+</tr>
+<tr>
+<td><code>Lynxer-512s</code></td>
+<td>verify</td>
+<td>436796</td>
+<td>5160 KiB</td>
+<td>34716 KiB</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="6-transmission-and-storage-overhead">6. Transmission and storage overhead</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>public key</th>
+<th>secret key</th>
+<th>signature</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Lynxer-160f</code></td>
+<td>40</td>
+<td>40</td>
+<td>5801</td>
+</tr>
+<tr>
+<td><code>Lynxer-160s</code></td>
+<td>40</td>
+<td>40</td>
+<td>4607</td>
+</tr>
+<tr>
+<td><code>Lynxer-256f</code></td>
+<td>64</td>
+<td>64</td>
+<td>15097</td>
+</tr>
+<tr>
+<td><code>Lynxer-256s</code></td>
+<td>64</td>
+<td>64</td>
+<td>12191</td>
+</tr>
+<tr>
+<td><code>Lynxer-384f</code></td>
+<td>96</td>
+<td>96</td>
+<td>34109</td>
+</tr>
+<tr>
+<td><code>Lynxer-384s</code></td>
+<td>96</td>
+<td>96</td>
+<td>27495</td>
+</tr>
+<tr>
+<td><code>Lynxer-512f</code></td>
+<td>128</td>
+<td>128</td>
+<td>61091</td>
+</tr>
+<tr>
+<td><code>Lynxer-512s</code></td>
+<td>128</td>
+<td>128</td>
+<td>48879</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="symmetric-primitives">Symmetric primitives</h2>
+<p><a href="../symmetric-survey.html">Survey</a> verdict: <strong>mixed</strong> — with -DXOF_PSEUDO (as the KATs need): oracles via pseudoXOF, PRG via AES/Rijndael/SHACAL-2; source default is own Keccak (bypass)</p>
+<p>Share of each operation spent in the ICCS placeholder hash functions and in the ICCS DRNG (reference build, measured in the same run with link-time wrappers):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>pseudohash/XOF/sm3</th>
+<th>DRNG</th>
+<th>calls per operation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Lynxer-160f</code></td>
+<td>keygen</td>
+<td>95%</td>
+<td>0.0%</td>
+<td>drng 2, pseudoXOF 62</td>
+</tr>
+<tr>
+<td><code>Lynxer-160f</code></td>
+<td>sign</td>
+<td>18%</td>
+<td>0.0%</td>
+<td>drng 1, pseudoXOF 436</td>
+</tr>
+<tr>
+<td><code>Lynxer-160f</code></td>
+<td>verify</td>
+<td>7.8%</td>
+<td>0.0%</td>
+<td>pseudoXOF 88</td>
+</tr>
+<tr>
+<td><code>Lynxer-160s</code></td>
+<td>keygen</td>
+<td>95%</td>
+<td>0.0%</td>
+<td>drng 2, pseudoXOF 62</td>
+</tr>
+<tr>
+<td><code>Lynxer-160s</code></td>
+<td>sign</td>
+<td>4.2%</td>
+<td>0.0%</td>
+<td>drng 1, pseudoXOF 3.64e+03</td>
+</tr>
+<tr>
+<td><code>Lynxer-160s</code></td>
+<td>verify</td>
+<td>2.4%</td>
+<td>0.0%</td>
+<td>pseudoXOF 81</td>
+</tr>
+<tr>
+<td><code>Lynxer-256f</code></td>
+<td>keygen</td>
+<td>99%</td>
+<td>0.0%</td>
+<td>drng 2, pseudoXOF 123</td>
+</tr>
+<tr>
+<td><code>Lynxer-256f</code></td>
+<td>sign</td>
+<td>40%</td>
+<td>0.0%</td>
+<td>drng 1, pseudoXOF 525</td>
+</tr>
+<tr>
+<td><code>Lynxer-256f</code></td>
+<td>verify</td>
+<td>19%</td>
+<td>0.0%</td>
+<td>pseudoXOF 163</td>
+</tr>
+<tr>
+<td><code>Lynxer-256s</code></td>
+<td>keygen</td>
+<td>99%</td>
+<td>0.0%</td>
+<td>drng 2, pseudoXOF 123</td>
+</tr>
+<tr>
+<td><code>Lynxer-256s</code></td>
+<td>sign</td>
+<td>8.2%</td>
+<td>0.0%</td>
+<td>drng 1, pseudoXOF 1.22e+04</td>
+</tr>
+<tr>
+<td><code>Lynxer-256s</code></td>
+<td>verify</td>
+<td>3.7%</td>
+<td>0.0%</td>
+<td>pseudoXOF 150</td>
+</tr>
+<tr>
+<td><code>Lynxer-384f</code></td>
+<td>keygen</td>
+<td>99%</td>
+<td>0.0%</td>
+<td>drng 2, pseudoXOF 255</td>
+</tr>
+<tr>
+<td><code>Lynxer-384f</code></td>
+<td>sign</td>
+<td>48%</td>
+<td>0.0%</td>
+<td>drng 1, pseudoXOF 971</td>
+</tr>
+<tr>
+<td><code>Lynxer-384f</code></td>
+<td>verify</td>
+<td>24%</td>
+<td>0.0%</td>
+<td>pseudoXOF 313</td>
+</tr>
+<tr>
+<td><code>Lynxer-384s</code></td>
+<td>keygen</td>
+<td>99%</td>
+<td>0.0%</td>
+<td>drng 2, pseudoXOF 255</td>
+</tr>
+<tr>
+<td><code>Lynxer-384s</code></td>
+<td>sign</td>
+<td>11%</td>
+<td>0.0%</td>
+<td>drng 1, pseudoXOF 2.73e+04</td>
+</tr>
+<tr>
+<td><code>Lynxer-384s</code></td>
+<td>verify</td>
+<td>4.8%</td>
+<td>0.0%</td>
+<td>pseudoXOF 294</td>
+</tr>
+<tr>
+<td><code>Lynxer-512f</code></td>
+<td>keygen</td>
+<td>100%</td>
+<td>0.0%</td>
+<td>drng 2, pseudoXOF 435</td>
+</tr>
+<tr>
+<td><code>Lynxer-512f</code></td>
+<td>sign</td>
+<td>96%</td>
+<td>0.0%</td>
+<td>drng 1, pseudoXOF 1.55e+03</td>
+</tr>
+<tr>
+<td><code>Lynxer-512f</code></td>
+<td>verify</td>
+<td>91%</td>
+<td>0.0%</td>
+<td>pseudoXOF 512</td>
+</tr>
+<tr>
+<td><code>Lynxer-512s</code></td>
+<td>keygen</td>
+<td>100%</td>
+<td>0.0%</td>
+<td>drng 2, pseudoXOF 435</td>
+</tr>
+<tr>
+<td><code>Lynxer-512s</code></td>
+<td>sign</td>
+<td>82%</td>
+<td>0.0%</td>
+<td>drng 1, pseudoXOF 1.21e+04</td>
+</tr>
+<tr>
+<td><code>Lynxer-512s</code></td>
+<td>verify</td>
+<td>66%</td>
+<td>0.0%</td>
+<td>pseudoXOF 486</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="7-raw-evidence-index">7. Raw evidence index</h2>
+<p>Paths are relative to <code>performance/data/arm_1/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>; each JSON file records its commands, environment and trials.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>item</th>
+<th>file</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Lynxer-160f</code></td>
+<td>KAT log (sha256 <code>a84705093d5baee0…</code>)</td>
+<td><code>kat/sign-14/Lynxer-160f.log</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-160f</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-14/Lynxer-160f__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-160f</code></td>
+<td>timing sign</td>
+<td><code>records/sign-14/Lynxer-160f__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-160f</code></td>
+<td>timing verify</td>
+<td><code>records/sign-14/Lynxer-160f__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-160f</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-14/Lynxer-160f__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-160f</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-14/Lynxer-160f__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-160f</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-14/Lynxer-160f__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-160s</code></td>
+<td>KAT log (sha256 <code>3f03764067260fb7…</code>)</td>
+<td><code>kat/sign-14/Lynxer-160s.log</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-160s</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-14/Lynxer-160s__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-160s</code></td>
+<td>timing sign</td>
+<td><code>records/sign-14/Lynxer-160s__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-160s</code></td>
+<td>timing verify</td>
+<td><code>records/sign-14/Lynxer-160s__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-160s</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-14/Lynxer-160s__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-160s</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-14/Lynxer-160s__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-160s</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-14/Lynxer-160s__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-256f</code></td>
+<td>KAT log (sha256 <code>30d2e64fc5d04d20…</code>)</td>
+<td><code>kat/sign-14/Lynxer-256f.log</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-256f</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-14/Lynxer-256f__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-256f</code></td>
+<td>timing sign</td>
+<td><code>records/sign-14/Lynxer-256f__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-256f</code></td>
+<td>timing verify</td>
+<td><code>records/sign-14/Lynxer-256f__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-256f</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-14/Lynxer-256f__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-256f</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-14/Lynxer-256f__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-256f</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-14/Lynxer-256f__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-256s</code></td>
+<td>KAT log (sha256 <code>b6838c63bd06e987…</code>)</td>
+<td><code>kat/sign-14/Lynxer-256s.log</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-256s</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-14/Lynxer-256s__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-256s</code></td>
+<td>timing sign</td>
+<td><code>records/sign-14/Lynxer-256s__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-256s</code></td>
+<td>timing verify</td>
+<td><code>records/sign-14/Lynxer-256s__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-256s</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-14/Lynxer-256s__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-256s</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-14/Lynxer-256s__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-256s</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-14/Lynxer-256s__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-384f</code></td>
+<td>KAT log (sha256 <code>df109a8beb466ef2…</code>)</td>
+<td><code>kat/sign-14/Lynxer-384f.log</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-384f</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-14/Lynxer-384f__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-384f</code></td>
+<td>timing sign</td>
+<td><code>records/sign-14/Lynxer-384f__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-384f</code></td>
+<td>timing verify</td>
+<td><code>records/sign-14/Lynxer-384f__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-384f</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-14/Lynxer-384f__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-384f</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-14/Lynxer-384f__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-384f</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-14/Lynxer-384f__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-384s</code></td>
+<td>KAT log (sha256 <code>dd0fe00cf6e819f9…</code>)</td>
+<td><code>kat/sign-14/Lynxer-384s.log</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-384s</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-14/Lynxer-384s__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-384s</code></td>
+<td>timing sign</td>
+<td><code>records/sign-14/Lynxer-384s__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-384s</code></td>
+<td>timing verify</td>
+<td><code>records/sign-14/Lynxer-384s__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-384s</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-14/Lynxer-384s__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-384s</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-14/Lynxer-384s__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-384s</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-14/Lynxer-384s__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-512f</code></td>
+<td>KAT log (sha256 <code>c2cd6643c4f9d01d…</code>)</td>
+<td><code>kat/sign-14/Lynxer-512f.log</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-512f</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-14/Lynxer-512f__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-512f</code></td>
+<td>timing sign</td>
+<td><code>records/sign-14/Lynxer-512f__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-512f</code></td>
+<td>timing verify</td>
+<td><code>records/sign-14/Lynxer-512f__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-512f</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-14/Lynxer-512f__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-512f</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-14/Lynxer-512f__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-512f</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-14/Lynxer-512f__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-512s</code></td>
+<td>KAT log (sha256 <code>8ef142b4f046ba42…</code>)</td>
+<td><code>kat/sign-14/Lynxer-512s.log</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-512s</code></td>
+<td>timing keygen</td>
+<td><code>records/sign-14/Lynxer-512s__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-512s</code></td>
+<td>timing sign</td>
+<td><code>records/sign-14/Lynxer-512s__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-512s</code></td>
+<td>timing verify</td>
+<td><code>records/sign-14/Lynxer-512s__verify.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-512s</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/sign-14/Lynxer-512s__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-512s</code></td>
+<td>hash profile sign</td>
+<td><code>profile/sign-14/Lynxer-512s__sign.json</code></td>
+</tr>
+<tr>
+<td><code>Lynxer-512s</code></td>
+<td>hash profile verify</td>
+<td><code>profile/sign-14/Lynxer-512s__verify.json</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Scripts: <code>performance/campaign.py</code>, <code>performance/ngcc_perf.c</code>, <code>performance/hashprof/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

@@ -10,10 +10,10 @@
 <body>
 <header class="site-header">
 <a class="brand" href="../index.html"><img class="brand-icon" src="../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
-<nav><a href="../index.html">Home</a><a href="../reports/index.html">Security</a><a href="../performance/x86_1/index.html">Performance</a><a href="../constant-time/index.html">Side-Channel</a></nav>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Security</a><a href="../performance/index.html">Performance</a><a href="../constant-time/index.html">Side-Channel</a></nav>
 </header>
 <main class="">
-<p class="crumb"><a href="../reports/index.html">Security</a> › <code>hash-17</code> · <a href="../constant-time/hash-17.html">Constant-time review</a> · <a href="../performance/x86_1/hash-17.html">Performance</a></p>
+<p class="crumb"><a href="../reports/index.html">Security</a> › <code>hash-17</code> · <a href="../constant-time/hash-17.html">Constant-time review</a> · Performance: <a href="../performance/x86_1/hash-17.html">x86_1</a> · <a href="../performance/arm_1/hash-17.html">arm_1</a></p>
 
 <h1 id="mastercube-hash-17">MasterCube (hash-17)</h1>
 <div class="table-wrap"><table class="meta">
@@ -45,7 +45,9 @@
 <p><code>847a067d6eb9078d5c3ce3e3f08fbfd3a1488eb6e89909144db1a76d5fcb9a097fef21b4927bb6fe0a1bb2769ef0f249734550c1e8acfa0023a1281d12131bf6</code></p>
 <p>The implementation attempts to apply <code>pad10*1</code> in a single rate block. When the message length is <code>r-1 mod r</code>, only one bit remains. The opening and closing delimiter bits are ORed into the same position instead of emitting the additional block required by the specification.</p>
 <p>Consequently, for any prefix <code>P</code> of length <code>r-2 mod r</code>, the implementation gives <code>H(P) = H(P || 1)</code>. The same defect was reproduced at 702/703 bits for MasterCube-768 and 446/447 bits for MasterCube-1024. It directly violates the claimed 256-, 384-, and 512-bit collision strengths and is an implementation error rather than an attack on the specified permutation.</p>
-<p>The MasterCube team subsequently confirmed the one-bit padding error and published a corrected implementation and clarified specification. The archived Round 1 implementation assessed here remains affected.</p>
+<p>The MasterCube team subsequently confirmed the one-bit padding error. The archived Round 1 implementation assessed here remains affected.</p>
+<h3 id="proposed-fixes">Proposed fixes</h3>
+<p>The <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/IG2TAQNA7YHL4JLOOWBTJGKBVVVESWZK/">MasterCube team's response</a> proposes emitting an additional block when only one bit remains for <code>10*1</code> padding and adding that case to the specification. This section records the proposal without evaluating it.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>Build the candidate and the reproducer, then run:</p>
@@ -70,7 +72,9 @@ witnesses and their controls. See <code>tools/README.md</code>.</p>
 Follow-up source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/IG2TAQNA7YHL4JLOOWBTJGKBVVVESWZK/">MasterCube team's confirmation and erratum</a></p>
 <p>As <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/2XVZUBVVMVXYKMSOBJOKY2IFHFMQUNEK/">reported on the CryptHash mailing list</a>, the inverse in Algorithm 2 does not invert the published forward round, and the implementation differs from Algorithm 2 but still fails the inverse identity. In the code, the nonlinear calls are already reversed correctly, yet an extra exchange of the two slices remains; additionally, the forward <code>MixColumns</code> is reused although its inverse is <code>J MixColumns J</code>, where <code>J</code> exchanges the slices.</p>
 <p>This matters to the complete hash: MasterCube's <code>Cube-f</code> transformation XORs the forward branch with a branch explicitly designed as its inverse, while the reference and optimized hashing paths execute the defective branch. Correcting the two operations changes the transformation and resulting digests. The finding invalidates conformance and the archived inverse-branch description, but it does not establish noninjectivity of the forward permutation or by itself give a hash collision or preimage attack.</p>
-<p>The MasterCube team confirmed that the old Algorithm 2 was not a genuine inverse because its pseudocode omitted the slice swap. Its revision corrects Algorithm 2 and explains how to reuse <code>MixColumns</code> for the inverse; the team states that the change does not affect its proofs or underlying design rationale.</p>
+<p>The MasterCube team confirmed that the old Algorithm 2 was not a genuine inverse because its pseudocode omitted the slice swap.</p>
+<h3 id="proposed-fixes_1">Proposed fixes</h3>
+<p>The <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/IG2TAQNA7YHL4JLOOWBTJGKBVVVESWZK/">MasterCube team's response</a> proposes adding the missing slice swap to Algorithm 2 and explaining how to reuse <code>MixColumns</code> for the inverse. This section records the proposal without evaluating the team's further claims about its effect on proofs, design rationale, or performance.</p>
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>The witness uses the submitted MasterCube-512 round functions. On the mailing-list state <code>(left,right)=(1,0)</code>, a forward round followed by the submitted inverse returns <code>(0,1)</code>; the corrected inverse returns the input exactly.</p>

@@ -40,7 +40,7 @@ TODAY = datetime.datetime.now(datetime.UTC).date().isoformat()   # <!-- date -->
 CATS = [("sign", "Signatures"), ("kem", "KEMs"), ("kex", "Key exchange"), ("hash", "Hash functions")]
 
 NAV = [("Home", "index.html"), ("Security", "reports/index.html"),
-       ("Performance", "performance/x86_1/index.html"), ("Side-Channel", "constant-time/index.html"),
+       ("Performance", "performance/index.html"), ("Side-Channel", "constant-time/index.html"),
        ("Candidates", "candidates/index.html"),
        ("KAT results", "results.html"), ("Security survey", "security-survey.html"),
        ("Attack matrix", "attack-matrix.html"), ("Audit", "audit.html")]
@@ -131,6 +131,20 @@ def load_candidates():
     return cands
 
 
+def performance_systems():
+    """Published performance systems, in the selector's display order."""
+    index = CONTENT / "performance" / "index.md"
+    systems = []
+    if index.is_file():
+        for sid, target in re.findall(r"^\|\s*\[([^]]+)\]\(([^)]+/index\.md)\)\s*\|", index.read_text(encoding="utf-8"), re.M):
+            if target == f"{sid}/index.md":
+                systems.append(sid)
+    if systems:
+        return systems
+    root = CONTENT / "performance"
+    return sorted(p.name for p in root.iterdir() if p.is_dir() and (p / "index.md").is_file()) if root.is_dir() else []
+
+
 def candidate_pages(cid):
     d = CONTENT / "candidates" / cid
     out = []
@@ -142,8 +156,9 @@ def candidate_pages(cid):
     out.append(("report", f"reports/{cid}.html"))
     if (CONTENT / "constant-time" / f"{cid}.md").is_file():
         out.append(("CT review", f"constant-time/{cid}.html"))
-    if (CONTENT / "performance" / "x86_1" / f"{cid}.md").is_file():
-        out.append(("performance", f"performance/x86_1/{cid}.html"))
+    for sid in performance_systems():
+        if (CONTENT / "performance" / sid / f"{cid}.md").is_file():
+            out.append((f"performance {sid}", f"performance/{sid}/{cid}.html"))
     return out
 
 
@@ -397,7 +412,12 @@ def report_page(r, prefix):
     crumb = f'<p class="crumb"><a href="{prefix}reports/index.html">Security</a> › <code>{r["cid"]}</code>'
     if (CONTENT / "constant-time" / f'{r["cid"]}.md').is_file():
         crumb += f' · <a href="{prefix}constant-time/{r["cid"]}.html">Constant-time review</a>'
-    crumb += f' · <a href="{prefix}performance/x86_1/{r["cid"]}.html">Performance</a>'
+    perf = [sid for sid in performance_systems()
+            if (CONTENT / "performance" / sid / f'{r["cid"]}.md').is_file()]
+    if perf:
+        links = " · ".join(
+            f'<a href="{prefix}performance/{sid}/{r["cid"]}.html">{sid}</a>' for sid in perf)
+        crumb += f' · Performance: {links}'
     crumb += '</p>'
     note = (f"\n\nCommands below run in a checkout of the [ngcc-harness repository]({HARNESS}) "
             f"with the candidate built (see its README).")
@@ -437,13 +457,16 @@ def add_no_finding_reports(reports, cands):
             meta["Archive"] = f'[Official submission archive]({candidate["zip"]})'
         official = (f' See the [official submission page]({candidate["page"]}).'
                     if candidate.get("page") else "")
+        perf = [sid for sid in performance_systems()
+                if (CONTENT / "performance" / sid / f"{cid}.md").is_file()]
+        perf_links = " · ".join(f"[{sid}](../performance/{sid}/{cid}.md)" for sid in perf)
         body = (
             "### Review status\n\n"
             "No vulnerability finding is currently published for this candidate. "
             "This is not a security endorsement: it records only the present state of the public "
             "finding inventory, and the candidate remains under review.\n\n"
-            f"See the [constant-time review](../constant-time/{cid}.md) and the "
-            f"[x86_1 performance summary](../performance/x86_1/{cid}.md).{official}"
+            f"See the [constant-time review](../constant-time/{cid}.md)"
+            f" and the performance reports ({perf_links}).{official}"
         )
         reports[cid] = {"cid": cid, "meta": meta, "body": body, "issues": [], "generated": True}
     return reports

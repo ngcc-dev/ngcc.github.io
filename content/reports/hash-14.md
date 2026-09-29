@@ -20,7 +20,11 @@ The specification uses `fid=0` for hashing and `fid=1` for XOF operation, placin
 
 For example, the 768-bit all-zero message has identical 1024-bit outputs under `Laurus[1024,0]` and `Laurus[1024,1]`. This is a functional-domain separation failure in the normative generic interface, not a collision between distinct messages in a named fixed-output hash. The submitted `Laurus-XOF` wrapper fixes `c=512`, so it does not expose this particular pair through the uniform API.
 
-The [Laurus team confirmed the generic-interface defect](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/CC2SBG5TUNBN5ZD2WWEKITUQEVNJD56L/) while reiterating that the named XOF uses `c=512`; they proposed repeating the function-ID-bearing initialization value across all three 512-bit state segments in an erratum. The archived specification remains the target here.
+The [Laurus team confirmed the generic-interface defect](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/CC2SBG5TUNBN5ZD2WWEKITUQEVNJD56L/) while reiterating that the named XOF uses `c=512`. The archived specification remains the target here.
+
+### Proposed fixes
+
+The [Laurus team's response](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/CC2SBG5TUNBN5ZD2WWEKITUQEVNJD56L/) proposes repeating the function-ID-bearing initialization value across all three 512-bit state segments. This section records the proposal without evaluating it.
 
 ### Reproducing
 

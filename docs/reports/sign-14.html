@@ -10,10 +10,10 @@
 <body>
 <header class="site-header">
 <a class="brand" href="../index.html"><img class="brand-icon" src="../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
-<nav><a href="../index.html">Home</a><a href="../reports/index.html">Security</a><a href="../performance/x86_1/index.html">Performance</a><a href="../constant-time/index.html">Side-Channel</a></nav>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Security</a><a href="../performance/index.html">Performance</a><a href="../constant-time/index.html">Side-Channel</a></nav>
 </header>
 <main class="">
-<p class="crumb"><a href="../reports/index.html">Security</a> › <code>sign-14</code> · <a href="../constant-time/sign-14.html">Constant-time review</a> · <a href="../performance/x86_1/sign-14.html">Performance</a></p>
+<p class="crumb"><a href="../reports/index.html">Security</a> › <code>sign-14</code> · <a href="../constant-time/sign-14.html">Constant-time review</a> · Performance: <a href="../performance/x86_1/sign-14.html">x86_1</a> · <a href="../performance/arm_1/sign-14.html">arm_1</a></p>
 
 <h1 id="lynxer-sign-14">Lynxer (sign-14)</h1>
 <div class="table-wrap"><table class="meta">
@@ -40,9 +40,11 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <p>Additional reference: <a href="https://eprint.iacr.org/2026/2235">Liu et al., ePrint 2026/2235</a></p>
 <p>The specified QuickSilver relation fails to enforce two nonzero conditions. Set the purported Lynx key to the public constant <code>c3</code> and the first S-box output <code>v1</code> to zero. Every term in the first constraint then vanishes; the final constraint loses the public target because both its products contain either <code>v1</code> or <code>k+c3</code>. The attacker publicly evaluates the second S-box to satisfy the sole remaining constraint. This gives a false witness for every public key and message without a signing query or Lynx preimage.</p>
 <p>We reran the pinned attack against all six affected full reference parameter sets. Each secret-key buffer was erased before attack construction, direct Lynx evaluation confirmed that the forged key was not a victim preimage, the ordinary submitted verifier accepted the fresh-message signature, and a changed-message control rejected. The 160-bit relations differ and are not claimed to be vulnerable.</p>
-<p>The Lynxer team confirms the flaw, reports that the Center for Cryptology Study at Tsinghua University found it independently, and replaces the original S-boxes with inversion in <a href="https://eprint.iacr.org/2026/1099">ePrint 2026/1099</a>. That revision is intended to enforce the relation over the full key space and blocks this attack; the archived Round 1 submission remains affected.</p>
+<p>The Lynxer team confirms the flaw and reports that the Center for Cryptology Study at Tsinghua University found it independently. The archived Round 1 submission remains the target of this finding.</p>
 <p>Liu et al. independently formalize the same null-branch witness mechanism, prove public-key-only forgery for the affected 256-, 384-, and 512-bit Lynxer relations, and report accepted fresh-message forgeries. Their separate Lynx-192 analysis concerns another upstream variant and does not extend this finding to the archived NGCC 160-bit sets.</p>
-<p>On 2026-09-29 the Lynxer team also <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/3HMAZXK7HD6JDLF5BJVYWDECM2SF5N3M/">released a targeted modification note</a> for the anomalous-point attack. It concerns the repaired revision, not the archived Round 1 package tested here.</p>
+<p>On 2026-09-29 the Lynxer team also <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/3HMAZXK7HD6JDLF5BJVYWDECM2SF5N3M/">released a targeted modification note</a> for its later revision, not the archived Round 1 package tested here.</p>
+<h3 id="proposed-fixes">Proposed fixes</h3>
+<p>The <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/TJ3HPFROBMZMNMEHDEC3IQRO7R7QHQAQ/">Lynxer team's response</a> proposes replacing the original S-boxes with inversion as described in <a href="https://eprint.iacr.org/2026/1099">ePrint 2026/1099</a>. Its later <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/3HMAZXK7HD6JDLF5BJVYWDECM2SF5N3M/">targeted-modification note</a> describes an additional proposal for the revised construction. This section records the proposals without evaluating them.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">make -C sign-14 exploit-public-forgery

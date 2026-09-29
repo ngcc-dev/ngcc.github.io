@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: kex-09 TriQ-KEX — performance on AArch64 (system arm1)</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=808fa5e8">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
+<nav><a href="../../index.html">Home</a><a href="../../reports/index.html">Security</a><a href="../../performance/index.html">Performance</a><a href="../../constant-time/index.html">Side-Channel</a></nav>
+</header>
+<main class="">
+<!-- synchronized from harness: kex-09/perf_arm_1.md -->
+<h1 id="kex-09-triq-kex-performance-on-aarch64-system-arm_1">kex-09 TriQ-KEX — performance on AArch64 (system arm_1)</h1>
+<p><a href="index.html">Performance arm_1</a> › <code>kex-09</code> · <a href="method.html">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560626335272960.html">NICCS page</a></p>
+<p><strong>Systems:</strong> <a href="../x86_1/kex-09.html">x86_1</a> · <strong>arm_1</strong></p>
+<p>Independent measurement following the structure of the NICCS ARM self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.</p>
+<h2 id="1-basic-information">1. Basic information</h2>
+<ul>
+<li>Category: public-key algorithm; function: key exchange</li>
+<li>Algorithm: TriQ-KEX</li>
+<li>Implementation versions measured: reference</li>
+<li>Parameter sets: <code>TriQ-KEX-128</code>, <code>TriQ-KEX-256</code>, <code>TriQ-KEX-384</code>, <code>TriQ-KEX-512</code></li>
+</ul>
+<h2 id="2-assessment-environment">2. Assessment environment</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>item</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>processor</td>
+<td>Qualcomm Oryon (CPU 2, one core)</td>
+</tr>
+<tr>
+<td>machine</td>
+<td>ASUS Vivobook S 15</td>
+</tr>
+<tr>
+<td>clock</td>
+<td>fixed 2.71 GHz (governor performance, minimum = maximum), boost off, SMT none</td>
+</tr>
+<tr>
+<td>memory</td>
+<td>30562 MiB</td>
+</tr>
+<tr>
+<td>OS / kernel</td>
+<td>Ubuntu 26.04.1 LTS / 7.0.0-34-generic</td>
+</tr>
+<tr>
+<td>compiler / build tool</td>
+<td>gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0 / cmake version 4.2.3</td>
+</tr>
+<tr>
+<td>campaign start / end (UTC)</td>
+<td>2026-09-28T15:05:46 / 2026-09-29T08:43:52</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="3-functional-testing-kat">3. Functional testing (KAT)</h2>
+<p>Each library was checked against the submitted KAT vectors (SHA-256 manifest <code>kex-09/kat.sha256</code> in the harness) before timing.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>build flags</th>
+<th>KAT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TriQ-KEX-128</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-256</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-384</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-512</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="4-performance">4. Performance</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>mean cycles</th>
+<th>mean time</th>
+<th>ops/s</th>
+<th>median trial</th>
+<th>n (trials × iters)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TriQ-KEX-128</code></td>
+<td>exchange</td>
+<td>37.66 M</td>
+<td>14 ms</td>
+<td>71.5</td>
+<td>14 ms</td>
+<td>230 (5 × 46)</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-128</code></td>
+<td>init_a</td>
+<td>2.23 M</td>
+<td>827 µs</td>
+<td>1.21e+03</td>
+<td>826 µs</td>
+<td>230 (5 × 46)</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-128</code></td>
+<td>init_b</td>
+<td>2.23 M</td>
+<td>826 µs</td>
+<td>1.21e+03</td>
+<td>826 µs</td>
+<td>230 (5 × 46)</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-128</code></td>
+<td>pass1</td>
+<td>6.60 M</td>
+<td>2.45 ms</td>
+<td>409</td>
+<td>2.45 ms</td>
+<td>230 (5 × 46)</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-128</code></td>
+<td>pass2</td>
+<td>15.46 M</td>
+<td>5.74 ms</td>
+<td>174</td>
+<td>5.74 ms</td>
+<td>230 (5 × 46)</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-128</code></td>
+<td>derive_a</td>
+<td>10.06 M</td>
+<td>3.73 ms</td>
+<td>268</td>
+<td>3.73 ms</td>
+<td>230 (5 × 46)</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-128</code></td>
+<td>derive_b</td>
+<td>1.11 M</td>
+<td>412 µs</td>
+<td>2.43e+03</td>
+<td>412 µs</td>
+<td>230 (5 × 46)</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-256</code></td>
+<td>exchange</td>
+<td>217.58 M</td>
+<td>80.7 ms</td>
+<td>12.4</td>
+<td>80.7 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-256</code></td>
+<td>init_a</td>
+<td>13.26 M</td>
+<td>4.92 ms</td>
+<td>203</td>
+<td>4.92 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-256</code></td>
+<td>init_b</td>
+<td>13.25 M</td>
+<td>4.92 ms</td>
+<td>203</td>
+<td>4.92 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-256</code></td>
+<td>pass1</td>
+<td>39.63 M</td>
+<td>14.7 ms</td>
+<td>68</td>
+<td>14.7 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-256</code></td>
+<td>pass2</td>
+<td>92.24 M</td>
+<td>34.2 ms</td>
+<td>29.2</td>
+<td>34.2 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-256</code></td>
+<td>derive_a</td>
+<td>55.80 M</td>
+<td>20.7 ms</td>
+<td>48.3</td>
+<td>20.7 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-256</code></td>
+<td>derive_b</td>
+<td>3.39 M</td>
+<td>1.26 ms</td>
+<td>795</td>
+<td>1.26 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-384</code></td>
+<td>exchange</td>
+<td>602.41 M</td>
+<td>223 ms</td>
+<td>4.47</td>
+<td>223 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-384</code></td>
+<td>init_a</td>
+<td>36.09 M</td>
+<td>13.4 ms</td>
+<td>74.7</td>
+<td>13.4 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-384</code></td>
+<td>init_b</td>
+<td>36.09 M</td>
+<td>13.4 ms</td>
+<td>74.7</td>
+<td>13.4 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-384</code></td>
+<td>pass1</td>
+<td>108.08 M</td>
+<td>40.1 ms</td>
+<td>24.9</td>
+<td>40.1 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-384</code></td>
+<td>pass2</td>
+<td>252.06 M</td>
+<td>93.5 ms</td>
+<td>10.7</td>
+<td>93.5 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-384</code></td>
+<td>derive_a</td>
+<td>156.81 M</td>
+<td>58.2 ms</td>
+<td>17.2</td>
+<td>58.1 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-384</code></td>
+<td>derive_b</td>
+<td>13.13 M</td>
+<td>4.89 ms</td>
+<td>205</td>
+<td>4.87 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-512</code></td>
+<td>exchange</td>
+<td>1.28 G</td>
+<td>475 ms</td>
+<td>2.11</td>
+<td>474 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-512</code></td>
+<td>init_a</td>
+<td>77.98 M</td>
+<td>28.9 ms</td>
+<td>34.6</td>
+<td>28.9 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-512</code></td>
+<td>init_b</td>
+<td>78.04 M</td>
+<td>29 ms</td>
+<td>34.5</td>
+<td>29 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-512</code></td>
+<td>pass1</td>
+<td>232.89 M</td>
+<td>86.4 ms</td>
+<td>11.6</td>
+<td>86.4 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-512</code></td>
+<td>pass2</td>
+<td>540.80 M</td>
+<td>201 ms</td>
+<td>4.98</td>
+<td>201 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-512</code></td>
+<td>derive_a</td>
+<td>327.84 M</td>
+<td>122 ms</td>
+<td>8.22</td>
+<td>122 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-512</code></td>
+<td>derive_b</td>
+<td>21.19 M</td>
+<td>7.86 ms</td>
+<td>127</td>
+<td>7.86 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-resource-consumption">5. Resource consumption</h2>
+<p>Static memory is approximated by the library's loadable ELF segments; peak memory is the process high-water mark (VmHWM) including the benchmark driver and libc, so both are upper-bound proxies rather than isolated algorithm memory.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>static: ELF image (bytes)</th>
+<th>baseline RSS</th>
+<th>peak RSS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TriQ-KEX-128</code></td>
+<td>exchange</td>
+<td>44624</td>
+<td>3836 KiB</td>
+<td>3900 KiB</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-128</code></td>
+<td>init_a</td>
+<td>44624</td>
+<td>1796 KiB</td>
+<td>1876 KiB</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-128</code></td>
+<td>init_b</td>
+<td>44624</td>
+<td>1796 KiB</td>
+<td>1876 KiB</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-128</code></td>
+<td>pass1</td>
+<td>44624</td>
+<td>3612 KiB</td>
+<td>3676 KiB</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-128</code></td>
+<td>pass2</td>
+<td>44624</td>
+<td>3728 KiB</td>
+<td>3792 KiB</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-128</code></td>
+<td>derive_a</td>
+<td>44624</td>
+<td>3644 KiB</td>
+<td>3708 KiB</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-128</code></td>
+<td>derive_b</td>
+<td>44624</td>
+<td>1796 KiB</td>
+<td>1876 KiB</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-256</code></td>
+<td>exchange</td>
+<td>47836</td>
+<td>4476 KiB</td>
+<td>4540 KiB</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-256</code></td>
+<td>init_a</td>
+<td>47836</td>
+<td>4380 KiB</td>
+<td>4444 KiB</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-256</code></td>
+<td>init_b</td>
+<td>47836</td>
+<td>4356 KiB</td>
+<td>4420 KiB</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-256</code></td>
+<td>pass1</td>
+<td>47836</td>
+<td>4492 KiB</td>
+<td>4556 KiB</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-256</code></td>
+<td>pass2</td>
+<td>47836</td>
+<td>4280 KiB</td>
+<td>4344 KiB</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-256</code></td>
+<td>derive_a</td>
+<td>47836</td>
+<td>4440 KiB</td>
+<td>4504 KiB</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-256</code></td>
+<td>derive_b</td>
+<td>47836</td>
+<td>3788 KiB</td>
+<td>3852 KiB</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-384</code></td>
+<td>exchange</td>
+<td>58368</td>
+<td>5132 KiB</td>
+<td>5196 KiB</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-384</code></td>
+<td>init_a</td>
+<td>58368</td>
+<td>4476 KiB</td>
+<td>5584 KiB</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-384</code></td>
+<td>init_b</td>
+<td>58368</td>
+<td>4848 KiB</td>
+<td>4912 KiB</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-384</code></td>
+<td>pass1</td>
+<td>58368</td>
+<td>5000 KiB</td>
+<td>5568 KiB</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-384</code></td>
+<td>pass2</td>
+<td>58368</td>
+<td>5328 KiB</td>
+<td>5392 KiB</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-384</code></td>
+<td>derive_a</td>
+<td>58368</td>
+<td>5152 KiB</td>
+<td>5644 KiB</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-384</code></td>
+<td>derive_b</td>
+<td>58368</td>
+<td>5384 KiB</td>
+<td>5636 KiB</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-512</code></td>
+<td>exchange</td>
+<td>64824</td>
+<td>6284 KiB</td>
+<td>6348 KiB</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-512</code></td>
+<td>init_a</td>
+<td>64824</td>
+<td>6320 KiB</td>
+<td>6384 KiB</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-512</code></td>
+<td>init_b</td>
+<td>64824</td>
+<td>5960 KiB</td>
+<td>6024 KiB</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-512</code></td>
+<td>pass1</td>
+<td>64824</td>
+<td>5304 KiB</td>
+<td>5368 KiB</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-512</code></td>
+<td>pass2</td>
+<td>64824</td>
+<td>6064 KiB</td>
+<td>6128 KiB</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-512</code></td>
+<td>derive_a</td>
+<td>64824</td>
+<td>5524 KiB</td>
+<td>5588 KiB</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-512</code></td>
+<td>derive_b</td>
+<td>64824</td>
+<td>6012 KiB</td>
+<td>6076 KiB</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="6-transmission-and-storage-overhead">6. Transmission and storage overhead</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>passes</th>
+<th>messages (bytes)</th>
+<th>total</th>
+<th>long-term pk / sk</th>
+<th>shared secret</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TriQ-KEX-128</code></td>
+<td>2</td>
+<td>6148 / 8180</td>
+<td>14328</td>
+<td>2054 / 2134</td>
+<td>16</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-256</code></td>
+<td>2</td>
+<td>18808 / 24952</td>
+<td>43760</td>
+<td>6328 / 6488</td>
+<td>32</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-384</code></td>
+<td>2</td>
+<td>36598 / 48678</td>
+<td>85276</td>
+<td>12255 / 12495</td>
+<td>48</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-512</code></td>
+<td>2</td>
+<td>59096 / 78648</td>
+<td>137744</td>
+<td>19768 / 20088</td>
+<td>64</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="symmetric-primitives">Symmetric primitives</h2>
+<p><a href="../symmetric-survey.html">Survey</a> verdict: <strong>ICCS-only</strong></p>
+<p>Share of each operation spent in the ICCS placeholder hash functions and in the ICCS DRNG (reference build, measured in the same run with link-time wrappers):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>pseudohash/XOF/sm3</th>
+<th>DRNG</th>
+<th>calls per operation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TriQ-KEX-128</code></td>
+<td>exchange</td>
+<td>11%</td>
+<td>0.2%</td>
+<td>drng 14, pseudoXOF 74.6</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-256</code></td>
+<td>exchange</td>
+<td>5.3%</td>
+<td>0.0%</td>
+<td>drng 14, pseudoXOF 65.9, pseudohash 9</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-384</code></td>
+<td>exchange</td>
+<td>6.3%</td>
+<td>0.0%</td>
+<td>drng 14, pseudoXOF 70.7, pseudohash 9</td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-512</code></td>
+<td>exchange</td>
+<td>5.6%</td>
+<td>0.0%</td>
+<td>drng 14, pseudoXOF 63, pseudohash 17</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="7-raw-evidence-index">7. Raw evidence index</h2>
+<p>Paths are relative to <code>performance/data/arm_1/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>; each JSON file records its commands, environment and trials.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>item</th>
+<th>file</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TriQ-KEX-128</code></td>
+<td>KAT log (sha256 <code>b53a7b6ac1262b30…</code>)</td>
+<td><code>kat/kex-09/TriQ-KEX-128.log</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-128</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-09/TriQ-KEX-128__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-128</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-09/TriQ-KEX-128__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-128</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-09/TriQ-KEX-128__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-128</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-09/TriQ-KEX-128__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-128</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-09/TriQ-KEX-128__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-128</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-09/TriQ-KEX-128__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-128</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-09/TriQ-KEX-128__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-128</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-09/TriQ-KEX-128__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-256</code></td>
+<td>KAT log (sha256 <code>ff3859812595cf76…</code>)</td>
+<td><code>kat/kex-09/TriQ-KEX-256.log</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-256</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-09/TriQ-KEX-256__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-256</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-09/TriQ-KEX-256__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-256</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-09/TriQ-KEX-256__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-256</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-09/TriQ-KEX-256__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-256</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-09/TriQ-KEX-256__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-256</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-09/TriQ-KEX-256__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-256</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-09/TriQ-KEX-256__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-256</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-09/TriQ-KEX-256__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-384</code></td>
+<td>KAT log (sha256 <code>bb396809c1d4bb7c…</code>)</td>
+<td><code>kat/kex-09/TriQ-KEX-384.log</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-384</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-09/TriQ-KEX-384__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-384</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-09/TriQ-KEX-384__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-384</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-09/TriQ-KEX-384__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-384</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-09/TriQ-KEX-384__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-384</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-09/TriQ-KEX-384__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-384</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-09/TriQ-KEX-384__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-384</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-09/TriQ-KEX-384__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-384</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-09/TriQ-KEX-384__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-512</code></td>
+<td>KAT log (sha256 <code>2b6807a92bffa604…</code>)</td>
+<td><code>kat/kex-09/TriQ-KEX-512.log</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-512</code></td>
+<td>timing derive_a</td>
+<td><code>records/kex-09/TriQ-KEX-512__derive_a.json</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-512</code></td>
+<td>timing derive_b</td>
+<td><code>records/kex-09/TriQ-KEX-512__derive_b.json</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-512</code></td>
+<td>timing exchange</td>
+<td><code>records/kex-09/TriQ-KEX-512__exchange.json</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-512</code></td>
+<td>timing init_a</td>
+<td><code>records/kex-09/TriQ-KEX-512__init_a.json</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-512</code></td>
+<td>timing init_b</td>
+<td><code>records/kex-09/TriQ-KEX-512__init_b.json</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-512</code></td>
+<td>timing pass1</td>
+<td><code>records/kex-09/TriQ-KEX-512__pass1.json</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-512</code></td>
+<td>timing pass2</td>
+<td><code>records/kex-09/TriQ-KEX-512__pass2.json</code></td>
+</tr>
+<tr>
+<td><code>TriQ-KEX-512</code></td>
+<td>hash profile exchange</td>
+<td><code>profile/kex-09/TriQ-KEX-512__exchange.json</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Scripts: <code>performance/campaign.py</code>, <code>performance/ngcc_perf.c</code>, <code>performance/hashprof/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

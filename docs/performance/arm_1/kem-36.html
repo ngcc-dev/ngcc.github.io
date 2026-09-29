@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: kem-36 TRIKE — performance on AArch64 (system arm1)</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=808fa5e8">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
+<nav><a href="../../index.html">Home</a><a href="../../reports/index.html">Security</a><a href="../../performance/index.html">Performance</a><a href="../../constant-time/index.html">Side-Channel</a></nav>
+</header>
+<main class="">
+<!-- synchronized from harness: kem-36/perf_arm_1.md -->
+<h1 id="kem-36-trike-performance-on-aarch64-system-arm_1">kem-36 TRIKE — performance on AArch64 (system arm_1)</h1>
+<p><a href="index.html">Performance arm_1</a> › <code>kem-36</code> · <a href="method.html">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560881424453632.html">NICCS page</a></p>
+<p><strong>Systems:</strong> <a href="../x86_1/kem-36.html">x86_1</a> · <strong>arm_1</strong></p>
+<p>Independent measurement following the structure of the NICCS ARM self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.</p>
+<h2 id="1-basic-information">1. Basic information</h2>
+<ul>
+<li>Category: public-key algorithm; function: key encapsulation</li>
+<li>Algorithm: TRIKE</li>
+<li>Implementation versions measured: reference</li>
+<li>Parameter sets: <code>TRIKE-2</code>, <code>TRIKE-5</code>, <code>TRIKE-7</code>, <code>TRIKE-9</code></li>
+</ul>
+<h2 id="2-assessment-environment">2. Assessment environment</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>item</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>processor</td>
+<td>Qualcomm Oryon (CPU 2, one core)</td>
+</tr>
+<tr>
+<td>machine</td>
+<td>ASUS Vivobook S 15</td>
+</tr>
+<tr>
+<td>clock</td>
+<td>fixed 2.71 GHz (governor performance, minimum = maximum), boost off, SMT none</td>
+</tr>
+<tr>
+<td>memory</td>
+<td>30562 MiB</td>
+</tr>
+<tr>
+<td>OS / kernel</td>
+<td>Ubuntu 26.04.1 LTS / 7.0.0-34-generic</td>
+</tr>
+<tr>
+<td>compiler / build tool</td>
+<td>gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0 / cmake version 4.2.3</td>
+</tr>
+<tr>
+<td>campaign start / end (UTC)</td>
+<td>2026-09-28T15:05:46 / 2026-09-29T08:43:52</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="3-functional-testing-kat">3. Functional testing (KAT)</h2>
+<p>Each library was checked against the submitted KAT vectors (SHA-256 manifest <code>kem-36/kat.sha256</code> in the harness) before timing.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>build flags</th>
+<th>KAT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TRIKE-2</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>TRIKE-5</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>TRIKE-7</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>TRIKE-9</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="4-performance">4. Performance</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>mean cycles</th>
+<th>mean time</th>
+<th>ops/s</th>
+<th>median trial</th>
+<th>n (trials × iters)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TRIKE-2</code></td>
+<td>keygen</td>
+<td>63.90 M</td>
+<td>23.7 ms</td>
+<td>42.2</td>
+<td>23.5 ms</td>
+<td>135 (5 × 27)</td>
+</tr>
+<tr>
+<td><code>TRIKE-2</code></td>
+<td>enc</td>
+<td>6.65 M</td>
+<td>2.47 ms</td>
+<td>405</td>
+<td>2.46 ms</td>
+<td>1285 (5 × 257)</td>
+</tr>
+<tr>
+<td><code>TRIKE-2</code></td>
+<td>dec</td>
+<td>35.18 M</td>
+<td>13.1 ms</td>
+<td>76.6</td>
+<td>13.1 ms</td>
+<td>245 (5 × 49)</td>
+</tr>
+<tr>
+<td><code>TRIKE-5</code></td>
+<td>keygen</td>
+<td>474.51 M</td>
+<td>176 ms</td>
+<td>5.68</td>
+<td>176 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>TRIKE-5</code></td>
+<td>enc</td>
+<td>45.93 M</td>
+<td>17 ms</td>
+<td>58.7</td>
+<td>17 ms</td>
+<td>190 (5 × 38)</td>
+</tr>
+<tr>
+<td><code>TRIKE-5</code></td>
+<td>dec</td>
+<td>133.26 M</td>
+<td>49.4 ms</td>
+<td>20.2</td>
+<td>49.4 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>TRIKE-7</code></td>
+<td>keygen</td>
+<td>1.54 G</td>
+<td>572 ms</td>
+<td>1.75</td>
+<td>572 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>TRIKE-7</code></td>
+<td>enc</td>
+<td>133.31 M</td>
+<td>49.5 ms</td>
+<td>20.2</td>
+<td>49.5 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>TRIKE-7</code></td>
+<td>dec</td>
+<td>405.06 M</td>
+<td>150 ms</td>
+<td>6.65</td>
+<td>150 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>TRIKE-9</code></td>
+<td>keygen</td>
+<td>1.94 G</td>
+<td>720 ms</td>
+<td>1.39</td>
+<td>720 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>TRIKE-9</code></td>
+<td>enc</td>
+<td>136.51 M</td>
+<td>50.6 ms</td>
+<td>19.7</td>
+<td>50.6 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+<tr>
+<td><code>TRIKE-9</code></td>
+<td>dec</td>
+<td>796.85 M</td>
+<td>296 ms</td>
+<td>3.38</td>
+<td>296 ms</td>
+<td>100 (5 × 20)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-resource-consumption">5. Resource consumption</h2>
+<p>Static memory is approximated by the library's loadable ELF segments; peak memory is the process high-water mark (VmHWM) including the benchmark driver and libc, so both are upper-bound proxies rather than isolated algorithm memory.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>static: ELF image (bytes)</th>
+<th>baseline RSS</th>
+<th>peak RSS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TRIKE-2</code></td>
+<td>keygen</td>
+<td>27408</td>
+<td>1424 KiB</td>
+<td>1548 KiB</td>
+</tr>
+<tr>
+<td><code>TRIKE-2</code></td>
+<td>enc</td>
+<td>27408</td>
+<td>1492 KiB</td>
+<td>1560 KiB</td>
+</tr>
+<tr>
+<td><code>TRIKE-2</code></td>
+<td>dec</td>
+<td>27408</td>
+<td>1660 KiB</td>
+<td>3840 KiB</td>
+</tr>
+<tr>
+<td><code>TRIKE-5</code></td>
+<td>keygen</td>
+<td>27840</td>
+<td>1444 KiB</td>
+<td>3740 KiB</td>
+</tr>
+<tr>
+<td><code>TRIKE-5</code></td>
+<td>enc</td>
+<td>27840</td>
+<td>3556 KiB</td>
+<td>3620 KiB</td>
+</tr>
+<tr>
+<td><code>TRIKE-5</code></td>
+<td>dec</td>
+<td>27840</td>
+<td>3656 KiB</td>
+<td>3996 KiB</td>
+</tr>
+<tr>
+<td><code>TRIKE-7</code></td>
+<td>keygen</td>
+<td>27736</td>
+<td>3468 KiB</td>
+<td>3848 KiB</td>
+</tr>
+<tr>
+<td><code>TRIKE-7</code></td>
+<td>enc</td>
+<td>27736</td>
+<td>3648 KiB</td>
+<td>3712 KiB</td>
+</tr>
+<tr>
+<td><code>TRIKE-7</code></td>
+<td>dec</td>
+<td>27736</td>
+<td>3600 KiB</td>
+<td>4028 KiB</td>
+</tr>
+<tr>
+<td><code>TRIKE-9</code></td>
+<td>keygen</td>
+<td>27576</td>
+<td>1504 KiB</td>
+<td>3772 KiB</td>
+</tr>
+<tr>
+<td><code>TRIKE-9</code></td>
+<td>enc</td>
+<td>27576</td>
+<td>3848 KiB</td>
+<td>3912 KiB</td>
+</tr>
+<tr>
+<td><code>TRIKE-9</code></td>
+<td>dec</td>
+<td>27576</td>
+<td>3900 KiB</td>
+<td>5592 KiB</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="6-transmission-and-storage-overhead">6. Transmission and storage overhead</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>public key</th>
+<th>secret key</th>
+<th>ciphertext</th>
+<th>shared secret</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TRIKE-2</code></td>
+<td>1980</td>
+<td>6328</td>
+<td>3928</td>
+<td>32</td>
+</tr>
+<tr>
+<td><code>TRIKE-5</code></td>
+<td>4453</td>
+<td>13988</td>
+<td>8874</td>
+<td>32</td>
+</tr>
+<tr>
+<td><code>TRIKE-7</code></td>
+<td>8776</td>
+<td>27260</td>
+<td>17488</td>
+<td>64</td>
+</tr>
+<tr>
+<td><code>TRIKE-9</code></td>
+<td>14320</td>
+<td>44228</td>
+<td>28576</td>
+<td>64</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="symmetric-primitives">Symmetric primitives</h2>
+<p><a href="../symmetric-survey.html">Survey</a> verdict: <strong>ICCS-only</strong></p>
+<p>Share of each operation spent in the ICCS placeholder hash functions and in the ICCS DRNG (reference build, measured in the same run with link-time wrappers):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>pseudohash/XOF/sm3</th>
+<th>DRNG</th>
+<th>calls per operation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TRIKE-2</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>1.2%</td>
+<td>drng 113</td>
+</tr>
+<tr>
+<td><code>TRIKE-2</code></td>
+<td>enc</td>
+<td>6.3%</td>
+<td>21%</td>
+<td>drng 267, pseudohash 2</td>
+</tr>
+<tr>
+<td><code>TRIKE-2</code></td>
+<td>dec</td>
+<td>1.2%</td>
+<td>3.9%</td>
+<td>drng 266, pseudohash 2</td>
+</tr>
+<tr>
+<td><code>TRIKE-5</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>0.3%</td>
+<td>drng 171</td>
+</tr>
+<tr>
+<td><code>TRIKE-5</code></td>
+<td>enc</td>
+<td>2.0%</td>
+<td>5.3%</td>
+<td>drng 433, pseudohash 2</td>
+</tr>
+<tr>
+<td><code>TRIKE-5</code></td>
+<td>dec</td>
+<td>0.7%</td>
+<td>1.8%</td>
+<td>drng 432, pseudohash 2</td>
+</tr>
+<tr>
+<td><code>TRIKE-7</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>0.1%</td>
+<td>drng 255</td>
+</tr>
+<tr>
+<td><code>TRIKE-7</code></td>
+<td>enc</td>
+<td>1.3%</td>
+<td>3.0%</td>
+<td>drng 663, pseudohash 2</td>
+</tr>
+<tr>
+<td><code>TRIKE-7</code></td>
+<td>dec</td>
+<td>0.4%</td>
+<td>1.0%</td>
+<td>drng 662, pseudohash 2</td>
+</tr>
+<tr>
+<td><code>TRIKE-9</code></td>
+<td>keygen</td>
+<td>0.0%</td>
+<td>0.2%</td>
+<td>drng 339</td>
+</tr>
+<tr>
+<td><code>TRIKE-9</code></td>
+<td>enc</td>
+<td>2.1%</td>
+<td>4.1%</td>
+<td>drng 881, pseudohash 2</td>
+</tr>
+<tr>
+<td><code>TRIKE-9</code></td>
+<td>dec</td>
+<td>0.4%</td>
+<td>0.7%</td>
+<td>drng 880, pseudohash 2</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="7-raw-evidence-index">7. Raw evidence index</h2>
+<p>Paths are relative to <code>performance/data/arm_1/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>; each JSON file records its commands, environment and trials.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>item</th>
+<th>file</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TRIKE-2</code></td>
+<td>KAT log (sha256 <code>45ce672140b72918…</code>)</td>
+<td><code>kat/kem-36/TRIKE-2.log</code></td>
+</tr>
+<tr>
+<td><code>TRIKE-2</code></td>
+<td>timing dec</td>
+<td><code>records/kem-36/TRIKE-2__dec.json</code></td>
+</tr>
+<tr>
+<td><code>TRIKE-2</code></td>
+<td>timing enc</td>
+<td><code>records/kem-36/TRIKE-2__enc.json</code></td>
+</tr>
+<tr>
+<td><code>TRIKE-2</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-36/TRIKE-2__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>TRIKE-2</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-36/TRIKE-2__dec.json</code></td>
+</tr>
+<tr>
+<td><code>TRIKE-2</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-36/TRIKE-2__enc.json</code></td>
+</tr>
+<tr>
+<td><code>TRIKE-2</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-36/TRIKE-2__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>TRIKE-5</code></td>
+<td>KAT log (sha256 <code>f03ad615d441c702…</code>)</td>
+<td><code>kat/kem-36/TRIKE-5.log</code></td>
+</tr>
+<tr>
+<td><code>TRIKE-5</code></td>
+<td>timing dec</td>
+<td><code>records/kem-36/TRIKE-5__dec.json</code></td>
+</tr>
+<tr>
+<td><code>TRIKE-5</code></td>
+<td>timing enc</td>
+<td><code>records/kem-36/TRIKE-5__enc.json</code></td>
+</tr>
+<tr>
+<td><code>TRIKE-5</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-36/TRIKE-5__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>TRIKE-5</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-36/TRIKE-5__dec.json</code></td>
+</tr>
+<tr>
+<td><code>TRIKE-5</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-36/TRIKE-5__enc.json</code></td>
+</tr>
+<tr>
+<td><code>TRIKE-5</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-36/TRIKE-5__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>TRIKE-7</code></td>
+<td>KAT log (sha256 <code>62cc4313b653022e…</code>)</td>
+<td><code>kat/kem-36/TRIKE-7.log</code></td>
+</tr>
+<tr>
+<td><code>TRIKE-7</code></td>
+<td>timing dec</td>
+<td><code>records/kem-36/TRIKE-7__dec.json</code></td>
+</tr>
+<tr>
+<td><code>TRIKE-7</code></td>
+<td>timing enc</td>
+<td><code>records/kem-36/TRIKE-7__enc.json</code></td>
+</tr>
+<tr>
+<td><code>TRIKE-7</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-36/TRIKE-7__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>TRIKE-7</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-36/TRIKE-7__dec.json</code></td>
+</tr>
+<tr>
+<td><code>TRIKE-7</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-36/TRIKE-7__enc.json</code></td>
+</tr>
+<tr>
+<td><code>TRIKE-7</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-36/TRIKE-7__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>TRIKE-9</code></td>
+<td>KAT log (sha256 <code>ca06ad9161d1d573…</code>)</td>
+<td><code>kat/kem-36/TRIKE-9.log</code></td>
+</tr>
+<tr>
+<td><code>TRIKE-9</code></td>
+<td>timing dec</td>
+<td><code>records/kem-36/TRIKE-9__dec.json</code></td>
+</tr>
+<tr>
+<td><code>TRIKE-9</code></td>
+<td>timing enc</td>
+<td><code>records/kem-36/TRIKE-9__enc.json</code></td>
+</tr>
+<tr>
+<td><code>TRIKE-9</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-36/TRIKE-9__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>TRIKE-9</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-36/TRIKE-9__dec.json</code></td>
+</tr>
+<tr>
+<td><code>TRIKE-9</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-36/TRIKE-9__enc.json</code></td>
+</tr>
+<tr>
+<td><code>TRIKE-9</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-36/TRIKE-9__keygen.json</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Scripts: <code>performance/campaign.py</code>, <code>performance/ngcc_perf.c</code>, <code>performance/hashprof/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

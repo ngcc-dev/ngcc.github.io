@@ -22,11 +22,15 @@ The specified QuickSilver relation fails to enforce two nonzero conditions. Set 
 
 We reran the pinned attack against all six affected full reference parameter sets. Each secret-key buffer was erased before attack construction, direct Lynx evaluation confirmed that the forged key was not a victim preimage, the ordinary submitted verifier accepted the fresh-message signature, and a changed-message control rejected. The 160-bit relations differ and are not claimed to be vulnerable.
 
-The Lynxer team confirms the flaw, reports that the Center for Cryptology Study at Tsinghua University found it independently, and replaces the original S-boxes with inversion in [ePrint 2026/1099](https://eprint.iacr.org/2026/1099). That revision is intended to enforce the relation over the full key space and blocks this attack; the archived Round 1 submission remains affected.
+The Lynxer team confirms the flaw and reports that the Center for Cryptology Study at Tsinghua University found it independently. The archived Round 1 submission remains the target of this finding.
 
 Liu et al. independently formalize the same null-branch witness mechanism, prove public-key-only forgery for the affected 256-, 384-, and 512-bit Lynxer relations, and report accepted fresh-message forgeries. Their separate Lynx-192 analysis concerns another upstream variant and does not extend this finding to the archived NGCC 160-bit sets.
 
-On 2026-09-29 the Lynxer team also [released a targeted modification note](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/3HMAZXK7HD6JDLF5BJVYWDECM2SF5N3M/) for the anomalous-point attack. It concerns the repaired revision, not the archived Round 1 package tested here.
+On 2026-09-29 the Lynxer team also [released a targeted modification note](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/3HMAZXK7HD6JDLF5BJVYWDECM2SF5N3M/) for its later revision, not the archived Round 1 package tested here.
+
+### Proposed fixes
+
+The [Lynxer team's response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/TJ3HPFROBMZMNMEHDEC3IQRO7R7QHQAQ/) proposes replacing the original S-boxes with inversion as described in [ePrint 2026/1099](https://eprint.iacr.org/2026/1099). Its later [targeted-modification note](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/3HMAZXK7HD6JDLF5BJVYWDECM2SF5N3M/) describes an additional proposal for the revised construction. This section records the proposals without evaluating them.
 
 ### Reproducing
 

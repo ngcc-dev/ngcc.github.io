@@ -3,6 +3,8 @@
 
 [Performance x86_1](index.md) › `hash-22` · [method](method.md) · [NICCS page](https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101536571221692416.html)
 
+**Systems:** **x86_1** · [arm_1](../arm_1/hash-22.md)
+
 Independent measurement following the structure of the NICCS x86 self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.
 
 ## 1. Basic information

@@ -114,6 +114,10 @@ SQIsignTriangle claims EUF-CMA security (§6.4, Theorem 4), which one signing qu
 
 We reran three deterministic fresh-key trials at each of the 128-, 160-, 256-, and 512-bit sets. Every first response met the sufficient condition; every transformed signature was accepted on its unqueried target and rejected on its source, while the genuine signature showed the opposite behavior. The observed response exponents were 219–895 and all 12 public transformations completed in under one second on this host. The submission gives no lower-tail bound for honest response sizes, so this establishes practical success on the tested executions rather than a proof that every first response is eligible; an attacker can request another signature after an ineligible response.
 
+### Proposed fixes
+
+The [SQIsignTriangle team's 2026-09-29 response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/LPKVMFEKL6SOLLJBMLYNMXCNQNL5R4P7/) proposes checking the actual response degree for the challenged codomain factor using Weil pairings and the degree bound, and clarifying a canonical commitment encoding for the hash input. It credits Tako Boris Fouotsa with the earlier missing-check observation and canonical-encoding proposal. This records the submitters' proposal without evaluating it.
+
 ### Reproducing
 
 ```sh

@@ -43,7 +43,11 @@ Step 9 of Algorithm 7 accepts every signing attempt when the hidden branch bit i
 
 We replayed the pinned PoC's accumulators from 20,000,000 DARTS-128 signatures. The collector derives them only from decoded public signature fields. The full data estimated 19,983,582 samples, measured a `656.87`-sigma signal, and recovered all secret polynomials after 40,342 public-relation candidates. The recovered bytes before the independent signing seed matched the submitted secret-key control exactly. Setting that irrelevant seed to zero still produced a fresh-message signature accepted by the untouched submitted verifier; changing one message byte was rejected. This is therefore equivalent signing-key recovery and an EUF-CMA forgery, not merely a distinguisher.
 
-Feussner independently reports full DARTS-128 recovery and fresh-message forgery from 17,000,000 signatures using negacyclic normal equations, ternary classification, and Kannan/BKZ completion. The DARTS team confirms that both attacks exploit the same omitted factor `2` in Step 9: the submitted comparison uses `(1-b)c*alpha` where the intended symmetric test uses `(1-2b)c*alpha`.
+Feussner independently reports full DARTS-128 recovery and fresh-message forgery from 17,000,000 signatures using negacyclic normal equations, ternary classification, and Kannan/BKZ completion. The DARTS team confirms that both attacks exploit the same omitted factor `2` in Step 9.
+
+### Proposed fixes
+
+The [DARTS team's response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/3XGOCUUIBO5UJ5C4GQKIIWR3AHAQNI2X/) proposes replacing the submitted `(1-b)c*alpha` comparison term by `(1-2b)c*alpha`. This section records the proposal without evaluating it.
 
 ### Reproducing
 

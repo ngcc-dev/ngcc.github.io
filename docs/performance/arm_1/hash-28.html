@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: hash-28 The XRH-1 Hash Function — performance on AArch64 (system arm1)</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=808fa5e8">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
+<nav><a href="../../index.html">Home</a><a href="../../reports/index.html">Security</a><a href="../../performance/index.html">Performance</a><a href="../../constant-time/index.html">Side-Channel</a></nav>
+</header>
+<main class="">
+<!-- synchronized from harness: hash-28/perf_arm_1.md -->
+<h1 id="hash-28-the-xrh-1-hash-function-performance-on-aarch64-system-arm_1">hash-28 The XRH-1 Hash Function — performance on AArch64 (system arm_1)</h1>
+<p><a href="index.html">Performance arm_1</a> › <code>hash-28</code> · <a href="method.html">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101535400742440960.html">NICCS page</a></p>
+<p><strong>Systems:</strong> <a href="../x86_1/hash-28.html">x86_1</a> · <strong>arm_1</strong></p>
+<p>Independent measurement following the structure of the NICCS ARM self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.</p>
+<h2 id="1-basic-information">1. Basic information</h2>
+<ul>
+<li>Category: cryptographic hash algorithm; function: hash</li>
+<li>Algorithm: The XRH-1 Hash Function</li>
+<li>Implementation versions measured: reference</li>
+<li>Parameter sets: <code>XRH-1-512</code>, <code>XRH-1-768</code>, <code>XRH-1-1024</code></li>
+</ul>
+<h2 id="2-assessment-environment">2. Assessment environment</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>item</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>processor</td>
+<td>Qualcomm Oryon (CPU 2, one core)</td>
+</tr>
+<tr>
+<td>machine</td>
+<td>ASUS Vivobook S 15</td>
+</tr>
+<tr>
+<td>clock</td>
+<td>fixed 2.71 GHz (governor performance, minimum = maximum), boost off, SMT none</td>
+</tr>
+<tr>
+<td>memory</td>
+<td>30562 MiB</td>
+</tr>
+<tr>
+<td>OS / kernel</td>
+<td>Ubuntu 26.04.1 LTS / 7.0.0-34-generic</td>
+</tr>
+<tr>
+<td>compiler / build tool</td>
+<td>gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0 / cmake version 4.2.3</td>
+</tr>
+<tr>
+<td>campaign start / end (UTC)</td>
+<td>2026-09-28T15:05:46 / 2026-09-29T08:43:52</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="3-functional-testing-kat">3. Functional testing (KAT)</h2>
+<p>Each library was checked against the submitted KAT vectors (SHA-256 manifest <code>hash-28/kat.sha256</code> in the harness) before timing.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>build flags</th>
+<th>KAT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>XRH-1-512</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>XRH-1-768</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>XRH-1-1024</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="4-performance">4. Performance</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>message</th>
+<th>mean cycles</th>
+<th>cycles/byte</th>
+<th>mean time</th>
+<th>MB/s</th>
+<th>n</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>XRH-1-512</code></td>
+<td>32 B</td>
+<td>1308</td>
+<td>40.9</td>
+<td>487 ns</td>
+<td>65.8</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>XRH-1-512</code></td>
+<td>128 B</td>
+<td>2588</td>
+<td>20.2</td>
+<td>963 ns</td>
+<td>133.0</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>XRH-1-512</code></td>
+<td>512 B</td>
+<td>7727</td>
+<td>15.1</td>
+<td>2.87 µs</td>
+<td>178.5</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>XRH-1-512</code></td>
+<td>1024 B</td>
+<td>15.4 k</td>
+<td>15.1</td>
+<td>5.73 µs</td>
+<td>178.8</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>XRH-1-512</code></td>
+<td>4096 B</td>
+<td>64.5 k</td>
+<td>15.8</td>
+<td>24 µs</td>
+<td>171.0</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>XRH-1-512</code></td>
+<td>8192 B</td>
+<td>120.3 k</td>
+<td>14.7</td>
+<td>44.6 µs</td>
+<td>183.5</td>
+<td>67230 (5 × 13446)</td>
+</tr>
+<tr>
+<td><code>XRH-1-512</code></td>
+<td>16384 B</td>
+<td>239.2 k</td>
+<td>14.6</td>
+<td>88.8 µs</td>
+<td>184.5</td>
+<td>34960 (5 × 6992)</td>
+</tr>
+<tr>
+<td><code>XRH-1-512</code></td>
+<td>65536 B</td>
+<td>953.0 k</td>
+<td>14.5</td>
+<td>354 µs</td>
+<td>185.3</td>
+<td>8920 (5 × 1784)</td>
+</tr>
+<tr>
+<td><code>XRH-1-768</code></td>
+<td>32 B</td>
+<td>2555</td>
+<td>79.9</td>
+<td>950 ns</td>
+<td>33.7</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>XRH-1-768</code></td>
+<td>128 B</td>
+<td>5127</td>
+<td>40.1</td>
+<td>1.9 µs</td>
+<td>67.2</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>XRH-1-768</code></td>
+<td>512 B</td>
+<td>14.2 k</td>
+<td>27.7</td>
+<td>5.27 µs</td>
+<td>97.2</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>XRH-1-768</code></td>
+<td>1024 B</td>
+<td>25.8 k</td>
+<td>25.2</td>
+<td>9.58 µs</td>
+<td>106.9</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>XRH-1-768</code></td>
+<td>4096 B</td>
+<td>96.8 k</td>
+<td>23.6</td>
+<td>35.9 µs</td>
+<td>114.0</td>
+<td>81495 (5 × 16299)</td>
+</tr>
+<tr>
+<td><code>XRH-1-768</code></td>
+<td>8192 B</td>
+<td>191.0 k</td>
+<td>23.3</td>
+<td>70.9 µs</td>
+<td>115.6</td>
+<td>43365 (5 × 8673)</td>
+</tr>
+<tr>
+<td><code>XRH-1-768</code></td>
+<td>16384 B</td>
+<td>379.7 k</td>
+<td>23.2</td>
+<td>141 µs</td>
+<td>116.3</td>
+<td>22175 (5 × 4435)</td>
+</tr>
+<tr>
+<td><code>XRH-1-768</code></td>
+<td>65536 B</td>
+<td>1.51 M</td>
+<td>23.1</td>
+<td>561 µs</td>
+<td>116.7</td>
+<td>5630 (5 × 1126)</td>
+</tr>
+<tr>
+<td><code>XRH-1-1024</code></td>
+<td>32 B</td>
+<td>8857</td>
+<td>276.8</td>
+<td>3.29 µs</td>
+<td>9.7</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>XRH-1-1024</code></td>
+<td>128 B</td>
+<td>14.1 k</td>
+<td>109.8</td>
+<td>5.22 µs</td>
+<td>24.5</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>XRH-1-1024</code></td>
+<td>512 B</td>
+<td>34.8 k</td>
+<td>68.1</td>
+<td>12.9 µs</td>
+<td>39.6</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>XRH-1-1024</code></td>
+<td>1024 B</td>
+<td>62.1 k</td>
+<td>60.7</td>
+<td>23.1 µs</td>
+<td>44.4</td>
+<td>100000 (5 × 20000)</td>
+</tr>
+<tr>
+<td><code>XRH-1-1024</code></td>
+<td>4096 B</td>
+<td>244.4 k</td>
+<td>59.7</td>
+<td>90.7 µs</td>
+<td>45.2</td>
+<td>36285 (5 × 7257)</td>
+</tr>
+<tr>
+<td><code>XRH-1-1024</code></td>
+<td>8192 B</td>
+<td>450.7 k</td>
+<td>55.0</td>
+<td>167 µs</td>
+<td>49.0</td>
+<td>18715 (5 × 3743)</td>
+</tr>
+<tr>
+<td><code>XRH-1-1024</code></td>
+<td>16384 B</td>
+<td>894.0 k</td>
+<td>54.6</td>
+<td>332 µs</td>
+<td>49.4</td>
+<td>9515 (5 × 1903)</td>
+</tr>
+<tr>
+<td><code>XRH-1-1024</code></td>
+<td>65536 B</td>
+<td>3.56 M</td>
+<td>54.3</td>
+<td>1.32 ms</td>
+<td>49.7</td>
+<td>2390 (5 × 478)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-resource-consumption">5. Resource consumption</h2>
+<p>Static memory is approximated by the library's loadable ELF segments; peak memory is the process high-water mark (VmHWM) including the benchmark driver and libc, so both are upper-bound proxies rather than isolated algorithm memory.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>static: ELF image (bytes)</th>
+<th>baseline RSS</th>
+<th>peak RSS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>XRH-1-512</code></td>
+<td>hash_32</td>
+<td>13156</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>XRH-1-512</code></td>
+<td>hash_128</td>
+<td>13156</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>XRH-1-512</code></td>
+<td>hash_512</td>
+<td>13156</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>XRH-1-512</code></td>
+<td>hash_1024</td>
+<td>13156</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>XRH-1-512</code></td>
+<td>hash_4096</td>
+<td>13156</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>XRH-1-512</code></td>
+<td>hash_8192</td>
+<td>13156</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>XRH-1-512</code></td>
+<td>hash_16384</td>
+<td>13156</td>
+<td>1416 KiB</td>
+<td>1480 KiB</td>
+</tr>
+<tr>
+<td><code>XRH-1-512</code></td>
+<td>hash_65536</td>
+<td>13156</td>
+<td>3504 KiB</td>
+<td>3568 KiB</td>
+</tr>
+<tr>
+<td><code>XRH-1-768</code></td>
+<td>hash_32</td>
+<td>13156</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>XRH-1-768</code></td>
+<td>hash_128</td>
+<td>13156</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>XRH-1-768</code></td>
+<td>hash_512</td>
+<td>13156</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>XRH-1-768</code></td>
+<td>hash_1024</td>
+<td>13156</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>XRH-1-768</code></td>
+<td>hash_4096</td>
+<td>13156</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>XRH-1-768</code></td>
+<td>hash_8192</td>
+<td>13156</td>
+<td>1408 KiB</td>
+<td>1472 KiB</td>
+</tr>
+<tr>
+<td><code>XRH-1-768</code></td>
+<td>hash_16384</td>
+<td>13156</td>
+<td>1416 KiB</td>
+<td>1480 KiB</td>
+</tr>
+<tr>
+<td><code>XRH-1-768</code></td>
+<td>hash_65536</td>
+<td>13156</td>
+<td>1464 KiB</td>
+<td>1528 KiB</td>
+</tr>
+<tr>
+<td><code>XRH-1-1024</code></td>
+<td>hash_32</td>
+<td>13156</td>
+<td>3436 KiB</td>
+<td>3500 KiB</td>
+</tr>
+<tr>
+<td><code>XRH-1-1024</code></td>
+<td>hash_128</td>
+<td>13156</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>XRH-1-1024</code></td>
+<td>hash_512</td>
+<td>13156</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>XRH-1-1024</code></td>
+<td>hash_1024</td>
+<td>13156</td>
+<td>1400 KiB</td>
+<td>1464 KiB</td>
+</tr>
+<tr>
+<td><code>XRH-1-1024</code></td>
+<td>hash_4096</td>
+<td>13156</td>
+<td>1404 KiB</td>
+<td>1468 KiB</td>
+</tr>
+<tr>
+<td><code>XRH-1-1024</code></td>
+<td>hash_8192</td>
+<td>13156</td>
+<td>1408 KiB</td>
+<td>1472 KiB</td>
+</tr>
+<tr>
+<td><code>XRH-1-1024</code></td>
+<td>hash_16384</td>
+<td>13156</td>
+<td>1416 KiB</td>
+<td>1480 KiB</td>
+</tr>
+<tr>
+<td><code>XRH-1-1024</code></td>
+<td>hash_65536</td>
+<td>13156</td>
+<td>1464 KiB</td>
+<td>1528 KiB</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="7-raw-evidence-index">7. Raw evidence index</h2>
+<p>Paths are relative to <code>performance/data/arm_1/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>; each JSON file records its commands, environment and trials.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>item</th>
+<th>file</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>XRH-1-512</code></td>
+<td>KAT log (sha256 <code>c2d321d39c32dc1f…</code>)</td>
+<td><code>kat/hash-28/XRH-1-512.log</code></td>
+</tr>
+<tr>
+<td><code>XRH-1-512</code></td>
+<td>timing hash_1024</td>
+<td><code>records/hash-28/XRH-1-512__hash_1024.json</code></td>
+</tr>
+<tr>
+<td><code>XRH-1-512</code></td>
+<td>timing hash_128</td>
+<td><code>records/hash-28/XRH-1-512__hash_128.json</code></td>
+</tr>
+<tr>
+<td><code>XRH-1-512</code></td>
+<td>timing hash_16384</td>
+<td><code>records/hash-28/XRH-1-512__hash_16384.json</code></td>
+</tr>
+<tr>
+<td><code>XRH-1-512</code></td>
+<td>timing hash_32</td>
+<td><code>records/hash-28/XRH-1-512__hash_32.json</code></td>
+</tr>
+<tr>
+<td><code>XRH-1-512</code></td>
+<td>timing hash_4096</td>
+<td><code>records/hash-28/XRH-1-512__hash_4096.json</code></td>
+</tr>
+<tr>
+<td><code>XRH-1-512</code></td>
+<td>timing hash_512</td>
+<td><code>records/hash-28/XRH-1-512__hash_512.json</code></td>
+</tr>
+<tr>
+<td><code>XRH-1-512</code></td>
+<td>timing hash_65536</td>
+<td><code>records/hash-28/XRH-1-512__hash_65536.json</code></td>
+</tr>
+<tr>
+<td><code>XRH-1-512</code></td>
+<td>timing hash_8192</td>
+<td><code>records/hash-28/XRH-1-512__hash_8192.json</code></td>
+</tr>
+<tr>
+<td><code>XRH-1-768</code></td>
+<td>KAT log (sha256 <code>5726f02d2d738612…</code>)</td>
+<td><code>kat/hash-28/XRH-1-768.log</code></td>
+</tr>
+<tr>
+<td><code>XRH-1-768</code></td>
+<td>timing hash_1024</td>
+<td><code>records/hash-28/XRH-1-768__hash_1024.json</code></td>
+</tr>
+<tr>
+<td><code>XRH-1-768</code></td>
+<td>timing hash_128</td>
+<td><code>records/hash-28/XRH-1-768__hash_128.json</code></td>
+</tr>
+<tr>
+<td><code>XRH-1-768</code></td>
+<td>timing hash_16384</td>
+<td><code>records/hash-28/XRH-1-768__hash_16384.json</code></td>
+</tr>
+<tr>
+<td><code>XRH-1-768</code></td>
+<td>timing hash_32</td>
+<td><code>records/hash-28/XRH-1-768__hash_32.json</code></td>
+</tr>
+<tr>
+<td><code>XRH-1-768</code></td>
+<td>timing hash_4096</td>
+<td><code>records/hash-28/XRH-1-768__hash_4096.json</code></td>
+</tr>
+<tr>
+<td><code>XRH-1-768</code></td>
+<td>timing hash_512</td>
+<td><code>records/hash-28/XRH-1-768__hash_512.json</code></td>
+</tr>
+<tr>
+<td><code>XRH-1-768</code></td>
+<td>timing hash_65536</td>
+<td><code>records/hash-28/XRH-1-768__hash_65536.json</code></td>
+</tr>
+<tr>
+<td><code>XRH-1-768</code></td>
+<td>timing hash_8192</td>
+<td><code>records/hash-28/XRH-1-768__hash_8192.json</code></td>
+</tr>
+<tr>
+<td><code>XRH-1-1024</code></td>
+<td>KAT log (sha256 <code>88fcb6eeab5eb833…</code>)</td>
+<td><code>kat/hash-28/XRH-1-1024.log</code></td>
+</tr>
+<tr>
+<td><code>XRH-1-1024</code></td>
+<td>timing hash_1024</td>
+<td><code>records/hash-28/XRH-1-1024__hash_1024.json</code></td>
+</tr>
+<tr>
+<td><code>XRH-1-1024</code></td>
+<td>timing hash_128</td>
+<td><code>records/hash-28/XRH-1-1024__hash_128.json</code></td>
+</tr>
+<tr>
+<td><code>XRH-1-1024</code></td>
+<td>timing hash_16384</td>
+<td><code>records/hash-28/XRH-1-1024__hash_16384.json</code></td>
+</tr>
+<tr>
+<td><code>XRH-1-1024</code></td>
+<td>timing hash_32</td>
+<td><code>records/hash-28/XRH-1-1024__hash_32.json</code></td>
+</tr>
+<tr>
+<td><code>XRH-1-1024</code></td>
+<td>timing hash_4096</td>
+<td><code>records/hash-28/XRH-1-1024__hash_4096.json</code></td>
+</tr>
+<tr>
+<td><code>XRH-1-1024</code></td>
+<td>timing hash_512</td>
+<td><code>records/hash-28/XRH-1-1024__hash_512.json</code></td>
+</tr>
+<tr>
+<td><code>XRH-1-1024</code></td>
+<td>timing hash_65536</td>
+<td><code>records/hash-28/XRH-1-1024__hash_65536.json</code></td>
+</tr>
+<tr>
+<td><code>XRH-1-1024</code></td>
+<td>timing hash_8192</td>
+<td><code>records/hash-28/XRH-1-1024__hash_8192.json</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Scripts: <code>performance/campaign.py</code>, <code>performance/ngcc_perf.c</code>, <code>performance/hashprof/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

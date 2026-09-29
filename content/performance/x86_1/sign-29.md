@@ -3,6 +3,8 @@
 
 [Performance x86_1](index.md) › `sign-29` · [method](method.md) · [NICCS page](https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561105320595456.html)
 
+**Systems:** **x86_1** · [arm_1](../arm_1/sign-29.md)
+
 Independent measurement following the structure of the NICCS x86 self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.
 
 ## 1. Basic information
@@ -33,7 +35,7 @@ Each library was checked against the submitted KAT vectors (SHA-256 manifest `si
 | `Tins256` | guide | PASS |
 | `Tins512` | guide | PASS |
 
-[1] CRYPTOFAIL: the Tins128 verifier overwrites the h_piop parsed from the signature with the recomputed hash and then compares it with an uninitialized stack buffer (src/Tins128/SIG_TINS128.c:414-439 These instances are timed anyway; their output is not validated.
+[1] CRYPTOFAIL: the Tins128 verifier overwrites the h_piop parsed from the signature with the recomputed hash and then compares it with an uninitialized stack buffer (src/Tins128/SIG_TINS128.c:414-439; Tins256/Tins512 are correct), so its verdict depends on leftover stack contents and honest signatures are rejected in this build (sign-29/pseudocode.md, discrepancy 1). Key generation and signing are timed normally; verification is timed too, but every call rejects the honest signature (counted as verify_rejections), so it measures the flawed verifier. These instances are timed anyway; their output is not validated.
 
 ## 4. Performance
 

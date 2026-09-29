@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: kem-34 Rudraksh2 — performance on AArch64 (system arm1)</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=808fa5e8">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
+<nav><a href="../../index.html">Home</a><a href="../../reports/index.html">Security</a><a href="../../performance/index.html">Performance</a><a href="../../constant-time/index.html">Side-Channel</a></nav>
+</header>
+<main class="">
+<!-- synchronized from harness: kem-34/perf_arm_1.md -->
+<h1 id="kem-34-rudraksh2-performance-on-aarch64-system-arm_1">kem-34 Rudraksh2 — performance on AArch64 (system arm_1)</h1>
+<p><a href="index.html">Performance arm_1</a> › <code>kem-34</code> · <a href="method.html">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560881139240960.html">NICCS page</a></p>
+<p><strong>Systems:</strong> <a href="../x86_1/kem-34.html">x86_1</a> · <strong>arm_1</strong></p>
+<p>Independent measurement following the structure of the NICCS ARM self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.</p>
+<h2 id="1-basic-information">1. Basic information</h2>
+<ul>
+<li>Category: public-key algorithm; function: key encapsulation</li>
+<li>Algorithm: Rudraksh2</li>
+<li>Implementation versions measured: reference</li>
+<li>Parameter sets: <code>lwekem128</code>, <code>lwekem256</code>, <code>lwekem512</code></li>
+</ul>
+<h2 id="2-assessment-environment">2. Assessment environment</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>item</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>processor</td>
+<td>Qualcomm Oryon (CPU 2, one core)</td>
+</tr>
+<tr>
+<td>machine</td>
+<td>ASUS Vivobook S 15</td>
+</tr>
+<tr>
+<td>clock</td>
+<td>fixed 2.71 GHz (governor performance, minimum = maximum), boost off, SMT none</td>
+</tr>
+<tr>
+<td>memory</td>
+<td>30562 MiB</td>
+</tr>
+<tr>
+<td>OS / kernel</td>
+<td>Ubuntu 26.04.1 LTS / 7.0.0-34-generic</td>
+</tr>
+<tr>
+<td>compiler / build tool</td>
+<td>gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0 / cmake version 4.2.3</td>
+</tr>
+<tr>
+<td>campaign start / end (UTC)</td>
+<td>2026-09-28T15:05:46 / 2026-09-29T08:43:52</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="3-functional-testing-kat">3. Functional testing (KAT)</h2>
+<p>Each library was checked against the submitted KAT vectors (SHA-256 manifest <code>kem-34/kat.sha256</code> in the harness) before timing.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>build flags</th>
+<th>KAT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>lwekem128</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>lwekem256</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+<tr>
+<td><code>lwekem512</code></td>
+<td>guide</td>
+<td class="st ok">PASS</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="4-performance">4. Performance</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>mean cycles</th>
+<th>mean time</th>
+<th>ops/s</th>
+<th>median trial</th>
+<th>n (trials × iters)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>lwekem128</code></td>
+<td>keygen</td>
+<td>2.89 M</td>
+<td>1.07 ms</td>
+<td>932</td>
+<td>1.07 ms</td>
+<td>2860 (5 × 572)</td>
+</tr>
+<tr>
+<td><code>lwekem128</code></td>
+<td>enc</td>
+<td>2.87 M</td>
+<td>1.07 ms</td>
+<td>938</td>
+<td>1.07 ms</td>
+<td>2960 (5 × 592)</td>
+</tr>
+<tr>
+<td><code>lwekem128</code></td>
+<td>dec</td>
+<td>2.92 M</td>
+<td>1.08 ms</td>
+<td>922</td>
+<td>1.08 ms</td>
+<td>2920 (5 × 584)</td>
+</tr>
+<tr>
+<td><code>lwekem256</code></td>
+<td>keygen</td>
+<td>5.84 M</td>
+<td>2.16 ms</td>
+<td>462</td>
+<td>2.17 ms</td>
+<td>1440 (5 × 288)</td>
+</tr>
+<tr>
+<td><code>lwekem256</code></td>
+<td>enc</td>
+<td>5.82 M</td>
+<td>2.16 ms</td>
+<td>463</td>
+<td>2.16 ms</td>
+<td>1455 (5 × 291)</td>
+</tr>
+<tr>
+<td><code>lwekem256</code></td>
+<td>dec</td>
+<td>5.94 M</td>
+<td>2.21 ms</td>
+<td>453</td>
+<td>2.18 ms</td>
+<td>1420 (5 × 284)</td>
+</tr>
+<tr>
+<td><code>lwekem512</code></td>
+<td>keygen</td>
+<td>18.83 M</td>
+<td>6.99 ms</td>
+<td>143</td>
+<td>6.98 ms</td>
+<td>450 (5 × 90)</td>
+</tr>
+<tr>
+<td><code>lwekem512</code></td>
+<td>enc</td>
+<td>18.80 M</td>
+<td>6.97 ms</td>
+<td>143</td>
+<td>6.97 ms</td>
+<td>455 (5 × 91)</td>
+</tr>
+<tr>
+<td><code>lwekem512</code></td>
+<td>dec</td>
+<td>18.94 M</td>
+<td>7.03 ms</td>
+<td>142</td>
+<td>7.03 ms</td>
+<td>450 (5 × 90)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="5-resource-consumption">5. Resource consumption</h2>
+<p>Static memory is approximated by the library's loadable ELF segments; peak memory is the process high-water mark (VmHWM) including the benchmark driver and libc, so both are upper-bound proxies rather than isolated algorithm memory.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>static: ELF image (bytes)</th>
+<th>baseline RSS</th>
+<th>peak RSS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>lwekem128</code></td>
+<td>keygen</td>
+<td>25396</td>
+<td>1416 KiB</td>
+<td>1496 KiB</td>
+</tr>
+<tr>
+<td><code>lwekem128</code></td>
+<td>enc</td>
+<td>25396</td>
+<td>1432 KiB</td>
+<td>1500 KiB</td>
+</tr>
+<tr>
+<td><code>lwekem128</code></td>
+<td>dec</td>
+<td>25396</td>
+<td>1432 KiB</td>
+<td>1496 KiB</td>
+</tr>
+<tr>
+<td><code>lwekem256</code></td>
+<td>keygen</td>
+<td>26068</td>
+<td>1420 KiB</td>
+<td>1516 KiB</td>
+</tr>
+<tr>
+<td><code>lwekem256</code></td>
+<td>enc</td>
+<td>26068</td>
+<td>1452 KiB</td>
+<td>1520 KiB</td>
+</tr>
+<tr>
+<td><code>lwekem256</code></td>
+<td>dec</td>
+<td>26068</td>
+<td>1452 KiB</td>
+<td>1520 KiB</td>
+</tr>
+<tr>
+<td><code>lwekem512</code></td>
+<td>keygen</td>
+<td>28076</td>
+<td>3448 KiB</td>
+<td>3560 KiB</td>
+</tr>
+<tr>
+<td><code>lwekem512</code></td>
+<td>enc</td>
+<td>28076</td>
+<td>1484 KiB</td>
+<td>1552 KiB</td>
+</tr>
+<tr>
+<td><code>lwekem512</code></td>
+<td>dec</td>
+<td>28076</td>
+<td>1492 KiB</td>
+<td>1560 KiB</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="6-transmission-and-storage-overhead">6. Transmission and storage overhead</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>public key</th>
+<th>secret key</th>
+<th>ciphertext</th>
+<th>shared secret</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>lwekem128</code></td>
+<td>880</td>
+<td>1776</td>
+<td>912</td>
+<td>16</td>
+</tr>
+<tr>
+<td><code>lwekem256</code></td>
+<td>1760</td>
+<td>3552</td>
+<td>1728</td>
+<td>32</td>
+</tr>
+<tr>
+<td><code>lwekem512</code></td>
+<td>3392</td>
+<td>6848</td>
+<td>3552</td>
+<td>64</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="symmetric-primitives">Symmetric primitives</h2>
+<p><a href="../symmetric-survey.html">Survey</a> verdict: <strong>ICCS-only</strong></p>
+<p>Share of each operation spent in the ICCS placeholder hash functions and in the ICCS DRNG (reference build, measured in the same run with link-time wrappers):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>operation</th>
+<th>pseudohash/XOF/sm3</th>
+<th>DRNG</th>
+<th>calls per operation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>lwekem128</code></td>
+<td>keygen</td>
+<td>94%</td>
+<td>0.3%</td>
+<td>drng 2, pseudoXOF 101</td>
+</tr>
+<tr>
+<td><code>lwekem128</code></td>
+<td>enc</td>
+<td>94%</td>
+<td>0.1%</td>
+<td>drng 1, pseudoXOF 102</td>
+</tr>
+<tr>
+<td><code>lwekem128</code></td>
+<td>dec</td>
+<td>93%</td>
+<td>0.0%</td>
+<td>pseudoXOF 102</td>
+</tr>
+<tr>
+<td><code>lwekem256</code></td>
+<td>keygen</td>
+<td>94%</td>
+<td>0.1%</td>
+<td>drng 2, pseudoXOF 101</td>
+</tr>
+<tr>
+<td><code>lwekem256</code></td>
+<td>enc</td>
+<td>94%</td>
+<td>0.1%</td>
+<td>drng 1, pseudoXOF 102</td>
+</tr>
+<tr>
+<td><code>lwekem256</code></td>
+<td>dec</td>
+<td>93%</td>
+<td>0.0%</td>
+<td>pseudoXOF 102</td>
+</tr>
+<tr>
+<td><code>lwekem512</code></td>
+<td>keygen</td>
+<td>97%</td>
+<td>0.1%</td>
+<td>drng 2, pseudoXOF 82</td>
+</tr>
+<tr>
+<td><code>lwekem512</code></td>
+<td>enc</td>
+<td>98%</td>
+<td>0.0%</td>
+<td>drng 1, pseudoXOF 83</td>
+</tr>
+<tr>
+<td><code>lwekem512</code></td>
+<td>dec</td>
+<td>97%</td>
+<td>0.0%</td>
+<td>pseudoXOF 83</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="7-raw-evidence-index">7. Raw evidence index</h2>
+<p>Paths are relative to <code>performance/data/arm_1/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>; each JSON file records its commands, environment and trials.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>instance</th>
+<th>item</th>
+<th>file</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>lwekem128</code></td>
+<td>KAT log (sha256 <code>0b425f13e606a2ad…</code>)</td>
+<td><code>kat/kem-34/lwekem128.log</code></td>
+</tr>
+<tr>
+<td><code>lwekem128</code></td>
+<td>timing dec</td>
+<td><code>records/kem-34/lwekem128__dec.json</code></td>
+</tr>
+<tr>
+<td><code>lwekem128</code></td>
+<td>timing enc</td>
+<td><code>records/kem-34/lwekem128__enc.json</code></td>
+</tr>
+<tr>
+<td><code>lwekem128</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-34/lwekem128__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>lwekem128</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-34/lwekem128__dec.json</code></td>
+</tr>
+<tr>
+<td><code>lwekem128</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-34/lwekem128__enc.json</code></td>
+</tr>
+<tr>
+<td><code>lwekem128</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-34/lwekem128__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>lwekem256</code></td>
+<td>KAT log (sha256 <code>f08edc3b80b3fc15…</code>)</td>
+<td><code>kat/kem-34/lwekem256.log</code></td>
+</tr>
+<tr>
+<td><code>lwekem256</code></td>
+<td>timing dec</td>
+<td><code>records/kem-34/lwekem256__dec.json</code></td>
+</tr>
+<tr>
+<td><code>lwekem256</code></td>
+<td>timing enc</td>
+<td><code>records/kem-34/lwekem256__enc.json</code></td>
+</tr>
+<tr>
+<td><code>lwekem256</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-34/lwekem256__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>lwekem256</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-34/lwekem256__dec.json</code></td>
+</tr>
+<tr>
+<td><code>lwekem256</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-34/lwekem256__enc.json</code></td>
+</tr>
+<tr>
+<td><code>lwekem256</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-34/lwekem256__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>lwekem512</code></td>
+<td>KAT log (sha256 <code>40c58106c46a7c47…</code>)</td>
+<td><code>kat/kem-34/lwekem512.log</code></td>
+</tr>
+<tr>
+<td><code>lwekem512</code></td>
+<td>timing dec</td>
+<td><code>records/kem-34/lwekem512__dec.json</code></td>
+</tr>
+<tr>
+<td><code>lwekem512</code></td>
+<td>timing enc</td>
+<td><code>records/kem-34/lwekem512__enc.json</code></td>
+</tr>
+<tr>
+<td><code>lwekem512</code></td>
+<td>timing keygen</td>
+<td><code>records/kem-34/lwekem512__keygen.json</code></td>
+</tr>
+<tr>
+<td><code>lwekem512</code></td>
+<td>hash profile dec</td>
+<td><code>profile/kem-34/lwekem512__dec.json</code></td>
+</tr>
+<tr>
+<td><code>lwekem512</code></td>
+<td>hash profile enc</td>
+<td><code>profile/kem-34/lwekem512__enc.json</code></td>
+</tr>
+<tr>
+<td><code>lwekem512</code></td>
+<td>hash profile keygen</td>
+<td><code>profile/kem-34/lwekem512__keygen.json</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Scripts: <code>performance/campaign.py</code>, <code>performance/ngcc_perf.c</code>, <code>performance/hashprof/</code> in the <a href="https://github.com/ngcc-dev/ngcc-harness">harness</a>.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

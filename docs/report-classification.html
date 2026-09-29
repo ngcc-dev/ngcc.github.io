@@ -10,7 +10,7 @@
 <body>
 <header class="site-header">
 <a class="brand" href="index.html"><img class="brand-icon" src="assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
-<nav><a href="index.html">Home</a><a href="reports/index.html">Security</a><a href="performance/x86_1/index.html">Performance</a><a href="constant-time/index.html">Side-Channel</a></nav>
+<nav><a href="index.html">Home</a><a href="reports/index.html">Security</a><a href="performance/index.html">Performance</a><a href="constant-time/index.html">Side-Channel</a></nav>
 </header>
 <main class="">
 <!-- synchronized report: security/REPORT_CLASSIFICATION.md -->
@@ -37,6 +37,12 @@ constant-time path is supplied or known.</p>
 report itself can describe (for example masked arithmetic, bitslicing,
 in-register shuffles, AES instructions, Beneš networks, or a published
 constant-time decoder or solver). The same meaning applies to hash functions.</p>
+<h3 id="proposed-fixes">Proposed fixes</h3>
+<p>When a report records a publicly proposed change, it places that material in a
+<code>Proposed fixes</code> subsection and attributes the source. The subsection records
+the proposal only: it does not assert that the change is correct, sufficient,
+complete, compatible, or secure, and it does not alter the report's evaluation
+of the archived submission. A revised candidate requires separate evaluation.</p>
 <h2 id="security-targets">Security targets</h2>
 <p>A finding is judged against the NGCC call as well as the specification's own
 claims. The canonical documents are published by ICCS.</p>
@@ -329,7 +335,7 @@ with the same external dimensions and parameters. A finding that disappears
 solely on that replacement is not publishable.</p>
 </main>
 <footer class="site-footer">
-<p>Updated 2026-09-29 07:44:58 UTC · Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Updated 2026-09-29 17:21:49 UTC · Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
 <p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
 </footer>
 </body>

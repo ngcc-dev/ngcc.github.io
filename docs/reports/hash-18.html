@@ -10,10 +10,10 @@
 <body>
 <header class="site-header">
 <a class="brand" href="../index.html"><img class="brand-icon" src="../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
-<nav><a href="../index.html">Home</a><a href="../reports/index.html">Security</a><a href="../performance/x86_1/index.html">Performance</a><a href="../constant-time/index.html">Side-Channel</a></nav>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Security</a><a href="../performance/index.html">Performance</a><a href="../constant-time/index.html">Side-Channel</a></nav>
 </header>
 <main class="">
-<p class="crumb"><a href="../reports/index.html">Security</a> › <code>hash-18</code> · <a href="../constant-time/hash-18.html">Constant-time review</a> · <a href="../performance/x86_1/hash-18.html">Performance</a></p>
+<p class="crumb"><a href="../reports/index.html">Security</a> › <code>hash-18</code> · <a href="../constant-time/hash-18.html">Constant-time review</a> · Performance: <a href="../performance/x86_1/hash-18.html">x86_1</a> · <a href="../performance/arm_1/hash-18.html">arm_1</a></p>
 
 <h1 id="megascon-hash-18">MEGASCON (hash-18)</h1>
 <div class="table-wrap"><table class="meta">
@@ -43,7 +43,9 @@
 <p>For every message shorter than 1024 bits, both variants initialize the same zero state, inject identical padded bytes at the same offset, and apply the same 15-round permutation. The digest length or variant identifier is never absorbed; only the amount returned to the caller differs.</p>
 <p>The two functions therefore lack cross-variant domain separation and cannot be treated as independent hashes. No explicit specification claim of cross-profile independence was located, so this is reported as a confirmed composition defect rather than a collision-resistance claim violation.</p>
 <p>The same missing domain separation affects the XOF profiles. On the audited short messages, the 384- and 512-profile 256-bit XOF outputs are equal, while shorter outputs are prefixes of the longer XOF streams. This follows from the normative zero initialization, common padding and permutation, and <code>MSB_l</code> output rule; it is not only a wrapper artifact.</p>
-<p>The Megascon team subsequently assigned a distinct four-bit initialization domain to every digest and XOF profile and regenerated the specification, implementations, and KATs. That revision prevents the cross-profile state alignment; the frozen Round 1 archive remains affected.</p>
+<p>The frozen Round 1 archive remains the target of this finding.</p>
+<h3 id="proposed-fixes">Proposed fixes</h3>
+<p>The <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/2VJXXVHAC7K44UFJ7YLSTJRSIWRJTVAQ/">Megascon team's revision notice</a> proposes a distinct four-bit initialization domain for every digest and XOF profile and reports regenerated specifications, implementations, and KATs. This section records the proposal without evaluating it.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>Build the candidate and the reproducer, then run:</p>
@@ -70,7 +72,9 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/crypthashforu
 <p>For MEGASCON-512, take two 256-byte messages initialized to zero, set <code>M[192] = 04</code>, and set <code>N[128] = N[160] = 04</code>. Under Listing 3, both hash to:</p>
 <p><code>2ed13b513054b271a9640e8ccc139d5a363cc69eee4158ec7453b6e39b3549a15a87b8695340271fdcb02903cfe42b79ea8227f074e05599299a318581faf368</code></p>
 <p>This is a specification-listing failure, not an attack on the archived implementations: the optimized code uses the corrected immediates <code>a6</code> and <code>56</code>, and the reference code implements the bijective mathematical S-box.</p>
-<p>The Megascon team confirms that Listing 3 was a transcription error and replaces <code>b4</code>/<code>1e</code> by <code>a6</code>/<code>56</code> in its revised specification. This correction agrees with the already-correct submitted source.</p>
+<p>The Megascon team confirms that Listing 3 was a transcription error. The submitted source already uses <code>a6</code> and <code>56</code>.</p>
+<h3 id="proposed-fixes_1">Proposed fixes</h3>
+<p>The <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/2VJXXVHAC7K44UFJ7YLSTJRSIWRJTVAQ/">Megascon team's correction</a> proposes replacing Listing 3's <code>b4</code>/<code>1e</code> immediates by <code>a6</code>/<code>56</code>. This section records the proposal without evaluating it.</p>
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>The local checker verifies the erroneous truth tables, the displayed collision inside the S-box, and bijectivity after correction:</p>

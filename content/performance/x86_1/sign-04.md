@@ -3,6 +3,8 @@
 
 [Performance x86_1](index.md) › `sign-04` · [method](method.md) · [NICCS page](https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561076644139008.html)
 
+**Systems:** **x86_1** · [arm_1](../arm_1/sign-04.md)
+
 Independent measurement following the structure of the NICCS x86 self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.
 
 ## 1. Basic information

@@ -10,10 +10,10 @@
 <body>
 <header class="site-header">
 <a class="brand" href="../index.html"><img class="brand-icon" src="../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
-<nav><a href="../index.html">Home</a><a href="../reports/index.html">Security</a><a href="../performance/x86_1/index.html">Performance</a><a href="../constant-time/index.html">Side-Channel</a></nav>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Security</a><a href="../performance/index.html">Performance</a><a href="../constant-time/index.html">Side-Channel</a></nav>
 </header>
 <main class="">
-<p class="crumb"><a href="../reports/index.html">Security</a> › <code>hash-32</code> · <a href="../constant-time/hash-32.html">Constant-time review</a> · <a href="../performance/x86_1/hash-32.html">Performance</a></p>
+<p class="crumb"><a href="../reports/index.html">Security</a> › <code>hash-32</code> · <a href="../constant-time/hash-32.html">Constant-time review</a> · Performance: <a href="../performance/x86_1/hash-32.html">x86_1</a> · <a href="../performance/arm_1/hash-32.html">arm_1</a></p>
 
 <h1 id="zc-edmc-hash-32">ZC-EDMC (hash-32)</h1>
 <div class="table-wrap"><table class="meta">
@@ -43,6 +43,26 @@
 <p>The local checker verifies both calls in every reference instance and the exact submitted constant schedule:</p>
 <pre><code class="language-sh">make -C hash-32 reproduce-forum
 </code></pre>
+<h2 class="issue-heading" id="hash-32-2-a-conditional-iterative-trail-gives-a-2384-full-round-collision-estimate">hash-32-2: A conditional iterative trail gives a 2^384 full-round collision estimate</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-lead">Lead</span></td></tr>
+<tr><th>Affected</th><td>Full-round ZC-EDMC-1536-1024; reduced-round estimates for the other sets</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Estimated 2^384 work, conditional on multi-round trail assumptions</td></tr>
+<tr><th>Credit</th><td>Qinghe Crypto Group</td></tr>
+<tr><th>Date</th><td>2026-09-29</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/4KRD3W3LRMJDQQNL7TYTBCW66P4UUWOY/">Qinghe Crypto Group's CryptHash Forum post</a></p>
+<p>For ZC-1536, the input difference <code>Delta A_0[0] = 0x1111111111111111</code> survives the linear layer. At each of its 16 active bit positions, the sequential χ mapping preserves the difference exactly when the two other input bits are <code>0,1</code>, a probability of <code>1/4</code>; the one-round trail therefore has weight 32. The intermediate capacity feed-forward leaves this rate difference unchanged, and later message-block differences can cancel it and merge the states. The same local trail applies to both mappings present in the archived specification and implementation because it is independent of the round constants and of whether the first six-round half is named <code>g</code> or <code>h</code>.</p>
+<p>Under a <code>2^-32</code> independent probability per round, the reported 7-, 11-, and 12-round costs are <code>2^224</code>, <code>2^352</code>, and <code>2^384</code>. The full 12-round ZC-EDMC-1536-1024 estimate is below its claimed 512-bit collision security. The local transition, linear invariance, feed-forward algebra, and arithmetic check out, but full-round satisfiability, independence, and the valid-message distribution remain unproved. Because the submitted IV is zero, the required first-round bit conditions may not all be directly message-controlled; a prefix block may be needed, and the existence of a suitable prefix is part of the unresolved satisfiability question. This is therefore a High Lead rather than a confirmed full collision.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 security/zc_iterative_differential.py
+</code></pre>
+<p>The certificate exhausts the three-bit χ inputs and checks both reported masks against the linear rotations: the 16-active-position mask used above has weight 32 per round, while the all-ones mask used for the reported ZC-1280 reduced-round trail has 64 active positions and weight 128 per round. It then prints the unresolved multi-round limitation.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

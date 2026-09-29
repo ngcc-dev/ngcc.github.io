@@ -10,10 +10,10 @@
 <body>
 <header class="site-header">
 <a class="brand" href="../index.html"><img class="brand-icon" src="../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
-<nav><a href="../index.html">Home</a><a href="../reports/index.html">Security</a><a href="../performance/x86_1/index.html">Performance</a><a href="../constant-time/index.html">Side-Channel</a></nav>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Security</a><a href="../performance/index.html">Performance</a><a href="../constant-time/index.html">Side-Channel</a></nav>
 </header>
 <main class="">
-<p class="crumb"><a href="../reports/index.html">Security</a> › <code>hash-09</code> · <a href="../constant-time/hash-09.html">Constant-time review</a> · <a href="../performance/x86_1/hash-09.html">Performance</a></p>
+<p class="crumb"><a href="../reports/index.html">Security</a> › <code>hash-09</code> · <a href="../constant-time/hash-09.html">Constant-time review</a> · Performance: <a href="../performance/x86_1/hash-09.html">x86_1</a> · <a href="../performance/arm_1/hash-09.html">arm_1</a></p>
 
 <h1 id="eijen-hash-09">Eijen (hash-09)</h1>
 <div class="table-wrap"><table class="meta">
@@ -67,10 +67,13 @@ witnesses and their controls. See <code>tools/README.md</code>.</p>
 <tr><th>Credit</th><td>Tsinghua Hash Lab <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#99;&#117;&#105;&#104;&#114;&#50;&#54;&#64;&#109;&#97;&#105;&#108;&#115;&#46;&#116;&#115;&#105;&#110;&#103;&#104;&#117;&#97;&#46;&#101;&#100;&#117;&#46;&#99;&#110;">&#99;&#117;&#105;&#104;&#114;&#50;&#54;&#64;&#109;&#97;&#105;&#108;&#115;&#46;&#116;&#115;&#105;&#110;&#103;&#104;&#117;&#97;&#46;&#101;&#100;&#117;&#46;&#99;&#110;</a></td></tr>
 <tr><th>Date</th><td>2026-09-22</td></tr>
 </table></div>
-<p>Original source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/3KZDO7FTB6ELVWL2ILGNXP256XCJBBES/">CryptHashForum report</a></p>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/3KZDO7FTB6ELVWL2ILGNXP256XCJBBES/">CryptHashForum report</a>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/LZYIEYXZWH7LADLHM64NH2G4MDTOQ6DK/">Eijen Algorithm Group's response</a></p>
 <p>The three instances use the same 2048-bit permutation and zero initial state, with only the rate and capacity-feed-forward boundary changing. The reporters constructed three-block message pairs whose outputs obey a predictable cross-instance suffix relation, succeeding on 8/8 trials for every pair of instances. This distinguishes the family from independent random functions, but is not a same-instance collision or a direct break of an individual instance's collision resistance.</p>
-<p>The <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/LZYIEYXZWH7LADLHM64NH2G4MDTOQ6DK/">Eijen Algorithm Group independently confirmed the issue</a> and revised finalization to inject the digest length. The original public message does not include its concrete three-block witnesses, so that particular construction has not been locally replayed.</p>
+<p>The Eijen Algorithm Group independently confirmed the issue. The original public message does not include its concrete three-block witnesses, so that particular construction has not been locally replayed.</p>
 <p>Follow-up analysis: the <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/BWXG6OPAIQL32FMWWYJ3C4D6QMRGHGP4/">Iphe Algorithm Group's cross-rate note, posted by 崔灏睿 on 2026-09-23</a>, identifies a simpler one-block relation in the archived implementation. For the same message shorter than 960 bits, the Eijen-512 digest is the final 512 bits of both Eijen-768 and Eijen-1024. The submitted libraries confirm this for the empty message, <code>abc</code>, and a 119-byte test message, with changed-message controls differing. This is still a cross-instance relation, not a same-instance collision.</p>
+<h3 id="proposed-fixes">Proposed fixes</h3>
+<p>The <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/LZYIEYXZWH7LADLHM64NH2G4MDTOQ6DK/">Eijen Algorithm Group's response</a> proposes injecting the digest length during finalization. This section records the proposal without evaluating it.</p>
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">make -C hash-09 lib/libEijen-512.so lib/libEijen-768.so lib/libEijen-1024.so

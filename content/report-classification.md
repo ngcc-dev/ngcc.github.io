@@ -25,6 +25,14 @@ report itself can describe (for example masked arithmetic, bitslicing,
 in-register shuffles, AES instructions, Beneš networks, or a published
 constant-time decoder or solver). The same meaning applies to hash functions.
 
+### Proposed fixes
+
+When a report records a publicly proposed change, it places that material in a
+`Proposed fixes` subsection and attributes the source. The subsection records
+the proposal only: it does not assert that the change is correct, sufficient,
+complete, compatible, or secure, and it does not alter the report's evaluation
+of the archived submission. A revised candidate requires separate evaluation.
+
 ## Security targets
 
 A finding is judged against the NGCC call as well as the specification's own

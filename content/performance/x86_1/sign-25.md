@@ -3,6 +3,8 @@
 
 [Performance x86_1](index.md) › `sign-25` · [method](method.md) · [NICCS page](https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561096361562112.html)
 
+**Systems:** **x86_1** · [arm_1](../arm_1/sign-25.md)
+
 Independent measurement following the structure of the NICCS x86 self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.
 
 ## 1. Basic information
@@ -46,7 +48,7 @@ Each library was checked against the submitted KAT vectors (SHA-256 manifest `si
 | `SQISign2Dsquare-Level5-sec_compressed` | guide | PASS |
 | `SQISign2Dsquare-Level5-sec_uncompressed` | guide | PASS |
 
-[1] CRYPTOFAIL: sig_verify accepts a modified message because the verifier's verdict is decided by stale stack contents (confirmed finding sign-25-1). Key generation and signing are timed normally These instances are timed anyway; their output is not validated.
+[1] CRYPTOFAIL: sig_verify accepts a modified message because the verifier's verdict is decided by stale stack contents (confirmed finding sign-25-1). Key generation and signing are timed normally; the verification time is that of the flawed verifier. These instances are timed anyway; their output is not validated.
 
 ## 4. Performance
 
