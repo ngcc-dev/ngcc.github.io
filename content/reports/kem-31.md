@@ -50,7 +50,7 @@ Exploitation: One decapsulation query on a byte-distinct copy of the challenge c
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-09-25
 
-Additional reference: [Xiong and Wang, ePrint 2026/2232, §5](https://eprint.iacr.org/2026/2232)
+Additional reference: [Xiong and Wang, ePrint 2026/2232, 2026-09-28 revision, §5](https://eprint.iacr.org/archive/2026/2232/1790581014.pdf)
 
 `fp_decode` reduces field elements modulo `p` without rejecting values at least `p`, and NGCC-1 also leaves 4 bytes of each 64-byte field slot unread. Decapsulation compares and hashes the re-encoded decoded ciphertext rather than the received bytes (`KEM_AlgorithmInstance.c:245,252`). Replacing any field element `x` by `x + p`, or changing an unread slot byte, therefore returns the honest key. The submission claims IND-CCA security, which is trivially violated.
 

@@ -14,7 +14,7 @@ Exploitation: Unauthenticated decapsulation request causes process termination; 
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-09-23
 
-Additional reference: [Xiong and Wang, ePrint 2026/2232, §17](https://eprint.iacr.org/2026/2232)
+Additional reference: [Xiong and Wang, ePrint 2026/2232, 2026-09-28 revision, §17](https://eprint.iacr.org/archive/2026/2232/1790581014.pdf)
 
 The shipped C-Multi-UR-AG decapsulator does not safely reject malformed ciphertexts. With an honestly generated key, an all-zero ciphertext triggers stack-smash detection in CMultiURAG-128 and a segmentation fault in CMultiURAG-512. A sampled single-bit change to an honest ciphertext segfaults in CMultiURAG-256. All three unmodified reference libraries pass their honest KATs. These are attacker-controlled, fixed-length ciphertexts, not truncated buffers or corrupted secret keys.
 

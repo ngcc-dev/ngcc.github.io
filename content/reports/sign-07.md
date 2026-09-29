@@ -66,22 +66,40 @@ sign-07/forgery_CS-512 sign-07/lib/libCS-512.so \
   --control --threads 4 --trials 200000 --verbose
 ```
 
-## sign-07-3: Compressed signatures may leak the CS-128 signing key
+## sign-07-3: Compressed signatures enable practical equivalent-key recovery and forgery
 
-Severity: High
-Status: Lead
+Severity: Critical
+Status: Confirmed
 Layer: Design
 Affected: CS-128 full compressed scheme; higher sets not evaluated
 Discovery: Non-trivial
-Exploitation: Reporter claims recovery from 2^27 signatures; not independently replayed
-Credit: Yijian Liu (on behalf of Xianhui Lu; with AI assistance)
+Exploitation: 2.3 million ordinary signatures for the demonstrated fixed key; 65.7 aggregate CPU minutes reported
+Credit: Xianhui Lu and Yijian Liu, with AI assistance; practical completion by Martin Feussner, with OpenAI Codex (Daybreak Blue) assistance
 Date: 2026-09-24
 Original source: [NGCC PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/PNQJ4PBNVDPNY624PDPCOO7ZL2GXIP6H/)
+Follow-up source: [Feussner's PKC Forum post and reproducer](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/YHC7FIZTNPJBTYDCH2H5JAYBR7Z4FEYH/)
 
 In the full compressed scheme, §3.4 (Correctness) derives the verifier-visible relation `z2' = z2 - c_r·b_0 + (-LowBits_h(w,α)+LSB(w))/2 (mod ±q)`, where `b_0` is the secret low part of the public-key relation and `c_r` aggregates hidden bimodal signing signs. Liu reports estimating `E[c_r | z0,c]` from public signature fields, then using its correlation with `z2'` to recover all coefficients of `b_0`; a second cross moment reportedly recovers `s1`, from which the remaining short key follows. The cited experiment used `2^27` CS-128 signatures and reported exact 768-coefficient recovery after normalization.
 
-The `c_r·b_0` term and public reconstruction are verified in specification Algorithm 11/12 and reference `cs.c`. The statistical estimator, sample cost, and claimed full key recovery are **not** independently reproduced: the post supplies no attack code or public transcripts. This is a high-priority lead, not a confirmed key-recovery break. It is separate from `sign-07-2`'s challenge-sign-blind forgery.
+Feussner's follow-up turns this into an end-to-end attack on one deterministic, ordinary CS-128 key. One million calibration signatures produce a rough public low-term estimate. For 1.3 million further signatures, posterior scoring tests all 64 hidden block-sign choices and regression produces a nearly correct ternary `s1`; a fixed public ladder completes an equivalent signing key. The submitted verifier accepts its signature on a fresh message. The immediately preceding 1.2-million refinement checkpoint fails.
+
+The frozen sufficient statistics replay against source that is byte-identical to the archive after line-ending normalization. Replacing every secret-dependent diagnostic truth array with unrelated values leaves the first public success, completed key, and forgery unchanged, establishing that the recovery consumes only the public key and ordinary signature fields. We independently rebuilt and replayed that evidence. The experiment covers one preselected key and does not estimate success probability across keys or extend the result to CS-256/512. A practical fresh-message forgery nevertheless violates CS-128's EUF-CMA claim and is Critical.
 
 ### Reproducing
 
-Compare §3.4's correctness identity with Algorithm 11, Algorithm 12, and `CS_Sign`/`CS_Verify` in the archived CS-128 reference source. This checks the secret-dependent public relation only; a full witness requires the reporter's 2^27-signature estimator or an independent equivalent.
+Download the reproducer pinned at commit `c66f8b06b9033d0be076db7a8bdaebb2158ad493` (archive SHA-256 `0fe62b6b330b3ece432013ca14a1ee35f3e2315ff36d6ac776e1a9134ad67b39`) and run its frozen evidence replay:
+
+```sh
+T=$(mktemp -d)
+curl -fL -o "$T/cs.tar.gz" \
+  'https://github.com/martinfeussner/NGCC-Signature-Audit/archive/c66f8b06b9033d0be076db7a8bdaebb2158ad493.tar.gz'
+printf '%s  %s\n' \
+  '0fe62b6b330b3ece432013ca14a1ee35f3e2315ff36d6ac776e1a9134ad67b39' \
+  "$T/cs.tar.gz" | sha256sum -c -
+tar -xzf "$T/cs.tar.gz" -C "$T"
+cd "$T"/NGCC-Signature-Audit-*/CS/reproducer
+CFLAGS='-O3 -flto -fcommon -std=gnu11 -Wno-error=implicit-int' \
+  ./verify_evidence.sh
+```
+
+The extra warning flag lets current GCC accept two pre-existing implicit-`int` declarations in the archived source. The replay verifies all evidence and submitted-source hashes, recomputes the posterior/refinement ladder, requires rejection through 1.2 million refinement signatures and an accepted fresh-message forgery at 1.3 million, then repeats with poisoned diagnostic truth. `run_full.sh` performs the approximately 2.3-million-signature collection instead.

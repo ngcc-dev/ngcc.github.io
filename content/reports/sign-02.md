@@ -40,7 +40,7 @@ Credit: Martin Feussner, with OpenAI Codex (Daybreak Blue) assistance
 Date: 2026-09-25
 Original source: [Feussner's pqc-forum post and attached analysis](https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/84_EKMOtk_M/m/ZNMqLQ07BAAJ)
 
-Additional reference: [Xiong and Wang, ePrint 2026/2232, §2](https://eprint.iacr.org/2026/2232)
+Additional reference: [Xiong and Wang, ePrint 2026/2232, 2026-09-29 revision, §8](https://eprint.iacr.org/archive/2026/2232/1790653241.pdf)
 
 BiT uses one hidden sign for the entire response, but its rejection rule corrects each coefficient against a *scalar* mixture. The joint response remains a mixture of two product distributions and retains secret-dependent cross-coordinate correlations even when the individual marginals have the intended distribution. The response to the known constant component gives an observation of the common sign, allowing the remaining response components to reveal the signing secret statistically. Figures 2 and 4 specify a single sign bit per signature with coefficientwise rejection; §3.1.3’s assertion that “z is independent of b” fails for the joint response. The BiT-128 source checkout shows the same pattern (`sign.c:134–153`, `sample.c:124–259`), but those BiT-128 files are absent from the harness. The retained BiT-512 `sign.c:130–150` independently shows the shared-sign construction. The posted analysis reports full equivalent-key recovery and an accepted fresh-message forgery for four independently generated keys; its attack code and those runtime results have not been independently checked here. The mechanism does not depend on a hash weakness.
 

@@ -53,38 +53,47 @@ python3 security/kem_mutation_oracle.py \
 
 The seeds, mutations, return codes, and timings are deterministic. The slow `-2` witness takes about 50 seconds on the audit host.
 
-## kem-38-3: Retry reactions may expose UVW-KEM-128 session keys
+## kem-38-3: Stateful timing reactions recover UVW-KEM-128 shared secrets
 
-Severity: High
-Status: Lead
+Severity: Critical
+Status: Probable
 Layer: Side-channel
 Affected: UVW-KEM-128 reference implementation; higher sets not tested
 Discovery: Non-trivial
-Exploitation: Conditional recovery from about 1.06 million precise first-attempt reaction labels; an uninstrumented timing classifier is not demonstrated
-Credit: Tianyuan Xie (on behalf of the openHiTLS team; with AI assistance)
+Exploitation: About one million chosen-ciphertext decapsulation calls; 2.8 hours reported on 32 logical threads
+Credit: Tianyuan Xie and Yamin Liu (openHiTLS team; with AI assistance)
 Date: 2026-09-24
 Original source: [NGCC PKC Forum post and attached reproducer](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/A6PUI23BHC7YNE5UQ3SMRO33GDBWCF2P/)
+Follow-up source: [Black-box timing recovery and attached PoC](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XLK4PVBFDFWXQA4QXKNBPNQRKKITR5OW/)
 
-UVW's secret monomial transform hides 430 column pairs and their ratios. A chosen valid ciphertext whose error has a nonzero equal-scaled value in a hidden pair can make the first information-set decoding attempt retry. Conditioning public error samples on that reaction enriches the true pair/ratio triples. With the pairs recovered, a public `Δ` projection cancels the duplicated component, exposes a generalized Reed–Solomon image, and permits decoding a fresh ciphertext and deriving its exact 512-bit session key. This is a candidate-specific exploitation path for the retry behavior, distinct from `kem-38-2`'s final-status oracle on malformed ciphertexts.
+UVW's secret monomial transform hides column pairs and their ratios. A chosen ciphertext whose error has a nonzero equal-scaled value in a hidden pair changes the list decoder's behavior. Conditioning public error samples on that reaction identifies pair/ratio triples; a public `Δ` projection then cancels the duplicated component, exposes a generalized Reed–Solomon image, and permits decoding a fresh ciphertext and deriving its exact 512-bit shared secret.
 
-The attached package's reference source matches the archived UVW-KEM-128 source (apart from an omitted build file). It validates an **instrumented** retry counter on real `kem_dec`, then recovers all 430 pairs and the target secret (`E2E_OK`). Its high-volume phase, however, reads the secret key to simulate 1,055,028 first-attempt reactions; it does **not** send those ciphertexts to the real decapsulator. A reported local timing check on 100 real valid decapsulations found 99 one-attempt calls averaging 811 ms and one three-attempt call at 896 ms; no runnable timing check is supplied. In the package's 60 real-decapsulation channel checks, only two ciphertexts were bad (one did not retry), too few to validate a reaction classifier. Thus the full public-interface attack remains a lead conditional on an observable, sufficiently accurate retry signal; the package does not demonstrate black-box shared-secret recovery. The structural attack does not depend on the contest hash/XOF placeholders being weak.
+The follow-up removes the earlier observation-channel gap. `uvw_rs_list_decode` can return a positive candidate count without producing a valid `r2`, and `uvw_pke_dec` treats every positive count as success and continues with that state. A chosen primer ciphertext makes the leftover state repeatable; the following malformed target then takes either a fast path or an expensive recovery loop. The reporters measured about 0.12–0.17 seconds versus 14.5–15.2 seconds and used only the return code and wall-clock duration of unmodified `kem_dec`.
+
+The PoC scans about 410,000 logical targets. Each sample consists of one primer and one target decapsulation, and confirmations bring the total to about one million calls. Its attack decisions consume only the public key, ciphertexts, and black-box timings; the locally generated secret key and honest shared secret are used to instantiate the decapsulation oracle and check the final answer. The reported 32-thread run ends with `success=1 shared_secret_match=1` after about 2.8 hours. Source inspection confirms this separation, and a clean independent replay has reproduced the calibration and begun the full scan, but has not yet completed; the finding therefore remains Probable rather than Confirmed. Higher parameter sets and remote-network timing are untested. The attack is independent of weaknesses in the contest hash/XOF placeholders.
 
 ### Reproducing
 
-Download the [forum attachment](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/A6PUI23BHC7YNE5UQ3SMRO33GDBWCF2P/attachment/4/uvw-kem-128-reaction-poc.tar.gz) (SHA-256 `9ae70267f8244247270f5d5e6e8edc34f87ba180cb0b340b2c6926f24b3e9fd9`), inspect its `README.md` and `attack/run_attack.sh`, then run it with a Python environment providing NumPy:
+Download the follow-up [forum attachment](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XLK4PVBFDFWXQA4QXKNBPNQRKKITR5OW/attachment/4/poc.zip) (SHA-256 `0a7655e2b7f569d8f178db4bcfc59aa71b494331f5462aa54eb8607b1055c109`), unpack it, and follow its `README.md`. Use the source at ngcc-harness commit `fe1a9fe61348178218fce5e1a1f0c553b6e37f58`, or the byte-identical archived UVW-KEM-128 source. The principal commands are:
 
 ```sh
 T=$(mktemp -d)
-curl -fL -o "$T/poc.tar.gz" \
-  'https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/A6PUI23BHC7YNE5UQ3SMRO33GDBWCF2P/attachment/4/uvw-kem-128-reaction-poc.tar.gz'
-printf '%s  %s\n' '9ae70267f8244247270f5d5e6e8edc34f87ba180cb0b340b2c6926f24b3e9fd9' "$T/poc.tar.gz" | sha256sum -c -
-tar -xzf "$T/poc.tar.gz" -C "$T"
-cd "$T/uvw-kem-128-reaction-poc/attack"
-python3 -c 'import numpy'  # activate an environment with NumPy if needed
-bash run_attack.sh
+curl -fL -o "$T/poc.zip" \
+  'https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XLK4PVBFDFWXQA4QXKNBPNQRKKITR5OW/attachment/4/poc.zip'
+printf '%s  %s\n' '0a7655e2b7f569d8f178db4bcfc59aa71b494331f5462aa54eb8607b1055c109' "$T/poc.zip" | sha256sum -c -
+unzip -q "$T/poc.zip" -d "$T"
+git clone https://github.com/ngcc-dev/ngcc-harness.git "$T/ngcc-harness"
+git -C "$T/ngcc-harness" checkout fe1a9fe61348178218fce5e1a1f0c553b6e37f58
+cd "$T/poc"
+UVW_REF="$T/ngcc-harness/kem-38/Implementations/Reference_Implementation/UVW-KEM-128" \
+  ./build_clean_blackbox_2026_09_28.sh
+mkdir -p result
+BB_NPROC=12 BB_PROBE_SHARDS=8 BB_SCAN_SHARDS=1000 \
+  BB_STATE="$PWD/bb_state" \
+  python3 run_blackbox_break_2026_09_28.py 2>&1 | tee result/blackbox-run.log
 ```
 
-The package compiles the submitted code, checks its two-line counter instrumentation, tests the real decoder channel, simulates the high-volume labels, and finishes with a fresh ciphertext and `E2E_OK`. The distinction between real decapsulation and secret-assisted simulation is essential when interpreting the result.
+This is an hours-long CPU experiment. A successful run ends with `success=1 shared_secret_match=1`.
 
 ## kem-38-4: Unused c1 bits make ciphertexts malleable without changing the key
 

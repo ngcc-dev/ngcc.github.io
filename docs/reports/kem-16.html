@@ -18,14 +18,34 @@
 <h1 id="hare-kem-16">HARE (kem-16)</h1>
 <div class="table-wrap"><table class="meta">
 <tr><th>Candidate</th><td>HARE</td></tr>
-<tr><th>Family</th><td>Code-based</td></tr>
-<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/HARE.zip">Official submission archive</a></td></tr>
+<tr><th>Family</th><td>Code-based (quasi-cyclic)</td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/HARE.zip">HARE.zip</a> (SHA-256: <code>718bb70eee268550fcef2a82e8eb9879c51ecfdbaefd6bfe2157e7639ffc8557</code>)</td></tr>
 <tr><th>Specification</th><td><a href="https://github.com/ngcc-dev/ngcc-harness/raw/dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kem-16/kem-16-spec.pdf" title="Download kem-16-spec.pdf from GitHub">kem-16-spec.pdf</a>&nbsp;<a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kem-16/kem-16-spec.pdf" title="Open the kem-16 specification PDF">PDF</a></td></tr>
 </table></div>
 
-<h3 id="review-status">Review status</h3>
-<p>No vulnerability finding is currently published for this candidate. This is not a security endorsement: it records only the present state of the public finding inventory, and the candidate remains under review.</p>
-<p>See the <a href="../constant-time/kem-16.html">constant-time review</a> and the <a href="../performance/x86_1/kem-16.html">x86_1 performance summary</a>. See the <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560844942397440.html">official submission page</a>.</p>
+<h2 class="issue-heading issue-heading-first" id="kem-16-1-headline-dfr-values-lack-a-reproducible-hare-calculation">kem-16-1: Headline DFR values lack a reproducible HARE calculation</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr>
+<tr><th>Affected</th><td>HARE-128 and HARE-256 specification (HARE-2 and HARE-5)</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Proof gap; no excessive failure rate or practical attack demonstrated</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, Institute of Information Engineering, Chinese Academy of Sciences, with Anthropic Claude Opus 5.5 assistance</td></tr>
+<tr><th>Date</th><td>2026-09-29</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/I3GOGQ7HXLFUKK5E3I562VHM3VAGNSJ6/">Xiong and Wang's PKC Forum post</a></p>
+<p>HARE's Table 2 claims decryption-failure probabilities below <code>2^-130</code> and <code>2^-258</code> for its submitted 128- and 256-bit sets. These two claims use the refined dependent-coordinate Model 2 in §6. The cited <a href="https://gitlab.com/HQCCiphertextCompression/hqc-with-ciphertext-compression">Bitzer et al. artifact</a> implements Model 2 for HQC, but the archived HARE package provides no adaptation that produces HARE's convolution distribution and combined error/erasure failure count.</p>
+<p>An independent implementation of the simpler Model 1 from §§5.1–5.3 gives <code>2^-121.4485</code> and <code>2^-239.2123</code>. These are short of Table 2's advertised bounds by about 8.6 and 18.8 bits, and short of the 128- and 256-bit security levels by about 6.6 and 16.8 bits. As a control, the same calculation reproduces Table 2's Model-1 figures for HARE-384 and HARE-512: <code>2^-384.9304</code> and <code>2^-519.4516</code>.</p>
+<p>The code package's <code>PARAMETER_MANIFEST.tsv</code> also labels HARE-256's <code>&lt;2^-258</code> value as “Model-1,” contradicting both the PDF's Model-2 label and the direct Model-1 recomputation. This appears to be a metadata error rather than evidence for either bound.</p>
+<p>This does not show that HARE's true failure probability exceeds its target: Model 1 is a conservative upper bound, and Model 2 may be correct. It shows that the headline sets depend on a tighter candidate-specific numerical calculation for which no checkable artifact was submitted. Publishing that implementation and its inputs, or selecting parameters that meet the target under the conservative calculation, would close the gap.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>Run the standard-library implementation of specification §§5.1–5.3:</p>
+<pre><code class="language-sh">python3 kem-16/reproduce_model1_dfr.py
+</code></pre>
+<p>It recomputes all four values above and checks the two specification-published Model-1 controls before printing <code>CONFIRMED</code>.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

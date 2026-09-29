@@ -36,7 +36,7 @@
 <tr><th>Date</th><td>2026-09-23</td></tr>
 </table></div>
 
-<p>Additional reference: <a href="https://eprint.iacr.org/2026/2232">Xiong and Wang, ePrint 2026/2232, §17</a></p>
+<p>Additional reference: <a href="https://eprint.iacr.org/archive/2026/2232/1790581014.pdf">Xiong and Wang, ePrint 2026/2232, 2026-09-28 revision, §17</a></p>
 <p>The shipped C-Multi-UR-AG decapsulator does not safely reject malformed ciphertexts. With an honestly generated key, an all-zero ciphertext triggers stack-smash detection in CMultiURAG-128 and a segmentation fault in CMultiURAG-512. A sampled single-bit change to an honest ciphertext segfaults in CMultiURAG-256. All three unmodified reference libraries pass their honest KATs. These are attacker-controlled, fixed-length ciphertexts, not truncated buffers or corrupted secret keys.</p>
 <p>For the 128-bit instance, a debugger places the stack-smash in <code>rbc_elt_mul</code>, called from <code>rbc_qpoly_mul2</code> through <code>rbc_qpoly_left_div2</code> and the augmented-Gabidulin decoder. In <code>src/qpoly.c</code>, <code>rbc_qpoly_left_div2</code> decrements its signed iteration bound without checking exhaustion and passes that value as an unsigned degree to <code>rbc_qpoly_mul2</code>, whose loop uses it to index polynomial coefficients. This is a concrete unsafe decoder path; the observed effect is process termination. No secret disclosure, shared-secret recovery, or arbitrary-code execution is established.</p>
 <p>Decapsulation must validate decoder bounds and return a defined rejection result on malformed ciphertexts. Merely replacing a process crash with the same unchecked polynomial access is insufficient.</p>

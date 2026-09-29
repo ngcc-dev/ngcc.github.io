@@ -11,11 +11,14 @@ Layer: Implementation
 Affected: Sigurd-128, -256, and -512 reference implementations
 Discovery: Moderate
 Exploitation: Witness recovery and accepted fresh-message forgeries from 4–8 ordinary signatures in independent tests
-Credit: Martin Feussner, with OpenAI Codex (Daybreak Blue) assistance
+Credit: Guoxiao Liu (Tsinghua University); independently Martin Feussner, with OpenAI Codex (Daybreak Blue) assistance; independently Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-09-25
 Original source: [Feussner's pqc-forum post and attached analysis](https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/2lO14yYyDK4/m/UYKYkWM7BAAJ)
+Follow-up source: [Sigurd team's confirmation and repair](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/5DEREMB3PTPDFONWGHOJ4MQR4OP3V3AQ/)
 
 The specification's vector commitment pads the witness with fresh random tail elements and applies one Reed–Solomon encoding. The submitted `RS_encode` instead divides the input into 32 independently encoded chunks (`sig_core.c:640–745` in Sigurd-128; the same structure appears in the other reference sets). Early chunks contain only the unchanged witness prefix; the fresh tail cannot hide their evaluations. Signatures expose selected encoded-witness symbols, so openings accumulated across signatures interpolate those chunks. The public syndrome then determines the short remaining witness suffix. An independent whole-scheme witness recovered all 217/458/946 blocks from 4–8 ordinary signatures and forged a fresh message accepted by each submitted verifier; changing one recovered one-hot block made the control forgery reject. The flaw is in the submitted encoding, not the specified single-code construction.
+
+The Sigurd team confirms that Guoxiao Liu first disclosed the issue privately and that Feussner and Saarinen found it independently shortly afterward. Its revision replaces the 32 short codes with one global Reed–Solomon code in every parameter set, regenerates the KATs, and makes the evaluation domain explicit. The frozen archive above remains affected.
 
 ### Reproducing
 

@@ -86,3 +86,30 @@ challenge so verification traverses the allocating path and rejects it, and
 measures 500 calls in an isolated process. Resident memory grows by tens of
 KiB per call. As a control, the same number of all-zero encodings are rejected
 before that path without per-call growth.
+
+## sign-06-4: XOF block replay duplicates every high-level secret polynomial
+
+Severity: High
+Status: Confirmed
+Layer: Implementation
+Affected: COMPASS-SIG-384 and COMPASS-SIG-512 reference and optimized implementations
+Discovery: Trivial
+Exploitation: Confirmed reduction of the secret dimension; public-key-only recovery cost remains unresolved
+Credit: Yamin Liu and Tianyuan Xie, with AI assistance
+Date: 2026-09-29
+Original source: [NGCC PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/5GFCMSYVGVAEWZQAYUR6QFMGBFDYQ6MT/)
+
+When `fill_squeeze` enlarges its buffered XOF output, it recomputes the longer prefix and resets `state->squeeze_pos` to zero (`symmetric-shake.c:11–30`). Consecutive 136-byte squeezes therefore return the same first block instead of consecutive blocks. This remains a defect when the contest placeholder is replaced by an ideal prefix-consistent XOF with the same interface.
+
+The 384- and 512-bit secret samplers need a second block for their 512-coefficient polynomials. That block replays the first, so every sampled secret polynomial has a suffix equal to its prefix. Fresh deterministic keys reproduced duplicated tails of 84–117 coefficients in all 11 COMPASS-SIG-384 secret polynomials and 80–133 in all 14 COMPASS-SIG-512 polynomials, leaving mean free-coordinate fractions about 0.797 and 0.800. The 128- and 256-bit sets consume only one block and are controls.
+
+The reporters' full-`t` lattice model reduces the estimated 384-bit attack from about `2^442` to `2^257`–`2^274`, and the 512-bit attack from about `2^523` to `2^281`–`2^300`. The public key exposes rounded `t`, however, and two public-key-only analysis routes disagree; no practical key recovery is claimed. The confirmed severe parameter-distribution failure and candidate-specific recovery path warrant High, not Critical. Preserving the old read position when the prefix buffer grows fixes the replay; the high-level KATs must then change.
+
+### Reproducing
+
+```sh
+make -C sign-06
+python3 sign-06/reproduce_xof_replay.py
+```
+
+The witness checks all eight parameter-specific reference and optimized wrapper copies, generates fresh keys through the submitted API, unpacks every `s1` and `s2` polynomial, and requires a long prefix-equal suffix in every high-level polynomial. Fresh 128- and 256-bit keys are negative controls.

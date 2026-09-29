@@ -32,11 +32,13 @@
 <tr><th>Affected</th><td>Sigurd-128, -256, and -512 reference implementations</td></tr>
 <tr><th>Discovery</th><td>Moderate</td></tr>
 <tr><th>Exploitation</th><td>Witness recovery and accepted fresh-message forgeries from 4–8 ordinary signatures in independent tests</td></tr>
-<tr><th>Credit</th><td>Martin Feussner, with OpenAI Codex (Daybreak Blue) assistance</td></tr>
+<tr><th>Credit</th><td>Guoxiao Liu (Tsinghua University); independently Martin Feussner, with OpenAI Codex (Daybreak Blue) assistance; independently Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
 <tr><th>Date</th><td>2026-09-25</td></tr>
 </table></div>
-<p>Original source: <a href="https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/2lO14yYyDK4/m/UYKYkWM7BAAJ">Feussner's pqc-forum post and attached analysis</a></p>
+<p>Original source: <a href="https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/2lO14yYyDK4/m/UYKYkWM7BAAJ">Feussner's pqc-forum post and attached analysis</a>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/5DEREMB3PTPDFONWGHOJ4MQR4OP3V3AQ/">Sigurd team's confirmation and repair</a></p>
 <p>The specification's vector commitment pads the witness with fresh random tail elements and applies one Reed–Solomon encoding. The submitted <code>RS_encode</code> instead divides the input into 32 independently encoded chunks (<code>sig_core.c:640–745</code> in Sigurd-128; the same structure appears in the other reference sets). Early chunks contain only the unchanged witness prefix; the fresh tail cannot hide their evaluations. Signatures expose selected encoded-witness symbols, so openings accumulated across signatures interpolate those chunks. The public syndrome then determines the short remaining witness suffix. An independent whole-scheme witness recovered all 217/458/946 blocks from 4–8 ordinary signatures and forged a fresh message accepted by each submitted verifier; changing one recovered one-hot block made the control forgery reject. The flaw is in the submitted encoding, not the specified single-code construction.</p>
+<p>The Sigurd team confirms that Guoxiao Liu first disclosed the issue privately and that Feussner and Saarinen found it independently shortly afterward. Its revision replaces the 32 short codes with one global Reed–Solomon code in every parameter set, regenerates the KATs, and makes the evaluation domain explicit. The frozen archive above remains affected.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">make -C sign-24 exploit

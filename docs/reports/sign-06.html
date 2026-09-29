@@ -98,6 +98,28 @@ challenge so verification traverses the allocating path and rejects it, and
 measures 500 calls in an isolated process. Resident memory grows by tens of
 KiB per call. As a control, the same number of all-zero encodings are rejected
 before that path without per-call growth.</p>
+<h2 class="issue-heading" id="sign-06-4-xof-block-replay-duplicates-every-high-level-secret-polynomial">sign-06-4: XOF block replay duplicates every high-level secret polynomial</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>COMPASS-SIG-384 and COMPASS-SIG-512 reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Confirmed reduction of the secret dimension; public-key-only recovery cost remains unresolved</td></tr>
+<tr><th>Credit</th><td>Yamin Liu and Tianyuan Xie, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-29</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/5GFCMSYVGVAEWZQAYUR6QFMGBFDYQ6MT/">NGCC PKC Forum post</a></p>
+<p>When <code>fill_squeeze</code> enlarges its buffered XOF output, it recomputes the longer prefix and resets <code>state-&gt;squeeze_pos</code> to zero (<code>symmetric-shake.c:11–30</code>). Consecutive 136-byte squeezes therefore return the same first block instead of consecutive blocks. This remains a defect when the contest placeholder is replaced by an ideal prefix-consistent XOF with the same interface.</p>
+<p>The 384- and 512-bit secret samplers need a second block for their 512-coefficient polynomials. That block replays the first, so every sampled secret polynomial has a suffix equal to its prefix. Fresh deterministic keys reproduced duplicated tails of 84–117 coefficients in all 11 COMPASS-SIG-384 secret polynomials and 80–133 in all 14 COMPASS-SIG-512 polynomials, leaving mean free-coordinate fractions about 0.797 and 0.800. The 128- and 256-bit sets consume only one block and are controls.</p>
+<p>The reporters' full-<code>t</code> lattice model reduces the estimated 384-bit attack from about <code>2^442</code> to <code>2^257</code>–<code>2^274</code>, and the 512-bit attack from about <code>2^523</code> to <code>2^281</code>–<code>2^300</code>. The public key exposes rounded <code>t</code>, however, and two public-key-only analysis routes disagree; no practical key recovery is claimed. The confirmed severe parameter-distribution failure and candidate-specific recovery path warrant High, not Critical. Preserving the old read position when the prefix buffer grows fixes the replay; the high-level KATs must then change.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C sign-06
+python3 sign-06/reproduce_xof_replay.py
+</code></pre>
+<p>The witness checks all eight parameter-specific reference and optimized wrapper copies, generates fresh keys through the submitted API, unpacks every <code>s1</code> and <code>s2</code> polynomial, and requires a long prefix-equal suffix in every high-level polynomial. Fresh 128- and 256-bit keys are negative controls.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -1,6 +1,6 @@
 <!-- synchronized report: sign-32/report.md -->
 Candidate: UVW
-Family: Multivariate (F3)
+Family: Code-based (Wave-type, syndrome decoding over F3)
 Archive: [UVW signature.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/UVW%20signature.zip) (SHA-256: `bbfa8dad5ee57083578b50b9937e773e6158f72646e825da3d3265cc00cb1294`)
 
 ## sign-32-1: Every signature is accepted
@@ -15,7 +15,7 @@ Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assi
 Date: 2026-09-21
 Follow-up source: [LittleQ's PKC Forum post, 2026-09-23](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/VT73TSZCRZVPPQDP3B4NBVVRRF36XVJ6/)
 
-Additional reference: [Xiong and Wang, ePrint 2026/2232, §15](https://eprint.iacr.org/2026/2232)
+Additional reference: [Xiong and Wang, ePrint 2026/2232, 2026-09-28 revision, §15](https://eprint.iacr.org/archive/2026/2232/1790581014.pdf)
 
 The internal `uvw_verify` routine computes the intended verification predicate. The API wrapper converts that result to `0` or `-1`, stores it in a local variable, and then unconditionally returns `0`.
 

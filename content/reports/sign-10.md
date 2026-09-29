@@ -45,7 +45,7 @@ Credit: MingLLuo (GitHub @MingLLuo), with AI assistance disclosed by the submitt
 Date: 2026-09-22
 Original source: [GitHub issue #5](https://github.com/ngcc-dev/ngcc-harness/issues/5)
 
-Additional reference: [Xiong and Wang, ePrint 2026/2232, §14](https://eprint.iacr.org/2026/2232)
+Additional reference: [Xiong and Wang, ePrint 2026/2232, 2026-09-29 revision, §3](https://eprint.iacr.org/archive/2026/2232/1790653241.pdf)
 
 Facto-DSA's public cubic map has a derivative space of dimension 165 inside the 210-dimensional space of quadratic forms. The 45 missing dimensions expose the hidden `X/Y` variable separation by linear algebra. In the recovered coordinates, another linear solve removes the mixed block and reveals the `n`-dimensional quadratic space; rank-one points recover a certified flag in which that space is triangular.
 

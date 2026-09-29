@@ -79,7 +79,7 @@ Discovery: Moderate
 Exploitation: The specified PolarKEM-128 radius rejects an honest error with probability 0.9965184962; no confidentiality attack is claimed here
 Credit: Zhenyu Xiong and Mingsheng Wang
 Date: 2026-09-27
-Reference: [Xiong and Wang, “Cryptanalysis of the ICCS NGCC Round-1 Public-Key Candidates,” ePrint 2026/2232, §13.5](https://eprint.iacr.org/2026/2232)
+Reference: [Xiong and Wang, ePrint 2026/2232, 2026-09-29 revision, §5](https://eprint.iacr.org/archive/2026/2232/1790653241.pdf)
 
 Table 1 specifies `(N,rho)=(512,15),(1024,31),(2048,63)` and claims decryption-failure probabilities below `2^-128`, `2^-256`, and `2^-512`. The specified ternary error has `Pr[e_i != 0]=1/2`, so `||e||^2` has the distribution `Bin(N,1/2)`. For PolarKEM-128 the radius test therefore rejects with
 
@@ -109,7 +109,7 @@ Discovery: Trivial
 Exploitation: One decapsulation query on a byte-distinct unit perturbation of the challenge ciphertext
 Credit: Zhenyu Xiong and Mingsheng Wang
 Date: 2026-09-27
-Reference: [Xiong and Wang, “Cryptanalysis of the ICCS NGCC Round-1 Public-Key Candidates,” ePrint 2026/2232, §13.5](https://eprint.iacr.org/2026/2232)
+Reference: [Xiong and Wang, ePrint 2026/2232, 2026-09-29 revision, §5](https://eprint.iacr.org/archive/2026/2232/1790653241.pdf)
 
 Algorithms 6 and 7 derive the valid key only as `K=Extract(m)`. Decapsulation recovers `m_hat`, forms `e_hat=c-Embed(m_hat,pk)`, and accepts whenever `||e_hat||<=rho`; it neither reconstructs the coins from `mu` nor compares a re-encryption, and the valid key does not bind the ciphertext.
 

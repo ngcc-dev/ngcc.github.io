@@ -28,9 +28,9 @@ sign-26;Isogeny-based
 sign-27;Isogeny-based
 sign-28;Code-based / MPC-in-the-head
 sign-29;Multivariate / MPC-in-the-head
-sign-30;Multivariate / MPC-in-the-head
+sign-30;Trilinear-form group action
 sign-31;Multivariate
-sign-32;Multivariate
+sign-32;Code-based (Wave-type, syndrome decoding over F3)
 sign-33;Multivariate
 sign-34;Lattice-based
 kem-01;Lattice-based

@@ -38,7 +38,7 @@ Discovery: Hard
 Exploitation: Complete MAMBA-NIKE-128 and -384 static-key recovery in 71 raw-reconciliation queries; the deployed hashed-key route is estimated at about 2^15 reactions but is not implemented or benchmarked
 Credit: Zhenyu Xiong and Mingsheng Wang
 Date: 2026-09-27
-Reference: [Xiong and Wang, “Cryptanalysis of the ICCS NGCC Round-1 Public-Key Candidates,” ePrint 2026/2232, §9](https://eprint.iacr.org/2026/2232)
+Reference: [Xiong and Wang, ePrint 2026/2232, 2026-09-29 revision, §6](https://eprint.iacr.org/archive/2026/2232/1790653241.pdf)
 
 The static responder applies D4 reconciliation to an unvalidated attacker-chosen one-pass message under the same long-term secret. Its intermediate product is linear in that secret, while the dither is derived from the attacker's public `mu`. Chosen monomial messages therefore turn each reconciliation group into a small lookup problem over four secret coefficients.
 

@@ -36,7 +36,7 @@
 <tr><th>Date</th><td>2026-09-21</td></tr>
 </table></div>
 
-<p>Additional reference: <a href="https://eprint.iacr.org/2026/2232">Xiong and Wang, ePrint 2026/2232, §7</a></p>
+<p>Additional reference: <a href="https://eprint.iacr.org/archive/2026/2232/1790581014.pdf">Xiong and Wang, ePrint 2026/2232, 2026-09-28 revision, §7</a></p>
 <p>Changing a ciphertext bit frequently leaves the decapsulated shared secret unchanged. An exhaustive sweep of Aigis-enc1 found that 5,632 of 7,168 single-bit ciphertext changes return the original shared secret. The same defect was reproduced in the other two parameter sets.</p>
 <p><code>mkem_dec</code> writes the candidate valid secret to the output before checking the re-encrypted ciphertext. On failure, the intended constant-time replacement writes into the wrong buffer, leaving the already-returned candidate secret untouched. Rejection is therefore ineffective.</p>
 <p>An attacker given a challenge ciphertext and candidate challenge key can modify the ciphertext, decapsulate it through the allowed CCA oracle, and compare the result with the candidate key. Retention identifies the real encapsulated key and provides a direct IND-CCA distinguisher. This violates the claimed IND-CCA security at every submitted level.</p>

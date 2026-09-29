@@ -85,7 +85,7 @@ witnesses and their controls. See <code>tools/README.md</code>.</p>
 <tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang</td></tr>
 <tr><th>Date</th><td>2026-09-27</td></tr>
 </table></div>
-<p>Reference: <a href="https://eprint.iacr.org/2026/2232">Xiong and Wang, “Cryptanalysis of the ICCS NGCC Round-1 Public-Key Candidates,” ePrint 2026/2232, §13.5</a></p>
+<p>Reference: <a href="https://eprint.iacr.org/archive/2026/2232/1790653241.pdf">Xiong and Wang, ePrint 2026/2232, 2026-09-29 revision, §5</a></p>
 <p>Table 1 specifies <code>(N,rho)=(512,15),(1024,31),(2048,63)</code> and claims decryption-failure probabilities below <code>2^-128</code>, <code>2^-256</code>, and <code>2^-512</code>. The specified ternary error has <code>Pr[e_i != 0]=1/2</code>, so <code>||e||^2</code> has the distribution <code>Bin(N,1/2)</code>. For PolarKEM-128 the radius test therefore rejects with</p>
 <p><code>Pr[||e|| &gt; 15] = Pr[Bin(512,1/2) &gt; 225] = 0.996518496182011</code>,</p>
 <p>rather than with probability below <code>2^-128</code>.</p>
@@ -108,7 +108,7 @@ witnesses and their controls. See <code>tools/README.md</code>.</p>
 <tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang</td></tr>
 <tr><th>Date</th><td>2026-09-27</td></tr>
 </table></div>
-<p>Reference: <a href="https://eprint.iacr.org/2026/2232">Xiong and Wang, “Cryptanalysis of the ICCS NGCC Round-1 Public-Key Candidates,” ePrint 2026/2232, §13.5</a></p>
+<p>Reference: <a href="https://eprint.iacr.org/archive/2026/2232/1790653241.pdf">Xiong and Wang, ePrint 2026/2232, 2026-09-29 revision, §5</a></p>
 <p>Algorithms 6 and 7 derive the valid key only as <code>K=Extract(m)</code>. Decapsulation recovers <code>m_hat</code>, forms <code>e_hat=c-Embed(m_hat,pk)</code>, and accepts whenever <code>||e_hat||&lt;=rho</code>; it neither reconstructs the coins from <code>mu</code> nor compares a re-encryption, and the valid key does not bind the ciphertext.</p>
 <p>Given a challenge <code>c=Embed(m,pk)+e</code>, perturb one coordinate by a uniformly random sign to obtain the distinct ciphertext <code>c'=c+/-u_i</code>. Whenever the decoder returns the same <code>m</code> and the perturbed residual remains inside the decoding ball, Algorithm 7 returns the challenge key <code>Extract(m)</code>.</p>
 <p>This conclusion does not rely on the specification's inconsistent minimum-distance argument. A signed unit perturbation leaves the changed error coefficient in the specified alphabet <code>{-1,0,1}</code> with probability <code>3/4</code>; on those outcomes, the perturbed-error distribution has point probability at most twice that of an honest error. Consequently, if the claimed honest decoding-failure probability is <code>delta</code>, decoding the perturbation to a different message costs at most <code>2*delta</code>. Including the public norm test gives alias probabilities of at least <code>0.0024956-2^-127</code>, <code>0.75-2^-255</code>, and <code>0.75-2^-511</code> for PolarKEM-128, -256, and -512. Thus either these aliases occur with the stated non-negligible probability, or the claimed correctness bound is already false.</p>

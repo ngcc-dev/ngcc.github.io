@@ -16,7 +16,7 @@ Date: 2026-09-22
 Original source: [NGCC PKC Forum report](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/ECMH3PMGM2NWJG4JIBQBCKQ6U5CBUDDA/)
 Follow-up source: [Tins team's 2026-09-25 response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/AJF5VVYQAJTICBWFFS5DHIO4U2FZZOXT/)
 
-Additional reference: [Xiong and Wang, ePrint 2026/2232, §16](https://eprint.iacr.org/2026/2232)
+Additional reference: [Xiong and Wang, ePrint 2026/2232, 2026-09-28 revision, §16](https://eprint.iacr.org/archive/2026/2232/1790581014.pdf)
 
 Tianyuan Xie reported the attack in the [NGCC PKC Forum](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/ECMH3PMGM2NWJG4JIBQBCKQ6U5CBUDDA/). Tins masks its binary witness `(alpha,beta)` with vectors over the 12-bit subfield, while publishing `p_mid` in `GF(2^k)`. After substituting the verifier-reconstructed evaluations into `p_mid`, the bilinear witness terms cancel in characteristic two. Only a 12-bit additive mask remains, confined to the final subfield coefficient.
 

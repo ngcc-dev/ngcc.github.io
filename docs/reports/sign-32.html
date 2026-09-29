@@ -18,7 +18,7 @@
 <h1 id="uvw-sign-32">UVW (sign-32)</h1>
 <div class="table-wrap"><table class="meta">
 <tr><th>Candidate</th><td>UVW</td></tr>
-<tr><th>Family</th><td>Multivariate (F3)</td></tr>
+<tr><th>Family</th><td>Code-based (Wave-type, syndrome decoding over F3)</td></tr>
 <tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/UVW%20signature.zip">UVW signature.zip</a> (SHA-256: <code>bbfa8dad5ee57083578b50b9937e773e6158f72646e825da3d3265cc00cb1294</code>)</td></tr>
 <tr><th>Specification</th><td><a href="https://github.com/ngcc-dev/ngcc-harness/raw/dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/sign-32/sign-32-spec.pdf" title="Download sign-32-spec.pdf from GitHub">sign-32-spec.pdf</a>&nbsp;<a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/sign-32/sign-32-spec.pdf" title="Open the sign-32 specification PDF">PDF</a></td></tr>
 </table></div>
@@ -36,7 +36,7 @@
 <tr><th>Date</th><td>2026-09-21</td></tr>
 </table></div>
 <p>Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/VT73TSZCRZVPPQDP3B4NBVVRRF36XVJ6/">LittleQ's PKC Forum post, 2026-09-23</a></p>
-<p>Additional reference: <a href="https://eprint.iacr.org/2026/2232">Xiong and Wang, ePrint 2026/2232, §15</a></p>
+<p>Additional reference: <a href="https://eprint.iacr.org/archive/2026/2232/1790581014.pdf">Xiong and Wang, ePrint 2026/2232, 2026-09-28 revision, §15</a></p>
 <p>The internal <code>uvw_verify</code> routine computes the intended verification predicate. The API wrapper converts that result to <code>0</code> or <code>-1</code>, stores it in a local variable, and then unconditionally returns <code>0</code>.</p>
 <p>Consequently, invalid signatures and modified messages that reach the final return are reported as valid. The modified-message witness reproduces on the 128- and 256-bit reference instances; some malformed signatures instead crash as described in <code>sign-32-2</code>. No cryptanalysis or signing query is required.</p>
 <p>Follow-up analysis: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/VT73TSZCRZVPPQDP3B4NBVVRRF36XVJ6/">LittleQ reported on 2026-09-23</a> that all six submitted wrappers discard <code>uvw_verify</code>'s result. We source-checked the three optimized variants: each also computes <code>result</code> and unconditionally returns <code>0</code>. This extends the source-confirmed scope to both implementation families; the local runtime witness still uses reference builds, and 512-bit key generation was too slow for that witness.</p>

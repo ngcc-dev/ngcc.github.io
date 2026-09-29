@@ -41,6 +41,26 @@
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>Compile <code>afs_tredm.c</code> with <code>gcc -O2 -g -fPIC -c</code> and inspect <code>objdump -dSl</code> around <code>set_lane_bit_msb</code>; the message-bit path contains <code>bt</code>/<code>jae</code>.</p>
+<h2 class="issue-heading" id="hash-01-2-missing-final-block-separation-gives-a-264-query-distinguisher">hash-01-2: Missing final-block separation gives a 2^64-query distinguisher</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Specified AFS-TrEDM-512, -768, and -1024 constructions and reference implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Approximately 2^64 permutation evaluations; this is an indifferentiability distinguisher, not a collision or preimage</td></tr>
+<tr><th>Credit</th><td>Qinghe Crypto Group</td></tr>
+<tr><th>Date</th><td>2026-09-29</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/IBTHTO24MZQCJUE4GCUI3HJKPA2B4Q6E/">CryptHash Forum post</a></p>
+<p>AFS-TrEDM applies the same absorbing core to ordinary and final framed blocks. Write the state after hashing <code>M</code> as <code>R || z || u</code>, where <code>R</code> is the rate, <code>z</code> is the published digest, and <code>u</code> is the only unrevealed 64-bit capacity suffix. Hash the distinct extended message <code>M' = P(M) || R</code>, where <code>P(M)</code> is the complete rate-aligned framing of <code>M</code>. Processing its <code>P(M)</code> prefix recreates the original final state; absorbing <code>R</code> then cancels the rate before <code>g</code>, leaving <code>0^r || z || u</code>. The following core output and the fixed fresh framing block for <code>M'</code> therefore depend only on public <code>z</code> and guessed <code>u</code>.</p>
+<p>A distinguisher enumerates the <code>2^64</code> possible values of <code>u</code>, fixes the resulting candidate-digest set, obtains <code>R</code> through later permutation queries, and tests whether <code>H(P(M) || R)</code> belongs to that set. The real construction always matches, whereas an ideal <code>d</code>-bit oracle matches a fixed set of at most <code>2^64</code> values with probability at most <code>2^(64-d)</code>. This contradicts the specification's ideal-permutation indifferentiability and length-extension discussion. It does not establish a collision, preimage, or second preimage, so the violation of this additional claimed property is High rather than Critical under the classification policy. Capacity-domain separation for the actual final block would prevent the replay.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 hash-01/reproduce_final_block_replay.py
+</code></pre>
+<p>The witness compiles the archived permutation at all three parameter sets. It checks the candidate's framing against <code>CryptHash</code>, confirms that absorbing the exposed rate produces exactly the same complete state as starting that call from <code>0^r || z || u</code>, processes the fresh extended-message padding, and matches the resulting candidate to the full submitted hash. Flipping one bit of the appended rate is a nonmatching control. The script certifies the construction underlying the <code>2^64</code> enumeration; it does not execute that enumeration.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

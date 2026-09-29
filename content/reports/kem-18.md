@@ -46,7 +46,7 @@ Credit: Sun Shuzhou, with GLM-5.3 assistance
 Date: 2026-09-28
 Original source: [Sun's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/JHXFAJR6JLACWVD5ZIWPNP3H7N5OJOGG/)
 
-Additional reference: [Xiong and Wang, ePrint 2026/2232, §10](https://eprint.iacr.org/2026/2232)
+Additional reference: [Xiong and Wang, ePrint 2026/2232, 2026-09-29 revision, §1](https://eprint.iacr.org/archive/2026/2232/1790653241.pdf)
 
 The specified rings split over the integers:
 

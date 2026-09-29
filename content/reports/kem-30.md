@@ -13,7 +13,7 @@ Discovery: Hard
 Exploitation: Measured timing classification of a decrypted-message-dependent rejection count; key recovery and IND-CCA break explicitly not demonstrated
 Credit: Zhenyu Xiong and Mingsheng Wang
 Date: 2026-09-27
-Reference: [Xiong and Wang, “Cryptanalysis of the ICCS NGCC Round-1 Public-Key Candidates,” ePrint 2026/2232, §§3.3 and 3.7–3.8](https://eprint.iacr.org/2026/2232)
+Reference: [Xiong and Wang, ePrint 2026/2232, 2026-09-28 revision, §§3.3 and 3.7–3.8](https://eprint.iacr.org/archive/2026/2232/1790581014.pdf)
 
 Decapsulation re-encrypts the decrypted message for its Fujisaki--Okamoto check. The derived seed enters `sample_screened_poly`, whose spectral rejection loop repeats until a bound is met (`pke.c:30–42`). Its total rejection count `R` is therefore a deterministic public function of the secret-derived decrypted message, and execution time reveals that count. This contradicts the specification's claims that the polar-code implementation has constant-time control flow and intrinsically supports constant-time implementation.
 

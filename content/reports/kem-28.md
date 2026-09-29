@@ -15,7 +15,7 @@ Credit: Matthias Meijers (GitHub @mmtobs), with AI assistance
 Date: 2026-09-25
 Original source: [ngcc-harness pull request #17](https://github.com/ngcc-dev/ngcc-harness/pull/17)
 
-Additional reference: [Xiong and Wang, ePrint 2026/2232, §4](https://eprint.iacr.org/2026/2232)
+Additional reference: [Xiong and Wang, ePrint 2026/2232, 2026-09-28 revision, §4](https://eprint.iacr.org/archive/2026/2232/1790581014.pdf)
 
 Specification Algorithms 12 and 14 unpack fixed-width coefficient fields without rejecting values at least `q`, and Algorithm 3 never rechecks the received ciphertext bytes. The reference `poly_frombytes` does the same (`poly.c:104`). When a ciphertext coefficient `c + q` still fits its field, replacing `c` with `c + q` changes the ciphertext bytes but leaves the polynomial residue used by decapsulation unchanged. `kem_dec` checks the confirmation tag but never checks that the received polynomial bytes are canonical (`KEM_AlgorithmInstance.c:170–204` in OAEP-NTRU-648, `:215–249` in -1296, and `:185–228` in -2592). A modified encoding of an honest ciphertext therefore returns its original shared secret. In the IND-CCA game, this byte-distinct alias can be submitted to the decapsulation oracle even though the challenge ciphertext itself cannot.
 

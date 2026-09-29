@@ -137,7 +137,7 @@ Discovery: Moderate
 Exploitation: 576/576 Amoeba-576 secret coefficients and a fresh session key recovered in about 24,200 chosen-ciphertext queries
 Credit: Zhenyu Xiong and Mingsheng Wang
 Date: 2026-09-27
-Reference: [Xiong and Wang, “Cryptanalysis of the ICCS NGCC Round-1 Public-Key Candidates,” ePrint 2026/2232, §8](https://eprint.iacr.org/2026/2232)
+Reference: [Xiong and Wang, ePrint 2026/2232, 2026-09-28 revision, §8](https://eprint.iacr.org/archive/2026/2232/1790581014.pdf)
 
 `CCAKEM_Decaps` returns `-1` immediately when `CPAPKE_Decrypt` reports an ECC failure, before the Fujisaki--Okamoto re-encryption comparison and implicit rejection. An attacker can therefore force and observe a secret-dependent decoding-failure bit. A ciphertext with scalar `c1=delta`, one pinned pilot bit, and one swept probe bit reveals the threshold `q/4+delta*s_i`; matching the 32 possible compressed-`c2` responses recovers that secret coefficient.
 

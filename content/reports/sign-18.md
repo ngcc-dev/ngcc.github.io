@@ -105,7 +105,7 @@ Credit: Pierre Pébereau
 Date: 2026-09-24
 Original source: [NGCC PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/HTZTMJ42AUXCWEDA3AURP4ZOEGSGSV4Z/), [UnfoldOrigami code](https://github.com/pi-r2/UnfoldOrigami/tree/defa3405d66e763580729b14d6f81c1300fbb219)
 
-Additional reference: [Xiong and Wang, ePrint 2026/2232, §12](https://eprint.iacr.org/2026/2232)
+Additional reference: [Xiong and Wang, ePrint 2026/2232, 2026-09-29 revision, §4](https://eprint.iacr.org/archive/2026/2232/1790653241.pdf)
 
 Origami §2.5.6 explicitly derives the change of variables `Π_pub` from the *public* expansion seed and defines `P_pub = G ∘ Π_pub^-1`. Undoing that permutation exposes the zone order. The public-key expansion supplies each zone's affine coefficients, so an attacker can choose its vinegar coordinates and solve the resulting linear system for oil coordinates, proceeding zone by zone. This reproduces the signer's easy inversion without its secret seed or a signing oracle. It is distinct from `sign-18-2`'s signature-derived subspace observation.
 

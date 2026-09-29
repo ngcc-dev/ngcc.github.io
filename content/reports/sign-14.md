@@ -26,6 +26,8 @@ The Lynxer team confirms the flaw, reports that the Center for Cryptology Study 
 
 Liu et al. independently formalize the same null-branch witness mechanism, prove public-key-only forgery for the affected 256-, 384-, and 512-bit Lynxer relations, and report accepted fresh-message forgeries. Their separate Lynx-192 analysis concerns another upstream variant and does not extend this finding to the archived NGCC 160-bit sets.
 
+On 2026-09-29 the Lynxer team also [released a targeted modification note](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/3HMAZXK7HD6JDLF5BJVYWDECM2SF5N3M/) for the anomalous-point attack. It concerns the repaired revision, not the archived Round 1 package tested here.
+
 ### Reproducing
 
 ```sh
