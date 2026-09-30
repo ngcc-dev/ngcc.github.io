@@ -33,10 +33,19 @@ Exploitation: Approximately 2^64 permutation evaluations; this is an indifferent
 Credit: Qinghe Crypto Group
 Date: 2026-09-29
 Original source: [CryptHash Forum post](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/IBTHTO24MZQCJUE4GCUI3HJKPA2B4Q6E/)
+Follow-up source: [AFS-TrEDM team's CryptHash Forum response](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/CW6EWBRZQZ4T36T7W4HO6F4OQSBBSOLJ/)
 
 AFS-TrEDM applies the same absorbing core to ordinary and final framed blocks. Write the state after hashing `M` as `R || z || u`, where `R` is the rate, `z` is the published digest, and `u` is the only unrevealed 64-bit capacity suffix. Hash the distinct extended message `M' = P(M) || R`, where `P(M)` is the complete rate-aligned framing of `M`. Processing its `P(M)` prefix recreates the original final state; absorbing `R` then cancels the rate before `g`, leaving `0^r || z || u`. The following core output and the fixed fresh framing block for `M'` therefore depend only on public `z` and guessed `u`.
 
 A distinguisher enumerates the `2^64` possible values of `u`, fixes the resulting candidate-digest set, obtains `R` through later permutation queries, and tests whether `H(P(M) || R)` belongs to that set. The real construction always matches, whereas an ideal `d`-bit oracle matches a fixed set of at most `2^64` values with probability at most `2^(64-d)`. This contradicts the specification's ideal-permutation indifferentiability and length-extension discussion. It does not establish a collision, preimage, or second preimage, so the violation of this additional claimed property is High rather than Critical under the classification policy. Capacity-domain separation for the actual final block would prevent the replay.
+
+### Follow-up Analysis
+
+The AFS-TrEDM team confirms that the submitted construction lacks finalization domain separation and is affected by the prefix-replay and rate-cancellation distinguisher.
+
+### Proposed fixes
+
+The team's response proposes XORing a fixed nonzero marker into the capacity only for the genuine final block, before applying `g`, capacity feed-forward, and `h`; ordinary blocks would omit that marker. This section records the proposal without evaluating it.
 
 ### Reproducing
 

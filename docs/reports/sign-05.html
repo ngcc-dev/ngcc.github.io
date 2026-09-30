@@ -35,10 +35,15 @@
 <tr><th>Credit</th><td>Martin Feussner, with OpenAI Codex (Daybreak Blue) assistance</td></tr>
 <tr><th>Date</th><td>2026-09-25</td></tr>
 </table></div>
-<p>Original source: <a href="https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/_WrUbtphjHw/m/fHXYK5hJBAAJ">Feussner's pqc-forum post and attached analysis</a></p>
+<p>Original source: <a href="https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/_WrUbtphjHw/m/fHXYK5hJBAAJ">Feussner's pqc-forum post and attached analysis</a>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/MJ6BBVT2VGSSN4YD45HOK4X7BPDDZ6UX/">Chinith team's PKC Forum response</a></p>
 <p>The submission claims EUF-CMA security (§9.1.5–9.1.6), which is trivially violated: anyone can sign any message under any public key.</p>
 <p>The specification binds the QuickSilver constant term into the final challenge, <code>chall3 ← H32(chall2 ∥ ã0 ∥ ã1 ∥ … ∥ ãd−1 ∥ ctr)</code> (SM4th.Sign line 24, physical PDF page 60; uBlockith line 23, page 71; Vistrutith line 19, page 92). The verifier reconstructs ã0 from the public key and the committed witness and recomputes that hash (SM4th.Verify lines 19–21, page 63). ã0 is the only value that depends on whether the committed witness satisfies the public one-way-function relation.</p>
 <p>The implementations never hash ã0. <code>hash_challenge_3_init</code> absorbs <code>chall_2</code> and then <code>deg − 1</code> field elements starting at the signature's ã1 (<code>sm4th_d3_128f_loose/sig_impl.c:104-113</code>). The signer computes <code>a0_tilde</code> and frees it unused (<code>:440-458,516</code>). The verifier also computes it (<code>:652-658</code>), hashes only ã1…ãd−1 (<code>:670-671</code>), compares <code>chall_3</code> (<code>:675</code>), and frees <code>a0_tilde</code> (<code>:679</code>). uBlockith (<code>utils_ublock/sig_impl_ublock.c:203</code>) and Vistrutith (<code>utils_vistrutah/sig_impl_vistrutith.c:205</code>) do the same, as do all optimized copies. A forger therefore runs the ordinary signer with the victim's public key and a false witness, for example the extended witness of an all-zero key. All remaining commitment, consistency and grinding checks are honestly satisfied. Signer and verifier share the defect, so self-generated KATs pass.</p>
+<h3 id="follow-up-analysis">Follow-up Analysis</h3>
+<p>The Chinith team confirms that every implementation must bind <code>a_tilde_0</code> through <code>a_tilde_(d-1)</code> and describes the omission as an implementation oversight. The same response lists three additional specification corrections concerning the <code>d=2</code>/<code>d=3</code>, EM/non-EM, and degree-lifting formulas; those errata are not separately classified here.</p>
+<h3 id="proposed-fixes">Proposed fixes</h3>
+<p>The team's response proposes including every coefficient <code>a_tilde_0, ..., a_tilde_(d-1)</code> in both signing and verification. This section records the proposal without evaluating it.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">make -C sign-05 exploit
@@ -63,6 +68,26 @@ for b in sign-05/bin/reproduce_forgery_*; do &quot;$b&quot;; done
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>Inspect the cited build flags and table reads in any reference variant; the lookup indices are round words derived from the secret one-way-function key.</p>
+<h2 class="issue-heading" id="sign-05-3-the-specified-opening-rejection-retry-cannot-make-progress">sign-05-3: The specified opening-rejection retry cannot make progress</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>SM4th, uBlockith, and Vistrutith signing pseudocode; concrete witness for SM4th-d3-128s-lo</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>A reachable challenge makes the specified signer loop forever; no efficient attacker trigger or implementation impact shown</td></tr>
+<tr><th>Credit</th><td>changke</td></tr>
+<tr><th>Date</th><td>2026-09-30</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/AGYNQF4QEWLJTPFESMNWASPA2BN6M7GL/">changke's PKC Forum post</a></p>
+<p>The three signing algorithms increment <code>ctr</code> only when <code>chall3</code> fails the trailing-zero grinding condition. If that condition passes but <code>BAVC.Open</code> returns bottom because the opening exceeds <code>Topen</code>, the loop repeats with the same counter and otherwise unchanged hash input. It therefore derives the same challenge and rejects the same opening forever (SM4th.Sign lines 23–31, physical PDF page 60; uBlockith.Sign lines 22–30, page 71; Vistrutith.Sign lines 18–26, page 92).</p>
+<p>The rejection branch is reachable. For SM4th-d3-128s-lo, the valid indices <code>(0,100,...,1000)</code> map to eleven leaf positions whose root-path union contains 135 nodes. The specified opening uses <code>135-2·11+1=114</code> sibling seeds, exceeding <code>Topen=102</code>. The tuple fits the 121 index bits and can be followed by the required seven zero grinding bits. This proves a specification-level non-progress case, not a practical chosen-message denial of service: no transcript producing that tuple was searched, and the inspected implementation advances the counter after a rejected batch.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-05/reproduce_open_retry.py
+</code></pre>
+<p>The witness recomputes every leaf position, the path-union size, and the opening-size rejection. Inspect the cited signing algorithms for the unchanged-counter retry.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -42,3 +42,64 @@ rg -n -F 'buf, SEED_BYTES, buf2' kex-03/Implementations/Reference_Implementation
 The same defect reduces the claimed weak forward secrecy of K2S and S2K instances to `2^64` after compromise of the complementary long-term KEM key. This is an implementation error, not a cryptanalytic attack on the specified primitives.
 
 A related initiator-side call passes `SEED_BYTES * 8` as the requested output length but only `SEED_BYTES + SKI_LEN` as the `pseudohash` input bit count. In those instances `SKI_LEN/8 > 56`, so all 64 random bytes are still absorbed and this second units error does not reduce entropy further. It confirms that the bits-versus-bytes confusion is systematic.
+
+## kex-03-2: Omitting signatures from the KDF breaks transcript matching
+
+Severity: Critical
+Status: Confirmed
+Layer: Design
+Affected: All 18 specified K2S, S2K, and S2S instances
+Discovery: Trivial
+Exploitation: One alternate valid signature and standard AKE reveal queries
+Credit: ManojG
+Date: 2026-09-30
+Original source: [ManojG's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/E7ZJE4X2VS7GIUMYIAAJXKRNIUYPYUWG/)
+
+CreTAKE says its KDF binds the complete public transcript and claims IND-AA or IND-StAA security for the four frameworks (§4.1). However, Figures 1, 2, and 4 include signature bytes in the exchanged messages while their KDF inputs omit those signatures. The reference implementation does the same in every signature-bearing instance.
+
+An adversary corrupts the signature-credential holder and replaces its valid signature with a distinct valid signature on the same authenticated string. It chooses that holder's session as the test session, without revealing its state; this is not excluded by the adopted [IND-(St)AA game](https://eprint.iacr.org/2018/928). The peer accepts, but the two sessions are non-matching because their complete wire transcripts differ. Their KDF inputs and session keys are nevertheless identical. Revealing the non-matching peer session therefore supplies the test session's real key and distinguishes it from random. This is a polynomial-time break of the claimed AKE security, hence Critical; it requires no signature forgery.
+
+The submitted BiT signer is randomized. Two calls with the same key and message readily produce distinct signatures that both verify, so the condition needed by the attack holds in the concrete instances rather than only for a contrived EUF-CMA scheme.
+
+### Proposed fixes
+
+The CreTAKE authors' revised KDFs, as quoted in the original post, include the signature bytes in the transcript hash. This section records the proposal without evaluating it.
+
+### Reproducing
+
+```sh
+make -C kex-03 lib/libCreTAKE-K2S-PLAC128-BiT128.so
+python3 kex-03/reproduce_binding_attacks.py
+```
+
+The witness checks all 18 KDF implementations, generates two distinct valid BiT signatures on one string, and shows the resulting distinct transcripts retain the same KDF input and key.
+
+## kex-03-3: The generic double-key KEM fails its claimed first-key CCA game
+
+Severity: High
+Status: Confirmed
+Layer: Design
+Affected: Figure 7 and the five generic PolarLAC/ZEN double-key KEM instances
+Discovery: Trivial
+Exploitation: Two allowed second-key leaks and one allowed decapsulation query
+Credit: ManojG
+Date: 2026-09-30
+Original source: [ManojG's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/E7ZJE4X2VS7GIUMYIAAJXKRNIUYPYUWG/)
+
+Figure 7 derives the double-key KEM output as `h(pk1,K1,m')`, omitting the second public key and both ciphertext components. The five generic `twokem.c` implementations reproduce this construction. It is not `[IND-CCA,IND-CPA]` secure under Definition 8.
+
+The first-key CCA game lets the adversary obtain two generated second-key pairs. For the challenge `(c1*,c2*)` under `pk2*`, it decrypts `c2*` with the leaked `sk2*`, re-encrypts the recovered `m'` under the other leaked `pk2'`, and asks the permitted CCA query `(pk2',(c1*,c2'))`. Decapsulation recovers the unchanged `K1` and `m'`, so it returns exactly the challenge key. The adversary distinguishes with overwhelming probability without learning the first secret key.
+
+This breaks an explicitly claimed component property. The outer K2K framework hashes the complete AKE transcript, so the post does not establish a session-key attack on CreTAKE-K2K itself; the finding is therefore High rather than Critical.
+
+### Proposed fixes
+
+The original post proposes deriving the key from a domain-separation tag, both public keys, both ciphertexts, `K1`, and `m'`. It does not supply a proof. This section records the proposal without evaluating it.
+
+### Reproducing
+
+```sh
+python3 kex-03/reproduce_binding_attacks.py
+```
+
+The witness checks the five submitted generic implementations and executes the cross-key query algebra with a correctness-preserving PKE model. The attack depends only on PKE correctness and on the displayed KDF inputs.

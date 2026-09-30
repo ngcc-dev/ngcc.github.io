@@ -34,10 +34,19 @@ Exploitation: Honest-session correctness failure; no confidentiality or authenti
 Credit: Sun Shuzhou, with GLM-5.3 assistance
 Date: 2026-09-29
 Original source: [Sun's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/AGQTR6256YQJPU76ZTC3RSLY44J7Y6T7/)
+Follow-up source: [DKEM/DKEX/ADKEX team's PKC Forum response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/NRJXWUW3IRBVMQZEGW3DNPUVK6PW7YLG/)
 
 ADKEX-512 inherits signed 16-bit arithmetic from its DKEM backend. Rare intermediate overflows make the two parties derive different shared secrets even though every API call reports success. A fresh deterministic run found the first mismatch at trial 148; a separate 3,000-session run found two mismatches. Identical controls over 3,000 ADKEX-128 and ADKEX-256 sessions found none.
 
 This contradicts the specification's correctness condition, which requires matching honest sessions to output the same key except with negligible probability. It is Low because the demonstrated effect is a silent reliability failure, not key recovery or an authentication bypass.
+
+### Follow-up Analysis
+
+The team confirms 20 handshake failures in 20,000 ADKEX-512 reference sessions. Its instrumentation found that overflow and failure depend only on the public received ciphertext, not the long-term secret; the submitted AVX2 backend is unaffected, while NEON and Cortex-M4 share the defect.
+
+### Proposed fixes
+
+The team's [fix commit](https://github.com/dkemdkex/dkem-dkex/commit/8e3417a) proposes additional forward-NTT reductions in the scalar, NEON, and Cortex-M4 paths. This section records the proposal without evaluating it.
 
 ### Reproducing
 

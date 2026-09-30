@@ -18,14 +18,33 @@
 <h1 id="dkex-ding-key-exchange-kex-04">DKEX (Ding Key Exchange) (kex-04)</h1>
 <div class="table-wrap"><table class="meta">
 <tr><th>Candidate</th><td>DKEX (Ding Key Exchange)</td></tr>
-<tr><th>Family</th><td>Lattice-based AKE</td></tr>
-<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/DKEX.zip">Official submission archive</a></td></tr>
+<tr><th>Family</th><td>Lattice (mutually authenticated key exchange)</td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/DKEX.zip">DKEX.zip</a> (SHA-256: <code>979c22239b4a2fb6732e68029c06659f8a7b582c00ca163e1ec72874b227e117</code>)</td></tr>
 <tr><th>Specification</th><td><a href="https://github.com/ngcc-dev/ngcc-harness/raw/dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-04/kex-04-spec.pdf" title="Download kex-04-spec.pdf from GitHub">kex-04-spec.pdf</a>&nbsp;<a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-04/kex-04-spec.pdf" title="Open the kex-04 specification PDF">PDF</a></td></tr>
 </table></div>
 
-<h3 id="review-status">Review status</h3>
-<p>No vulnerability finding is currently published for this candidate. This is not a security endorsement: it records only the present state of the public finding inventory, and the candidate remains under review.</p>
-<p>See the <a href="../constant-time/kex-04.html">constant-time review</a> and the performance reports (<a href="../performance/x86_1/kex-04.html">x86_1</a> · <a href="../performance/arm_1/kex-04.html">arm_1</a>). See the <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560625651601408.html">official submission page</a>.</p>
+<h2 class="issue-heading issue-heading-first" id="kex-04-1-dkex-512-silently-derives-different-keys-in-honest-sessions">kex-04-1: DKEX-512 silently derives different keys in honest sessions</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Submitted DKEX-512 scalar reference implementation</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Honest-session correctness failure; no confidentiality or authentication attack demonstrated</td></tr>
+<tr><th>Credit</th><td>Sun Shuzhou, with GLM-5.3 assistance</td></tr>
+<tr><th>Date</th><td>2026-09-30</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/NRJXWUW3IRBVMQZEGW3DNPUVK6PW7YLG/">DKEM/DKEX/ADKEX team's PKC Forum response</a></p>
+<p>DKEX-512 shares the 16-bit scalar NTT arithmetic used by DKEM-512 and ADKEX-512. Legitimate lazy butterfly intermediates at <code>q=7681</code> can exceed the signed 16-bit range, corrupting the reconciliation value. The specification nevertheless claims a failure probability of about <code>2^-167</code> (Table 2 and §3.3).</p>
+<p>The team reports 9 mismatches in 20,000 complete DKEX-512 reference sessions. An independent fixed-seed run found an honest three-pass session mismatch at trial 1379 even though every API call reported success. This is a protocol reliability failure, not a demonstrated key-recovery or authentication attack, hence Low.</p>
+<h3 id="proposed-fixes">Proposed fixes</h3>
+<p>The team's <a href="https://github.com/dkemdkex/dkem-dkex/commit/8e3417a">fix commit</a> proposes additional forward-NTT reductions in the scalar, NEON, and Cortex-M4 paths. This section records the proposal without evaluating it.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kex-04/reproduce_correctness.py
+</code></pre>
+<p>The witness initializes honest long-term keys, runs complete authenticated three-pass sessions through the submitted API, and compares both derived keys.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

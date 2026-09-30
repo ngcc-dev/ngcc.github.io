@@ -82,7 +82,8 @@ python3 kem-13/reproduce_malicious_key.py \
 <tr><th>Credit</th><td>Sun Shuzhou, with GLM-5.3 assistance</td></tr>
 <tr><th>Date</th><td>2026-09-28</td></tr>
 </table></div>
-<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/GD3QWKLXKTRIRKCMKCOHTFRLBQN3REES/">NGCC PKC Forum post</a></p>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/GD3QWKLXKTRIRKCMKCOHTFRLBQN3REES/">NGCC PKC Forum post</a>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/NRJXWUW3IRBVMQZEGW3DNPUVK6PW7YLG/">DKEM/DKEX/ADKEX team's PKC Forum response</a></p>
 <p>Table 1 and §3.4 claim a DKEM-512 reconciliation-failure probability of at
 most about <code>2^-167</code>. The scalar forward NTT instead stores both butterfly sums
 in <code>int16_t</code> (<code>DKEM-512/ntt.c:78–88</code>). With <code>q = 7681</code>, legitimate lazy
@@ -92,6 +93,10 @@ and selects the implicit-rejection key, but the API still returns success. Sun
 reports an observed honest mismatch rate near <code>2^-11</code>; this also invalidates
 the shipped implementation's §5.2.5 failure-boosting estimate. The <code>q = 3329</code>
 DKEM-128 and -256 sets have substantially more headroom and are controls.</p>
+<h3 id="follow-up-analysis">Follow-up Analysis</h3>
+<p>The team confirms 12 mismatches in 20,000 and 21 in 40,000 scalar DKEM-512 sessions, as well as the same defect in the submitted NEON and Cortex-M4 backends. It reports that the AVX2 implementation already reduces between layers and is unaffected. Instrumentation made every observed overflow/failure depend only on the public ciphertext, which supports limiting this finding to correctness rather than secret-key leakage.</p>
+<h3 id="proposed-fixes">Proposed fixes</h3>
+<p>The team's <a href="https://github.com/dkemdkex/dkem-dkex/commit/8e3417a">fix commit</a> proposes Barrett-reducing all coefficients after the length-64 and length-8 forward-NTT layers in the reference and NEON code, and reducing between the two four-layer Cortex-M4 passes. This section records the proposal without evaluating it.</p>
 <h3 id="reproducing_2">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">make -C api harness

@@ -81,8 +81,9 @@ Layer: Design
 Affected: Loong128; the higher parameter sets were not evaluated
 Discovery: Non-trivial
 Exploitation: Practical 48-variable lattice recovery followed by 2^12 public re-encryptions
-Credit: Tianyuan Xie, on behalf of the openHiTLS team, with GPT-5.5 assistance
+Credit: Tianyuan Xie, on behalf of the openHiTLS team, with GLM-5.3 assistance (corrected 2026-09-30)
 Date: 2026-09-29
+<!-- Credit correction: On 2026-09-30, the submitter clarified that “GPT-5.5” in the original submission email was a typo; the assistance was GLM-5.3. -->
 Original source: [Xie's PKC Forum post and PoC](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/VBOUFRS2CDGNLPEAR4ZBKZM4U5YHBTZY/)
 
 Loong128 publishes the structured matrix equation, naming the matrix `U0` in Algorithm 19; the reference implementation calls the corresponding buffer `U2`:

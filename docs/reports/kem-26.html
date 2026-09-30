@@ -18,14 +18,51 @@
 <h1 id="nss-hqc-kem-26">NSS-HQC (kem-26)</h1>
 <div class="table-wrap"><table class="meta">
 <tr><th>Candidate</th><td>NSS-HQC</td></tr>
-<tr><th>Family</th><td>Code-based</td></tr>
-<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/NSS-HQC.zip">Official submission archive</a></td></tr>
+<tr><th>Family</th><td>Code-based (HQC-type quasi-cyclic codes)</td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/NSS-HQC.zip">NSS-HQC.zip</a> (SHA-256: <code>033994e27bf0dc824078593a98eb51465f979b1bca0932cabb29be6626447638</code>)</td></tr>
 <tr><th>Specification</th><td><a href="https://github.com/ngcc-dev/ngcc-harness/raw/dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kem-26/kem-26-spec.pdf" title="Download kem-26-spec.pdf from GitHub">kem-26-spec.pdf</a>&nbsp;<a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kem-26/kem-26-spec.pdf" title="Open the kem-26 specification PDF">PDF</a></td></tr>
 </table></div>
 
-<h3 id="review-status">Review status</h3>
-<p>No vulnerability finding is currently published for this candidate. This is not a security endorsement: it records only the present state of the public finding inventory, and the candidate remains under review.</p>
-<p>See the <a href="../constant-time/kem-26.html">constant-time review</a> and the performance reports (<a href="../performance/x86_1/kem-26.html">x86_1</a> · <a href="../performance/arm_1/kem-26.html">arm_1</a>). See the <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560863191814144.html">official submission page</a>.</p>
+<h2 class="issue-heading issue-heading-first" id="kem-26-1-fixed-weight-parity-falsifies-the-dqcsd-and-jpci-assumptions">kem-26-1: Fixed-weight parity falsifies the DQCSD and JPCI assumptions</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All four NSS-HQC parameter sets and the IND-CPA/IND-CCA2 reductions</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>One parity computation distinguishes the assumed distribution; no message or key recovery demonstrated</td></tr>
+<tr><th>Credit</th><td>Information Security Center, Academy of Mathematics and Systems Science, Chinese Academy of Sciences</td></tr>
+<tr><th>Date</th><td>2026-09-30</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/DGP2J3ZUZJYNC4COYWQQ77L42OOFNCP7/">AMSS PKC Forum post</a></p>
+<p>The DQCSD assumption compares <code>(h, r1+h*r2)</code> with uniform ring elements, and the JPCI assumption used by Lemma 16 contains the same first ciphertext component <code>u</code>. In <code>F2[x]/(x^n-1)</code>, parity is evaluation at <code>x=1</code>, so <code>parity(a*b)=parity(a)·parity(b)</code>. NSS-HQC-128 and -256 give both <code>r1</code> and <code>r2</code> even fixed weight, forcing <code>parity(u)=0</code>; uniform <code>u</code> has either parity with probability one half.</p>
+<p>Further extension to the AMSS analysis: the same distinguisher covers the odd-weight 384- and 512-bit sets. There <code>parity(u)=1+parity(h)</code>, which is also public and deterministic. Thus all four stated DQCSD/JPCI instances are trivially distinguishable from the distributions used in the reductions. This invalidates the submitted proof route but does not by itself distinguish encrypted messages or recover a secret, hence Medium rather than Critical.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-26/reproduce_parity.py
+</code></pre>
+<p>The witness produces 64 NSS-HQC-256 ciphertexts with the submitted library: every <code>u</code> has even parity, while a deterministic uniform-string control contains both parities. The other levels follow exactly from their fixed weights 66, 106, 159, and 213 and the identity above.</p>
+<h2 class="issue-heading" id="kem-26-2-nss-hqc-256-fails-honest-decapsulation-near-10-4">kem-26-2: NSS-HQC-256 fails honest decapsulation near 10^-4</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>NSS-HQC-256 parameters, DFR analysis, and submitted reference implementation</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Honest-session mismatch; potential failure-oracle implications are not developed into key recovery</td></tr>
+<tr><th>Credit</th><td>Information Security Center, Academy of Mathematics and Systems Science, Chinese Academy of Sciences</td></tr>
+<tr><th>Date</th><td>2026-09-30</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/DGP2J3ZUZJYNC4COYWQQ77L42OOFNCP7/">AMSS PKC Forum post</a></p>
+<p>The specification selects every parameter set under <code>DFR_NSS &lt; 2^-128</code> (§3.6) and uses that bound in its IND-CCA2 loss. Its calculation replaces the five-bit compressor's correlated errors with a binary-symmetric-channel proxy. Equation (68) is also labelled an upper bound although it counts only error patterns matching nonzero RM codewords; the forum gives <code>7.53·10^-45</code> at crossover probability <code>1/4</code>, while one omitted failure event alone has probability at least <code>4.59·10^-6</code>.</p>
+<p>The mismatch is observable in the complete scheme. AMSS reports 7 failed decapsulations in 50,000 honest NSS-HQC-256 sessions (<code>1.4·10^-4</code>). An independent deterministic search found a failing submitted-library transcript at seed index 4201; <code>kem_dec</code> returns <code>-1</code> and its key differs from the encapsulated key, while adjacent seeds agree. This confirms that the advertised DFR analysis is not conservative for the shipped parameters. No reaction attack or secret recovery is demonstrated.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-26/reproduce_failure.py
+</code></pre>
+<p>The compact witness replays the pinned failing seed and two adjacent controls. The earlier bounded search examined 30,000 deterministically derived seeds on the archived NSS-HQC-256 library.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -18,14 +18,31 @@
 <h1 id="greatwall-signature-algorithm-sign-13">GreatWall Signature Algorithm (sign-13)</h1>
 <div class="table-wrap"><table class="meta">
 <tr><th>Candidate</th><td>GreatWall Signature Algorithm</td></tr>
-<tr><th>Family</th><td>MPC/VOLE-in-the-head</td></tr>
-<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/GreatWall.zip">Official submission archive</a></td></tr>
+<tr><th>Family</th><td>Symmetric-key (VOLE-in-the-head) signature</td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/GreatWall.zip">GreatWall.zip</a> (SHA-256: <code>814cd3b977ddc0cc59828861c145580473b1a62a66da852b078edbaf689f5a8d</code>)</td></tr>
 <tr><th>Specification</th><td><a href="https://github.com/ngcc-dev/ngcc-harness/raw/dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/sign-13/sign-13-spec.pdf" title="Download sign-13-spec.pdf from GitHub">sign-13-spec.pdf</a>&nbsp;<a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/sign-13/sign-13-spec.pdf" title="Open the sign-13 specification PDF">PDF</a></td></tr>
 </table></div>
 
-<h3 id="review-status">Review status</h3>
-<p>No vulnerability finding is currently published for this candidate. This is not a security endorsement: it records only the present state of the public finding inventory, and the candidate remains under review.</p>
-<p>See the <a href="../constant-time/sign-13.html">constant-time review</a> and the performance reports (<a href="../performance/x86_1/sign-13.html">x86_1</a> · <a href="../performance/arm_1/sign-13.html">arm_1</a>). See the <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561077852098560.html">official submission page</a>.</p>
+<h2 class="issue-heading issue-heading-first" id="sign-13-1-shake256-capacity-reduces-greatwall-512-forgery-cost-to-about-2256">sign-13-1: SHAKE256 capacity reduces GreatWall-512 forgery cost to about 2^256</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>GreatWall-512s and GreatWall-512f</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Approximately 2^256 classical Keccak evaluations and one signing query</td></tr>
+<tr><th>Credit</th><td>Martin Feussner, with OpenAI Codex (Daybreak Blue) assistance</td></tr>
+<tr><th>Date</th><td>2026-09-30</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/UCS5CCGZNZYKBBJZAE6PKT275GPRPGGP/">Feussner's PKC Forum post</a></p>
+<p>GreatWall specifies <code>H1 : {0,1}* -&gt; {0,1}^{2λ}</code> as collision resistant and instantiates every hash with SHAKE256 when <code>λ&gt;128</code> (§2.3.4). For the 512-bit sets, signing and verification compute <code>mu=SHAKE256(pk || m || 0x01,1024)</code> (Algorithms 2 and 13; <code>faest.c:351–355,542–546</code>). The 1024-bit output does not raise SHAKE256's 512-bit sponge capacity.</p>
+<p>For the fixed public-key prefix, a birthday search over one controlled rate block finds two post-permutation states with equal capacity in about <code>2^256</code> work. A second block cancels their public rate difference, making the complete states equal before common padding. The resulting distinct messages have the same <code>mu</code>; a signature requested on one therefore verifies unchanged on the other. This is a one-query EUF-CMA forgery at about <code>2^256</code> classical work (about <code>2^170.7</code> generic quantum queries), below GreatWall's 512-bit classical claim and therefore Critical.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-13/reproduce_shake_capacity.py
+</code></pre>
+<p>The witness checks the archived SHAKE256 selection and message-hash path, then executes the exact two-block construction in a scaled permutation model. It certifies the structural attack and full-size generic bound; it does not perform the infeasible <code>2^256</code> search.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

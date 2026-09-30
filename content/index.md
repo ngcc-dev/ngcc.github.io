@@ -16,7 +16,7 @@ This site is not affiliated with NICCS.
   for all 119 candidates, including cases without a finding.
 - [Harness](https://github.com/ngcc-dev/ngcc-harness) — the build and test tooling
   the reproductions rely on.
-- [“Chinese NGCC Algorithms: The First Week of AI Cryptanalysis”](assets/ngcc1wk.pdf) (A draft write-up, September 29, 2026.)
+- [“Chinese NGCC Algorithms: The First Week of AI Cryptanalysis”](https://eprint.iacr.org/2026/2266) — IACR Cryptology ePrint Archive, Report 2026/2266.
 
 ## Citing
 

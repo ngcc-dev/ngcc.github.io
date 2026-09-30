@@ -53,9 +53,14 @@
 <tr><th>Credit</th><td>Qinghe Crypto Group</td></tr>
 <tr><th>Date</th><td>2026-09-29</td></tr>
 </table></div>
-<p>Original source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/IBTHTO24MZQCJUE4GCUI3HJKPA2B4Q6E/">CryptHash Forum post</a></p>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/IBTHTO24MZQCJUE4GCUI3HJKPA2B4Q6E/">CryptHash Forum post</a>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/CW6EWBRZQZ4T36T7W4HO6F4OQSBBSOLJ/">AFS-TrEDM team's CryptHash Forum response</a></p>
 <p>AFS-TrEDM applies the same absorbing core to ordinary and final framed blocks. Write the state after hashing <code>M</code> as <code>R || z || u</code>, where <code>R</code> is the rate, <code>z</code> is the published digest, and <code>u</code> is the only unrevealed 64-bit capacity suffix. Hash the distinct extended message <code>M' = P(M) || R</code>, where <code>P(M)</code> is the complete rate-aligned framing of <code>M</code>. Processing its <code>P(M)</code> prefix recreates the original final state; absorbing <code>R</code> then cancels the rate before <code>g</code>, leaving <code>0^r || z || u</code>. The following core output and the fixed fresh framing block for <code>M'</code> therefore depend only on public <code>z</code> and guessed <code>u</code>.</p>
 <p>A distinguisher enumerates the <code>2^64</code> possible values of <code>u</code>, fixes the resulting candidate-digest set, obtains <code>R</code> through later permutation queries, and tests whether <code>H(P(M) || R)</code> belongs to that set. The real construction always matches, whereas an ideal <code>d</code>-bit oracle matches a fixed set of at most <code>2^64</code> values with probability at most <code>2^(64-d)</code>. This contradicts the specification's ideal-permutation indifferentiability and length-extension discussion. It does not establish a collision, preimage, or second preimage, so the violation of this additional claimed property is High rather than Critical under the classification policy. Capacity-domain separation for the actual final block would prevent the replay.</p>
+<h3 id="follow-up-analysis">Follow-up Analysis</h3>
+<p>The AFS-TrEDM team confirms that the submitted construction lacks finalization domain separation and is affected by the prefix-replay and rate-cancellation distinguisher.</p>
+<h3 id="proposed-fixes">Proposed fixes</h3>
+<p>The team's response proposes XORing a fixed nonzero marker into the capacity only for the genuine final block, before applying <code>g</code>, capacity feed-forward, and <code>h</code>; ordinary blocks would omit that marker. This section records the proposal without evaluating it.</p>
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 hash-01/reproduce_final_block_replay.py

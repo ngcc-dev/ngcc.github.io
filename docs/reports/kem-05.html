@@ -18,14 +18,31 @@
 <h1 id="bike-mlthre-kem-05">BIKE-MLThre (kem-05)</h1>
 <div class="table-wrap"><table class="meta">
 <tr><th>Candidate</th><td>BIKE-MLThre</td></tr>
-<tr><th>Family</th><td>Code-based</td></tr>
-<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/BIKE_MLThre.zip">Official submission archive</a></td></tr>
+<tr><th>Family</th><td>Code-based (QC-MDPC)</td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/BIKE_MLThre.zip">BIKE_MLThre.zip</a> (SHA-256: <code>3a5d97532003786374b68b39779cff4e4938f593fef9596f171652c6ff593917</code>)</td></tr>
 <tr><th>Specification</th><td><a href="https://github.com/ngcc-dev/ngcc-harness/raw/dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kem-05/kem-05-spec.pdf" title="Download kem-05-spec.pdf from GitHub">kem-05-spec.pdf</a>&nbsp;<a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kem-05/kem-05-spec.pdf" title="Open the kem-05 specification PDF">PDF</a></td></tr>
 </table></div>
 
-<h3 id="review-status">Review status</h3>
-<p>No vulnerability finding is currently published for this candidate. This is not a security endorsement: it records only the present state of the public finding inventory, and the candidate remains under review.</p>
-<p>See the <a href="../constant-time/kem-05.html">constant-time review</a> and the performance reports (<a href="../performance/x86_1/kem-05.html">x86_1</a> · <a href="../performance/arm_1/kem-05.html">arm_1</a>). See the <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560843495362560.html">official submission page</a>.</p>
+<h2 class="issue-heading issue-heading-first" id="kem-05-1-the-default-library-deterministically-generates-a-public-secret-key">kem-05-1: The default library deterministically generates a public secret key</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Default submitted reference-library build, all four parameter sets</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>One local key generation; the victim's complete secret key is reproduced</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, Institute of Information Engineering, Chinese Academy of Sciences</td></tr>
+<tr><th>Date</th><td>2026-09-30</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/AXAPSYKLHJBJHNYCZO57NUKTBTNNCLPV/">Xiong and Wang's PKC Forum post</a></p>
+<p>The submitted default <code>make all</code> builds <code>libbike_v2.a</code> with <code>-DNIST_RAND=1</code> and <code>FromNIST/rng.c</code> (<code>Makefile:4–5,24–26,32–46</code>). That file's global AES-CTR DRBG state starts at zero, but the public library exposes only the KEM API and no library path calls <code>randombytes_init</code>. Key generation immediately draws both secret seeds from this state (<code>kem.c:100–130</code>). Only the separate KAT wrapper initializes the DRBG (<code>kat/KEM_AlgorithmInstance.c:18</code>).</p>
+<p>Consequently, the first key pair in every fresh process is fixed and publicly reproducible. For BIKE-MLThre-128 its public key begins <code>b505bc3a4fd4de9a86991932daad9337bf3343b2ea3697bd11443da3e1388027</code>, exactly as reported. The same source path is selected for the 192-, 256-, and 512-bit builds. Reproducing the secret key gives immediate decapsulation and violates every claimed security level, hence Critical.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-05/reproduce_unseeded_drbg.py
+</code></pre>
+<p>The witness compiles the archived 128-bit sources with the submitted default flags, compares key generation in two fresh processes, and checks the reported public-key prefix. Initializing the same DRBG with two distinct seeds produces distinct keys as a control.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

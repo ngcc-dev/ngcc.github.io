@@ -67,6 +67,7 @@ Exploitation: Honest encapsulation and decapsulation disagree about once per 2^1
 Credit: Sun Shuzhou, with GLM-5.3 assistance
 Date: 2026-09-28
 Original source: [NGCC PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/GD3QWKLXKTRIRKCMKCOHTFRLBQN3REES/)
+Follow-up source: [DKEM/DKEX/ADKEX team's PKC Forum response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/NRJXWUW3IRBVMQZEGW3DNPUVK6PW7YLG/)
 
 Table 1 and §3.4 claim a DKEM-512 reconciliation-failure probability of at
 most about `2^-167`. The scalar forward NTT instead stores both butterfly sums
@@ -77,6 +78,14 @@ and selects the implicit-rejection key, but the API still returns success. Sun
 reports an observed honest mismatch rate near `2^-11`; this also invalidates
 the shipped implementation's §5.2.5 failure-boosting estimate. The `q = 3329`
 DKEM-128 and -256 sets have substantially more headroom and are controls.
+
+### Follow-up Analysis
+
+The team confirms 12 mismatches in 20,000 and 21 in 40,000 scalar DKEM-512 sessions, as well as the same defect in the submitted NEON and Cortex-M4 backends. It reports that the AVX2 implementation already reduces between layers and is unaffected. Instrumentation made every observed overflow/failure depend only on the public ciphertext, which supports limiting this finding to correctness rather than secret-key leakage.
+
+### Proposed fixes
+
+The team's [fix commit](https://github.com/dkemdkex/dkem-dkex/commit/8e3417a) proposes Barrett-reducing all coefficients after the length-64 and length-8 forward-NTT layers in the reference and NEON code, and reducing between the two four-layer Cortex-M4 passes. This section records the proposal without evaluating it.
 
 ### Reproducing
 
