@@ -60,14 +60,16 @@ rg -n 'polyvec_invq|poly_getnoise_eta2|prf\(' kem-39/Implementations/Reference_I
 <tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
 <tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
-<tr><th>Affected</th><td>WeaverKEM-256 reference implementation (Weaver-1024 in the specification); optimized implementation reported but not independently checked</td></tr>
+<tr><th>Affected</th><td>WeaverKEM-256 reference and optimized implementations (Weaver-1024 in the specification)</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
 <tr><th>Exploitation</th><td>Correctable high-layer errors change the decapsulated message; actual honest KEM failure rate unmeasured</td></tr>
 <tr><th>Credit</th><td>Yijian Liu (with AI assistance)</td></tr>
 <tr><th>Date</th><td>2026-09-24</td></tr>
 </table></div>
 <p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/DJRC6VQK5TYNKMAJBD2MIKUH7EAZ4VO6/">NGCC PKC Forum post</a></p>
-<p>Table 3's Weaver-1024 failure estimate (<code>2^-231.7</code> overall) assumes a high-layer BCH(255,223,4) decoder. The archived WeaverKEM-256 reference <code>poly_frommsg</code> encodes this redundancy, but its <code>WEAVER_MODE == 3</code> <code>poly_tomsg</code> branch copies the hard-decision high bits into the message without calling the included <code>decode_bch_high_nibbles</code>. Other modes do call their high-layer decoder. The forum post says the optimized implementation has the same omission; that source was not included in the available archive and is not independently verified here. Thus Table 3's correction-based bound does not describe the checked implementation; no replacement failure probability or key-recovery attack is claimed.</p>
+<p>Table 3's Weaver-1024 failure estimate (<code>2^-231.7</code> overall) assumes a high-layer BCH(255,223,4) decoder. The archived WeaverKEM-256 <code>poly_frommsg</code> encodes this redundancy, but the <code>WEAVER_MODE == 3</code> <code>poly_tomsg</code> branch in both submitted implementation families copies the hard-decision high bits into the message without calling the included <code>decode_bch_high_nibbles</code>. Other modes do call their high-layer decoder. Thus Table 3's correction-based bound does not describe the submitted implementations; no replacement failure probability or key-recovery attack is claimed.</p>
+<h3 id="follow-up-analysis">Follow-up Analysis</h3>
+<p>Zhenyu Xiong and Mingsheng Wang's <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/N4VESPWVOKXHJJABPIENYA2GYFGLBC7K/">2026-09-30 Weaver analysis</a> models the submitted decoder rather than the specified BCH-correcting decoder. It estimates an honest-ciphertext DFR near <code>2^-47.5</code> under its exact-noise model, or about <code>2^-45.5</code> when initialized from the specification's per-bit rate, rather than the claimed <code>2^-231.7</code>. Its failure-boosting estimates are about <code>2^41</code> to <code>2^47</code> decapsulation queries. These figures are model extrapolations, not raw observations of such rare honest failures or a completed key recovery, so the finding remains Medium.</p>
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">D=kem-39/Implementations/Reference_Implementation/WeaverKEM-256
@@ -77,6 +79,68 @@ gcc -O2 -DWEAVER_MODE=3 -I&quot;$D&quot; kem-39/reproduce_high_bch_omission.c \
 &quot;$T/repro&quot;
 </code></pre>
 <p>The witness starts with a correctly encoded zero message, injects one high-layer bit error, and obtains <code>0x80</code> from the submitted decoder; the included BCH decoder corrects the same bit to <code>0x00</code>. This demonstrates the omitted correction, not the frequency of naturally occurring ciphertext failures.</p>
+<h2 class="issue-heading" id="kem-39-3-bch-decoders-mis-correct-some-errors-within-their-designed-radius">kem-39-3: BCH decoders mis-correct some errors within their designed radius</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>WeaverKEM-256 and -512 reference and optimized implementations (Weaver-1024 and -2048 in the specification)</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Occasional decoder failure at or below the advertised correction radius; no target-level DFR or key-recovery failure demonstrated</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-30</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/N4VESPWVOKXHJJABPIENYA2GYFGLBC7K/">Xiong and Wang's Weaver analysis</a></p>
+<p>The Berlekamp–Massey discrepancy update in both the high- and low-layer BCH decoders sums locator coefficients only through iteration index <code>i+1</code>, rather than through the current locator-polynomial degree (<code>bch_high.c:209</code>, <code>bch_low.c:212</code>). When that degree grows faster than the iteration index, a required term is omitted and the decoder can mis-correct patterns whose weight is still within its advertised radius. The radius-two WeaverKEM-128 decoder is unaffected.</p>
+<p>At exactly four errors, the archived WeaverKEM-256 high and low decoders recover 19,923/20,000 and 19,720/20,000 random trials. At exactly seven errors, WeaverKEM-512 recovers 19,832/20,000 and 19,398/20,000. A patched-loop control recovers 20,000/20,000 at every weight through the designed radius, while both versions fail at one error beyond it. This establishes a narrow robustness defect, but this report does not independently establish its contribution to the complete KEM's honest-failure rate.</p>
+<h3 id="proposed-fixes_1">Proposed fixes</h3>
+<p>The <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/N4VESPWVOKXHJJABPIENYA2GYFGLBC7K/">original post</a> proposes changing the discrepancy loop in both BCH decoders to <code>for (j = 1; j &lt;= t &amp;&amp; j &lt;= 2*i+2; j++)</code> and adding unit tests at every error weight through <code>t</code>. This section records the proposal without evaluating it.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>The pinned public artifact builds isolated original and patched copies, runs direct and codec-level tests, checks a minimal failing message, and compares KAT hashes:</p>
+<pre><code class="language-sh">sh kem-39/reproduce_bch_decoder.sh
+</code></pre>
+<p>In the archived WeaverKEM-256 tree, the whole-codec original and patched controls both still fail because a separate omission of the high-layer decoder precedes this BCH-loop defect. The direct decoder tests isolate the discrepancy-loop defect described here.</p>
+<h2 class="issue-heading" id="kem-39-4-matrix-and-lifting-samplers-differ-from-the-normative-parsers">kem-39-4: Matrix and lifting samplers differ from the normative parsers</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Reference and optimized implementations; lifting in all sets and matrix expansion in WeaverKEM-256/-512</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Independent implementations following the PDF derive different polynomials; no cryptographic attack demonstrated</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-30</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/N4VESPWVOKXHJJABPIENYA2GYFGLBC7K/">Xiong and Wang's Weaver analysis</a></p>
+<p>The specification's <code>ParseUniformq</code> consumes non-overlapping <code>ceil(log2 q)</code>-bit candidates. For <code>q=7681</code>, the WeaverKEM-256 and -512 implementations instead consume 16-bit words and apply Lemire's multiply-and-reject map. Both methods are uniform, but map the same XOF byte stream to different public matrices.</p>
+<p>The randomized public-key lifting also differs in every set. Algorithm 3 derives each coefficient's bucket index from the separately domain-separated <code>SampleIndex(rho,i*n+j,|B|)</code>. The implementations instead draw a sequential PRF stream for each polynomial and continue it on rejection. This does not establish a bias, but it makes the normative construction and submitted KAT implementation non-interoperable and means the proof's specified random variables are not the ones instantiated by the source.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-39/reproduce_spec_mismatches.py
+</code></pre>
+<p>The certificate checks the PDF requirements and all six reference and optimized source trees.</p>
+<h2 class="issue-heading" id="kem-39-5-message-encoding-uses-the-wrong-half-modulus">kem-39-5: Message encoding uses the wrong half-modulus</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All three reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Specification/code interoperability mismatch; no security consequence demonstrated</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-30</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/N4VESPWVOKXHJJABPIENYA2GYFGLBC7K/">Xiong and Wang's Weaver analysis</a></p>
+<p>Weaver's message encoder specifies the high-layer representative <code>(q-1)/2</code>. The implementations define <code>WEAVER_HALFQ</code> as <code>(q+1)/2</code> and use it in both encoding and the lower-layer decision. Since all Weaver moduli are odd, these values differ by one: 1664 versus 1665 for <code>q=3329</code>, and 3840 versus 3841 for <code>q=7681</code>.</p>
+<p>Encapsulator and decapsulator share the submitted convention, so self-generated tests remain consistent. An implementation following the normative algorithms, however, does not reproduce the submitted encoding and KAT behavior. No elevated DFR or confidentiality break is demonstrated.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-39/reproduce_spec_mismatches.py
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

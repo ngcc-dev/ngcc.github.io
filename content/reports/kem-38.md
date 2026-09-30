@@ -115,3 +115,53 @@ The specification's Algorithm 9 (§1.2.2) checks equality of the received `(c1, 
 ```sh
 python3 kem-38/reproduce_padding_alias.py          # add 512 for UVW-KEM-512 (minutes)
 ```
+
+## kem-38-5: The implementation's final decryption failures expose UVW's hidden pairs
+
+Severity: High
+Status: Lead
+Layer: Implementation
+Affected: UVW-KEM-128 reference implementation; the same 1,000-attempt cap is present in the higher sets
+Discovery: Moderate
+Exploitation: About 2^53 honest encapsulation/decapsulation trials for the UVW-128 pair-recovery stage
+Credit: Zhenyu Xiong and Mingsheng Wang, with AI assistance
+Date: 2026-09-30
+Original source: [PKC Forum post and verification package](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/N2M32DODRHH53N6CQRXVSY3J77PZEWEK/)
+
+The submitted decoder caps its information-set search at 1,000 attempts (`KEM_AlgorithmInstance.c:1256,1262,1354–1355` in UVW-128). Exact enumeration gives final-failure rates `2^-43.317`, `2^-42.144`, and `2^-41.729` for the 128-, 256-, and 512-bit implementations. An encapsulator knows the honest shared secret and can therefore recognize implicit rejection without a timing measurement. The specification's Algorithm 5 instead returns to Step 9 and chooses another information set without giving an attempt limit, so these final-failure rates are properties of the submitted implementation, not of the written algorithm.
+
+Conditioning ciphertext errors on final UVW-128 failures exposes repeated coordinate pairs and their field ratios. A simulation using only 1,000 final failures recovered all 430 hidden pair/ratio triples; obtaining those failures costs about `2^(43.3+10) = 2^53.3` honest encapsulation/decapsulation trials. Tianyuan Xie and Yamin Liu demonstrated the public projection and generalized Reed–Solomon decoding stages needed for shared-secret recovery in their [openHiTLS UVW report and PoC](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/A6PUI23BHC7YNE5UQ3SMRO33GDBWCF2P/), but the timing-free artifact did not combine and rerun the complete recovery. The candidate-specific path is well below the 128-bit claim, but this remaining integration and scale gap makes the finding High and a Lead rather than a demonstrated primary break.
+
+### Proposed fixes
+
+The original post proposes stating the overall rather than per-attempt decryption-failure rate and including it in the Fujisaki–Okamoto bound. It says that making the rate negligible requires changing the decoder or parameters, rather than adding more retries.
+
+### Reproducing
+
+```sh
+python3 kem-38/reproduce_dfr_reaction.py
+```
+
+The dependency-free witness recomputes all three exact rates and performs the failure-only 430-pair recovery. It does not execute the roughly `2^53` honest queries or the later key-recovery stages.
+
+## kem-38-6: UVW-256 and -512 leak retry matrices
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: UVW-KEM-256 and UVW-KEM-512 reference implementations
+Discovery: Trivial
+Exploitation: Up to about 0.73 GB or 2.91 GB leaked by one 1,000-attempt decapsulation
+Credit: Zhenyu Xiong and Mingsheng Wang, with AI assistance
+Date: 2026-09-30
+Original source: [PKC Forum post and verification package](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/N2M32DODRHH53N6CQRXVSY3J77PZEWEK/)
+
+Every information-set retry allocates `GU_I1` and `GU_I1_inv`, each a `k1 * k1` matrix of 16-bit field elements, but neither the retry nor success path frees them (`KEM_AlgorithmInstance.c:1312–1336` for UVW-256 and `:1313–1336` for UVW-512). At 1,000 attempts this leaks about 0.73 GB for `k1=427` and 2.91 GB for `k1=853`. In UVW-256, the allocation-failure branch also calls `free(I1)` at line 1315 even though `I1` is a stack array, causing undefined behavior once allocation fails. UVW-128 places the matrices on the stack and does not have the retry leak. No memory disclosure or controlled write is demonstrated.
+
+### Reproducing
+
+```sh
+python3 kem-38/reproduce_dfr_reaction.py
+```
+
+The witness checks both allocation paths and derives their byte counts from the archived parameters.

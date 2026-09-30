@@ -64,7 +64,8 @@ claims. The canonical documents are published by ICCS.</p>
 <li>Security is evaluated against an attacker with signatures on up to 2^80
   chosen messages or decapsulations of up to 2^80 chosen ciphertexts
   (<a href="https://www.niccs.org.cn/niccs/Notice/tT7TSQiz.pdf">Evaluation Criteria</a> §1(2)). This is an evaluation ceiling
-  for the attacker; the operational per-key requirement remains 2^64 messages.
+  for the attacker. For signatures, the operational per-key requirement remains
+  2^64 messages; the call gives no analogous per-key session cap for KEMs.
   Classify query-budget findings as follows:</li>
 <li><strong>Critical:</strong> a concrete attack costs less than the required level for an
     attacker using at most 2^80 queries and within the per-key usage model that
@@ -116,6 +117,12 @@ Examples include:</p>
 A demonstrated <code>2^256</code> attack against a 512-bit claim is therefore Critical:
 practical feasibility is not required when the advertised security bound is
 violated.</p>
+<p>For quantum attacks, a Grover-iteration count alone is not an end-to-end work
+estimate when the oracle is nontrivial. Count the oracle circuit, reversible
+arithmetic, memory and parallelization costs under the metric used by the
+claim. If those costs could close the reported margin and have not been
+bounded, classify the result as an analysis or proof gap rather than a
+confirmed below-target attack.</p>
 <h3 id="high">High</h3>
 <p>The report establishes a serious security failure but stops short of a complete
 primary-claim break. Typical cases are:</p>
@@ -335,7 +342,7 @@ with the same external dimensions and parameters. A finding that disappears
 solely on that replacement is not publishable.</p>
 </main>
 <footer class="site-footer">
-<p>Updated 2026-09-30 10:50:16 UTC · Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Updated 2026-09-30 22:59:23 UTC · Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
 <p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
 </footer>
 </body>

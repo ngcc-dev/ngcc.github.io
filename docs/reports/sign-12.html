@@ -48,6 +48,47 @@ tools/ngcc_attack keygen-determinism sign-12/lib/libGalas-160S.so
 </code></pre>
 <p><code>tools/reproduce.sh</code> runs this together with the other supported runtime
 witnesses and their controls. See <code>tools/README.md</code>.</p>
+<h2 class="issue-heading" id="sign-12-2-32-bit-message-length-truncation-enables-long-message-forgeries">sign-12-2: 32-bit message-length truncation enables long-message forgeries</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All eight reference variants on platforms with 32-bit unsigned; runtime confirmation on Galas-160F and Galas-256F</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>One signing query and a 64-bit process able to reserve a 4 GiB virtual mapping</td></tr>
+<tr><th>Credit</th><td>pq-CUC</td></tr>
+<tr><th>Date</th><td>2026-09-30</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/7GPLR732HEXNMYOT37KSQDVDVHIRR2GH/">pq-CUC's PKC Forum post</a></p>
+<p>Galas claims EUF-CMA security (§1.1 and §9.1). The reference API accepts a
+64-bit byte count, but both signing and verification cast <code>m_len_bytes</code> to
+32-bit <code>unsigned</code> before hashing (<code>ngcc/SIG_AlgorithmInstance.c:291,413</code>).
+The helper itself takes an <code>unsigned msg_len</code> and passes only that many bytes
+to H2 (<code>galas/sign_helpers.c:8-15</code>). These files are byte-identical across all
+eight reference variants.</p>
+<p>Consequently, a signature requested on any short message <code>M</code> also verifies on
+the distinct message <code>M || X</code>, where <code>|X| = 2^32</code> bytes: both lengths reduce
+to <code>|M|</code> inside the message hash. This is a one-query fresh-message forgery,
+not only a large-input correctness failure. It is also within the call's
+required message range of up to <code>2^63</code> bits
+(<a href="https://www.niccs.org.cn/niccs/Notice/lDop1mav.pdf">Submission Requirements</a>
+§2(2)).
+The submitted optimized implementation was not assessed.</p>
+<h3 id="proposed-fixes">Proposed fixes</h3>
+<p>The original post proposes hashing the entire message with its full 64-bit
+length, or explicitly rejecting lengths the implementation cannot process,
+and adding tests across the <code>2^32</code>-byte boundary. This section records the
+proposal without evaluating it.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C sign-12 reproduce-long-message
+</code></pre>
+<p>The witness signs 38 bytes and reserves, without physically allocating, a
+<code>2^32 + 38</code>-byte anonymous mapping with the same prefix. Galas-160F and
+Galas-256F accept the original signature for the long message and continue to
+accept after its last byte changes; changing the first byte is rejected. The
+two runs use about 6 MiB and 13 MiB peak resident memory, respectively.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

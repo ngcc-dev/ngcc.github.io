@@ -50,6 +50,63 @@ pattern.</p>
 ./extract.sh kem-32
 rg -n 'debug_last_error|TRACE_DEC' kem-32/Implementations/Reference_Implementation/QCTM*/kem.c
 </code></pre>
+<h2 class="issue-heading" id="kem-32-2-same-key-multi-instance-decoding-misses-qctm-128-and-256-targets">kem-32-2: Same-key multi-instance decoding misses QCTM-128 and -256 targets</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>QCTM128 and QCTM256</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>About 2^127.66 work after 2^79 ciphertexts, or 2^255.34 work after 2^76 ciphertexts</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-30</td></tr>
+</table></div>
+
+<p>Additional reference: <a href="https://eprint.iacr.org/archive/2026/517/20260612:161211">May and Sá Diogo, <em>Multi-Instance Security Degradation of Code-Based KEMs</em>, ePrint 2026/517, pinned 2026-06-12 version</a></p>
+<p>QCTM encapsulation publishes <code>C=H e^T</code> for a fresh weight-<code>w</code> error under a reusable public key. The order-19 circulant part gives 19 public rotated targets for every observed ciphertext. Omitting the two non-circulant tail checks while searching gives effective dimensions 4,958, 9,784 and 19,892; the fixed-weight parity restores the remaining check. A candidate rotation is unshifted and verified against the complete public syndrome, after which <code>K=H(1,e,C)</code> is public.</p>
+<p>May and Sá Diogo's pinned DS-DOOM estimator gives:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>set</th>
+<th style="text-align: right;">observed ciphertexts</th>
+<th style="text-align: right;">log2(bit operations)</th>
+<th style="text-align: right;">log2(memory bits)</th>
+<th style="text-align: right;">target</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>QCTM128</td>
+<td style="text-align: right;">2^79</td>
+<td style="text-align: right;">127.661</td>
+<td style="text-align: right;">95.592</td>
+<td style="text-align: right;">128</td>
+</tr>
+<tr>
+<td>QCTM256</td>
+<td style="text-align: right;">2^76</td>
+<td style="text-align: right;">255.336</td>
+<td style="text-align: right;">96.271</td>
+<td style="text-align: right;">256</td>
+</tr>
+<tr>
+<td>QCTM512 (control)</td>
+<td style="text-align: right;">2^80</td>
+<td style="text-align: right;">524.342</td>
+<td style="text-align: right;">124.253</td>
+<td style="text-align: right;">512</td>
+</tr>
+</tbody>
+</table></div>
+<p>The attacks are passive, use fewer than 2^80 observed encapsulations, and need no decapsulation queries. The specification describes cached public-key state for encapsulation and reuse of decoded secret-key state across calls (§7.4), and states no per-key session cap. A hypothetical 2^64-ciphertext limit would avoid the crossings, but neither the NGCC call nor QCTM imposes one. The 128- and 256-bit claims are therefore missed and the finding is Critical.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>Install <code>numpy</code> and <code>scipy</code>, then run:</p>
+<pre><code class="language-sh">python3 kem-32/reproduce_multi_instance.py
+</code></pre>
+<p>The witness downloads the official estimator at commit <code>39b78dcc077793cfa3ccdce8d032ece76825ca55</code>, verifies both its archive and <code>doom.py</code> hashes, reproduces each crossing and its preceding above-target point, and checks the 512-bit control.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

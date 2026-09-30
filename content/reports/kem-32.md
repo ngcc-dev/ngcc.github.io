@@ -33,3 +33,38 @@ IDS=kem-32 ./download.sh
 ./extract.sh kem-32
 rg -n 'debug_last_error|TRACE_DEC' kem-32/Implementations/Reference_Implementation/QCTM*/kem.c
 ```
+
+## kem-32-2: Same-key multi-instance decoding misses QCTM-128 and -256 targets
+
+Severity: Critical
+Status: Confirmed
+Layer: Design
+Affected: QCTM128 and QCTM256
+Discovery: Moderate
+Exploitation: About 2^127.66 work after 2^79 ciphertexts, or 2^255.34 work after 2^76 ciphertexts
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-09-30
+
+Additional reference: [May and Sá Diogo, *Multi-Instance Security Degradation of Code-Based KEMs*, ePrint 2026/517, pinned 2026-06-12 version](https://eprint.iacr.org/archive/2026/517/20260612:161211)
+
+QCTM encapsulation publishes `C=H e^T` for a fresh weight-`w` error under a reusable public key. The order-19 circulant part gives 19 public rotated targets for every observed ciphertext. Omitting the two non-circulant tail checks while searching gives effective dimensions 4,958, 9,784 and 19,892; the fixed-weight parity restores the remaining check. A candidate rotation is unshifted and verified against the complete public syndrome, after which `K=H(1,e,C)` is public.
+
+May and Sá Diogo's pinned DS-DOOM estimator gives:
+
+| set | observed ciphertexts | log2(bit operations) | log2(memory bits) | target |
+|---|---:|---:|---:|---:|
+| QCTM128 | 2^79 | 127.661 | 95.592 | 128 |
+| QCTM256 | 2^76 | 255.336 | 96.271 | 256 |
+| QCTM512 (control) | 2^80 | 524.342 | 124.253 | 512 |
+
+The attacks are passive, use fewer than 2^80 observed encapsulations, and need no decapsulation queries. The specification describes cached public-key state for encapsulation and reuse of decoded secret-key state across calls (§7.4), and states no per-key session cap. A hypothetical 2^64-ciphertext limit would avoid the crossings, but neither the NGCC call nor QCTM imposes one. The 128- and 256-bit claims are therefore missed and the finding is Critical.
+
+### Reproducing
+
+Install `numpy` and `scipy`, then run:
+
+```sh
+python3 kem-32/reproduce_multi_instance.py
+```
+
+The witness downloads the official estimator at commit `39b78dcc077793cfa3ccdce8d032ece76825ca55`, verifies both its archive and `doom.py` hashes, reproduces each crossing and its preceding above-target point, and checks the 512-bit control.

@@ -35,15 +35,128 @@
 <tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
 <tr><th>Date</th><td>2026-09-21</td></tr>
 </table></div>
-
+<p>Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/6LRD73BAIXBHGRSZRC7Z7XUMNGGVDY27/">Xiong and Wang's TRIKE analysis</a></p>
 <p>TRIKE's PDF defines the bit-flipping threshold as <code>max(Tnow,T′)</code>, repeats that return value in Algorithm 8, and explains that the decoder uses the larger threshold. Every submitted implementation instead computes <code>min(Tnow,T′)</code>.</p>
 <p>The difference is decisive. In a paired whole-KEM test where the libraries differed only in this expression, the shipped <code>min</code> decoder recovered 1,000/1,000 honest TRIKE-2 shared secrets. The literal PDF <code>max</code> decoder recovered 0/1,000: the API still returned success, but every derived shared secret was wrong. Hence the specified scheme is nonfunctional, while the implementation and its KATs instantiate a materially different decoder. Any DFR claim must identify and analyze the actual rule.</p>
+<h3 id="follow-up-analysis">Follow-up Analysis</h3>
+<p>Zhenyu Xiong and Mingsheng Wang's <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/6LRD73BAIXBHGRSZRC7Z7XUMNGGVDY27/">2026-09-30 PKC Forum post</a> identifies an independent defect in the same specified decoder: Algorithm 8 omits the original syndrome term when updating the syndrome, while the source retains it. This gives a second reason that the specified decoder differs from the implemented one; the post does not independently retest the <code>max</code>/<code>min</code> differential above and does not change this finding's classification.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">make -C kem-36 lib/libTRIKE-2.so
 python3 security/trike_threshold_differential.py --trials 1000
 </code></pre>
 <p>The script builds an isolated copy with the literal PDF expression and compares both complete KEMs on identical deterministic trials.</p>
+<h2 class="issue-heading" id="kem-36-2-the-specified-weak-key-test-rejects-every-key">kem-36-2: The specified weak-key test rejects every key</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>TRIKE specification, all parameter sets; submitted implementations use a different formula</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Literal specified key generation never terminates; submitted code is unaffected</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-30</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/6LRD73BAIXBHGRSZRC7Z7XUMNGGVDY27/">Xiong and Wang's TRIKE analysis</a></p>
+<p>Appendix Algorithm 9 sums the squares of the distance multiplicities in both its intra-block and inter-block tests. For any secret block of weight <code>d</code>, the intra-block multiplicities sum to <code>C(d,2)</code>, so their squares sum to at least <code>C(d,2)</code>. The inter-block multiplicities sum to <code>d^2</code>, so their squares sum to at least <code>d^2</code>. These lower bounds already exceed Table 11's <code>s</code> and <code>s'</code> thresholds for every specified set. The literal algorithm therefore rejects every candidate key.</p>
+<p>All submitted implementations instead weight a multiplicity <code>i</code> by <code>C(i,2)</code>, which is the collision count described in the surrounding prose. That code terminates, so this is a specification-level non-progress defect rather than a break of the archived executable implementations.</p>
+<h3 id="proposed-fixes">Proposed fixes</h3>
+<p>The <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/6LRD73BAIXBHGRSZRC7Z7XUMNGGVDY27/">original post</a> proposes replacing each squared multiplicity in Algorithm 9 with the binomial count <code>C(mu,2)</code>. This section records the proposal without evaluating it.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-36/reproduce_weak_key_test.py
+</code></pre>
+<p>The certificate checks all six specified parameter sets and verifies the distinct binomial formula in all eight submitted reference and optimized source trees.</p>
+<h2 class="issue-heading" id="kem-36-3-decapsulation-fails-to-free-the-private-h0-buffer">kem-36-3: Decapsulation fails to free the private h0 buffer</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All four reference and four optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Repeated decapsulation exhausts process memory; no secret disclosure or cryptographic break demonstrated</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-30</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/6LRD73BAIXBHGRSZRC7Z7XUMNGGVDY27/">Xiong and Wang's TRIKE analysis</a></p>
+<p><code>kem_dec</code> allocates a padded buffer <code>h0</code>, copies the first private parity-check block into it, and never frees it. The function frees its other eleven heap buffers before returning. The omission is present in every submitted parameter set in both implementation families.</p>
+<p>The reporters observed an AddressSanitizer direct leak and approximately 2,064 bytes retained per TRIKE-2 call and 16,400 bytes per TRIKE-7 or TRIKE-9 call. This supports resource exhaustion in a long-running decapsulation service, but neither memory disclosure nor control-flow impact is shown.</p>
+<h3 id="proposed-fixes_1">Proposed fixes</h3>
+<p>The <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/6LRD73BAIXBHGRSZRC7Z7XUMNGGVDY27/">original post</a> proposes adding <code>free(h0)</code> after <code>free(t0)</code> in each of the eight affected decapsulation functions. This section records the proposal without evaluating it.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-36/reproduce_implementation_issues.py
+</code></pre>
+<p>The static certificate isolates <code>kem_dec</code>, confirms the unmatched <code>h0</code> allocation, and checks that the other temporaries are freed in all eight source trees.</p>
+<h2 class="issue-heading" id="kem-36-4-boundary-weak-key-classes-are-omitted-from-the-dfr-bound">kem-36-4: Boundary weak-key classes are omitted from the DFR bound</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr>
+<tr><th>Affected</th><td>TRIKE weak-key rejection and DFR analysis, all parameter sets</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>The target-level failure bounds are not established for adjacent unfiltered key classes; no excessive DFR is demonstrated</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-30</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/6LRD73BAIXBHGRSZRC7Z7XUMNGGVDY27/">Xiong and Wang's TRIKE analysis</a></p>
+<p>Appendix Tables 12–14 derive complete filtering only for weak-key classes at or beyond the selected boundary <code>m0</code>. For the adjacent unfiltered classes <code>m0-1</code>, the specification instead reports zero failures in <code>10^7</code> experiments for TRIKE-1/2/3/5 and <code>10^6</code> for TRIKE-7/9. Those experiments give only 95% upper confidence limits of about <code>2^-21.67</code> and <code>2^-18.35</code>; they do not establish failure probabilities at the claimed <code>2^-128</code> through <code>2^-512</code> scales.</p>
+<p>This is an evidence gap, not evidence that the true DFR is as high as those confidence limits. In particular, zero observed failures supplies no lower bound on the boundary-class DFR and no concrete failure-oracle or key-recovery attack follows from the reported experiment.</p>
+<h3 id="proposed-fixes_2">Proposed fixes</h3>
+<p>The <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/6LRD73BAIXBHGRSZRC7Z7XUMNGGVDY27/">original post</a> proposes fitting the failure model separately for the boundary classes and including their density-weighted DFR in the total bound. This section records the proposal without evaluating it.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-36/reproduce_spec_proof_gaps.py
+</code></pre>
+<p>The certificate locates the two unfiltered-boundary statements, their experiment counts, and their confidence limits in the submitted PDF.</p>
+<h2 class="issue-heading" id="kem-36-5-the-weak-key-reduction-assumes-the-secret-parity-checks-are-public">kem-36-5: The weak-key reduction assumes the secret parity checks are public</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr>
+<tr><th>Affected</th><td>TRIKE Theorem 4 and its claimed weak-key-rejection security loss</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>The stated reduction cannot test its required predicate from the actual public key; no IND-CCA attack demonstrated</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-30</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/6LRD73BAIXBHGRSZRC7Z7XUMNGGVDY27/">Xiong and Wang's TRIKE analysis</a></p>
+<p>Normative KEM.KeyGen (Algorithm 4) publishes <code>pk = (sigma,r2)</code> and retains <code>(h0,h1,h2)</code> in the secret key. Theorem 4 nevertheless begins its reduction with “public key <code>pk = (h0,h1,h2)</code>” and has the reduction decide whether that tuple passes the private weak-key predicate. An IND-CCA instance for the actual scheme does not reveal those parity checks, so the described reduction cannot perform its first step.</p>
+<p>Conditioning key generation on a rejection event of probability <code>rho</code> can still be related to the original distribution by a generic statistical-distance bound of order <code>rho</code>. The report does not claim the conditioned scheme is insecure; it records that the specification's exact multiplicative reduction and its quoted negligible bit loss are not proved by the stated argument.</p>
+<h3 id="proposed-fixes_3">Proposed fixes</h3>
+<p>The <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/6LRD73BAIXBHGRSZRC7Z7XUMNGGVDY27/">original post</a> proposes dropping Theorem 4 and accounting for weak keys on the DFR side instead. This section records the proposal without evaluating it.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-36/reproduce_spec_proof_gaps.py
+</code></pre>
+<p>The certificate checks both the actual public-key assignment in Algorithm 4 and the incompatible public-key assumption in Theorem 4.</p>
+<h2 class="issue-heading" id="kem-36-6-decapsulation-addresses-depend-on-the-secret-support">kem-36-6: Decapsulation addresses depend on the secret support</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>side-channel</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All four reference and four optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Repeated fine-grained secret-address dependence in decapsulation; no observation trace or key recovery demonstrated</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-30</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/6LRD73BAIXBHGRSZRC7Z7XUMNGGVDY27/">Xiong and Wang's TRIKE analysis</a></p>
+<p>Decapsulation copies the sparse secret supports <code>h0_idx</code>, <code>h1_idx</code>, and <code>h2_idx</code> from the secret key into the decoder. The reference <code>calc_upc_block</code> then computes <code>idx_to = (i + idx[k]) mod r</code> and reads <code>s[idx_to/8]</code>; its memory addresses therefore expose the support positions repeatedly throughout decoding. The optimized rotation path likewise derives its load offsets from secret shifts. The early-exit comparison used by some paths adds a smaller timing dependency.</p>
+<p>This contradicts the specification's statement that the reference implementation was designed to execute in constant time and that the optimized implementation preserves constant-time behavior (p. 12). The finding confirms the address dependence only; the reporters did not capture a cache or power trace and did not recover a key.</p>
+<p>Constant-time fix (moderate, hence Medium): replace secret-indexed rotations with an oblivious rotation, such as a masked barrel shifter or a BIKE-style constant-time decoder, and use a masked ciphertext comparison. This is a substantial decoder rewrite, but published techniques exist.</p>
+<h3 id="proposed-fixes_4">Proposed fixes</h3>
+<p>The <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/6LRD73BAIXBHGRSZRC7Z7XUMNGGVDY27/">original post</a> proposes register-level rotation for the secret-support operations and a masked ciphertext comparison. This section records the proposal without evaluating it.</p>
+<h3 id="reproducing_5">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-36/reproduce_implementation_issues.py
+</code></pre>
+<p>The certificate traces the index from the secret key into the syndrome address in every submitted source tree.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

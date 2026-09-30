@@ -43,6 +43,64 @@
 <pre><code class="language-sh">python3 kem-05/reproduce_unseeded_drbg.py
 </code></pre>
 <p>The witness compiles the archived 128-bit sources with the submitted default flags, compares key generation in two fresh processes, and checks the reported public-key prefix. Initializing the same DRBG with two distinct seeds produces distinct keys as a control.</p>
+<h2 class="issue-heading" id="kem-05-2-same-key-multi-instance-decoding-misses-bike-mlthre-128-and-256-targets">kem-05-2: Same-key multi-instance decoding misses BIKE-MLThre-128 and -256 targets</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>BIKE-MLThre-128 and BIKE-MLThre-256</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>About 2^127.89 work after 2^69 ciphertexts, or 2^255.78 work after 2^73 ciphertexts</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-30</td></tr>
+</table></div>
+
+<p>Additional reference: <a href="https://eprint.iacr.org/archive/2026/517/20260612:161211">May and Sá Diogo, <em>Multi-Instance Security Degradation of Code-Based KEMs</em>, ePrint 2026/517, pinned 2026-06-12 version</a></p>
+<p>Each encapsulation under one public key gives a new syndrome for an independently sampled weight-<code>t</code> error. May and Sá Diogo's same-key DS-DOOM attack searches all such targets together and returns the error for one observed ciphertext. In BIKE-MLThre, that error recovers the masked seed <code>m</code> and hence the shared key <code>KDF(m,c0,c1)</code>.</p>
+<p>Applying the authors' pinned estimator to the submitted dimensions gives the first below-target crossings:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>set</th>
+<th style="text-align: right;">observed ciphertexts</th>
+<th style="text-align: right;">log2(bit operations)</th>
+<th style="text-align: right;">log2(memory bits)</th>
+<th style="text-align: right;">target</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BIKE-MLThre-128</td>
+<td style="text-align: right;">2^69</td>
+<td style="text-align: right;">127.890</td>
+<td style="text-align: right;">96.189</td>
+<td style="text-align: right;">128</td>
+</tr>
+<tr>
+<td>BIKE-MLThre-256</td>
+<td style="text-align: right;">2^73</td>
+<td style="text-align: right;">255.780</td>
+<td style="text-align: right;">103.648</td>
+<td style="text-align: right;">256</td>
+</tr>
+<tr>
+<td>BIKE-MLThre-512 (control)</td>
+<td style="text-align: right;">2^80</td>
+<td style="text-align: right;">513.965</td>
+<td style="text-align: right;">114.390</td>
+<td style="text-align: right;">512</td>
+</tr>
+</tbody>
+</table></div>
+<p>The crossings use fewer than the evaluation ceiling of 2^80 ciphertexts under one public key and no decapsulation oracle. The NGCC call gives signatures a 2^64 per-key message requirement but gives KEMs no corresponding session cap. BIKE-MLThre explicitly discusses static-key deployments and key-reuse exposure (specification §3.4, physical pages 30–31). A hypothetical 2^64-ciphertext limit would avoid these two crossings, but it is neither specified nor enforced. The attacks therefore fall just below the 128- and 256-bit targets under the pinned estimator and are Critical under the classification policy.</p>
+<p>The margins are only 0.110 and 0.220 bits, and the estimator reports large memory costs of <code>2^96.189</code> and <code>2^103.648</code> bits. One fewer session exponent puts each estimate back above its target. The classification is consequently sensitive to estimator precision, time-memory accounting, and alternative ISD cost models; the report does not claim a robust multi-bit shortfall.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>Install <code>numpy</code> and <code>scipy</code>, then run:</p>
+<pre><code class="language-sh">python3 kem-05/reproduce_multi_instance.py
+</code></pre>
+<p>The witness downloads the official estimator at commit <code>39b78dcc077793cfa3ccdce8d032ece76825ca55</code>, verifies both its archive and <code>doom.py</code> hashes, reproduces each crossing and its preceding above-target point, and checks the 512-bit control.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

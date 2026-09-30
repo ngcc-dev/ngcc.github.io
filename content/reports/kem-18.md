@@ -73,20 +73,21 @@ LATTICE_ESTIMATOR_PATH=/path/to/lattice-estimator \
 
 The script checks the integer factorizations, coprimality modulo 8191, quotient homomorphisms, CRT reconstruction, and exact covariance matrices before reproducing the six MATZOV BDD estimates. Its final `LIMITATION` line records the correlation not modeled by those estimates.
 
-## kem-18-3: Public consistency equations recover a Loong128 shared secret
+## kem-18-3: Public consistency equations recover Loong128 and Loong256 shared secrets
 
 Severity: Critical
 Status: Confirmed
 Layer: Design
-Affected: Loong128; the higher parameter sets were not evaluated
+Affected: Loong128 and Loong256; Loong384 and Loong512 were not evaluated
 Discovery: Non-trivial
-Exploitation: Practical 48-variable lattice recovery followed by 2^12 public re-encryptions
+Exploitation: Practical 48- and 96-variable lattice recoveries followed by 2^12 and 2^16 public re-encryptions
 Credit: Tianyuan Xie, on behalf of the openHiTLS team, with GLM-5.3 assistance (corrected 2026-09-30)
 Date: 2026-09-29
 <!-- Credit correction: On 2026-09-30, the submitter clarified that “GPT-5.5” in the original submission email was a typo; the assistance was GLM-5.3. -->
 Original source: [Xie's PKC Forum post and PoC](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/VBOUFRS2CDGNLPEAR4ZBKZM4U5YHBTZY/)
+Follow-up source: [Xie's LoongKEM256 GitHub issue #23](https://github.com/ngcc-dev/ngcc-harness/issues/23)
 
-Loong128 publishes the structured matrix equation, naming the matrix `U0` in Algorithm 19; the reference implementation calls the corresponding buffer `U2`:
+LoongKEM publishes the structured matrix equation, naming the matrix `U0` in Algorithm 20; the reference implementation calls the corresponding buffer `U2`:
 
 ```text
 U0 = Block(r1*A2) + R2*A4 + E4.
@@ -95,6 +96,16 @@ U0 = Block(r1*A2) + R2*A4 + E4.
 Negacyclic consistency eliminates the first term and gives 528 public equations in the 48 short coefficients of `r2`. A small Kannan-embedding/BKZ instance recovers one candidate. Subtracting `R2*B2` from the second ciphertext component leaves two plausible message patterns per negacyclic diagonal, or only `2^12 = 4096` messages. Public FO re-encryption identifies the unique message and derives the encapsulated shared secret.
 
 We independently generated a fresh submitted-API key and ciphertext, then gave the attack only the 1,472-byte public key and 1,512-byte ciphertext. It recovered one `r2` candidate and the secret `6ece998be1b9b297d88833700a1c5221`; a separate encapsulation/decapsulation control outside the attack input produced the identical value. A second fresh transcript also reached a unique FO match. This is a public-only recovery of an honest session key and directly violates Loong128's IND-CCA claim, hence Critical.
+
+For Loong256, `N=16` and `k2=6`, so the same public cancellation gives 1,440 equations in 96 short coefficients. Selecting 240 equations produces a 337-dimensional Kannan embedding. Progressive BKZ-20/30/40 recovers `r2`; the 16 negacyclic diagonals then leave `2^16=65,536` message candidates for public FO re-encryption. The attack code and transcript are pinned at commit [`0366a8a`](https://github.com/ifeelok92/ngcc-analysis/tree/0366a8aaf2914d08a5bb8e672e68a87e40a8ef15/instances/loong256).
+
+Our independent replay recovered the posted transcript's shared secret after
+130 public re-encryptions. A second run generated a fresh submitted-library
+transcript, removed the `SS` line before the attack, and recovered the held-out
+secret after 4,389 candidates. Ten further runs—five independent BKZ seeds and
+five shuffled public-equation subsets—each found one `r2` candidate, generated
+65,536 messages, and recovered the same posted secret. Their lattice phases
+took 2,746–3,089 seconds per core under a 12-way parallel load.
 
 ### Reproducing
 
@@ -112,3 +123,16 @@ python3 poc2/attack_public_only.py /tmp/loong128-pkct.txt --m 90 --block 40
 ```
 
 The input file contains exactly `PK` and `CT` lines. The PoC refuses `SK` or expected-`SS` lines and derives the printed shared secret from its recovered message and public key.
+
+For a fresh Loong256 transcript generated from the archived implementation, run:
+
+```sh
+PYTHON=/path/to/python-with-fpylll sh kem-18/reproduce_loong256.sh
+```
+
+The wrapper keeps the genuine shared secret outside the attack input, runs the
+pinned public-data recovery, and compares the recovered value only after the
+attack has finished. It applies a compatibility-only float conversion to the
+PoC's post-BKZ RMS diagnostic on Sage builds where `fpylll` returns Sage
+integers; candidate recovery is unchanged. Our fully loaded runs took about
+46–52 minutes per core.

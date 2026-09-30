@@ -35,9 +35,12 @@
 <tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang</td></tr>
 <tr><th>Date</th><td>2026-09-27</td></tr>
 </table></div>
+<p>Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/NUOASTPTGEHI4GSVCJKRJFHSIXOECO5T/">PolarLAC team's PKC Forum response</a></p>
 <p>Reference: <a href="https://eprint.iacr.org/archive/2026/2232/1790581014.pdf">Xiong and Wang, ePrint 2026/2232, 2026-09-28 revision, §§3.3 and 3.7–3.8</a></p>
 <p>Decapsulation re-encrypts the decrypted message for its Fujisaki--Okamoto check. The derived seed enters <code>sample_screened_poly</code>, whose spectral rejection loop repeats until a bound is met (<code>pke.c:30–42</code>). Its total rejection count <code>R</code> is therefore a deterministic public function of the secret-derived decrypted message, and execution time reveals that count. This contradicts the specification's claims that the polar-code implementation has constant-time control flow and intrinsically supports constant-time implementation.</p>
 <p>On PolarLAC-Light, the artifact measures adjacent <code>R</code> classes about 9,000–10,600 cycles apart and classifies them with low error after repeated measurements. The timing channel is real. The paper also carefully reports the negative result: the chosen-ciphertext message-flip predicate needed by its algebraic recovery has 68–99% error through this timing channel, and a genuine-timing run recovers 0/512 coefficients. This report therefore claims secret-dependent timing leakage, not key recovery or an IND-CCA break.</p>
+<h3 id="follow-up-analysis">Follow-up Analysis</h3>
+<p>The PolarLAC team confirms the measurable rejection-count timing leakage and agrees that it does not presently give the plaintext predicate required by the reported key-recovery method. It notes that the re-encryption coins are derived from <code>Hash(m || pk)</code>, making the observed class a pseudorandom function of the decrypted message rather than a direct structured relation to its bits. This is consistent with the report's Medium scope and does not change its classification.</p>
 <p>Use fixed-work, message-independent sampling in the re-encryption path. The complete decapsulation, including reconstruction of its coins, must have a trace independent of the decrypted message and long-term key.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>

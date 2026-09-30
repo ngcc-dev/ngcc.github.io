@@ -35,10 +35,13 @@
 <tr><th>Credit</th><td>Kris Kwiatkowski <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#99;&#111;&#110;&#116;&#97;&#99;&#116;&#64;&#97;&#109;&#111;&#110;&#103;&#98;&#121;&#116;&#101;&#115;&#46;&#99;&#111;&#109;">&#99;&#111;&#110;&#116;&#97;&#99;&#116;&#64;&#97;&#109;&#111;&#110;&#103;&#98;&#121;&#116;&#101;&#115;&#46;&#99;&#111;&#109;</a></td></tr>
 <tr><th>Date</th><td>2026-09-22</td></tr>
 </table></div>
-<p>Original source: <a href="https://github.com/ngcc-dev/ngcc-harness/pull/2">ngcc-harness PR #2</a>, superseded by <a href="https://github.com/ngcc-dev/ngcc-harness/pull/3">PR #3</a></p>
+<p>Original source: <a href="https://github.com/ngcc-dev/ngcc-harness/pull/2">ngcc-harness PR #2</a>, superseded by <a href="https://github.com/ngcc-dev/ngcc-harness/pull/3">PR #3</a>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/FMDKNMFRD7Q74TF5U5ZEA2P2XA3YII7S/">Xiong and Wang's YuanYang.DSA analysis</a></p>
 <p>The specification represents the NTRU basis vectors as columns and requires perturbation covariance <code>Sigma_p = sigma^2 I - B_hat B_hat^*</code>. The implementation's <code>sigma_p_set_slot()</code> instead subtracts <code>B_hat^* B_hat</code>, the Gram matrix of those basis vectors. Since the two matrix products differ for this non-normal basis, the intended cancellation fails and leaves secret-dependent variance and cross-covariance in every signature.</p>
 <p>For each Fourier slot, the diagonal leakage predicts <code>Var(s1)=sigma_eff^2-|g|^2+|F_hat|^2</code> and the opposite deviation in <code>Var(s2)</code>. The off-diagonal covariance combines with that difference to expose an approximation to the slotwise ratio <code>f/g</code>. The public-data reproducer decodes only published signature bytes and never reads the secret key. On an independently generated YuanYang-512 key, 4,000 signatures produced a 7.4-sigma dispersion and a 2.23-fold slot-variance spread; a spherical control produced 1.0 sigma and a 1.08-fold spread. The faulty source is byte-identical across all three parameter sets.</p>
 <p>This confirms substantial key-dependent leakage and invalidates the claimed spherical-transcript simulation. It does not yet recover <code>(f,g)</code> or forge a signature: the proposed final rank-one module-lattice recovery has not been implemented, and the observed ratio estimate retains a systematic error floor. The implementation must subtract <code>B_hat B_hat^*</code>, and the repaired sampler must be revalidated statistically.</p>
+<h3 id="follow-up-analysis">Follow-up Analysis</h3>
+<p>Zhenyu Xiong and Mingsheng Wang's <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/FMDKNMFRD7Q74TF5U5ZEA2P2XA3YII7S/">2026-09-30 PKC Forum post</a> independently identifies the transposed covariance product and shows that it combines with the separate YuanYang.DSA-512 wide-sampler defect described below. The follow-up strengthens the public-signature leakage evidence, but does not complete the key-recovery step for this covariance defect by itself.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">make -C sign-34 exploit
@@ -67,6 +70,54 @@ is needed by the <code>sign-34-1</code> statistical test, not by this encoding c
 <pre><code class="language-sh">make -C sign-34 exploit
 sign-34/reproduce_transcript_leak sign-34/lib/libyuanyang-512.so 4000
 </code></pre>
+<h2 class="issue-heading" id="sign-34-3-wrong-wide-sampler-constant-leaks-secret-basis-information-through-signature-means">sign-34-3: Wrong wide-sampler constant leaks secret-basis information through signature means</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>YuanYang.DSA-512 reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Non-trivial</td></tr>
+<tr><th>Exploitation</th><td>Strong public-signature leakage with a candidate-specific key-recovery route; complete recovery is simulated, not executed</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-30</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/FMDKNMFRD7Q74TF5U5ZEA2P2XA3YII7S/">Xiong and Wang's YuanYang.DSA analysis</a></p>
+<p>The YuanYang.DSA-512 RCDT and specification use a wide integer Gaussian of standard deviation <code>4 eta = 4.104</code>. Both submitted implementations instead set the fixed-point rejection exponent to <code>1/(2(16 eta)^2)</code>. The submitted Q20.43 constant is <code>0x3ccc24a85</code>, or <code>0.00185539045</code>; the constant for <code>4 eta</code> is <code>0x3ccc24a84f</code>, or <code>0.02968624724</code>. The 1024- and 2048-dimensional sets use the correct scale and are unaffected by this finding.</p>
+<p>The erroneous rejection step leaves the one-dimensional sampler with mean about <code>0.458</code> rather than zero. That bias passes through the secret Gram root and gives the public signature coefficients a large, key-dependent mean. At 400,000 signatures per test key, the reporters' own-key regressions have slopes <code>0.102 +/- 0.011</code> and <code>0.113 +/- 0.010</code>, close to the predicted <code>0.458/4</code>, while cross-key controls remain near zero. Correcting only the wide-sampler constant removes the mean signal.</p>
+<p>The recovered quantity approaches the secret autocorrelation <code>f fbar + g gbar</code>. Fouque, Kirchner, Tibouchi, Wallet, and Yu, <a href="https://eprint.iacr.org/2019/1180">ePrint 2019/1180</a>, give a polynomial-time full-key recovery once that autocorrelation is exact. The reporters estimate coefficient-wise recovery at roughly <code>2^35</code> signatures, but that scale is a simulation corresponding to about 400 core-days of victim signing; they did not execute the complete recovery. This is therefore High rather than Critical.</p>
+<h3 id="proposed-fixes">Proposed fixes</h3>
+<p>The <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/FMDKNMFRD7Q74TF5U5ZEA2P2XA3YII7S/">original post</a> proposes setting the exponent constant to <code>0x3ccc24a84f</code>, regenerating <code>yuanyang_large_zero_berexp[]</code> for <code>4 eta</code>, and adding signature mean and variance self-tests to the KAT suite. This section records the proposal without evaluating it.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>The local certificate checks both submitted source trees and the two fixed-point factors:</p>
+<pre><code class="language-sh">python3 sign-34/reproduce_sampler_constants.py
+</code></pre>
+<p>The pinned public experiment recompiles isolated copies, compares the submitted and corrected samplers, and runs the public-signature mean test. It needs Python with NumPy; 20,000 signatures show the mean, while 400,000 are needed for the reported approximately ten-sigma secret regression.</p>
+<pre><code class="language-sh">PYTHON_BIN=python3 sh sign-34/reproduce_sampler_mean.sh 20000
+</code></pre>
+<h2 class="issue-heading" id="sign-34-4-wrong-delta2-exponent-causes-excessive-signing-rejection">sign-34-4: Wrong Delta2 exponent causes excessive signing rejection</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>YuanYang.DSA-512 reference implementation</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Increased signing retries; no key recovery, forgery, or output-distribution failure demonstrated</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-30</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/FMDKNMFRD7Q74TF5U5ZEA2P2XA3YII7S/">Xiong and Wang's YuanYang.DSA analysis</a></p>
+<p>Both YuanYang.DSA-512 implementations encode <code>fpr_yuanyang_inv_2sqrsigma_sig</code> as <code>3701747757852</code>, or approximately <code>0.42084</code> in Q20.43. For <code>sigma_sig = 69.76</code>, <code>1/(2 sigma_sig^2)</code> is approximately <code>0.000102744</code>, raw value <code>0x35de15c3</code>. The reference implementation applies the larger constant directly (<code>sign.c:325</code>), making its exponent 4096 times too large. The optimized implementation compensates by shifting the product right by 12 bits (<code>sign.c:311</code>) and is not affected.</p>
+<p>In the reporters' isolated reference-code comparison, correcting this factor lowers Delta2 rejection from about 10.6% to 1.4% per completed signature. Other sampler corrections change the input distribution and its final rejection rate, so this comparison is not a general performance prediction. The confirmed consequence is an unnecessary retry cost in the archived 512 reference implementation; no cryptographic claim violation is demonstrated.</p>
+<h3 id="proposed-fixes_1">Proposed fixes</h3>
+<p>The <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/FMDKNMFRD7Q74TF5U5ZEA2P2XA3YII7S/">original post</a> proposes dividing the reference Delta2 exponent constant by <code>2^12</code> together with correcting the perturbation covariance. This section records the proposal without evaluating it.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-34/reproduce_sampler_constants.py
+</code></pre>
+<p><code>sign-34/reproduce_sampler_mean.sh</code> also prints the public package's pinned 400,000-signature isolated Delta2 comparison after its fresh sampler run.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

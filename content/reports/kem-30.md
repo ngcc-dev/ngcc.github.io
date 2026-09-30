@@ -13,11 +13,17 @@ Discovery: Hard
 Exploitation: Measured timing classification of a decrypted-message-dependent rejection count; key recovery and IND-CCA break explicitly not demonstrated
 Credit: Zhenyu Xiong and Mingsheng Wang
 Date: 2026-09-27
+Follow-up source: [PolarLAC team's PKC Forum response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/NUOASTPTGEHI4GSVCJKRJFHSIXOECO5T/)
+
 Reference: [Xiong and Wang, ePrint 2026/2232, 2026-09-28 revision, §§3.3 and 3.7–3.8](https://eprint.iacr.org/archive/2026/2232/1790581014.pdf)
 
 Decapsulation re-encrypts the decrypted message for its Fujisaki--Okamoto check. The derived seed enters `sample_screened_poly`, whose spectral rejection loop repeats until a bound is met (`pke.c:30–42`). Its total rejection count `R` is therefore a deterministic public function of the secret-derived decrypted message, and execution time reveals that count. This contradicts the specification's claims that the polar-code implementation has constant-time control flow and intrinsically supports constant-time implementation.
 
 On PolarLAC-Light, the artifact measures adjacent `R` classes about 9,000–10,600 cycles apart and classifies them with low error after repeated measurements. The timing channel is real. The paper also carefully reports the negative result: the chosen-ciphertext message-flip predicate needed by its algebraic recovery has 68–99% error through this timing channel, and a genuine-timing run recovers 0/512 coefficients. This report therefore claims secret-dependent timing leakage, not key recovery or an IND-CCA break.
+
+### Follow-up Analysis
+
+The PolarLAC team confirms the measurable rejection-count timing leakage and agrees that it does not presently give the plaintext predicate required by the reported key-recovery method. It notes that the re-encryption coins are derived from `Hash(m || pk)`, making the observed class a pseudorandom function of the decrypted message rather than a direct structured relation to its bits. This is consistent with the report's Medium scope and does not change its classification.
 
 Use fixed-work, message-independent sampling in the re-encryption path. The complete decapsulation, including reconstruction of its coins, must have a trace independent of the decrypted message and long-term key.
 

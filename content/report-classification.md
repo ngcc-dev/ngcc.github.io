@@ -56,7 +56,8 @@ Public-key algorithms ([call](https://www.niccs.org.cn/niccs/Notice/pc/content/c
 - Security is evaluated against an attacker with signatures on up to 2^80
   chosen messages or decapsulations of up to 2^80 chosen ciphertexts
   ([Evaluation Criteria](https://www.niccs.org.cn/niccs/Notice/tT7TSQiz.pdf) §1(2)). This is an evaluation ceiling
-  for the attacker; the operational per-key requirement remains 2^64 messages.
+  for the attacker. For signatures, the operational per-key requirement remains
+  2^64 messages; the call gives no analogous per-key session cap for KEMs.
   Classify query-budget findings as follows:
   - **Critical:** a concrete attack costs less than the required level for an
     attacker using at most 2^80 queries and within the per-key usage model that
@@ -111,6 +112,13 @@ NGCC requires a 512-bit classical level and permits an optional 384-bit level.
 A demonstrated `2^256` attack against a 512-bit claim is therefore Critical:
 practical feasibility is not required when the advertised security bound is
 violated.
+
+For quantum attacks, a Grover-iteration count alone is not an end-to-end work
+estimate when the oracle is nontrivial. Count the oracle circuit, reversible
+arithmetic, memory and parallelization costs under the metric used by the
+claim. If those costs could close the reported margin and have not been
+bounded, classify the result as an analysis or proof gap rather than a
+confirmed below-target attack.
 
 ### High
 

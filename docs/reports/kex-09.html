@@ -51,7 +51,29 @@ cc -std=c99 -O3 -ffunction-sections -fdata-sections -Wl,--gc-sections \
 &quot;$ct_dir/repro&quot;
 </code></pre>
 <p>The witness counts XOF fetch calls in the unmodified reference sampler. It prints <code>CONFIRMED</code> after finding two secret seeds (first byte 0 and 11 in this build) that require different call counts. An extra fetch performs another XOF invocation and allocation, making the paths observably different without a statistical timing test.</p>
-<p>Follow-up analysis: decapsulation re-encryption also runs a bounded-density sampler on coins derived from recovered <code>m_prime</code> (<code>src/common/kem.c:156-164</code>, <code>src/ref/triq_pke.c:96-98</code>). This is a <a href="https://eprint.iacr.org/2021/1485.pdf">Guo et al.</a>-style lead; no TriQ-specific key-recovery oracle is yet demonstrated.</p>
+<h2 class="issue-heading" id="kex-09-2-fo-re-encryption-leaks-the-decrypted-message-through-sampler-timing">kex-09-2: FO re-encryption leaks the decrypted message through sampler timing</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>side-channel</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-lead">Lead</span></td></tr>
+<tr><th>Affected</th><td>TriQ-KEX reference and optimized implementations, 128/256/384/512; timing measured on TriQ-KEX-128's internal KEM</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Chosen-ciphertext timing classifier; full key recovery not demonstrated</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 and Anthropic Claude Opus 5.5 assistance</td></tr>
+<tr><th>Date</th><td>2026-09-30</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/FJSWIK5YXD6SNYN22H6GT3XE6A5RRKN4/">PKC Forum post and verification package</a></p>
+<p>The KEX's internal KEM decapsulation decrypts <code>m_prime</code>, derives <code>theta_prime</code> from it, and re-encrypts before comparing the ciphertext (<code>src/common/kem.c:156–171</code>). Re-encryption calls the bounded-density sampler twice (<code>src/ref/triq_pke.c:96–98</code>). That sampler exits as soon as a candidate passes its density test, so its iteration count depends on <code>theta_prime</code> and hence on the secret-dependent decrypted message (<code>src/ref/vector.c:244–255</code>); the optimized trees contain the same early exit. The masked final validity selection does not hide this earlier work. This operational dataflow contradicts the specification's statement that the bounded-density condition is public and independent of secret data (§III-B, p. 9).</p>
+<p>The unauthenticated <code>ct_a</code> is decapsulated with the long-term KEX secret before peer authentication (<code>KEX_AlgorithmInstance.c:404</code>), so an active party can reach this path. The reporters measured a 7.9% probability that a full internal-KEM re-encryption needs at least one extra draw across its two sampler calls, corresponding to about 4.1% per call under the same model. Its two timing classes differed by 37,227 cycles: one averaged 10,220,477 cycles and the one-extra-rejection class 10,257,704 cycles (<code>z</code> about 4.4); a quieter-host run reached <code>z=5.6</code>. A separate microbenchmark measured one extra sampler iteration at roughly 15,674 cycles, so the figures are not measurements of the full KEX. This is the re-encryption leakage mechanism used by the published <a href="https://eprint.iacr.org/2021/1485">Don't Reject This attack</a> on related code-based KEMs. A TriQ-specific classifier is demonstrated, but a complete secret-key recovery is still in progress.</p>
+<p>Constant-time fix (moderate, hence Medium): run a fixed, message-independent number of sampler candidates and use masks to select the first acceptable one. The original analysis estimates about 78% extra sampler work for a two-candidate schedule; that performance estimate and its residual failure probability have not been independently validated.</p>
+<h3 id="proposed-fixes">Proposed fixes</h3>
+<p>The <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/FJSWIK5YXD6SNYN22H6GT3XE6A5RRKN4/">original post</a> proposes running exactly <code>N_max</code> sampler iterations with masked selection, or using another fixed message-independent schedule. This section records the proposal without evaluating it.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kex-09/reproduce_reencrypt_sampler.py
+</code></pre>
+<p>The compact witness checks the decrypted-message-to-sampler dataflow and early exit in all four archived trees. It deliberately does not claim to reproduce a stable timing classifier or key recovery on every host.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

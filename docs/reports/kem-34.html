@@ -18,14 +18,90 @@
 <h1 id="rudraksh2-kem-34">Rudraksh2 (kem-34)</h1>
 <div class="table-wrap"><table class="meta">
 <tr><th>Candidate</th><td>Rudraksh2</td></tr>
-<tr><th>Family</th><td>Lattice-based</td></tr>
-<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/Rudraksh2.zip">Official submission archive</a></td></tr>
+<tr><th>Family</th><td>Lattice-based KEM</td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/Rudraksh2.zip">Rudraksh2.zip</a> (SHA-256: <code>569d526cf7abe38393f69a4513686fa86a0c3b3033cc225b84cc107b20b17b98</code>)</td></tr>
 <tr><th>Specification</th><td><a href="https://github.com/ngcc-dev/ngcc-harness/raw/dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kem-34/kem-34-spec.pdf" title="Download kem-34-spec.pdf from GitHub">kem-34-spec.pdf</a>&nbsp;<a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kem-34/kem-34-spec.pdf" title="Open the kem-34 specification PDF">PDF</a></td></tr>
 </table></div>
 
-<h3 id="review-status">Review status</h3>
-<p>No vulnerability finding is currently published for this candidate. This is not a security endorsement: it records only the present state of the public finding inventory, and the candidate remains under review.</p>
-<p>See the <a href="../constant-time/kem-34.html">constant-time review</a> and the performance reports (<a href="../performance/x86_1/kem-34.html">x86_1</a> · <a href="../performance/arm_1/kem-34.html">arm_1</a>). See the <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560881139240960.html">official submission page</a>.</p>
+<h2 class="issue-heading issue-heading-first" id="kem-34-1-rudraksh2-128-leaves-only-a-264-query-grover-margin">kem-34-1: Rudraksh2-128 leaves only a 2^64-query Grover margin</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr>
+<tr><th>Affected</th><td>Rudraksh2-128-I; the same 128-bit message dimension is specified for Rudraksh2-128-II</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>About 2^64 Grover oracle iterations; total quantum circuit cost is not established below 2^80</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance</td></tr>
+<tr><th>Date</th><td>2026-09-30</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/3QHUJGWZDN7ZFSG7R46HHEWG67MKGYYB/">PKC Forum post and verification package</a></p>
+<p>Rudraksh2-128 samples a 16-byte encapsulation message <code>m</code>, then derives both the session key and the public encryption randomness as <code>G(m || H(pk))</code> (<code>params.h:41–50</code>, <code>KEM_lwekem128.c:73–97</code>). Given a ciphertext and public key, a candidate message is publicly testable by recomputing the encryption. Generic Grover search therefore needs about <code>2^64</code> such oracle iterations. This is below the set's nominal 80-bit quantum exponent if one counts oracle calls alone, but each oracle must implement and uncompute the full public encryption test. The NGCC call does not specify the quantum cost metric precisely, and no gate-level estimate establishes total work below <code>2^80</code>; this is therefore a parameter-analysis gap rather than a confirmed claim break. The observation remains after replacing the contest placeholder XOF with an ideal primitive of the same dimensions.</p>
+<p>The witness resets the deterministic test generator to recover the encapsulator's <code>m</code>, then reconstructs all 32 session keys as <code>G(m || H(pk))</code> without using the secret key or ciphertext. It demonstrates the public reduction but does not run the generic <code>2^64</code> search.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C kem-34 reproduce-message-space
+python3 kem-34/reproduce_parameters.py
+</code></pre>
+<h2 class="issue-heading" id="kem-34-2-cortex-m4-uses-an-incompatible-minal-decoder-constant">kem-34-2: Cortex-M4 uses an incompatible Minal decoder constant</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Rudraksh2-128 and -256 Cortex-M4 implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Honest cross-implementation sessions derive different keys</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance</td></tr>
+<tr><th>Date</th><td>2026-09-30</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/3QHUJGWZDN7ZFSG7R46HHEWG67MKGYYB/">PKC Forum post and verification package</a></p>
+<p>The Cortex-M4 128- and 256-bit trees set <code>MINAL_BETA</code> to 0 (<code>minal.c:15</code>), whereas the specification, reference, and optimized implementations use 220. This constant changes the two-dimensional error-correcting code. Cross-tests reproduced zero matching keys in 200 sessions in each direction between Cortex-M4 and reference code; Cortex-M4 self-tests succeeded, and changing only the constant to 220 restored 200/200 interoperability in both directions. This is an availability/interoperability defect, not a confidentiality break.</p>
+<h3 id="proposed-fixes">Proposed fixes</h3>
+<p>The original post proposes changing <code>MINAL_BETA</code> to 220 in the Cortex-M4 128- and 256-bit implementations.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-34/reproduce_parameters.py
+</code></pre>
+<p>The compact witness verifies the conflicting constants in the archived trees. The original package contains the full cross-implementation experiment.</p>
+<h2 class="issue-heading" id="kem-34-3-kem-entry-points-ignore-caller-declared-buffer-lengths">kem-34-3: KEM entry points ignore caller-declared buffer lengths</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Rudraksh2 reference implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Out-of-bounds read from a caller-supplied short buffer</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance</td></tr>
+<tr><th>Date</th><td>2026-09-30</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/3QHUJGWZDN7ZFSG7R46HHEWG67MKGYYB/">PKC Forum post and verification package</a></p>
+<p><code>kem_enc</code> and <code>kem_dec</code> accept public-key and ciphertext lengths but never inspect them, and <code>kem_dec</code> likewise ignores the supplied secret-key length. They instead read the compile-time sizes (<code>KEM_lwekem128.c:73–99,102–144</code>). Passing <code>kem_dec</code> an allocation one byte shorter than the normal 912-byte ciphertext and its true length of 911 produces an AddressSanitizer heap-buffer-overflow read at <code>poly.c:105</code>, reached through <code>indcpa.c:121</code>. No disclosure, write, or control-flow impact is demonstrated.</p>
+<h3 id="proposed-fixes_1">Proposed fixes</h3>
+<p>The original post proposes validating caller-supplied lengths before accessing the public key or ciphertext.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C kem-34 reproduce-length-read
+</code></pre>
+<h2 class="issue-heading" id="kem-34-4-rudraksh2-iis-modulus-cannot-support-its-specified-ntt">kem-34-4: Rudraksh2-II&#x27;s modulus cannot support its specified NTT</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Rudraksh2-128-II, -256-II, and -512-II specifications</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>The specified polynomial-multiplication method does not exist for these parameters</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance</td></tr>
+<tr><th>Date</th><td>2026-09-30</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/3QHUJGWZDN7ZFSG7R46HHEWG67MKGYYB/">PKC Forum post and verification package</a></p>
+<p>The specification requires a primitive <code>2n</code>-th root of unity in <code>Z_q</code> for its negacyclic NTT. Every <code>-II</code> set uses <code>q=4001</code>, but <code>q-1 = 4000 = 2^5 * 5^3</code>; the largest supported negacyclic-NTT degree is therefore 16. The specified degrees are 64, 128, and 256, so none has the required root. The submission supplies no <code>-II</code> implementation. The polynomial ring itself remains implementable by a different multiplication method, so this is a specification/realization defect rather than a cryptanalytic break.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-34/reproduce_parameters.py
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

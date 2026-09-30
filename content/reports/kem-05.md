@@ -26,3 +26,40 @@ python3 kem-05/reproduce_unseeded_drbg.py
 ```
 
 The witness compiles the archived 128-bit sources with the submitted default flags, compares key generation in two fresh processes, and checks the reported public-key prefix. Initializing the same DRBG with two distinct seeds produces distinct keys as a control.
+
+## kem-05-2: Same-key multi-instance decoding misses BIKE-MLThre-128 and -256 targets
+
+Severity: Critical
+Status: Confirmed
+Layer: Design
+Affected: BIKE-MLThre-128 and BIKE-MLThre-256
+Discovery: Moderate
+Exploitation: About 2^127.89 work after 2^69 ciphertexts, or 2^255.78 work after 2^73 ciphertexts
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-09-30
+
+Additional reference: [May and Sá Diogo, *Multi-Instance Security Degradation of Code-Based KEMs*, ePrint 2026/517, pinned 2026-06-12 version](https://eprint.iacr.org/archive/2026/517/20260612:161211)
+
+Each encapsulation under one public key gives a new syndrome for an independently sampled weight-`t` error. May and Sá Diogo's same-key DS-DOOM attack searches all such targets together and returns the error for one observed ciphertext. In BIKE-MLThre, that error recovers the masked seed `m` and hence the shared key `KDF(m,c0,c1)`.
+
+Applying the authors' pinned estimator to the submitted dimensions gives the first below-target crossings:
+
+| set | observed ciphertexts | log2(bit operations) | log2(memory bits) | target |
+|---|---:|---:|---:|---:|
+| BIKE-MLThre-128 | 2^69 | 127.890 | 96.189 | 128 |
+| BIKE-MLThre-256 | 2^73 | 255.780 | 103.648 | 256 |
+| BIKE-MLThre-512 (control) | 2^80 | 513.965 | 114.390 | 512 |
+
+The crossings use fewer than the evaluation ceiling of 2^80 ciphertexts under one public key and no decapsulation oracle. The NGCC call gives signatures a 2^64 per-key message requirement but gives KEMs no corresponding session cap. BIKE-MLThre explicitly discusses static-key deployments and key-reuse exposure (specification §3.4, physical pages 30–31). A hypothetical 2^64-ciphertext limit would avoid these two crossings, but it is neither specified nor enforced. The attacks therefore fall just below the 128- and 256-bit targets under the pinned estimator and are Critical under the classification policy.
+
+The margins are only 0.110 and 0.220 bits, and the estimator reports large memory costs of `2^96.189` and `2^103.648` bits. One fewer session exponent puts each estimate back above its target. The classification is consequently sensitive to estimator precision, time-memory accounting, and alternative ISD cost models; the report does not claim a robust multi-bit shortfall.
+
+### Reproducing
+
+Install `numpy` and `scipy`, then run:
+
+```sh
+python3 kem-05/reproduce_multi_instance.py
+```
+
+The witness downloads the official estimator at commit `39b78dcc077793cfa3ccdce8d032ece76825ca55`, verifies both its archive and `doom.py` hashes, reproduces each crossing and its preceding above-target point, and checks the 512-bit control.

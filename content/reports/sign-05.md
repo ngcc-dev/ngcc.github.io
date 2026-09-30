@@ -69,10 +69,19 @@ Exploitation: A reachable challenge makes the specified signer loop forever; no 
 Credit: changke
 Date: 2026-09-30
 Original source: [changke's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/AGYNQF4QEWLJTPFESMNWASPA2BN6M7GL/)
+Follow-up source: [Chinith team's PKC Forum response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/6V7CWIE6JHSUTRBQK4U6BHNHEFAME76E/)
 
 The three signing algorithms increment `ctr` only when `chall3` fails the trailing-zero grinding condition. If that condition passes but `BAVC.Open` returns bottom because the opening exceeds `Topen`, the loop repeats with the same counter and otherwise unchanged hash input. It therefore derives the same challenge and rejects the same opening forever (SM4th.Sign lines 23–31, physical PDF page 60; uBlockith.Sign lines 22–30, page 71; Vistrutith.Sign lines 18–26, page 92).
 
 The rejection branch is reachable. For SM4th-d3-128s-lo, the valid indices `(0,100,...,1000)` map to eleven leaf positions whose root-path union contains 135 nodes. The specified opening uses `135-2·11+1=114` sibling seeds, exceeding `Topen=102`. The tuple fits the 121 index bits and can be followed by the required seven zero grinding bits. This proves a specification-level non-progress case, not a practical chosen-message denial of service: no transcript producing that tuple was searched, and the inspected implementation advances the counter after a rejected batch.
+
+### Follow-up Analysis
+
+The Chinith team confirms that the counter must advance after either grinding rejection or opening rejection. Its response also corrects the stated one-trial probability from `2^-wgrind` to `2^-wgrind·alpha`, where `alpha` is the probability that `BAVC.Open` accepts.
+
+### Proposed fixes
+
+The team's response proposes breaking only after both the grinding test and `BAVC.Open` succeed, returning failure if the 32-bit counter is exhausted, and otherwise incrementing the counter before retrying. This records the proposal without evaluating it.
 
 ### Reproducing
 
@@ -81,3 +90,67 @@ python3 sign-05/reproduce_open_retry.py
 ```
 
 The witness recomputes every leaf position, the path-union size, and the opening-size rejection. Inspect the cited signing algorithms for the unchanged-counter retry.
+
+## sign-05-4: uBlockith-EM witness misalignment reduces the specified relation to a two-round fixed point
+
+Severity: Critical
+Status: Probable
+Layer: Design
+Affected: Specified uBlockith-EM 256s and 256f; the submitted source has the corresponding completeness failure after binding the final Fiat–Shamir constant term
+Discovery: Hard
+Exploitation: Spec-literal universal forgery estimated at about 2^135.5 work; the 2^108 guess enumeration was not run
+Credit: IIE-AIC Team
+Date: 2026-09-30
+Original source: [IIE-AIC Team's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/Q5TTRVDKJ2I2AZUK3YHZWORRNX6O27CN/) and [pinned artifact](https://github.com/acprk/ngcc-round1-cryptanalysis/tree/729616512528d6e8aa06e85707e68cd4cf09a62a/chinith-em-misalignment)
+
+The specification's 3,072-bit EM encryption witness begins with the secret input `S0`, yet `uBlockith.OWFConstraints` selects the encryption witness from offset `l_ke=0`, and `uBlockith.EncCstrnts` prepends the same input again (Table 2 and physical PDF pages 67–69). The checked chain is therefore
+
+```text
+S0 || S0 || S2 || ... || S22 || out.
+```
+
+Its first constraint is only `DoubleRound_0(S0)=S0`; the remaining constraints follow freely chosen intermediate blocks, and the loop stops at `S22` without reading `out=S0 xor pk2`. Thus the specified relation does not bind the public output. A fixed point of the first two public-keyed uBlock rounds gives a witness for any `pk2` and any message.
+
+The posted guess-and-determine method fixes 108 nibble-spread input bits and SAT-solves the residual system. At this same `g=108` point, eight wrong guesses for a real public first component took 17.1 seconds on average, while the planted-instance mean was 22.3 seconds. This gives the reported extrapolation `2^108 · 2^27.5 = 2^135.5` double-round evaluations. The full enumeration was not run, so the empirical cost remains Probable, but the real-key measurement directly supports the extrapolation and its large margin below the claimed 256-bit level supports Critical severity.
+
+### Further extension to IIE-AIC Team's analysis
+
+The artifact estimates that about `1-1/e ≈ 63%` of public first components have a fixed point under the random-permutation heuristic. Accounting also for the independent `w[0]·w[1]=0` constraint thins the expected fixed-point count from 1 to `3/4`, so about `1-exp(-3/4) ≈ 53%` of first components are expected to have an admissible fixed point. This changes the affected-key fraction, not the attack cost when such a point exists.
+
+The source duplicates the first witness block too (`ublockith_ublock_256.c:181,190,264`; `ublock_constraints.c:778–784`), but its final-round branch reads `out` directly. It therefore does not have the spec-literal forgery relation. Instead, once the final Fiat–Shamir challenge is corrected to bind the reconstructed constant term, honest uBlockith-EM signatures fail. The post reports this for both parameter sets and implementation families; our reference-256f replay obtained 0/5 valid signatures, while the non-EM control and a one-block-offset repair each gave 5/5.
+
+### Proposed fixes
+
+The post proposes either selecting the EM encryption witness after `S0` or not prepending `in` inside `EncCstrnts`. This records the proposal without evaluating it.
+
+### Reproducing
+
+```sh
+sh sign-05/reproduce_em_constraints.sh
+```
+
+The wrapper downloads the public artifact at a pinned commit, applies its instrumentation only to temporary copies of the archived source, checks the uBlock core against its public vector, and replays the non-EM, EM, and shifted-witness controls. It also validates the clear constraint reduction for two unrelated public outputs. The final `LIMITATION` line records that the `2^135.5` estimate is an extrapolation rather than a completed enumeration.
+
+## sign-05-5: Vistrutith combines three constraint families as one polynomial
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: Vistrutith 512s and 512f, reference and optimized implementations
+Discovery: Moderate
+Exploitation: Honest signatures fail once the final Fiat–Shamir constant term is bound; no forgery is demonstrated
+Credit: IIE-AIC Team
+Date: 2026-09-30
+Original source: [IIE-AIC Team's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/Q5TTRVDKJ2I2AZUK3YHZWORRNX6O27CN/) and [pinned artifact](https://github.com/acprk/ngcc-round1-cryptanalysis/tree/729616512528d6e8aa06e85707e68cd4cf09a62a/chinith-em-misalignment)
+
+Vistrutith creates three separate arrays of normal, input/output-0, and input/output-1 constraints. The prover passes one tag from each array to `zk_hash_SSS_3_update` as though they were the three coefficients of one degree-two polynomial (`vistrutith_vistrutah_512.c:139–145`). The verifier correspondingly hashes `z_norm + delta·z_io0 + delta^2·z_io1` (`:163–170`). This is not the coefficient decomposition of any one submitted constraint and loses the intermediate coefficients of the three actual constraint polynomials. The file is byte-identical in both parameter sets and implementation families.
+
+After instrumenting signing and verification to bind the reconstructed constant term, honest Vistrutith-512f signatures failed 5/5. A clear-value control simultaneously found zero nonzero values in each of the three 576-element constraint arrays, excluding an invalid witness as the cause. The current final-challenge omission masks this independent completeness error. No forgery or security-level reduction follows, so the finding is Low.
+
+### Reproducing
+
+```sh
+sh sign-05/reproduce_em_constraints.sh
+```
+
+The Vistrutith portion prints five signer/verifier constant-term mismatches, followed by two controls in which all 1,728 honest constraint values are zero.

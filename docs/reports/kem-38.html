@@ -121,6 +121,47 @@ BB_NPROC=12 BB_PROBE_SHARDS=8 BB_SCAN_SHARDS=1000 \
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 kem-38/reproduce_padding_alias.py          # add 512 for UVW-KEM-512 (minutes)
 </code></pre>
+<h2 class="issue-heading" id="kem-38-5-the-implementations-final-decryption-failures-expose-uvws-hidden-pairs">kem-38-5: The implementation&#x27;s final decryption failures expose UVW&#x27;s hidden pairs</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-lead">Lead</span></td></tr>
+<tr><th>Affected</th><td>UVW-KEM-128 reference implementation; the same 1,000-attempt cap is present in the higher sets</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>About 2^53 honest encapsulation/decapsulation trials for the UVW-128 pair-recovery stage</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-30</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/N2M32DODRHH53N6CQRXVSY3J77PZEWEK/">PKC Forum post and verification package</a></p>
+<p>The submitted decoder caps its information-set search at 1,000 attempts (<code>KEM_AlgorithmInstance.c:1256,1262,1354–1355</code> in UVW-128). Exact enumeration gives final-failure rates <code>2^-43.317</code>, <code>2^-42.144</code>, and <code>2^-41.729</code> for the 128-, 256-, and 512-bit implementations. An encapsulator knows the honest shared secret and can therefore recognize implicit rejection without a timing measurement. The specification's Algorithm 5 instead returns to Step 9 and chooses another information set without giving an attempt limit, so these final-failure rates are properties of the submitted implementation, not of the written algorithm.</p>
+<p>Conditioning ciphertext errors on final UVW-128 failures exposes repeated coordinate pairs and their field ratios. A simulation using only 1,000 final failures recovered all 430 hidden pair/ratio triples; obtaining those failures costs about <code>2^(43.3+10) = 2^53.3</code> honest encapsulation/decapsulation trials. Tianyuan Xie and Yamin Liu demonstrated the public projection and generalized Reed–Solomon decoding stages needed for shared-secret recovery in their <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/A6PUI23BHC7YNE5UQ3SMRO33GDBWCF2P/">openHiTLS UVW report and PoC</a>, but the timing-free artifact did not combine and rerun the complete recovery. The candidate-specific path is well below the 128-bit claim, but this remaining integration and scale gap makes the finding High and a Lead rather than a demonstrated primary break.</p>
+<h3 id="proposed-fixes">Proposed fixes</h3>
+<p>The original post proposes stating the overall rather than per-attempt decryption-failure rate and including it in the Fujisaki–Okamoto bound. It says that making the rate negligible requires changing the decoder or parameters, rather than adding more retries.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-38/reproduce_dfr_reaction.py
+</code></pre>
+<p>The dependency-free witness recomputes all three exact rates and performs the failure-only 430-pair recovery. It does not execute the roughly <code>2^53</code> honest queries or the later key-recovery stages.</p>
+<h2 class="issue-heading" id="kem-38-6-uvw-256-and-512-leak-retry-matrices">kem-38-6: UVW-256 and -512 leak retry matrices</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>UVW-KEM-256 and UVW-KEM-512 reference implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Up to about 0.73 GB or 2.91 GB leaked by one 1,000-attempt decapsulation</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-30</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/N2M32DODRHH53N6CQRXVSY3J77PZEWEK/">PKC Forum post and verification package</a></p>
+<p>Every information-set retry allocates <code>GU_I1</code> and <code>GU_I1_inv</code>, each a <code>k1 * k1</code> matrix of 16-bit field elements, but neither the retry nor success path frees them (<code>KEM_AlgorithmInstance.c:1312–1336</code> for UVW-256 and <code>:1313–1336</code> for UVW-512). At 1,000 attempts this leaks about 0.73 GB for <code>k1=427</code> and 2.91 GB for <code>k1=853</code>. In UVW-256, the allocation-failure branch also calls <code>free(I1)</code> at line 1315 even though <code>I1</code> is a stack array, causing undefined behavior once allocation fails. UVW-128 places the matrices on the stack and does not have the retry leak. No memory disclosure or controlled write is demonstrated.</p>
+<h3 id="reproducing_5">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-38/reproduce_dfr_reaction.py
+</code></pre>
+<p>The witness checks both allocation paths and derives their byte counts from the archived parameters.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

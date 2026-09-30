@@ -63,6 +63,94 @@
 <pre><code class="language-sh">python3 kem-26/reproduce_failure.py
 </code></pre>
 <p>The compact witness replays the pinned failing seed and two adjacent controls. The earlier bounded search examined 30,000 deterministically derived seeds on the archived NSS-HQC-256 library.</p>
+<h2 class="issue-heading" id="kem-26-3-ephemeral-syndrome-decoding-misses-the-256-384-and-512-bit-targets">kem-26-3: Ephemeral syndrome decoding misses the 256-, 384-, and 512-bit targets</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>NSS-HQC-256, NSS-HQC-384, and NSS-HQC-512 parameters</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Approximately 2^226.51, 2^333.04, and 2^441.39 bit operations after the standard QC/DOOM discount</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-09-30</td></tr>
+</table></div>
+
+<p>The specification estimates finite-size decoding security by extrapolating one
+HQC-128 value as <code>1.0969 sqrt(n)</code> (§4.5.2, Equations 91–92). It then says that
+reducing the ephemeral weights changes the exponent by less than 5, 7, and 9
+bits (§4.4.5, Table 5) and claims that the 256-, 384-, and 512-bit sets meet
+their respective targets (§4.5.3–4.5.4, Tables 7–8).</p>
+<p>Direct finite-size Stern estimates contradict those claims:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>set</th>
+<th style="text-align: right;">public SD instance from <code>u=r1+h*r2</code></th>
+<th style="text-align: right;">Stern time</th>
+<th style="text-align: right;">memory</th>
+<th style="text-align: right;">after <code>sqrt(n)</code> QC/DOOM discount</th>
+<th style="text-align: right;">target</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NSS-HQC-256</td>
+<td style="text-align: right;"><code>[108986,54493,212]</code></td>
+<td style="text-align: right;">234.38</td>
+<td style="text-align: right;">46.20</td>
+<td style="text-align: right;"><strong>226.51</strong></td>
+<td style="text-align: right;">256</td>
+</tr>
+<tr>
+<td>NSS-HQC-384</td>
+<td style="text-align: right;"><code>[245158,122579,318]</code></td>
+<td style="text-align: right;">341.49</td>
+<td style="text-align: right;">49.71</td>
+<td style="text-align: right;"><strong>333.04</strong></td>
+<td style="text-align: right;">384</td>
+</tr>
+<tr>
+<td>NSS-HQC-512</td>
+<td style="text-align: right;"><code>[435802,217901,426]</code></td>
+<td style="text-align: right;">450.26</td>
+<td style="text-align: right;">52.20</td>
+<td style="text-align: right;"><strong>441.39</strong></td>
+<td style="text-align: right;">512</td>
+</tr>
+</tbody>
+</table></div>
+<p>All figures are base-two bit complexities from
+<code>cryptographic-estimators==2.1.1</code>. The conclusion does not depend on the
+quasi-cyclic discount: the raw Stern costs are already below all three claimed
+levels. The analogous NSS-HQC-128 result is 154.43 raw and 147.01 after the
+discount, so that set is not affected by this finding.</p>
+<p>This is a shared-secret recovery attack, not only a smaller abstract decoding
+number. Solving the first ciphertext component recovers the essentially unique
+weight-<code>2w_r</code> pair <code>(r1,r2)</code>. The expected number of unrelated solutions is
+below <code>2^-52000</code> even for the smallest affected set.</p>
+<p>Compression does not prevent message recovery. For each five-bit repetition
+group, the attacker knows <code>a=(s*r2) xor d</code> from the public key, recovered
+<code>r2</code>, salt, and public dither. In the absence of <code>e</code>, the two possible code
+bits produce distinct quantizer symbols: if <code>Q(a)=c</code>, complementing the group
+gives <code>Q(a xor 1^5)=3-c</code>. Thus the transmitted symbol determines the code
+bit. Each bit of <code>e</code> can corrupt at most one inferred RM coordinate. A wrong
+RM symbol needs at least 32 such errors, so the three affected weights
+<code>187,279,372</code> cause at most <code>5,8,11</code> bad outer symbols, below the respective
+RS correction radii <code>19,26,33</code>. The public concatenated-code decoder therefore
+recovers <code>m</code>, and the session key follows from the public derivation
+<code>H_kappa(m || ct_full)</code>. This breaks the required KEM indistinguishability
+below every affected target, hence Critical.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>Install the pinned estimator in an isolated environment and run:</p>
+<pre><code class="language-sh">python3 -m venv /tmp/ngcc-code-estimator
+/tmp/ngcc-code-estimator/bin/pip install cryptographic-estimators==2.1.1
+/tmp/ngcc-code-estimator/bin/python kem-26/reproduce_isd_estimate.py
+</code></pre>
+<p>The script prints the optimized Stern parameters, raw time and memory, the
+QC/DOOM discount, the discounted result, and the expected number of unrelated
+fixed-weight solutions.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

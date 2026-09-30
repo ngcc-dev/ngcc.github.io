@@ -50,3 +50,66 @@ python3 kem-26/reproduce_failure.py
 ```
 
 The compact witness replays the pinned failing seed and two adjacent controls. The earlier bounded search examined 30,000 deterministically derived seeds on the archived NSS-HQC-256 library.
+
+## kem-26-3: Ephemeral syndrome decoding misses the 256-, 384-, and 512-bit targets
+
+Severity: Critical
+Status: Confirmed
+Layer: Design
+Affected: NSS-HQC-256, NSS-HQC-384, and NSS-HQC-512 parameters
+Discovery: Moderate
+Exploitation: Approximately 2^226.51, 2^333.04, and 2^441.39 bit operations after the standard QC/DOOM discount
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-09-30
+
+The specification estimates finite-size decoding security by extrapolating one
+HQC-128 value as `1.0969 sqrt(n)` (§4.5.2, Equations 91–92). It then says that
+reducing the ephemeral weights changes the exponent by less than 5, 7, and 9
+bits (§4.4.5, Table 5) and claims that the 256-, 384-, and 512-bit sets meet
+their respective targets (§4.5.3–4.5.4, Tables 7–8).
+
+Direct finite-size Stern estimates contradict those claims:
+
+| set | public SD instance from `u=r1+h*r2` | Stern time | memory | after `sqrt(n)` QC/DOOM discount | target |
+|---|---:|---:|---:|---:|---:|
+| NSS-HQC-256 | `[108986,54493,212]` | 234.38 | 46.20 | **226.51** | 256 |
+| NSS-HQC-384 | `[245158,122579,318]` | 341.49 | 49.71 | **333.04** | 384 |
+| NSS-HQC-512 | `[435802,217901,426]` | 450.26 | 52.20 | **441.39** | 512 |
+
+All figures are base-two bit complexities from
+`cryptographic-estimators==2.1.1`. The conclusion does not depend on the
+quasi-cyclic discount: the raw Stern costs are already below all three claimed
+levels. The analogous NSS-HQC-128 result is 154.43 raw and 147.01 after the
+discount, so that set is not affected by this finding.
+
+This is a shared-secret recovery attack, not only a smaller abstract decoding
+number. Solving the first ciphertext component recovers the essentially unique
+weight-`2w_r` pair `(r1,r2)`. The expected number of unrelated solutions is
+below `2^-52000` even for the smallest affected set.
+
+Compression does not prevent message recovery. For each five-bit repetition
+group, the attacker knows `a=(s*r2) xor d` from the public key, recovered
+`r2`, salt, and public dither. In the absence of `e`, the two possible code
+bits produce distinct quantizer symbols: if `Q(a)=c`, complementing the group
+gives `Q(a xor 1^5)=3-c`. Thus the transmitted symbol determines the code
+bit. Each bit of `e` can corrupt at most one inferred RM coordinate. A wrong
+RM symbol needs at least 32 such errors, so the three affected weights
+`187,279,372` cause at most `5,8,11` bad outer symbols, below the respective
+RS correction radii `19,26,33`. The public concatenated-code decoder therefore
+recovers `m`, and the session key follows from the public derivation
+`H_kappa(m || ct_full)`. This breaks the required KEM indistinguishability
+below every affected target, hence Critical.
+
+### Reproducing
+
+Install the pinned estimator in an isolated environment and run:
+
+```sh
+python3 -m venv /tmp/ngcc-code-estimator
+/tmp/ngcc-code-estimator/bin/pip install cryptographic-estimators==2.1.1
+/tmp/ngcc-code-estimator/bin/python kem-26/reproduce_isd_estimate.py
+```
+
+The script prints the optimized Stern parameters, raw time and memory, the
+QC/DOOM discount, the discounted result, and the expected number of unrelated
+fixed-weight solutions.
