@@ -20,14 +20,17 @@
 <p>Independent measurements of the NGCC Round 1 implementations on one 12th Gen Intel(R) Core(TM) i7-12700 core (max 2.10 GHz, governor performance, turbo off, SMT off).</p>
 <ul>
 <li><strong>Cycles</strong> are the mean of all timed calls in five trials, normally with each trial in a fresh process.</li>
-<li><strong>Symmetric %</strong>, in parentheses after each public-key cycle count, is the measured share of an operation spent specifically in the ICCS placeholder functions (<code>pseudohash</code>, <code>pseudoXOF</code>, <code>sm3hash</code>). It excludes the ICCS DRNG and candidates' own hash primitives, so a low value does not necessarily mean little symmetric-cryptography work; see the <a href="../symmetric-survey.html">symmetric cryptography survey</a>.</li>
+<li><strong>Symmetric %</strong>, in parentheses after each public-key cycle count, is the measured share of an operation spent specifically in the ICCS placeholder functions (<code>pseudohash</code>, <code>pseudoXOF</code>, <code>sm3hash</code>). It excludes the ICCS DRNG and candidates' own hash primitives, so a low value does not necessarily mean little symmetric-cryptography work; see the <a href="../symmetric-survey.html">symmetric cryptography survey</a>. <code>(??%)</code> means that the candidate uses its own symmetric primitives and no ICCS-facing backend was measured.</li>
 <li>Each instance links to its <strong>performance report</strong> with KAT status, all measured implementations, sizes, memory proxies, primitive profiles, and raw-evidence references.</li>
 <li>See <a href="method.html">method and limitations</a>. These are independent measurements, not submitter self-assessments or NICCS results.</li>
 <li><strong>Notation:</strong> <code>–</code> means not measured, <code>n=</code> marks fewer than 100 timed calls, and ⚠ marks an instance whose submitted KAT vectors are not reproduced by the submitted code.</li>
 <li><strong>Sizes</strong> in bytes (public key, ciphertext, signature; for key exchange, the total transferred in all protocol messages) are the implementation's own API constants and do not depend on the system.</li>
 <li><strong>Hash rows</strong> give three message sizes; each parenthesized value is the candidate's cycles divided by those of the ICCS <code>pseudoXOF</code> with the same output width and message length, timed the same way (<a href="#iccs-hash-helpers">ICCS helpers</a>). It is a relative speed, not an estimate of a production replacement.</li>
-<li><strong>Scope:</strong> the table keeps ICCS-facing reference parameter sets. Notes flag important caveats; additional measured variants remain on the linked instance reports.</li>
+<li><strong>Scope:</strong> the table keeps reference parameter sets, suppressing a non-ICCS backend only when an ICCS-facing backend of the same candidate was measured. Notes flag important caveats; additional measured variants remain on the linked instance reports.</li>
 </ul>
+<h2 id="ordered-measurements">Ordered measurements</h2>
+<p><a href="ranking-128.html">128-bit</a> · <a href="ranking-256.html">256-bit</a> · <a href="ranking-512.html">512-bit</a></p>
+<p>Compare candidates at a common claimed security target. Each table orders the measured metrics and summarizes their mean ordinal position; see the individual performance reports for measurement details and caveats.</p>
 <h2 id="digital-signatures">Digital signatures</h2>
 <div class="table-wrap"><table class="performance-summary">
 <thead>
@@ -826,6 +829,94 @@
 <td>KAT/output caveat; see candidate page</td>
 </tr>
 <tr>
+<td><a href="../../reports/sign-13.html"><code>sign-13</code></a></td>
+<td><a href="../../reports/sign-13.html">GreatWall Signature Algorithm</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/sign-13/sign-13-spec.pdf" title="Open the sign-13 specification PDF">PDF</a></td>
+<td><a href="sign-13.html"><code>GreatWall128f</code></a></td>
+<td>5.88 M (??%)</td>
+<td>137.40 M (??%)</td>
+<td>101.83 M (??%)</td>
+<td>36</td>
+<td>3396</td>
+<td>own symmetric primitives; placeholder share unavailable</td>
+</tr>
+<tr>
+<td><a href="../../reports/sign-13.html"><code>sign-13</code></a></td>
+<td><a href="../../reports/sign-13.html">GreatWall Signature Algorithm</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/sign-13/sign-13-spec.pdf" title="Open the sign-13 specification PDF">PDF</a></td>
+<td><a href="sign-13.html"><code>GreatWall128s</code></a></td>
+<td>5.89 M (??%)</td>
+<td>632.05 M (??%)</td>
+<td>538.77 M (??%)</td>
+<td>36</td>
+<td>2758</td>
+<td>own symmetric primitives; placeholder share unavailable</td>
+</tr>
+<tr>
+<td><a href="../../reports/sign-13.html"><code>sign-13</code></a></td>
+<td><a href="../../reports/sign-13.html">GreatWall Signature Algorithm</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/sign-13/sign-13-spec.pdf" title="Open the sign-13 specification PDF">PDF</a></td>
+<td><a href="sign-13.html"><code>GreatWall192f</code></a></td>
+<td>13.49 M (??%)</td>
+<td>450.19 M (??%)</td>
+<td>311.50 M (??%)</td>
+<td>50</td>
+<td>8012</td>
+<td>own symmetric primitives; placeholder share unavailable</td>
+</tr>
+<tr>
+<td><a href="../../reports/sign-13.html"><code>sign-13</code></a></td>
+<td><a href="../../reports/sign-13.html">GreatWall Signature Algorithm</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/sign-13/sign-13-spec.pdf" title="Open the sign-13 specification PDF">PDF</a></td>
+<td><a href="sign-13.html"><code>GreatWall192s</code></a></td>
+<td>13.54 M (??%)</td>
+<td>1.95 G (??%)</td>
+<td>1.81 G (??%)</td>
+<td>50</td>
+<td>6804</td>
+<td>own symmetric primitives; placeholder share unavailable</td>
+</tr>
+<tr>
+<td><a href="../../reports/sign-13.html"><code>sign-13</code></a></td>
+<td><a href="../../reports/sign-13.html">GreatWall Signature Algorithm</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/sign-13/sign-13-spec.pdf" title="Open the sign-13 specification PDF">PDF</a></td>
+<td><a href="sign-13.html"><code>GreatWall256f</code></a></td>
+<td>27.35 M (??%)</td>
+<td>1.04 G (??%)</td>
+<td>699.87 M (??%)</td>
+<td>66</td>
+<td>14260</td>
+<td>own symmetric primitives; placeholder share unavailable</td>
+</tr>
+<tr>
+<td><a href="../../reports/sign-13.html"><code>sign-13</code></a></td>
+<td><a href="../../reports/sign-13.html">GreatWall Signature Algorithm</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/sign-13/sign-13-spec.pdf" title="Open the sign-13 specification PDF">PDF</a></td>
+<td><a href="sign-13.html"><code>GreatWall256s</code></a></td>
+<td>27.36 M (??%)</td>
+<td>3.65 G (??%)</td>
+<td>3.30 G (??%)</td>
+<td>66</td>
+<td>12236</td>
+<td>own symmetric primitives; placeholder share unavailable</td>
+</tr>
+<tr>
+<td><a href="../../reports/sign-13.html"><code>sign-13</code></a></td>
+<td><a href="../../reports/sign-13.html">GreatWall Signature Algorithm</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/sign-13/sign-13-spec.pdf" title="Open the sign-13 specification PDF">PDF</a></td>
+<td><a href="sign-13.html"><code>GreatWall512f</code></a></td>
+<td>121.94 M (??%)</td>
+<td>9.92 G (??%)</td>
+<td>5.91 G (??%)</td>
+<td>132</td>
+<td>57812</td>
+<td>own symmetric primitives; placeholder share unavailable</td>
+</tr>
+<tr>
+<td><a href="../../reports/sign-13.html"><code>sign-13</code></a></td>
+<td><a href="../../reports/sign-13.html">GreatWall Signature Algorithm</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/sign-13/sign-13-spec.pdf" title="Open the sign-13 specification PDF">PDF</a></td>
+<td><a href="sign-13.html"><code>GreatWall512s</code></a></td>
+<td>121.91 M (??%)</td>
+<td>24.65 G (??%, n=75)</td>
+<td>20.69 G (??%, n=90)</td>
+<td>132</td>
+<td>50012</td>
+<td>own symmetric primitives; placeholder share unavailable</td>
+</tr>
+<tr>
 <td><a href="../../reports/sign-14.html"><code>sign-14</code></a></td>
 <td><a href="../../reports/sign-14.html">Lynxer</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/sign-14/sign-14-spec.pdf" title="Open the sign-14 specification PDF">PDF</a></td>
 <td><a href="sign-14.html"><code>Lynxer-160f</code></a></td>
@@ -1230,7 +1321,7 @@
 <td>639.43 M (1.8%)</td>
 <td>121</td>
 <td>6851</td>
-<td>own symmetric primitives; sym % excludes them</td>
+<td>own symmetric primitives; placeholder share unavailable</td>
 </tr>
 <tr>
 <td><a href="../../reports/sign-21.html"><code>sign-21</code></a></td>
@@ -1241,7 +1332,7 @@
 <td>4.61 G (1.2%)</td>
 <td>121</td>
 <td>5307</td>
-<td>own symmetric primitives; sym % excludes them</td>
+<td>own symmetric primitives; placeholder share unavailable</td>
 </tr>
 <tr>
 <td><a href="../../reports/sign-21.html"><code>sign-21</code></a></td>
@@ -1252,7 +1343,7 @@
 <td>1.33 G (2.1%)</td>
 <td>194</td>
 <td>17932</td>
-<td>own symmetric primitives; sym % excludes them</td>
+<td>own symmetric primitives; placeholder share unavailable</td>
 </tr>
 <tr>
 <td><a href="../../reports/sign-21.html"><code>sign-21</code></a></td>
@@ -1263,7 +1354,7 @@
 <td>12.98 G (1.1%)</td>
 <td>194</td>
 <td>13973</td>
-<td>own symmetric primitives; sym % excludes them</td>
+<td>own symmetric primitives; placeholder share unavailable</td>
 </tr>
 <tr>
 <td><a href="../../reports/sign-21.html"><code>sign-21</code></a></td>
@@ -1274,7 +1365,7 @@
 <td>3.61 G (2.2%)</td>
 <td>288</td>
 <td>40469</td>
-<td>own symmetric primitives; sym % excludes them</td>
+<td>own symmetric primitives; placeholder share unavailable</td>
 </tr>
 <tr>
 <td><a href="../../reports/sign-21.html"><code>sign-21</code></a></td>
@@ -1285,7 +1376,7 @@
 <td>33.31 G (1.4%, n=55)</td>
 <td>288</td>
 <td>31575</td>
-<td>own symmetric primitives; sym % excludes them</td>
+<td>own symmetric primitives; placeholder share unavailable</td>
 </tr>
 <tr>
 <td><a href="../../reports/sign-21.html"><code>sign-21</code></a></td>
@@ -1296,7 +1387,7 @@
 <td>640.49 M (33%)</td>
 <td>385</td>
 <td>72611</td>
-<td>own symmetric primitives; sym % excludes them</td>
+<td>own symmetric primitives; placeholder share unavailable</td>
 </tr>
 <tr>
 <td><a href="../../reports/sign-21.html"><code>sign-21</code></a></td>
@@ -1307,7 +1398,7 @@
 <td>3.28 G (35%)</td>
 <td>385</td>
 <td>56239</td>
-<td>own symmetric primitives; sym % excludes them</td>
+<td>own symmetric primitives; placeholder share unavailable</td>
 </tr>
 <tr>
 <td><a href="../../reports/sign-22.html"><code>sign-22</code></a></td>
@@ -1357,9 +1448,9 @@
 <td><a href="../../reports/sign-23.html"><code>sign-23</code></a></td>
 <td><a href="../../reports/sign-23.html">Shuttle</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/sign-23/sign-23-spec.pdf" title="Open the sign-23 specification PDF">PDF</a></td>
 <td><a href="sign-23.html"><code>SHUTTLE-128</code></a></td>
-<td>8.65 M (0.0%)</td>
-<td>4.51 M (0.0%)</td>
-<td>1.11 M (0.0%)</td>
+<td>8.65 M (??%)</td>
+<td>4.51 M (??%)</td>
+<td>1.11 M (??%)</td>
 <td>1264</td>
 <td>1183</td>
 <td>ICCS DRNG is used as the XOF and accounted separately</td>
@@ -1368,9 +1459,9 @@
 <td><a href="../../reports/sign-23.html"><code>sign-23</code></a></td>
 <td><a href="../../reports/sign-23.html">Shuttle</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/sign-23/sign-23-spec.pdf" title="Open the sign-23 specification PDF">PDF</a></td>
 <td><a href="sign-23.html"><code>SHUTTLE-256</code></a></td>
-<td>9.11 M (0.0%)</td>
-<td>7.15 M (0.0%)</td>
-<td>1.51 M (0.0%)</td>
+<td>9.11 M (??%)</td>
+<td>7.15 M (??%)</td>
+<td>1.51 M (??%)</td>
 <td>1952</td>
 <td>2417</td>
 <td>ICCS DRNG is used as the XOF and accounted separately</td>
@@ -1379,9 +1470,9 @@
 <td><a href="../../reports/sign-23.html"><code>sign-23</code></a></td>
 <td><a href="../../reports/sign-23.html">Shuttle</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/sign-23/sign-23-spec.pdf" title="Open the sign-23 specification PDF">PDF</a></td>
 <td><a href="sign-23.html"><code>SHUTTLE-512</code></a></td>
-<td>20.92 M (0.0%)</td>
-<td>14.60 M (0.0%)</td>
-<td>2.83 M (0.0%)</td>
+<td>20.92 M (??%)</td>
+<td>14.60 M (??%)</td>
+<td>2.83 M (??%)</td>
 <td>3648</td>
 <td>5001</td>
 <td>ICCS DRNG is used as the XOF and accounted separately</td>
@@ -3297,6 +3388,50 @@
 <td>–</td>
 </tr>
 <tr>
+<td><a href="../../reports/kem-26.html"><code>kem-26</code></a></td>
+<td><a href="../../reports/kem-26.html">NSS-HQC</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kem-26/kem-26-spec.pdf" title="Open the kem-26 specification PDF">PDF</a></td>
+<td><a href="kem-26.html"><code>HQC-128</code></a></td>
+<td>36.60 M (??%)</td>
+<td>64.37 M (??%)</td>
+<td>128.53 M (??%)</td>
+<td>3713</td>
+<td>5185</td>
+<td>own symmetric primitives; placeholder share unavailable</td>
+</tr>
+<tr>
+<td><a href="../../reports/kem-26.html"><code>kem-26</code></a></td>
+<td><a href="../../reports/kem-26.html">NSS-HQC</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kem-26/kem-26-spec.pdf" title="Open the kem-26 specification PDF">PDF</a></td>
+<td><a href="kem-26.html"><code>HQC-256</code></a></td>
+<td>108.08 M (??%)</td>
+<td>194.06 M (??%)</td>
+<td>343.84 M (??%)</td>
+<td>6844</td>
+<td>9084</td>
+<td>own symmetric primitives; placeholder share unavailable</td>
+</tr>
+<tr>
+<td><a href="../../reports/kem-26.html"><code>kem-26</code></a></td>
+<td><a href="../../reports/kem-26.html">NSS-HQC</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kem-26/kem-26-spec.pdf" title="Open the kem-26 specification PDF">PDF</a></td>
+<td><a href="kem-26.html"><code>HQC-384</code></a></td>
+<td>366.16 M (??%)</td>
+<td>661.21 M (??%)</td>
+<td>1.09 G (??%)</td>
+<td>15371</td>
+<td>18571</td>
+<td>own symmetric primitives; placeholder share unavailable</td>
+</tr>
+<tr>
+<td><a href="../../reports/kem-26.html"><code>kem-26</code></a></td>
+<td><a href="../../reports/kem-26.html">NSS-HQC</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kem-26/kem-26-spec.pdf" title="Open the kem-26 specification PDF">PDF</a></td>
+<td><a href="kem-26.html"><code>HQC-512</code></a></td>
+<td>868.07 M (??%)</td>
+<td>1.58 G (??%)</td>
+<td>2.53 G (??%)</td>
+<td>27302</td>
+<td>31462</td>
+<td>own symmetric primitives; placeholder share unavailable</td>
+</tr>
+<tr>
 <td><a href="../../reports/kem-27.html"><code>kem-27</code></a></td>
 <td><a href="../../reports/kem-27.html">NTRE Key Encapsulation Mechanism</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kem-27/kem-27-spec.pdf" title="Open the kem-27 specification PDF">PDF</a></td>
 <td><a href="kem-27.html"><code>NTRE-128</code></a></td>
@@ -3449,6 +3584,72 @@
 <td>530</td>
 <td>608</td>
 <td>–</td>
+</tr>
+<tr>
+<td><a href="../../reports/kem-31.html"><code>kem-31</code></a></td>
+<td><a href="../../reports/kem-31.html">QIMEN-PIKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kem-31/kem-31-spec.pdf" title="Open the kem-31 specification PDF">PDF</a></td>
+<td><a href="kem-31.html"><code>NGCC-1</code></a></td>
+<td>391.07 M (??%)</td>
+<td>129.56 M (??%)</td>
+<td>200.66 M (??%)</td>
+<td>389</td>
+<td>602</td>
+<td>own symmetric primitives; placeholder share unavailable</td>
+</tr>
+<tr>
+<td><a href="../../reports/kem-31.html"><code>kem-31</code></a></td>
+<td><a href="../../reports/kem-31.html">QIMEN-PIKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kem-31/kem-31-spec.pdf" title="Open the kem-31 specification PDF">PDF</a></td>
+<td><a href="kem-31.html"><code>NGCC-2</code></a></td>
+<td>1.28 G (??%)</td>
+<td>409.71 M (??%)</td>
+<td>638.67 M (??%)</td>
+<td>592</td>
+<td>882</td>
+<td>own symmetric primitives; placeholder share unavailable</td>
+</tr>
+<tr>
+<td><a href="../../reports/kem-31.html"><code>kem-31</code></a></td>
+<td><a href="../../reports/kem-31.html">QIMEN-PIKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kem-31/kem-31-spec.pdf" title="Open the kem-31 specification PDF">PDF</a></td>
+<td><a href="kem-31.html"><code>NGCC-3</code></a></td>
+<td>8.51 G (??%)</td>
+<td>3.13 G (??%)</td>
+<td>4.79 G (??%)</td>
+<td>1198</td>
+<td>1746</td>
+<td>own symmetric primitives; placeholder share unavailable</td>
+</tr>
+<tr>
+<td><a href="../../reports/kem-32.html"><code>kem-32</code></a></td>
+<td><a href="../../reports/kem-32.html">Quasi-Cyclic Twisted McEliece Key Encapsulation Mechanism</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kem-32/kem-32-spec.pdf" title="Open the kem-32 specification PDF">PDF</a></td>
+<td><a href="kem-32.html"><code>QCTM128</code></a></td>
+<td>53.85 G (??%, n=65)</td>
+<td>18.43 M (??%)</td>
+<td>5.90 G (??%)</td>
+<td>167987</td>
+<td>640</td>
+<td>own symmetric primitives; placeholder share unavailable</td>
+</tr>
+<tr>
+<td><a href="../../reports/kem-32.html"><code>kem-32</code></a></td>
+<td><a href="../../reports/kem-32.html">Quasi-Cyclic Twisted McEliece Key Encapsulation Mechanism</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kem-32/kem-32-spec.pdf" title="Open the kem-32 specification PDF">PDF</a></td>
+<td><a href="kem-32.html"><code>QCTM256</code></a></td>
+<td>132.38 G (??%, n=10)</td>
+<td>53.10 M (??%)</td>
+<td>29.11 G (??%, n=60)</td>
+<td>595662</td>
+<td>1153</td>
+<td>own symmetric primitives; placeholder share unavailable</td>
+</tr>
+<tr>
+<td><a href="../../reports/kem-32.html"><code>kem-32</code></a></td>
+<td><a href="../../reports/kem-32.html">Quasi-Cyclic Twisted McEliece Key Encapsulation Mechanism</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kem-32/kem-32-spec.pdf" title="Open the kem-32 specification PDF">PDF</a></td>
+<td><a href="kem-32.html"><code>QCTM512</code></a></td>
+<td>793.78 G (??%, n=2)</td>
+<td>211.05 M (??%)</td>
+<td>204.27 G (??%, n=5)</td>
+<td>2374727</td>
+<td>2264</td>
+<td>own symmetric primitives; placeholder share unavailable</td>
 </tr>
 <tr>
 <td><a href="../../reports/kem-33.html"><code>kem-33</code></a></td>
@@ -4125,6 +4326,46 @@
 <td>–</td>
 </tr>
 <tr>
+<td><a href="../../reports/kex-06.html"><code>kex-06</code></a></td>
+<td><a href="../../reports/kex-06.html">MAMBA-NIKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-06/kex-06-spec.pdf" title="Open the kex-06 specification PDF">PDF</a></td>
+<td><a href="kex-06.html"><code>MAMBA-NIKE-128</code></a></td>
+<td>6.09 M (??%)</td>
+<td>1568</td>
+<td>own symmetric primitives; placeholder share unavailable</td>
+</tr>
+<tr>
+<td><a href="../../reports/kex-06.html"><code>kex-06</code></a></td>
+<td><a href="../../reports/kex-06.html">MAMBA-NIKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-06/kex-06-spec.pdf" title="Open the kex-06 specification PDF">PDF</a></td>
+<td><a href="kex-06.html"><code>MAMBA-NIKE-192</code></a></td>
+<td>6.14 M (??%)</td>
+<td>1568</td>
+<td>own symmetric primitives; placeholder share unavailable</td>
+</tr>
+<tr>
+<td><a href="../../reports/kex-06.html"><code>kex-06</code></a></td>
+<td><a href="../../reports/kex-06.html">MAMBA-NIKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-06/kex-06-spec.pdf" title="Open the kex-06 specification PDF">PDF</a></td>
+<td><a href="kex-06.html"><code>MAMBA-NIKE-256</code></a></td>
+<td>6.20 M (??%)</td>
+<td>1568</td>
+<td>own symmetric primitives; placeholder share unavailable</td>
+</tr>
+<tr>
+<td><a href="../../reports/kex-06.html"><code>kex-06</code></a></td>
+<td><a href="../../reports/kex-06.html">MAMBA-NIKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-06/kex-06-spec.pdf" title="Open the kex-06 specification PDF">PDF</a></td>
+<td><a href="kex-06.html"><code>MAMBA-NIKE-384</code></a></td>
+<td>12.94 M (??%)</td>
+<td>3360</td>
+<td>own symmetric primitives; placeholder share unavailable</td>
+</tr>
+<tr>
+<td><a href="../../reports/kex-06.html"><code>kex-06</code></a></td>
+<td><a href="../../reports/kex-06.html">MAMBA-NIKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-06/kex-06-spec.pdf" title="Open the kex-06 specification PDF">PDF</a></td>
+<td><a href="kex-06.html"><code>MAMBA-NIKE-512</code></a></td>
+<td>13.11 M (??%)</td>
+<td>3360</td>
+<td>own symmetric primitives; placeholder share unavailable</td>
+</tr>
+<tr>
 <td><a href="../../reports/kex-07.html"><code>kex-07</code></a></td>
 <td><a href="../../reports/kex-07.html">NEV-AKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-07/kex-07-spec.pdf" title="Open the kex-07 specification PDF">PDF</a></td>
 <td><a href="kex-07.html"><code>NEV_AKE_512_769</code></a></td>
@@ -4195,6 +4436,22 @@
 <td>5.75 M (53%)</td>
 <td>10752</td>
 <td>–</td>
+</tr>
+<tr>
+<td><a href="../../reports/kex-08.html"><code>kex-08</code></a></td>
+<td><a href="../../reports/kex-08.html">NIIKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-08/kex-08-spec.pdf" title="Open the kex-08 specification PDF">PDF</a></td>
+<td><a href="kex-08.html"><code>NIIKE-lv128</code></a></td>
+<td>52.91 G (??%, n=35)</td>
+<td>0</td>
+<td>own symmetric primitives; placeholder share unavailable</td>
+</tr>
+<tr>
+<td><a href="../../reports/kex-08.html"><code>kex-08</code></a></td>
+<td><a href="../../reports/kex-08.html">NIIKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-08/kex-08-spec.pdf" title="Open the kex-08 specification PDF">PDF</a></td>
+<td><a href="kex-08.html"><code>NIIKE-lv256</code></a></td>
+<td>935.98 G (??%, n=1)</td>
+<td>0</td>
+<td>own symmetric primitives; placeholder share unavailable</td>
 </tr>
 <tr>
 <td><a href="../../reports/kex-09.html"><code>kex-09</code></a></td>

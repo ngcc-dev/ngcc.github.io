@@ -12,6 +12,7 @@ import csv
 import posixpath
 import re
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -23,6 +24,7 @@ SUMMARY_ROW_RE = re.compile(
     re.M)
 HARNESS_REV = "dc66c6cb3c06e75bdea0048e21fa4e13c63f00af"
 HARNESS_RAW = f"https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@{HARNESS_REV}"
+ORDERED_TARGETS = (128, 256, 512)
 
 
 def rows(path):
@@ -92,7 +94,21 @@ def main():
                            f'<a href="../{other}/index.md">{other}</a>')
         selector = (f'<p class="crumb"><a href="../index.md">Performance measurements</a> › '
                     f'system: {" · ".join(choices)}</p>\n\n')
-        return selector + SUMMARY_ROW_RE.sub(row, text)
+        text = SUMMARY_ROW_RE.sub(row, text)
+        if sid == "x86_1":
+            links = " · ".join(
+                f"[{target}-bit](ranking-{target}.md)" for target in ORDERED_TARGETS)
+            ordered = ("\n\n## Ordered measurements\n\n"
+                       f"{links}\n\n"
+                       "Compare candidates at a common claimed security target. "
+                       "Each table orders the measured metrics and summarizes their "
+                       "mean ordinal position; see the individual performance reports "
+                       "for measurement details and caveats.")
+            first_summary = text.find("\n## Digital signatures")
+            if first_summary < 0:
+                sys.exit(f"sync-performance: {sid}: first summary heading not found")
+            text = text[:first_summary] + ordered + "\n" + text[first_summary:]
+        return selector + text
 
     def decorate_detail(text, sid):
         """Put reciprocal system links beside each candidate measurement page."""
@@ -134,6 +150,14 @@ def main():
               "public-key submission implements hashing and randomness. Per-candidate pages include "
               "the measurement method, KAT status, sizes, memory proxies and raw-evidence index.", ""]
     (DEST / "index.md").write_text("\n".join(index), encoding="utf-8")
+
+    # The ordered-measurement pages are site views assembled from the benchmark
+    # evidence, security-target metadata and synchronized report inventory.
+    if any(row["ID"] == "x86_1" for row in systems):
+        subprocess.run(
+            [sys.executable, str(ROOT / "tools" / "rank_performance.py"), str(src),
+             "--system", "x86_1", "--output-dir", str(DEST / "x86_1")],
+            check=True)
     print(f"sync-performance: {len(site_of) + 1} pages for {len(systems)} system(s), "
           f"{len(candidate_ids)} candidates -> {DEST.relative_to(ROOT)}/")
 

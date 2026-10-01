@@ -111,6 +111,14 @@ def load_candidates():
                                          "algorithm": row["Algorithm"], "submitters": "", "kat_pass": 0,
                                          "kat_total": 0, "statuses": []})
         c.update(page=row.get("PageURL", ""), zip=row.get("DownloadURL", ""), forum=row.get("ForumThread", ""))
+    short_names = read_csv("short_names.csv")
+    if {row.get("ID", "") for row in short_names} != set(cands) or len(short_names) != len(cands):
+        raise ValueError("short_names.csv does not cover every candidate exactly once")
+    for row in short_names:
+        value = row.get("ShortName", "")
+        if not re.fullmatch(r"[A-Za-z0-9-]+", value):
+            raise ValueError(f"short_names.csv: invalid short name for {row.get('ID', '')}")
+        cands[row["ID"]]["short_name"] = value
     for row in read_csv("families.csv"):
         if row.get("ID") in cands:
             cands[row["ID"]]["family"] = row.get("Family", "")

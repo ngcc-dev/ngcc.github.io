@@ -34,7 +34,7 @@ PER_CANDIDATE = {
     "constant_time.md": "constant-time/{id}.md",
 }
 # data files copied verbatim into content/data/, e.g. "sign.csv"
-DATA = ["sign.csv", "kem.csv", "kex.csv", "hash.csv", "downloads.csv"]
+DATA = ["sign.csv", "kem.csv", "kex.csv", "hash.csv", "downloads.csv", "short_names.csv"]
 
 CAND_RE = re.compile(r"^(sign|kem|kex|hash)-\d\d$")
 LINK_RE = re.compile(r"(?<!!)\[((?:[^\[\]]|\[[^\]]*\])*)\]\(([^)\s]+)(\s+\"[^\"]*\")?\)")
