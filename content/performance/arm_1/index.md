@@ -14,6 +14,13 @@ Independent measurements of the NGCC Round 1 implementations on one Qualcomm Ory
 - **Hash rows** give three message sizes; each parenthesized value is the candidate's cycles divided by those of the ICCS `pseudoXOF` with the same output width and message length, timed the same way ([ICCS helpers](#iccs-hash-helpers)). It is a relative speed, not an estimate of a production replacement.
 - **Scope:** the table keeps reference parameter sets, suppressing a non-ICCS backend only when an ICCS-facing backend of the same candidate was measured. Notes flag important caveats; additional measured variants remain on the linked instance reports.
 
+
+## Ordered measurements
+
+[128-bit](ranking-128.md) · [256-bit](ranking-256.md) · [512-bit](ranking-512.md)
+
+Compare candidates at a common claimed security target. Each table orders the measured metrics and summarizes their mean ordinal position; see the individual performance reports for measurement details and caveats.
+
 ## Digital signatures
 
 | id | algorithm | instance performance report | keygen cycles (sym %) | sign cycles (sym %) | verify cycles (sym %) | public key (B) | signature (B) | notes |

@@ -95,19 +95,18 @@ def main():
         selector = (f'<p class="crumb"><a href="../index.md">Performance measurements</a> › '
                     f'system: {" · ".join(choices)}</p>\n\n')
         text = SUMMARY_ROW_RE.sub(row, text)
-        if sid == "x86_1":
-            links = " · ".join(
-                f"[{target}-bit](ranking-{target}.md)" for target in ORDERED_TARGETS)
-            ordered = ("\n\n## Ordered measurements\n\n"
-                       f"{links}\n\n"
-                       "Compare candidates at a common claimed security target. "
-                       "Each table orders the measured metrics and summarizes their "
-                       "mean ordinal position; see the individual performance reports "
-                       "for measurement details and caveats.")
-            first_summary = text.find("\n## Digital signatures")
-            if first_summary < 0:
-                sys.exit(f"sync-performance: {sid}: first summary heading not found")
-            text = text[:first_summary] + ordered + "\n" + text[first_summary:]
+        links = " · ".join(
+            f"[{target}-bit](ranking-{target}.md)" for target in ORDERED_TARGETS)
+        ordered = ("\n\n## Ordered measurements\n\n"
+                   f"{links}\n\n"
+                   "Compare candidates at a common claimed security target. "
+                   "Each table orders the measured metrics and summarizes their "
+                   "mean ordinal position; see the individual performance reports "
+                   "for measurement details and caveats.")
+        first_summary = text.find("\n## Digital signatures")
+        if first_summary < 0:
+            sys.exit(f"sync-performance: {sid}: first summary heading not found")
+        text = text[:first_summary] + ordered + "\n" + text[first_summary:]
         return selector + text
 
     def decorate_detail(text, sid):
@@ -153,10 +152,11 @@ def main():
 
     # The ordered-measurement pages are site views assembled from the benchmark
     # evidence, security-target metadata and synchronized report inventory.
-    if any(row["ID"] == "x86_1" for row in systems):
+    for row in systems:
+        sid = row["ID"]
         subprocess.run(
             [sys.executable, str(ROOT / "tools" / "rank_performance.py"), str(src),
-             "--system", "x86_1", "--output-dir", str(DEST / "x86_1")],
+             "--system", sid, "--output-dir", str(DEST / sid)],
             check=True)
     print(f"sync-performance: {len(site_of) + 1} pages for {len(systems)} system(s), "
           f"{len(candidate_ids)} candidates -> {DEST.relative_to(ROOT)}/")

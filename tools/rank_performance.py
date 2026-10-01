@@ -310,6 +310,45 @@ def assign_ranks(entries: list[Entry], metric_names: list[str]) -> list[Entry]:
     return eligible
 
 
+def select_fastest(entries: list[Entry], category: str) -> list[Entry]:
+    """Keep one reference instance per candidate and security target.
+
+    Selection uses only cycle metrics: sizes participate in the final ordering,
+    but they do not cause a slower implementation to represent a candidate.
+    As elsewhere on the page, tied cycle values receive their average ordinal
+    position.
+    """
+    metrics = METRICS[category]
+    required = [name for name, _, _ in metrics]
+    cycle_metrics = [name for name, _, unit in metrics if unit == "cycles"]
+    eligible = [entry for entry in entries if all(name in entry.values for name in required)]
+    cycle_ranks: dict[tuple[str, str], dict[str, float]] = defaultdict(dict)
+    for metric in cycle_metrics:
+        ordered = sorted(eligible, key=lambda entry: (entry.values[metric], natural(entry.display)))
+        start = 0
+        while start < len(ordered):
+            end = start + 1
+            while end < len(ordered) and ordered[end].values[metric] == ordered[start].values[metric]:
+                end += 1
+            rank = ((start + 1) + end) / 2
+            for entry in ordered[start:end]:
+                cycle_ranks[entry.key][metric] = rank
+            start = end
+    by_candidate: dict[str, list[Entry]] = defaultdict(list)
+    for entry in eligible:
+        by_candidate[entry.candidate].append(entry)
+    selected = []
+    for candidate in sorted(by_candidate, key=natural):
+        choices = by_candidate[candidate]
+        selected.append(min(
+            choices,
+            key=lambda entry: (
+                sum(cycle_ranks[entry.key][metric] for metric in cycle_metrics) /
+                len(cycle_metrics),
+                natural(entry.label))))
+    return selected
+
+
 def security_badge(candidate: str, findings: dict[str, Counter]) -> str:
     counts = findings.get(candidate, Counter())
     severity = next((value for value in SEVERITIES if counts[value]), "none")
@@ -332,7 +371,7 @@ def render_table(category: str, title: str, entries: list[Entry],
                  target_bits: int) -> str:
     metrics = METRICS[category]
     metric_names = [name for name, _, _ in metrics]
-    eligible = assign_ranks(entries, metric_names)
+    eligible = assign_ranks(select_fastest(entries, category), metric_names)
     overall = sorted(eligible, key=lambda entry: (entry.mean_rank, natural(entry.display)))
     columns = [overall] + [sorted(eligible,
                                   key=lambda entry, metric=name:
@@ -388,11 +427,12 @@ def render(entries: list[Entry], findings: dict[str, Counter],
                 "average rank.", "",
                 "Key-generation latency and secret-key size are excluded. Only reference instances "
                 f"assigned to the {target_bits}-bit NGCC target and having every metric required by "
-                "their category are ranked. For public-key schemes, the percentage after each cycle "
+                "their category are ordered. If a candidate has several such instances, the one with "
+                "the lowest mean ordinal position across the cycle measurements represents it. "
+                "For public-key schemes, the percentage after each cycle "
                 "count is the measured share spent in the ICCS placeholder hash functions. For hash "
                 "functions, the multiplier is relative to ICCS `pseudoXOF` with the same output width "
-                "and message length. Security badges show the "
-                "A `(??%)` share means that the candidate uses its own symmetric primitives and no "
+                "and message length. A `(??%)` share means that the candidate uses its own symmetric primitives and no "
                 "ICCS-facing backend was measured. Security badges show the "
                 "number of active findings at the candidate's highest severity; they do not affect "
                 "the performance rank.", ""]
