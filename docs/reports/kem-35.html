@@ -18,14 +18,36 @@
 <h1 id="scloud-kem-35">Scloud+ (kem-35)</h1>
 <div class="table-wrap"><table class="meta">
 <tr><th>Candidate</th><td>Scloud+</td></tr>
-<tr><th>Family</th><td>Lattice-based</td></tr>
-<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/Scloud%2B.zip">Official submission archive</a></td></tr>
+<tr><th>Family</th><td>Lattice-based (unstructured LWE with Barnes–Wall decoding)</td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/Scloud%2B.zip">Scloud+.zip</a> (SHA-256: <code>050aad7293ec90fafd9070e82877eedc81caf0aaaca932c995619a3f35429876</code>)</td></tr>
 <tr><th>Specification</th><td><a href="https://github.com/ngcc-dev/ngcc-harness/raw/dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kem-35/kem-35-spec.pdf" title="Download kem-35-spec.pdf from GitHub">kem-35-spec.pdf</a>&nbsp;<a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kem-35/kem-35-spec.pdf" title="Open the kem-35 specification PDF">PDF</a></td></tr>
 </table></div>
 
-<h3 id="review-status">Review status</h3>
-<p>No vulnerability finding is currently published for this candidate. This is not a security endorsement: it records only the present state of the public finding inventory, and the candidate remains under review.</p>
-<p>See the <a href="../constant-time/kem-35.html">constant-time review</a> and the performance reports (<a href="../performance/x86_1/kem-35.html">x86_1</a> · <a href="../performance/arm_1/kem-35.html">arm_1</a>). See the <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560881269264384.html">official submission page</a>.</p>
+<h2 class="issue-heading issue-heading-first" id="kem-35-1-re-encryption-rejection-sampling-leaks-the-decrypted-message-class">kem-35-1: Re-encryption rejection sampling leaks the decrypted-message class</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>side-channel</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Reference and optimized Scloud+-256, -384, and -512; all AES, SHAKE, and SM3 families</td></tr>
+<tr><th>Discovery</th><td>Hard</td></tr>
+<tr><th>Exploitation</th><td>Repeatable decrypted-message-dependent timing; key recovery and IND-CCA break not demonstrated</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance</td></tr>
+<tr><th>Date</th><td>2026-10-01</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/4CQU6FWGGX4KK7XBHMBM6535CHEYX7HF/">Xiong and Wang's PKC Forum post</a> and <a href="https://github.com/acprk/ngcc-round1-cryptanalysis/tree/709d5ec64239206effb2667ca853ddcef3c060b4/scloudplus-reencryption-timing">pinned public artifact</a></p>
+<p>Decapsulation re-encrypts the decrypted message <code>m'</code> for its Fujisaki--Okamoto check (<code>common/kem.c:96–113</code>). The resulting seed enters the BD6 or BD12 rejection sampler, whose number of accepted candidates, refills, and XOF squeezes depends on that secret-derived seed (<code>common/sample.c:325–374,401–446</code>). The accepted-bit compaction also writes through the secret-derived index <code>count</code> (<code>common/sample.c:345–364,421–436</code>; <code>avx2/sample_avx2.c:139,161,206–226</code>). Both the reference and AVX2 implementations therefore have a decrypted-message-dependent execution trace. Scloud+-128 and -192 use non-rejection samplers and are controls.</p>
+<p>Instrumentation over 5,000 honest Scloud+-256 decapsulations measured 296--301 sampler batches and 53--54 XOF squeezes. The original post reports a 6,209-cycle sampler-only gap with Welch's <code>t = 53.2</code>; independent reruns measured significant but host-dependent gaps around 6,000--6,700 cycles. These are microbenchmarks of the sampler, not whole decapsulation: the post estimates only a 0.1--0.3% end-to-end effect.</p>
+<p>The squeeze class is a public function of a guessed <code>m'</code> and the public key. Timing therefore supplies a plaintext-checking-style bit, but the post estimates roughly <code>10^3</code> decapsulations per recovered bit and gives no Scloud+-specific key-recovery procedure. No null-control experiment is included in the artifact, and no key recovery or IND-CCA break has been demonstrated.</p>
+<h3 id="constant-time-fix-moderate-hence-medium">Constant-time fix (moderate, hence Medium)</h3>
+<p>Make candidate generation and compaction consume fixed work: process a fixed upper-bound number of candidates and select accepted values obliviously. This is a substantive sampler rewrite rather than a local mask, but it uses standard fixed-work and oblivious-compaction techniques; the expected cost is moderate and has not been measured here.</p>
+<h3 id="proposed-fixes">Proposed fixes</h3>
+<p>The original post proposes processing a fixed upper-bound number of candidates with constant-time compaction, or replacing the rejection sampler with a non-rejection construction based on fixed-point comparison against <code>1/6</code> or <code>1/12</code>. This section records those proposals without evaluating them.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh kem-35/reproduce_reencryption_timing.sh
+</code></pre>
+<p>The wrapper fetches the pinned artifact and runs its deterministic squeeze-count and timing experiments against the archived optimized implementation. Absolute cycle counts depend on host scheduling; the deterministic squeeze-count result does not.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

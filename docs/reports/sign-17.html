@@ -35,7 +35,8 @@
 <tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance</td></tr>
 <tr><th>Date</th><td>2026-09-30</td></tr>
 </table></div>
-<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/P72SIPCDX7C2TRO36VBHX7GGMKGDNCIH/">Xiong and Wang's PKC Forum post</a></p>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/P72SIPCDX7C2TRO36VBHX7GGMKGDNCIH/">Xiong and Wang's PKC Forum post</a>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/TAVWDZWBTG3FSHKDHATS5YNKNT7JN5X4/">OPS team's PKC Forum acknowledgment</a></p>
 <p>Algorithm 6 (physical page 9) swaps <code>idx[i]</code> and <code>idx[j]</code>, then writes the new sign to <code>c[idx[j]]</code>. At step <code>i = n-tau+t</code>, the old <code>idx[i]</code> has not previously moved, so after the swap <code>idx[j] = i</code>. Every challenge therefore has the fixed public support <code>{n-tau,...,n-1}</code>; only its <code>tau</code> signs vary. The challenge spaces have just <code>2^39</code>, <code>2^45</code>, and <code>2^90</code> elements, rather than the intended signed-weight spaces.</p>
 <p>This enables a public-key-only forgery. Choose a short response and a target challenge on the fixed support, reconstruct the verifier's commitment from the public key, and grind the hint until the hash maps back to that challenge. The resulting costs are below the claimed 128-, 256-, and 512-bit levels, so the specified scheme violates its SUF-CMA and the required EUF-CMA targets. A reduced-<code>tau</code> end-to-end witness forges fresh messages for all three parameter geometries; changed-message and submitted-sampler controls reject. At the real parameters, direct enumeration gives the bounds above without requiring the full searches to be run.</p>
 <p>The submitted <code>poly_challenge</code> uses the correct ML-DSA-style <code>c[i] = c[j]; c[j] = sign</code> update and reaches all coefficient positions. The finding is therefore confined to an implementation faithful to the written Algorithm 6, not the submitted binaries.</p>
@@ -58,7 +59,8 @@
 <tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance</td></tr>
 <tr><th>Date</th><td>2026-09-30</td></tr>
 </table></div>
-<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/P72SIPCDX7C2TRO36VBHX7GGMKGDNCIH/">Xiong and Wang's PKC Forum post</a></p>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/P72SIPCDX7C2TRO36VBHX7GGMKGDNCIH/">Xiong and Wang's PKC Forum post</a>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/TAVWDZWBTG3FSHKDHATS5YNKNT7JN5X4/">OPS team's PKC Forum acknowledgment</a></p>
 <p>Algorithms 30 and 32 (physical pages 14–15) use <code>ceil(q/alpha)</code> as the high-bit bucket count, where <code>alpha = 2*gamma2</code>. For every submitted set, <code>alpha</code> divides <code>q-1</code>, so the reachable count is <code>(q-1)/alpha</code>; the specified ceiling is one larger. The top bucket is consequently not folded to zero at the wrap boundary, and a verifier following the specification can reconstruct different high bits from the signer.</p>
 <p>In 2,000 honest signatures per set, a verifier using the specified operations rejected 149 (7.45%), 630 (31.50%), and 1,339 (66.95%) at the 128-, 256-, and 512-bit sets. The submitted rounding code, which uses <code>(q-1)/alpha</code>, rejected 0 of 2,000 in each control. This is a specification correctness and interoperability defect, not an attack on the submitted code.</p>
 <h3 id="proposed-fixes_1">Proposed fixes</h3>

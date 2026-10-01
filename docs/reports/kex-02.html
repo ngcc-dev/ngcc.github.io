@@ -87,10 +87,12 @@ gcc -O2 -std=c99 -I. -DBWKEM128_INTERNAL_COMPAT -DBWKEM_C128_USE_ICCS_AUXFUNC -S
 <tr><th>Date</th><td>2026-09-30</td></tr>
 </table></div>
 <p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/6J2L7XPCKMT7VFS4LRE7DSP3BMJRUFEV/">Xiong and Wang's PKC Forum post</a>
-Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/M4U5QIFRBYA3T6XQ7UCLJV3RDA6J5IIA/">AFS-KEX team's PKC Forum statement</a></p>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/M4U5QIFRBYA3T6XQ7UCLJV3RDA6J5IIA/">AFS-KEX team's initial statement</a>, <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/KWCCXWCNCLZBXRLN5GQJCMFUHCFSECXM/">response</a>, and <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/5LFINDPHMLECJ6YRWV7QCCMAV7J6JBFL/">further response</a></p>
 <p>Figure 3 authenticates an initiator by extracting <code>pk'_A = cpk_A - t_e(seed_A)</code> and checking <code>CAVerf(id_A,pk'_A)</code>. Given Alice's public key, an attacker can choose its own <code>seed*</code> and publish <code>cpk* = pk_A + t_e(seed*)</code>; extraction then returns Alice's certified public key. If the in-session encapsulated key <code>K_A</code> is exposed, the attacker completes the remaining exchange, derives <code>K_SESSION = PRF(K_A,K_B)</code>, and is accepted by Bob as Alice. Alice does not participate, and no secret of hers other than the assumed <code>K_A</code> exposure is used.</p>
 <p>This demonstrates the consequence of exposing an in-session encapsulated key, but it does not contradict the formal proof. Section 9.1 limits <code>RevealEph</code> to ephemeral material that can be precomputed offline, assumes encapsulation randomness is erased, and Remark 9.1 discusses retained precomputed keys rather than the in-session <code>K_A</code> used here. The same exposure defeats the authentication role of the KEM contribution in many KEM-authenticated AKEs. The confirmed protocol behavior is therefore a Medium model-boundary finding, not a break of AFS-KEX's stated primary game.</p>
 <p>The spec-faithful protocol witness built from each submitted reference primitive succeeds in 200 of 200 trials, derives Bob's exact session key, and is rejected in 200 of 200 controls without the <code>K_A</code> exposure.</p>
+<h3 id="follow-up-analysis">Follow-up Analysis</h3>
+<p>The AFS-KEX team states that its intended model excludes arbitrary exposure of in-session ephemeral state and characterizes the protocol as ephemeral KEX. That position is consistent with the report's model-boundary classification; it does not change the reproduced impersonation behavior under the stated exposure.</p>
 <h3 id="proposed-fixes">Proposed fixes</h3>
 <p>The original post proposes correcting the public description of which secret authenticates the exchange. This section records the proposal without evaluating it.</p>
 <h3 id="reproducing_2">Reproducing</h3>
@@ -110,9 +112,12 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance</td></tr>
 <tr><th>Date</th><td>2026-09-30</td></tr>
 </table></div>
-<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/6J2L7XPCKMT7VFS4LRE7DSP3BMJRUFEV/">Xiong and Wang's PKC Forum post</a></p>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/6J2L7XPCKMT7VFS4LRE7DSP3BMJRUFEV/">Xiong and Wang's PKC Forum post</a>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/KWCCXWCNCLZBXRLN5GQJCMFUHCFSECXM/">AFS-KEX team's response</a> and <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/5LFINDPHMLECJ6YRWV7QCCMAV7J6JBFL/">further response</a></p>
 <p>The protocol derives <code>K_SESSION = PRF(K_A,K_B)</code>. Neither party identity enters that KDF or a MAC. An attacker Eve registers a copy of Alice's public key under Eve's identity, relays an Alice–Bob exchange, and changes the cleartext <code>id_A</code> in round 3 to <code>id_E</code>. Alice accepts Bob, Bob's certification check accepts the same public key for Eve, and Bob accepts Eve; both honest parties derive the same key while disagreeing about its peer identity. The defect is specifically that the peer identity is not bound into the derived key.</p>
 <p>The witness reproduces this unknown-key-share in 200 of 200 sessions at every parameter set using only public-key copying and message relay. The specification says authentication is obtained through public-key recovery and certification, but the formal Setup generates distinct honest public keys and excludes duplicate-key registration. Because the attack depends on a certification policy outside that model, it is a Medium identity-binding gap rather than a break inside the stated game.</p>
+<h3 id="follow-up-analysis_1">Follow-up Analysis</h3>
+<p>The team states that its certification model disallows duplicate public-key registration and that, in a deployment permitting it, identities should enter the key derivation. This agrees with the report's stated precondition and does not change the reproduced behavior under that precondition.</p>
 <h3 id="proposed-fixes_1">Proposed fixes</h3>
 <p>The original post proposes including <code>id_A</code>, <code>id_B</code>, and a transcript hash in the session-key PRF. This section records the proposal without evaluating it.</p>
 <h3 id="reproducing_3">Reproducing</h3>
@@ -132,9 +137,12 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance</td></tr>
 <tr><th>Date</th><td>2026-09-30</td></tr>
 </table></div>
-<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/6J2L7XPCKMT7VFS4LRE7DSP3BMJRUFEV/">Xiong and Wang's PKC Forum post</a></p>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/6J2L7XPCKMT7VFS4LRE7DSP3BMJRUFEV/">Xiong and Wang's PKC Forum post</a>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/KWCCXWCNCLZBXRLN5GQJCMFUHCFSECXM/">AFS-KEX team's response</a> and <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/5LFINDPHMLECJ6YRWV7QCCMAV7J6JBFL/">further response</a></p>
 <p>The KEM uses implicit rejection, and the initiator sends round 3 for both valid and invalid ciphertexts. An unauthenticated responder nevertheless knows the valid ciphertext's encapsulated key. It can decrypt the returned protected seed with the key derived for the valid path and check whether that seed reconstructs the initiator's certified public key. After a ciphertext modification triggers implicit rejection, this check fails, revealing the decapsulation-validity bit even though the message flow is unchanged.</p>
 <p>At each parameter set, the validity check succeeded for 200 of 200 honest ciphertexts and failed for 200 of 200 deliberately modified ciphertexts. This confirms the observable reaction bit, not a recovery attack. The specification already argues that a fresh composite key permits at most one relevant failure observation per session. Aggregating useful conditions across independently refreshed composite keys has not been validated, and no natural-failure run or long-term-key recovery is claimed.</p>
+<h3 id="follow-up-analysis_2">Follow-up Analysis</h3>
+<p>The team emphasizes that the composite public key changes each session and argues that the resulting failure observations cannot be accumulated against one key. That is already the limitation stated here; no cross-session recovery is claimed.</p>
 <h3 id="reproducing_4">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">make -C kex-02 reproduce-protocol-findings

@@ -80,3 +80,37 @@ Encapsulation does not validate the public key. With the two basis hints set to 
 ```sh
 python3 kem-31/reproduce_malformed_public_key.py
 ```
+
+## kem-31-4: A shared torsion mask leaks a square-coset constraint on the secret degree
+
+Severity: Medium
+Status: Confirmed
+Layer: Design
+Affected: QIMEN-PIKE NGCC-1, NGCC-2, and NGCC-3
+Discovery: Non-trivial
+Exploitation: Public pairing leakage removes about two bits from the secret-degree candidate space; no oracle, key recovery, or below-target attack is established
+Credit: Sun Shuzhou, with GLM-5.3 assistance
+Date: 2026-10-01
+Original source: [Sun's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/HKC2JLEC7CWIQHGV22RUQDIFSPI55LZT/)
+
+Additional references: [POKÉ, ePrint 2024/624, §6.1](https://eprint.iacr.org/2024/624), and [Moriya's POKÉ weak-key analysis, ePrint 2026/1002](https://eprint.iacr.org/2026/1002)
+
+Algorithm 9 and Equation (8.1) publish the C-torsion points `R_A=[gamma]phi(R_0)` and `S_A=[gamma]phi(S_0)` using the same scalar. On the `C1` component, Weil-pairing compatibility directly exposes
+
+```text
+e_C(R_A,S_A) = e_C(R_0,S_0)^(deg(phi) * gamma^2).
+```
+
+Because `C` is smooth, the exponent can be extracted publicly by Pohlig–Hellman. Since `gamma^2` is a square, it constrains `deg(phi)` to one quadratic-residuosity coset. The `C2` component gives the same square-coset condition after the public points are normalized onto the specified twist; it is not justified by the displayed `C1` pairing alone. This contradicts §8.3.1, which says that the critical degree information is hidden by “independent masking scalars with uniformly distributed determinants” and cannot be recovered through pairings. The compressed reference and optimized sources likewise sample one `gamma` and combine it into both basis scalars (`pike_compressed.c:163,174–175`).
+
+The forum analysis validates the pairing invariant on all 30 KATs and demonstrates the completion algebra on reduced two-dimensional instances. Exact factor counting gives filter strengths of 1.96, 1.89, and 2.88 bits for NGCC-1/2/3; the post prints 1.88 for NGCC-3. This is a small, confirmed public leak.
+
+The post's below-target figures come from its baseline candidate accounting, not from this filter alone. No formal eight-dimensional theta-chain recovery was run, and charging the reported approximately `2^36` field operations needed to complete each surviving candidate closes the few-bit margin. With no query oracle that amplifies the leak and no demonstrated recovery consequence, the square-coset constraint is Medium and Confirmed rather than a High recovery lead.
+
+### Reproducing
+
+```sh
+python3 kem-31/reproduce_pairing_constraint.py
+```
+
+The local witness checks Algorithm 9, the contradictory §8.3.1 sentence, and the shared-mask data flow in both submitted source trees. It then exhaustively demonstrates on a small composite modulus that a common mask confines the public exponent to one square coset, whereas independent masks cover the full unit group. It does not reproduce the 30-vector pairing calculation or a formal-parameter key recovery.

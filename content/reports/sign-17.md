@@ -14,6 +14,7 @@ Exploitation: Public-key-only forgery in about 2^39, 2^45, or 2^90 trials; no si
 Credit: Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance
 Date: 2026-09-30
 Original source: [Xiong and Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/P72SIPCDX7C2TRO36VBHX7GGMKGDNCIH/)
+Follow-up source: [OPS team's PKC Forum acknowledgment](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/TAVWDZWBTG3FSHKDHATS5YNKNT7JN5X4/)
 
 Algorithm 6 (physical page 9) swaps `idx[i]` and `idx[j]`, then writes the new sign to `c[idx[j]]`. At step `i = n-tau+t`, the old `idx[i]` has not previously moved, so after the swap `idx[j] = i`. Every challenge therefore has the fixed public support `{n-tau,...,n-1}`; only its `tau` signs vary. The challenge spaces have just `2^39`, `2^45`, and `2^90` elements, rather than the intended signed-weight spaces.
 
@@ -44,6 +45,7 @@ Exploitation: Honest signatures fail verification; no forgery or key recovery
 Credit: Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance
 Date: 2026-09-30
 Original source: [Xiong and Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/P72SIPCDX7C2TRO36VBHX7GGMKGDNCIH/)
+Follow-up source: [OPS team's PKC Forum acknowledgment](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/TAVWDZWBTG3FSHKDHATS5YNKNT7JN5X4/)
 
 Algorithms 30 and 32 (physical pages 14–15) use `ceil(q/alpha)` as the high-bit bucket count, where `alpha = 2*gamma2`. For every submitted set, `alpha` divides `q-1`, so the reachable count is `(q-1)/alpha`; the specified ceiling is one larger. The top bucket is consequently not folded to zero at the wrap boundary, and a verifier following the specification can reconstruct different high bits from the signer.
 

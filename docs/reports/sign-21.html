@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ngcc.dev: ReSolveD-ɑ (sign-21)</title>
+<title>ngcc.dev: ReSolveD-α (sign-21)</title>
 <link rel="icon" type="image/png" href="../assets/mag-glass.png">
 <link rel="stylesheet" href="../assets/style.css?v=808fa5e8">
 </head>
@@ -15,17 +15,38 @@
 <main class="">
 <p class="crumb"><a href="../reports/index.html">Security</a> › <code>sign-21</code> · <a href="../constant-time/sign-21.html">Constant-time review</a> · Performance: <a href="../performance/x86_1/sign-21.html">x86_1</a> · <a href="../performance/arm_1/sign-21.html">arm_1</a></p>
 
-<h1 id="resolved-sign-21">ReSolveD-ɑ (sign-21)</h1>
+<h1 id="resolved-sign-21">ReSolveD-α (sign-21)</h1>
 <div class="table-wrap"><table class="meta">
-<tr><th>Candidate</th><td>ReSolveD-ɑ</td></tr>
-<tr><th>Family</th><td>Code-based / VOLE-in-the-head</td></tr>
-<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/ReSolveD-alpha.zip">Official submission archive</a></td></tr>
+<tr><th>Candidate</th><td>ReSolveD-α</td></tr>
+<tr><th>Family</th><td>Code-based (regular syndrome decoding, VOLE-in-the-head)</td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/ReSolveD-alpha.zip">ReSolveD-alpha.zip</a> (SHA-256: <code>499821538d7f79464cc1ee1468254b0e49f750794a591ffe038938c4cfa11914</code>)</td></tr>
 <tr><th>Specification</th><td><a href="https://github.com/ngcc-dev/ngcc-harness/raw/dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/sign-21/sign-21-spec.pdf" title="Download sign-21-spec.pdf from GitHub">sign-21-spec.pdf</a>&nbsp;<a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/sign-21/sign-21-spec.pdf" title="Open the sign-21 specification PDF">PDF</a></td></tr>
 </table></div>
 
-<h3 id="review-status">Review status</h3>
-<p>No vulnerability finding is currently published for this candidate. This is not a security endorsement: it records only the present state of the public finding inventory, and the candidate remains under review.</p>
-<p>See the <a href="../constant-time/sign-21.html">constant-time review</a> and the performance reports (<a href="../performance/x86_1/sign-21.html">x86_1</a> · <a href="../performance/arm_1/sign-21.html">arm_1</a>). See the <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561087368974336.html">official submission page</a>.</p>
+<h2 class="issue-heading issue-heading-first" id="sign-21-1-a-shared-tccr-tweak-enables-one-signature-multi-target-key-recovery-below-the-claimed-levels">sign-21-1: A shared TCCR tweak enables one-signature multi-target key recovery below the claimed levels</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>ReSolveD-α-256s/f, -384s/f, and -512s/f; reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>One signature; about 2^248.2, 2^375.6, or 2^503.2 TCCR evaluations for full signing-key recovery and forgery</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance</td></tr>
+<tr><th>Date</th><td>2026-10-01</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/PH6Q6UHS7YJAN3RHER7YWUNXOHOZYIFF/">Xiong and Wang's PKC Forum post</a>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/WI3PDQ3FGAT6H7TSKV4STFL5X6WCZEQF/">ReSolveD-α team's acknowledgment of receipt</a></p>
+<p><code>BAVC.Commit</code> expands every internal node of one signature with the same TCCR parameters <code>(s, iv)</code>. The reference code passes no node position to <code>tccr_hash</code> (<code>bavc.c:50–69</code>, <code>tccr.c:13–51</code>); the optimized AES and Rijndael paths likewise compute the node position but do not pass it into TCCR (<code>prgs.hpp:494–516</code>; the generic fallback is at 521–540). The output-block byte inside TCCR is not a tree-node tweak. A signature reveals <code>T</code> sibling nodes, each a public function of a different hidden parent under this one TCCR instance.</p>
+<p>An attacker enumerates a parent candidate once and tests its derived child values against all <code>T</code> revealed nodes with a hash table. A match identifies a hidden subtree, from which the attacker derives the hidden leaf, reconstructs the complete witness, and signs a fresh message. The expected search is <code>2^lambda/(T+1)</code>: median <code>T</code> values of 221/217, 330/328, and 437/439 for the small/fast 256-, 384-, and 512-bit sets give about 2^248.2, 2^375.6, and 2^503.2 evaluations. The target mapping is recorded in the archived <code>Algorithm specifications Addition.pdf</code>, Table 24; the 160-bit sets target 128 bits and remain above that target.</p>
+<p>This directly contradicts §7.1.2's conclusion that no multi-target attack improves on a single target. A fresh <code>iv</code> separates different signatures, not the hundreds of targets inside one signature; the specification's own Theorem 8.12 includes a multi-target term proportional to the number of construction queries under a fixed tweak. Each affected set therefore has a concrete classical signing-key recovery bound below its claimed level, hence Critical. The full exponential search was not run, but source/specification reasoning and scaled searches establish the <code>/T</code> speedup, the recovery chain, and accepted fresh-message forgeries.</p>
+<h3 id="proposed-fixes">Proposed fixes</h3>
+<p>The <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/PH6Q6UHS7YJAN3RHER7YWUNXOHOZYIFF/">original post</a> proposes adding a node-index/instance tweak to TCCR and the leaf PRG, or increasing <code>lambda</code> by <code>ceil(log2(T_open)) + 1</code> bits and removing the single-target claim. This section records those proposals without evaluating them.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh sign-21/reproduce_tccr_multitarget.sh
+</code></pre>
+<p>The pinned <a href="https://github.com/acprk/ngcc-round1-cryptanalysis/tree/5568023b43000ce9eb38467705bb2731f230c73b/resolved-alpha-tccr-multitarget">reproduction package</a> builds against the archived reference source with the Keccak backend. It checks the tree relation on real signatures. To make enumeration feasible, its scaled experiment is given all but 20–22 bits of one selected hidden parent, tests every candidate against the complete revealed-node table, finds the selected target, reconstructs the witness from the public transcript, and produces a fresh-message forgery accepted by the unmodified verifier; a one-bit-witness control rejects. It does not demonstrate an unconstrained search in which any revealed node is equally reachable. A separate experiment confirms constant-work hash-table membership and the predicted <code>2^B/(T+1)</code> scaling. Only the final <code>2^248.2</code> or larger enumeration is extrapolated.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

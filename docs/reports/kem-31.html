@@ -89,6 +89,31 @@ security/ngcc_security kem-31/lib/libNGCC-3.so kem-zero
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 kem-31/reproduce_malformed_public_key.py
 </code></pre>
+<h2 class="issue-heading" id="kem-31-4-a-shared-torsion-mask-leaks-a-square-coset-constraint-on-the-secret-degree">kem-31-4: A shared torsion mask leaks a square-coset constraint on the secret degree</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>QIMEN-PIKE NGCC-1, NGCC-2, and NGCC-3</td></tr>
+<tr><th>Discovery</th><td>Non-trivial</td></tr>
+<tr><th>Exploitation</th><td>Public pairing leakage removes about two bits from the secret-degree candidate space; no oracle, key recovery, or below-target attack is established</td></tr>
+<tr><th>Credit</th><td>Sun Shuzhou, with GLM-5.3 assistance</td></tr>
+<tr><th>Date</th><td>2026-10-01</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/HKC2JLEC7CWIQHGV22RUQDIFSPI55LZT/">Sun's PKC Forum post</a></p>
+<p>Additional references: <a href="https://eprint.iacr.org/2024/624">POKÉ, ePrint 2024/624, §6.1</a>, and <a href="https://eprint.iacr.org/2026/1002">Moriya's POKÉ weak-key analysis, ePrint 2026/1002</a></p>
+<p>Algorithm 9 and Equation (8.1) publish the C-torsion points <code>R_A=[gamma]phi(R_0)</code> and <code>S_A=[gamma]phi(S_0)</code> using the same scalar. On the <code>C1</code> component, Weil-pairing compatibility directly exposes</p>
+<pre><code class="language-text">e_C(R_A,S_A) = e_C(R_0,S_0)^(deg(phi) * gamma^2).
+</code></pre>
+<p>Because <code>C</code> is smooth, the exponent can be extracted publicly by Pohlig–Hellman. Since <code>gamma^2</code> is a square, it constrains <code>deg(phi)</code> to one quadratic-residuosity coset. The <code>C2</code> component gives the same square-coset condition after the public points are normalized onto the specified twist; it is not justified by the displayed <code>C1</code> pairing alone. This contradicts §8.3.1, which says that the critical degree information is hidden by “independent masking scalars with uniformly distributed determinants” and cannot be recovered through pairings. The compressed reference and optimized sources likewise sample one <code>gamma</code> and combine it into both basis scalars (<code>pike_compressed.c:163,174–175</code>).</p>
+<p>The forum analysis validates the pairing invariant on all 30 KATs and demonstrates the completion algebra on reduced two-dimensional instances. Exact factor counting gives filter strengths of 1.96, 1.89, and 2.88 bits for NGCC-1/2/3; the post prints 1.88 for NGCC-3. This is a small, confirmed public leak.</p>
+<p>The post's below-target figures come from its baseline candidate accounting, not from this filter alone. No formal eight-dimensional theta-chain recovery was run, and charging the reported approximately <code>2^36</code> field operations needed to complete each surviving candidate closes the few-bit margin. With no query oracle that amplifies the leak and no demonstrated recovery consequence, the square-coset constraint is Medium and Confirmed rather than a High recovery lead.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-31/reproduce_pairing_constraint.py
+</code></pre>
+<p>The local witness checks Algorithm 9, the contradictory §8.3.1 sentence, and the shared-mask data flow in both submitted source trees. It then exhaustively demonstrates on a small composite modulus that a common mask confines the public exponent to one square coset, whereas independent masks cover the full unit group. It does not reproduce the 30-vector pairing calculation or a formal-parameter key recovery.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

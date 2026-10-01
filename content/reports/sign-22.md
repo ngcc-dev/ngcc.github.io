@@ -88,3 +88,33 @@ sh sign-22/reproduce_sm3_parity_runtime.sh
 ```
 
 The checked run measured bias `7.025e-4`, versus the exact raw-CDT value `6.3322e-4`; a zero-vector wrong predictor measured `-1.028125e-4`. It takes about two minutes on this host.
+
+## sign-22-4: An undersized rejection envelope permits practical secret-tail recovery and forgery
+
+Severity: Critical
+Status: Confirmed
+Layer: Design
+Affected: A deterministic Rhyme-SHAKE-128 completion using the specification's stated closed-form boundary and a central-first fixed order; the submitted SHAKE signer is excluded
+Discovery: Hard
+Exploitation: At most 40,000 chosen-message signatures, followed by seconds of regression
+Credit: Martin Feussner, with OpenAI Codex (Daybreak Blue) assistance
+Date: 2026-10-01
+Original source: [Feussner's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/3FOEXR4RO5COXIJ7RQZH2GSXCTAH7V3R/) and [pinned public analysis and reproducer](https://github.com/martinfeussner/NGCC-Signature-Audit/tree/83360df0c060f54c327754a7baa3d7be10acfeeb/Rhyme)
+
+Appendix A first states the correct cumulative-envelope condition for Rhyme's sequential rejection sampler, but then derives a boundary expression and expressly calls that closed form a valid upper bound. It is not: for Rhyme-128 the formula gives about `10^-5`, while the preceding condition needs about `1.002`. Algorithm 3 also requires a fixed enumeration order without defining it. Using that specification-sanctioned closed form with a deterministic central-first order makes the sampler strongly order-dependent: the sampled offset is usually close to the negative public challenge, so each signature exposes a noisy linear equation in the four-polynomial secret tail.
+
+Negacyclic least-squares regression recovers all 1,024 tail coefficients from at most 40,000 chosen-message signatures. The recovered public relation then gives a zero-commitment signature on a fresh message, accepted by the pristine submitted verifier. Our deterministic replay used a fixed key tag and preset checkpoints: all 50,000 generated signatures passed the pristine verifier and decoder, exact recovery held at the preset 30,000-signature checkpoint, the fresh-message forgery was accepted, and wrong-message, perturbed-tail, and wrong-key controls were rejected. The attack harness patches `encoding.c` in its scratch signer to restart the roughly 10% of signing attempts whose encodings do not fit; the verifier used for the forgery remains pristine.
+
+This is a break of a deterministic implementation permitted by one of the submitted specification's conflicting prescriptions, not of the pristine submitted signer. Critical severity rests on the specification explicitly presenting the vulnerable closed form as a valid upper bound; the earlier cumulative condition points to the safe choice instead. The submitted SHAKE source uses ascending arrays and `M = 1.002214572...`, which satisfies the required envelope for its operational CDT distribution; the same-key safe-envelope control does not recover the tail or forge.
+
+### Proposed fixes
+
+The cited analysis proposes replacing the boundary expression by the exact cumulative-ratio maximum or a proved upper bound, testing the resulting cumulative mass, and specifying a canonical enumeration order and one Gaussian convention. This section records those proposals without evaluating them.
+
+### Reproducing
+
+```sh
+sh sign-22/reproduce_order_dependent_forgery.sh
+```
+
+The default replay checks the envelope calculation, the frozen public evidence, the recovered public relation, the accepted forgery, and three negative controls. Set `FULL=1` to generate 50,000 chosen-message signatures and repeat the complete recovery; NumPy is required and the regression uses about 2.5 GiB of memory.

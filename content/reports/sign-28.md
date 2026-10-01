@@ -1,0 +1,110 @@
+<!-- synchronized report: sign-28/report.md -->
+Candidate: SYDO
+Family: Code-based signature (syndrome decoding, MPC-in-the-head)
+Archive: [SYDO.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/SYDO.zip) (SHA-256: `c4ae5b27a188612cd286a786179ce5461e6aca0b8599ba13b8d77b210a940adb`)
+
+## sign-28-1: SYDO enforces two fewer grinding bits than its claimed soundness
+
+Severity: High
+Status: Confirmed
+Layer: Design
+Affected: All six 160-, 256- and 512-bit parameter sets, reference and optimized implementations
+Discovery: Non-trivial
+Exploitation: Generic QuickSilver forgery work about 2^158, 2^254 or 2^510 hash calls, two bits below the scheme's labels but above the applicable NGCC floors
+Credit: Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance
+Date: 2026-10-01
+Original source: [Xiong and Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/HMZS3BAVGCFDQRAQKQU3UZ7DZT7EF524/) and [pinned verification package](https://github.com/acprk/ngcc-round1-cryptanalysis/tree/709d5ec64239206effb2667ca853ddcef3c060b4/sydo-grinding-and-padding)
+
+Section 5.2 requires `tau*log2(N) - log2(d) + wgrind >= lambda`, with `d=4`, and Table 5.3 takes equality. Consequently `tau*log2(N) + wgrind = lambda+2`. Algorithms 2 and 3 nevertheless divide a `lambda`-bit `chall3` into `wgrind` checked zero bits and only `lambda-wgrind` bits for `VOLE.DecodeAllChall`, whose specified input needs `tau*log2(N) = lambda-wgrind+2` bits. This two-bit type mismatch holds by construction at all six parameter sets.
+
+Both submitted implementations resolve the mismatch by making `delta_bits = lambda-wgrind+2` and checking only the remaining `wgrind-2` bits for zero. The shipped signatures corroborate the implementation behavior: only 13 of 60 KATs satisfy the specification's full grinding predicate, and their counters match two fewer enforced bits. A degree-four QuickSilver false witness can select four accepting challenge values, so the realized challenge space gives about `2^(lambda-2)` forgery work: `2^158`, `2^254`, and `2^510`. These miss the scheme's 160-, 256- and 512-bit labels but remain above the applicable NGCC floors; Theorem 25's own bound is already only about 157.0, 254.3, and 509.9 bits. The forum authors accordingly do not claim that SYDO is broken. This is High rather than Critical. The public package verifies the four-root strategy in a scaled exact field model; the full-size searches are not attempted.
+
+### Proposed fixes
+
+The original post proposes lengthening `chall3` by `ceil(log2(d))` bits, increasing every `wgrind` by two, or lowering the stated target by two bits and correcting the parameter tables. This section records those alternatives without evaluating them.
+
+### Reproducing
+
+```sh
+./sign-28/reproduce_forum_findings.sh
+```
+
+The wrapper verifies and unpacks the archived submission, fetches the pinned public package, builds all six reference sets, reads the enforced-bit counts through the submitted library's accessors, checks the KAT predicates and counters, and runs the exact scaled QuickSilver control.
+
+## sign-28-2: The reference verifier ignores required BAVC opening padding
+
+Severity: Medium
+Status: Confirmed
+Layer: Implementation
+Affected: All six reference parameter sets; the optimized implementations reject the same mutations
+Discovery: Trivial
+Exploitation: Same-message signature malleability and cross-implementation verifier disagreement; no new-message forgery
+Credit: Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance
+Date: 2026-10-01
+Original source: [Xiong and Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/HMZS3BAVGCFDQRAQKQU3UZ7DZT7EF524/) and [pinned verification package](https://github.com/acprk/ngcc-round1-cryptanalysis/tree/709d5ec64239206effb2667ca853ddcef3c060b4/sydo-grinding-and-padding)
+
+Algorithm 13 lines 21–22 require the unused tail of the fixed-size BAVC opening to be all zero. The optimized verifier checks every remaining byte in `vector_com.inc:994–1002`; the reference `sydo_ref_bavc_verify` reaches `ok = true` at `bavc_impl.inc:446` without inspecting that tail.
+
+Across three signatures at every parameter set, 16 signatures had nonempty padding. Replacing the complete zero tail with `0xA5` was accepted by the reference verifier in all 16 cases and rejected by the optimized verifier in all 16. A bounded 160f bit-flip sweep found precisely the 1,120 accepted flips expected from its 140-byte padding and no optimized acceptance. SYDO does not claim strong unforgeability, so this is not presented as an EUF-CMA break; the security-relevant result is malleability plus incompatible verdicts on an identical signature.
+
+### Proposed fixes
+
+The original post proposes checking every remaining byte of the fixed-size opening before the reference verifier returns success. This section records the proposal without evaluating it.
+
+### Reproducing
+
+```sh
+SETS=160f ./sign-28/reproduce_forum_findings.sh full
+```
+
+This cross-verifies three mutated signatures and runs the bounded bit-flip control against both submitted trees. It takes about ten minutes on the reporting host; remove `SETS=160f` to repeat the cross-verification at all six sets.
+
+## sign-28-3: The implementations omit the Hash4 step required by the proof
+
+Severity: Medium
+Status: Confirmed
+Layer: Implementation
+Affected: All six parameter sets, reference and optimized implementations
+Discovery: Moderate
+Exploitation: The implementation is outside the stated extraction proof; no concrete forgery demonstrated
+Credit: Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance
+Date: 2026-10-01
+Original source: [Xiong and Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/HMZS3BAVGCFDQRAQKQU3UZ7DZT7EF524/)
+
+Algorithms 2 and 3 derive `iv = Hash4(ivpre)`, carry `ivpre` in the signature, and let the Lemma 19 extractor program `Hash4`. Both implementation trees instead derive `seed || iv` directly with the domain-three hash, serialize `iv`, and feed it directly to reconstruction. There is no candidate `Hash4` call or domain-four hash in either implementation.
+
+The shipped construction is therefore not the construction covered by the stated binding and EUF-KO extraction argument: its `iv` is supplied directly by the signature rather than constrained to be a `Hash4` output. A verifier implemented literally from the specification also disagrees with the shipped KATs. No practical attack from this proof mismatch is claimed.
+
+### Reproducing
+
+```sh
+python3 sign-28/reproduce_static_findings.py
+```
+
+The source/specification validator checks the normative `Hash4` steps and extractor dependency, then checks the direct serialization and use of `iv` in representative reference and optimized sources.
+
+## sign-28-4: Reference universal hashing reads beyond an eight-byte stack buffer
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: All six reference parameter sets during honest signing and verification
+Discovery: Trivial
+Exploitation: Out-of-bounds stack read and undefined behavior; no disclosure, forgery, or control-flow impact demonstrated
+Credit: Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance
+Date: 2026-10-01
+Original source: [Xiong and Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/HMZS3BAVGCFDQRAQKQU3UZ7DZT7EF524/)
+
+`universal_hashing_impl.inc:447–452` declares `uint8_t tmp[8]` but sets `left = lambda_bytes-byte_off`, passes that value to the partial store, and then reads `tmp[j]` for every `j < left`. On the first word, `left` is 20, 32, or 64 bytes, so ordinary signing and verification read well past the eight-byte object. Later iterations replace the affected output, which explains why the KATs still match, but does not make the access defined. No attacker-controlled disclosure is established.
+
+### Proposed fixes
+
+The original post proposes clamping each processed chunk to eight bytes. This section records the proposal without evaluating it.
+
+### Reproducing
+
+```sh
+python3 sign-28/reproduce_static_findings.py
+```
+
+The validator checks the identical faulty loop in all six reference trees and confirms that the supported security-parameter byte lengths all exceed eight.

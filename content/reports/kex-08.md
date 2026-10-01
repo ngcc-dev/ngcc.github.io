@@ -13,12 +13,19 @@ Discovery: Moderate
 Exploitation: Polynomial-time real-or-random distinguisher; no shared-key recovery
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-09-23
+Follow-up source: [NIIKE team's PKC Forum response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/VDKJZGVFIR4B7KO7QC75TKPBJJBWQKZ5/)
 
 The specified `NIIKE.KeyAgr` (Algorithm 5, §4.3) returns the *unhashed* j-invariant of the shared supersingular curve. The submitted `kex_derive_ss_a/b` API likewise calls `niike_SecretAgreement` and serializes that field element directly with `fp2_encode`. An adversary given a candidate shared-key byte string can decode it as an element of Fp², construct a curve with that j-invariant, and test supersingularity. Every honest output passes. Only O(p) of the p² field elements are supersingular j-invariants, so a uniformly random canonical Fp² control passes with negligible probability. Uniform random API-length bytes are also distinguishable, even before the supersingularity test, because many are not canonical field encodings.
 
 This is a polynomial-time real-or-random *key-distribution* break, not a method to compute the honest shared value from the public keys. It is a design error in the specified output, not an isogeny-path shortcut. The specification's §9.1.6 experiment samples its random branch from an abstract shared-key space `SK` without defining that space concretely. If `SK` were stipulated to be exactly the supersingular j-invariants with the honest distribution, this particular test would not distinguish that formal experiment. However, the proof of Theorem 9.1.7 explicitly analyzes a different construction that returns `H(K)` and compares it with a uniform hash output; Algorithm 5 and the shipped byte-key API perform no such hash. The submitted construction therefore fails the ordinary uniform-key indistinguishability target that its proof claims to establish. A primary key-exchange distinguishing break is Critical even without shared-key recovery.
 
 The lv128 witness runs the official reference key generation and agreement for two honest parties, checks matching shared keys, then applies Sage's supersingularity test to the result and to 16 independently sampled *canonical* Fp² controls. It confirms an algebraic distinguisher independent of byte-encoding slack. The same raw-output data flow appears in all three levels; lv256/lv512 were not rerun in this witness because their reference group actions are much slower.
+
+The NIIKE team acknowledges the implementation issue and states that the session key should be derived by applying a KDF to the key material.
+
+### Proposed fixes
+
+The team's response proposes applying a KDF to the shared key material and says an updated implementation will follow. This section records the proposal without evaluating it.
 
 ### Reproducing
 

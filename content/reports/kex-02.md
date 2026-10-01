@@ -76,13 +76,17 @@ Exploitation: Public initiator key plus exposure of one in-session encapsulated 
 Credit: Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance
 Date: 2026-09-30
 Original source: [Xiong and Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/6J2L7XPCKMT7VFS4LRE7DSP3BMJRUFEV/)
-Follow-up source: [AFS-KEX team's PKC Forum statement](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/M4U5QIFRBYA3T6XQ7UCLJV3RDA6J5IIA/)
+Follow-up source: [AFS-KEX team's initial statement](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/M4U5QIFRBYA3T6XQ7UCLJV3RDA6J5IIA/), [response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/KWCCXWCNCLZBXRLN5GQJCMFUHCFSECXM/), and [further response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/5LFINDPHMLECJ6YRWV7QCCMAV7J6JBFL/)
 
 Figure 3 authenticates an initiator by extracting `pk'_A = cpk_A - t_e(seed_A)` and checking `CAVerf(id_A,pk'_A)`. Given Alice's public key, an attacker can choose its own `seed*` and publish `cpk* = pk_A + t_e(seed*)`; extraction then returns Alice's certified public key. If the in-session encapsulated key `K_A` is exposed, the attacker completes the remaining exchange, derives `K_SESSION = PRF(K_A,K_B)`, and is accepted by Bob as Alice. Alice does not participate, and no secret of hers other than the assumed `K_A` exposure is used.
 
 This demonstrates the consequence of exposing an in-session encapsulated key, but it does not contradict the formal proof. Section 9.1 limits `RevealEph` to ephemeral material that can be precomputed offline, assumes encapsulation randomness is erased, and Remark 9.1 discusses retained precomputed keys rather than the in-session `K_A` used here. The same exposure defeats the authentication role of the KEM contribution in many KEM-authenticated AKEs. The confirmed protocol behavior is therefore a Medium model-boundary finding, not a break of AFS-KEX's stated primary game.
 
 The spec-faithful protocol witness built from each submitted reference primitive succeeds in 200 of 200 trials, derives Bob's exact session key, and is rejected in 200 of 200 controls without the `K_A` exposure.
+
+### Follow-up Analysis
+
+The AFS-KEX team states that its intended model excludes arbitrary exposure of in-session ephemeral state and characterizes the protocol as ephemeral KEX. That position is consistent with the report's model-boundary classification; it does not change the reproduced impersonation behavior under the stated exposure.
 
 ### Proposed fixes
 
@@ -107,10 +111,15 @@ Exploitation: One duplicate-key registration and one relayed honest session
 Credit: Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance
 Date: 2026-09-30
 Original source: [Xiong and Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/6J2L7XPCKMT7VFS4LRE7DSP3BMJRUFEV/)
+Follow-up source: [AFS-KEX team's response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/KWCCXWCNCLZBXRLN5GQJCMFUHCFSECXM/) and [further response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/5LFINDPHMLECJ6YRWV7QCCMAV7J6JBFL/)
 
 The protocol derives `K_SESSION = PRF(K_A,K_B)`. Neither party identity enters that KDF or a MAC. An attacker Eve registers a copy of Alice's public key under Eve's identity, relays an Alice–Bob exchange, and changes the cleartext `id_A` in round 3 to `id_E`. Alice accepts Bob, Bob's certification check accepts the same public key for Eve, and Bob accepts Eve; both honest parties derive the same key while disagreeing about its peer identity. The defect is specifically that the peer identity is not bound into the derived key.
 
 The witness reproduces this unknown-key-share in 200 of 200 sessions at every parameter set using only public-key copying and message relay. The specification says authentication is obtained through public-key recovery and certification, but the formal Setup generates distinct honest public keys and excludes duplicate-key registration. Because the attack depends on a certification policy outside that model, it is a Medium identity-binding gap rather than a break inside the stated game.
+
+### Follow-up Analysis
+
+The team states that its certification model disallows duplicate public-key registration and that, in a deployment permitting it, identities should enter the key derivation. This agrees with the report's stated precondition and does not change the reproduced behavior under that precondition.
 
 ### Proposed fixes
 
@@ -135,10 +144,15 @@ Exploitation: Stable chosen-ciphertext reaction oracle; key recovery not demonst
 Credit: Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance
 Date: 2026-09-30
 Original source: [Xiong and Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/6J2L7XPCKMT7VFS4LRE7DSP3BMJRUFEV/)
+Follow-up source: [AFS-KEX team's response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/KWCCXWCNCLZBXRLN5GQJCMFUHCFSECXM/) and [further response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/5LFINDPHMLECJ6YRWV7QCCMAV7J6JBFL/)
 
 The KEM uses implicit rejection, and the initiator sends round 3 for both valid and invalid ciphertexts. An unauthenticated responder nevertheless knows the valid ciphertext's encapsulated key. It can decrypt the returned protected seed with the key derived for the valid path and check whether that seed reconstructs the initiator's certified public key. After a ciphertext modification triggers implicit rejection, this check fails, revealing the decapsulation-validity bit even though the message flow is unchanged.
 
 At each parameter set, the validity check succeeded for 200 of 200 honest ciphertexts and failed for 200 of 200 deliberately modified ciphertexts. This confirms the observable reaction bit, not a recovery attack. The specification already argues that a fresh composite key permits at most one relevant failure observation per session. Aggregating useful conditions across independently refreshed composite keys has not been validated, and no natural-failure run or long-term-key recovery is claimed.
+
+### Follow-up Analysis
+
+The team emphasizes that the composite public key changes each session and argues that the resulting failure observations cannot be accumulated against one key. That is already the limitation stated here; no cross-session recovery is claimed.
 
 ### Reproducing
 

@@ -98,18 +98,22 @@ Inspect the cited lookup definitions and signer call sites in `Implementations a
 Severity: Critical
 Status: Confirmed
 Layer: Design
-Affected: Origami-128 (full forgery reproduced); the same public-permutation and triangular-zone construction occurs in Origami-256/-384/-512, not runtime-tested here
+Affected: Origami-128, Origami-256, Origami-384, and Origami-512; independently reproduced here on Origami-128
 Discovery: Moderate
 Exploitation: Public-key-only forgery for a chosen message, with no signing queries
-Credit: Pierre Pébereau
+Credit: Hugo Louiso and Jintai Ding; independently, Pierre Pébereau
 Date: 2026-09-24
-Original source: [NGCC PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/HTZTMJ42AUXCWEDA3AURP4ZOEGSGSV4Z/), [UnfoldOrigami code](https://github.com/pi-r2/UnfoldOrigami/tree/defa3405d66e763580729b14d6f81c1300fbb219)
+Original source: [Ding and Louiso's NIST PQC Forum post](https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/N1WfpgvlI2s/m/lym34vPOAwAJ), [Pébereau's NGCC PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/HTZTMJ42AUXCWEDA3AURP4ZOEGSGSV4Z/), and [UnfoldOrigami code](https://github.com/pi-r2/UnfoldOrigami/tree/defa3405d66e763580729b14d6f81c1300fbb219)
 
 Additional reference: [Xiong and Wang, ePrint 2026/2232, 2026-09-29 revision, §4](https://eprint.iacr.org/archive/2026/2232/1790653241.pdf)
 
 Origami §2.5.6 explicitly derives the change of variables `Π_pub` from the *public* expansion seed and defines `P_pub = G ∘ Π_pub^-1`. Undoing that permutation exposes the zone order. The public-key expansion supplies each zone's affine coefficients, so an attacker can choose its vinegar coordinates and solve the resulting linear system for oil coordinates, proceeding zone by zone. This reproduces the signer's easy inversion without its secret seed or a signing oracle. It is distinct from `sign-18-2`'s signature-derived subspace observation.
 
-Pébereau's Origami-128 implementation forges a signature that the archived `sig_verify` accepts; a changed-message control rejects. The four submitted sets have byte-identical `origami_ref.c` evaluators and the same public-permutation construction, but full-size forging runtimes for the higher sets have not been independently measured here. The flaw survives ideal replacement of the contest hash/XOF placeholders: whatever public expansion is used, the public `seed_pk` still determines `Π_pub`, so anyone can undo it and expose the triangular zone system.
+Louiso and Ding publicly reported public-key-only forgeries on 2026-09-24 and report acceptance by the unmodified reference verifier on the official KATs for all four parameter sets, with runtimes from about 0.01 seconds for Origami-128 to 15 seconds for Origami-512. Their post gives no method, so we cannot establish that it is the same construction as Pébereau's. Pébereau disclosed his analysis privately to the submitters on 2026-09-22 and independently published the public-permutation construction and code on 2026-09-24; this report makes no priority claim between the disclosures.
+
+Our pinned replay of Pébereau's code forges on Origami-128 against the archived `sig_verify`, and a changed-message control rejects. We have not executed a forgery on Origami-256, -384, or -512 ourselves. Their inclusion in `Affected` rests on Louiso and Ding's reported all-level runs and on the identical public-permutation construction in the four submitted sources, not on a local all-level replay.
+
+The four submitted sets have byte-identical `origami_ref.c` evaluators and the same public-permutation construction. The flaw survives ideal replacement of the contest hash/XOF placeholders: whatever public expansion is used, the public `seed_pk` still determines `Π_pub`, so anyone can undo it and expose the triangular zone system.
 
 ### Reproducing
 
