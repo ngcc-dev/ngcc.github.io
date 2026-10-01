@@ -21,6 +21,7 @@
 <tr><th>Family</th><td>Code-based (regular syndrome decoding, VOLE-in-the-head)</td></tr>
 <tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/ReSolveD-alpha.zip">ReSolveD-alpha.zip</a> (SHA-256: <code>499821538d7f79464cc1ee1468254b0e49f750794a591ffe038938c4cfa11914</code>)</td></tr>
 <tr><th>Specification</th><td><a href="https://github.com/ngcc-dev/ngcc-harness/raw/dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/sign-21/sign-21-spec.pdf" title="Download sign-21-spec.pdf from GitHub">sign-21-spec.pdf</a>&nbsp;<a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/sign-21/sign-21-spec.pdf" title="Open the sign-21 specification PDF">PDF</a></td></tr>
+<tr><th>Performance</th><td><a href="../performance/x86_1/sign-21.html">x86_1</a> · <a href="../performance/arm_1/sign-21.html">arm_1</a></td></tr>
 </table></div>
 
 <h2 class="issue-heading issue-heading-first" id="sign-21-1-a-shared-tccr-tweak-enables-one-signature-multi-target-key-recovery-below-the-claimed-levels">sign-21-1: A shared TCCR tweak enables one-signature multi-target key recovery below the claimed levels</h2>
@@ -47,6 +48,91 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <pre><code class="language-sh">sh sign-21/reproduce_tccr_multitarget.sh
 </code></pre>
 <p>The pinned <a href="https://github.com/acprk/ngcc-round1-cryptanalysis/tree/5568023b43000ce9eb38467705bb2731f230c73b/resolved-alpha-tccr-multitarget">reproduction package</a> builds against the archived reference source with the Keccak backend. It checks the tree relation on real signatures. To make enumeration feasible, its scaled experiment is given all but 20–22 bits of one selected hidden parent, tests every candidate against the complete revealed-node table, finds the selected target, reconstructs the witness from the public transcript, and produces a fresh-message forgery accepted by the unmodified verifier; a one-bit-witness control rejects. It does not demonstrate an unconstrained search in which any revealed node is equally reachable. A separate experiment confirms constant-work hash-table membership and the predicted <code>2^B/(T+1)</code> scaling. Only the final <code>2^248.2</code> or larger enumeration is extrapolated.</p>
+<h2 class="issue-heading" id="sign-21-2-a-shared-leaf-commitment-tweak-gives-one-signature-multi-target-key-recovery">sign-21-2: A shared leaf-commitment tweak gives one-signature multi-target key recovery</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>ReSolveD-α-256s/f, -384s/f, and -512s/f; reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>One signature; about 2^250.87, 2^378.27, or 2^505.83 leaf-PRG evaluations for witness recovery and forgery</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance</td></tr>
+<tr><th>Date</th><td>2026-10-01</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/PH6Q6UHS7YJAN3RHER7YWUNXOHOZYIFF/">Xiong and Wang's original PKC Forum post</a>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/TU4TWGKTQ46F5HCMMRX25XMKVQG7JPEX/">Xiong and Wang's clarification</a></p>
+<p>The specified <code>LeafHash(x,iv)</code> uses the fixed tweak <code>0^8</code> (§4.4.7), while
+<code>BAVC.Open</code> publishes one hidden-leaf commitment per instance (§4.4.2,
+Algorithm 14, line 18). This contradicts §7.1.3 (p. 63), which treats the PRG
+calls as separated by distinct counters. The reference code uses zero for every
+leaf (<code>bavc.c:85–90,141–150</code>). The optimized leaf-hash wrapper discards both
+provided tweaks (<code>vector_com.inc:1090–1097</code>); its 160/256-bit path supplies zero
+(<code>vector_com.inc:1102–1107</code>), while its 384/512-bit paths use fixed-tweak
+helpers (<code>vector_com.inc:1112–1115</code>, <code>prgs.hpp:2022–2055,2242–2299</code>).</p>
+<p>An attacker enumerates one candidate seed, evaluates the fixed-tweak leaf PRG
+once, and tests its commitment against every revealed hidden-leaf target.</p>
+<p>With <code>tau</code> targets, expected work is about <code>2^lambda/tau</code>. The submitted
+parameters therefore give exponents 251.5/250.9, 378.9/378.3 and 506.5/505.8
+for the small/fast 256-, 384- and 512-bit profiles, respectively. A match
+completes one VOLE instance; the public correction then reconstructs the
+masked regular-syndrome-decoding witness and permits a fresh-message forgery.
+Table 24 of the addition specification maps the 160-bit profiles to a 128-bit
+target; their approximately 156-bit costs remain above it.</p>
+<p>This is a complete mathematical recovery route below each affected target,
+although the final exponential enumeration was not run. A repair that changes
+only internal tree-node expansion does not separate <code>LeafHash</code>; the leaf PRG
+requires its own instance-specific domain input.</p>
+<h3 id="proposed-fixes_1">Proposed fixes</h3>
+<p>The <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/PH6Q6UHS7YJAN3RHER7YWUNXOHOZYIFF/">original post</a>
+proposes assigning every leaf-PRG invocation a node/instance tweak, as in
+FAEST v2. This section records the proposal without evaluating it.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-21/reproduce_leaf_commitment_multitarget.py
+</code></pre>
+<p>The certificate checks the fixed zero tweak in every submitted reference and
+optimized profile and recomputes the multi-target bounds. It explicitly
+records that the full exponential search is not executed.</p>
+<h2 class="issue-heading" id="sign-21-3-same-key-deterministic-sf-signatures-recover-an-equivalent-witness">sign-21-3: Same-key deterministic S/F signatures recover an equivalent witness</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>ReSolveD-α-160/256/384/512 S/F pairs in the optional deterministic mode permitted by the specification</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Two same-message signatures recover an equivalent signing witness and permit fresh-message forgery</td></tr>
+<tr><th>Credit</th><td>Martin Feussner, with OpenAI Codex (Daybreak Blue) assistance</td></tr>
+<tr><th>Date</th><td>2026-10-01</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/HNQWNWEIP44QKJGMBCNRQIZCRHDLIAZC/">Feussner's PKC Forum post</a> and <a href="https://github.com/martinfeussner/NGCC-Signature-Audit/tree/d0db6e0e0a28ef7ef41fe5dd826aa17ff743bcba/ReSolveD-alpha">pinned attack package</a></p>
+<p>ReSolveD-α permits optional deterministic signing by setting <code>rho = 0^lambda</code>
+(§4.2.2 and §4.9.2); the default path samples <code>rho</code> randomly. At each level the
+S and F profiles share the key format and RSD relation, while <code>CoinHash</code> binds
+the secret seed, message digest and <code>rho</code> but not the profile
+(<code>voleith_impl.c:167–184</code>). Consequently, same-key same-message S/F signatures
+using that optional mode reuse the root seed and IV under different tree shapes.</p>
+<p>The complementary openings recover a hidden leaf, complete the corresponding
+VOLE transcript, and reveal an equivalent RSD witness through the public
+correction. The reproduced 160-bit attack uses that witness to create a
+fresh-message signature accepted by the untouched verifier; different-key,
+different-message and different-<code>rho</code> controls reject. The submitted API's
+ordinary randomized signing path samples fresh <code>rho</code> and is not affected
+unless randomness repeats.</p>
+<p>This conditional cross-profile composition is outside the isolated
+single-profile EUF-CMA experiment, but it gives complete equivalent-key
+recovery and forgery whenever the optional deterministic profiles share a
+key, hence High.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh sign-21/reproduce_cross_profile_recovery.sh
+</code></pre>
+<p>The wrapper downloads the commit- and hash-pinned package and builds its
+minimal reproducer. The paired-signature generator uses the package's
+documented <code>CoinHash</code> patch; final acceptance is checked by a binary linked to
+the untouched submitted verifier. The wrapper requires recovery, an accepted
+fresh-message forgery, and all negative controls.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

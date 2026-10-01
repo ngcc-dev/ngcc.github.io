@@ -8,7 +8,7 @@
 #   make clean   remove generated output (keeps docs/CNAME and docs/.nojekyll)
 
 REPORT_SOURCE ?=
-PERF_SOURCE ?=
+PERF_SOURCE ?= ../ngcc-harness
 PORT  ?= 8000
 
 .PHONY: build check serve sync sync-performance clean
@@ -22,6 +22,8 @@ serve: build
 sync:
 	@test -n "$(REPORT_SOURCE)" || { echo "set REPORT_SOURCE=/path/to/source-checkout" >&2; exit 2; }
 	python3 tools/sync.py "$(REPORT_SOURCE)"
+	@test -n "$(PERF_SOURCE)" || { echo "set PERF_SOURCE=/path/to/harness-checkout" >&2; exit 2; }
+	python3 tools/sync_performance.py "$(PERF_SOURCE)"
 sync-performance:
 	@test -n "$(PERF_SOURCE)" || { echo "set PERF_SOURCE=/path/to/harness-checkout" >&2; exit 2; }
 	python3 tools/sync_performance.py "$(PERF_SOURCE)"

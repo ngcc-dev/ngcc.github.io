@@ -415,17 +415,19 @@ def report_page(r, prefix):
         rows.append(f"<tr><th>{html.escape(k)}</th><td>{v}</td></tr>")
     cid = r["cid"]
     rows.append(f'<tr><th>Specification</th><td>{pdf_download_link(cid)}&nbsp;{pdf_link({"id": cid})}</td></tr>')
+    perf = [sid for sid in performance_systems()
+            if (CONTENT / "performance" / sid / f'{cid}.md').is_file()]
+    perf_links = " · ".join(
+        f'<a href="{prefix}performance/{sid}/{cid}.html">{sid}</a>' for sid in perf)
+    if perf:
+        rows.append(f'<tr><th>Performance</th><td>{perf_links}</td></tr>')
     meta_table = '<table class="meta">\n' + "\n".join(rows) + "\n</table>"
     title = f"{m.get('Candidate', r['cid'])} ({r['cid']})"
     crumb = f'<p class="crumb"><a href="{prefix}reports/index.html">Security</a> › <code>{r["cid"]}</code>'
     if (CONTENT / "constant-time" / f'{r["cid"]}.md').is_file():
         crumb += f' · <a href="{prefix}constant-time/{r["cid"]}.html">Constant-time review</a>'
-    perf = [sid for sid in performance_systems()
-            if (CONTENT / "performance" / sid / f'{r["cid"]}.md').is_file()]
     if perf:
-        links = " · ".join(
-            f'<a href="{prefix}performance/{sid}/{r["cid"]}.html">{sid}</a>' for sid in perf)
-        crumb += f' · Performance: {links}'
+        crumb += f' · Performance: {perf_links}'
     crumb += '</p>'
     note = (f"\n\nCommands below run in a checkout of the [ngcc-harness repository]({HARNESS}) "
             f"with the candidate built (see its README).")

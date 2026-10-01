@@ -1,9 +1,7 @@
 <!-- synchronized from harness: hash-13/perf_x86_1.md -->
+<p class="crumb"><a href="index.md">Performance x86_1</a> › <code>hash-13</code> · <a href="method.md">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101538489901862912.html">NICCS page</a> · system: <strong>x86_1</strong> · <a href="../arm_1/hash-13.md">arm_1</a></p>
+
 # hash-13 JuziHash — performance on x86-64 (system x86_1)
-
-[Performance x86_1](index.md) › `hash-13` · [method](method.md) · [NICCS page](https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101538489901862912.html)
-
-**Systems:** **x86_1** · [arm_1](../arm_1/hash-13.md)
 
 Independent measurement following the structure of the NICCS x86 self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.
 
@@ -13,6 +11,7 @@ Independent measurement following the structure of the NICCS x86 self-assessment
 - Algorithm: JuziHash
 - Implementation versions measured: reference
 - Parameter sets: `JuziHash-512`, `JuziHash-1024`
+- Security evaluation: [hash-13 report](../../reports/hash-13.md)
 
 ## 2. Assessment environment
 

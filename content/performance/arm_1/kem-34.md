@@ -1,9 +1,7 @@
 <!-- synchronized from harness: kem-34/perf_arm_1.md -->
+<p class="crumb"><a href="index.md">Performance arm_1</a> › <code>kem-34</code> · <a href="method.md">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560881139240960.html">NICCS page</a> · system: <a href="../x86_1/kem-34.md">x86_1</a> · <strong>arm_1</strong></p>
+
 # kem-34 Rudraksh2 — performance on AArch64 (system arm_1)
-
-[Performance arm_1](index.md) › `kem-34` · [method](method.md) · [NICCS page](https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560881139240960.html)
-
-**Systems:** [x86_1](../x86_1/kem-34.md) · **arm_1**
 
 Independent measurement following the structure of the NICCS ARM self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.
 
@@ -13,6 +11,7 @@ Independent measurement following the structure of the NICCS ARM self-assessment
 - Algorithm: Rudraksh2
 - Implementation versions measured: reference
 - Parameter sets: `lwekem128`, `lwekem256`, `lwekem512`
+- Security evaluation: [kem-34 report](../../reports/kem-34.md)
 
 ## 2. Assessment environment
 

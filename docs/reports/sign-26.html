@@ -21,6 +21,7 @@
 <tr><th>Family</th><td>Isogeny-based signature</td></tr>
 <tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/SQIsign2D-push12.zip">SQIsign2D-push12.zip</a> (SHA-256: <code>98b7e4ffddfe31b5fb0f448345b49228c8d8a7c87078688ba1656b28631448c5</code>)</td></tr>
 <tr><th>Specification</th><td><a href="https://github.com/ngcc-dev/ngcc-harness/raw/dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/sign-26/sign-26-spec.pdf" title="Download sign-26-spec.pdf from GitHub">sign-26-spec.pdf</a>&nbsp;<a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/sign-26/sign-26-spec.pdf" title="Open the sign-26 specification PDF">PDF</a></td></tr>
+<tr><th>Performance</th><td><a href="../performance/x86_1/sign-26.html">x86_1</a> · <a href="../performance/arm_1/sign-26.html">arm_1</a></td></tr>
 </table></div>
 
 <h2 class="issue-heading issue-heading-first" id="sign-26-1-prime-sizing-assumes-a-superseded-square-root-isogeny-cost">sign-26-1: Prime sizing assumes a superseded square-root isogeny cost</h2>
@@ -53,9 +54,12 @@
 <tr><th>Credit</th><td>Sun Shuzhou, with GLM-5.3 assistance; Level-1 extension by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
 <tr><th>Date</th><td>2026-10-01</td></tr>
 </table></div>
-<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/TUR2W3S22UGBUJXFZYT25VO44PHNFAOJ/">Sun Shuzhou's PKC Forum post</a></p>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/TUR2W3S22UGBUJXFZYT25VO44PHNFAOJ/">Sun Shuzhou's PKC Forum post</a>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/BT6OPELMKDHUTECWKMVPWDI2VCMPAAIG/">Sun Shuzhou's Level-1 confirmation</a></p>
 <p>Section 5.1(4) compensates for a challenge space smaller than <code>2^lambda</code> by iterating the hash <code>ceil(2^lambda / 3^e2)</code> times. This is 21 iterations at Level-1 and 430 at Level-3. The four delivered source trees instead contain the same <code>hash_to_challenge</code> function, with one XOF call and no grinding loop (<code>sign.c:738–769</code>); signing and verification each call it once (<code>sign.c:819,1132</code>).</p>
 <p>Given one valid signature, an attacker keeps its public geometric response and searches for a fresh message whose recomputed challenge matches the transmitted challenge. Without the specified compensation, this costs <code>3^78 = 2^123.63</code> trials at Level-1 and <code>3^156 = 2^247.25</code> at Level-3, below the claimed 128- and 256-bit classical levels. Sun Shuzhou reported the Level-3 shortfall; the same calculation shows that Level-1 is also affected. Levels 2 and 4 have challenge spaces above their respective targets even without grinding. This is a concrete one-query EUF-CMA bound below target, not merely a KAT or encoding mismatch, and therefore is Critical.</p>
+<p>Sun Shuzhou subsequently confirmed the Level-1 cost <code>2^123.63</code>, which is 4.37
+bits below its declared classical target.</p>
 <p>The signer and verifier must implement the same <code>k</code>-fold hash construction specified in §5.1(4).</p>
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>

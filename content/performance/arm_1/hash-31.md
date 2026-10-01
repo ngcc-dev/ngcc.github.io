@@ -1,9 +1,7 @@
 <!-- synchronized from harness: hash-31/perf_arm_1.md -->
+<p class="crumb"><a href="index.md">Performance arm_1</a> › <code>hash-31</code> · <a href="method.md">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101534457934204928.html">NICCS page</a> · system: <a href="../x86_1/hash-31.md">x86_1</a> · <strong>arm_1</strong></p>
+
 # hash-31 The ZC-DMC Hash Function — performance on AArch64 (system arm_1)
-
-[Performance arm_1](index.md) › `hash-31` · [method](method.md) · [NICCS page](https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101534457934204928.html)
-
-**Systems:** [x86_1](../x86_1/hash-31.md) · **arm_1**
 
 Independent measurement following the structure of the NICCS ARM self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.
 
@@ -13,6 +11,7 @@ Independent measurement following the structure of the NICCS ARM self-assessment
 - Algorithm: The ZC-DMC Hash Function
 - Implementation versions measured: reference
 - Parameter sets: `ZC-DMC-1280-512`, `ZC-DMC-1280-768`, `ZC-DMC-1280-1024`, `ZC-DMC-1536-512`, `ZC-DMC-1536-768`, `ZC-DMC-1536-1024`
+- Security evaluation: [hash-31 report](../../reports/hash-31.md)
 
 ## 2. Assessment environment
 

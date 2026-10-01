@@ -1,9 +1,7 @@
 <!-- synchronized from harness: sign-05/perf_x86_1.md -->
+<p class="crumb"><a href="index.md">Performance x86_1</a> › <code>sign-05</code> · <a href="method.md">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561076774162432.html">NICCS page</a> · system: <strong>x86_1</strong> · <a href="../arm_1/sign-05.md">arm_1</a></p>
+
 # sign-05 Chinith — performance on x86-64 (system x86_1)
-
-[Performance x86_1](index.md) › `sign-05` · [method](method.md) · [NICCS page](https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561076774162432.html)
-
-**Systems:** **x86_1** · [arm_1](../arm_1/sign-05.md)
 
 Independent measurement following the structure of the NICCS x86 self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.
 
@@ -13,6 +11,7 @@ Independent measurement following the structure of the NICCS x86 self-assessment
 - Algorithm: Chinith
 - Implementation versions measured: reference
 - Parameter sets: `sm4th_d3_128f_loose`, `sm4th_d3_128f_tight`, `sm4th_d3_128s_loose`, `sm4th_d3_128s_tight`, `sm4th_em_d2_128f_loose`, `sm4th_em_d2_128f_tight`, `sm4th_em_d2_128s_loose`, `sm4th_em_d2_128s_tight`, `ublockith_d3_256f`, `ublockith_d3_256s`, `ublockith_em_d3_256f`, `ublockith_em_d3_256s`, `vistrutith_d3_512f`, `vistrutith_d3_512s`
+- Security evaluation: [sign-05 report](../../reports/sign-05.md)
 
 ## 2. Assessment environment
 

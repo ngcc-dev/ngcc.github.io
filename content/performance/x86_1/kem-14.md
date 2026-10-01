@@ -1,9 +1,7 @@
 <!-- synchronized from harness: kem-14/perf_x86_1.md -->
+<p class="crumb"><a href="index.md">Performance x86_1</a> › <code>kem-14</code> · <a href="method.md">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560844682350592.html">NICCS page</a> · system: <strong>x86_1</strong> · <a href="../arm_1/kem-14.md">arm_1</a></p>
+
 # kem-14 DTRU — performance on x86-64 (system x86_1)
-
-[Performance x86_1](index.md) › `kem-14` · [method](method.md) · [NICCS page](https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560844682350592.html)
-
-**Systems:** **x86_1** · [arm_1](../arm_1/kem-14.md)
 
 Independent measurement following the structure of the NICCS x86 self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.
 
@@ -13,6 +11,7 @@ Independent measurement following the structure of the NICCS x86 self-assessment
 - Algorithm: DTRU
 - Implementation versions measured: reference
 - Parameter sets: `DTRU-648`, `DTRU-648-PACK_PK`, `DTRU-768`, `DTRU-768-PACK_PK`, `DTRU-1024`, `DTRU-1024-PACK_PK`, `DTRU-1536`, `DTRU-1536-PACK_PK`, `DTRU-2048`, `DTRU-2048-PACK_PK`, `DTRU-Light`, `DTRU-Prime`
+- Security evaluation: [kem-14 report](../../reports/kem-14.md)
 
 ## 2. Assessment environment
 

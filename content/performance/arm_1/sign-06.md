@@ -1,9 +1,7 @@
 <!-- synchronized from harness: sign-06/perf_arm_1.md -->
+<p class="crumb"><a href="index.md">Performance arm_1</a> › <code>sign-06</code> · <a href="method.md">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561076912574464.html">NICCS page</a> · system: <a href="../x86_1/sign-06.md">x86_1</a> · <strong>arm_1</strong></p>
+
 # sign-06 COMPASS-SIG — performance on AArch64 (system arm_1)
-
-[Performance arm_1](index.md) › `sign-06` · [method](method.md) · [NICCS page](https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561076912574464.html)
-
-**Systems:** [x86_1](../x86_1/sign-06.md) · **arm_1**
 
 Independent measurement following the structure of the NICCS ARM self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.
 
@@ -13,6 +11,7 @@ Independent measurement following the structure of the NICCS ARM self-assessment
 - Algorithm: COMPASS-SIG
 - Implementation versions measured: reference
 - Parameter sets: `COMPASS-SIG-128`, `COMPASS-SIG-256`, `COMPASS-SIG-384`, `COMPASS-SIG-512`
+- Security evaluation: [sign-06 report](../../reports/sign-06.md)
 
 ## 2. Assessment environment
 

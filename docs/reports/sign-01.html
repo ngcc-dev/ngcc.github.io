@@ -21,6 +21,7 @@
 <tr><th>Family</th><td>Lattice (Module-LWE/SIS, Fiat-Shamir)</td></tr>
 <tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/Aigis-Sig%2B.zip">Aigis-Sig+.zip</a> (SHA-256: <code>88242576a3ae8f9d090b0c9045020f04ee9b5ae828e01b839f25267959e9c7ea</code>)</td></tr>
 <tr><th>Specification</th><td><a href="https://github.com/ngcc-dev/ngcc-harness/raw/dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/sign-01/sign-01-spec.pdf" title="Download sign-01-spec.pdf from GitHub">sign-01-spec.pdf</a>&nbsp;<a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/sign-01/sign-01-spec.pdf" title="Open the sign-01 specification PDF">PDF</a></td></tr>
+<tr><th>Performance</th><td><a href="../performance/x86_1/sign-01.html">x86_1</a> · <a href="../performance/arm_1/sign-01.html">arm_1</a></td></tr>
 </table></div>
 
 <h2 class="issue-heading issue-heading-first" id="sign-01-1-trivial-signature-malleability-violates-suf-cma">sign-01-1: Trivial signature malleability violates SUF-CMA</h2>
@@ -143,7 +144,7 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <h2 class="issue-heading" id="sign-01-6-the-abort-bound-violates-the-security-proofs-own-precondition">sign-01-6: The abort bound violates the security proof&#x27;s own precondition</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
 <tr><th>Scope</th><td>design</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr>
 <tr><th>Affected</th><td>Aigis-Sig+ PARAMS I and PARAMS III security analysis</td></tr>
@@ -152,11 +153,15 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <tr><th>Credit</th><td>Sun Shuzhou, with GLM-5.3 assistance</td></tr>
 <tr><th>Date</th><td>2026-10-01</td></tr>
 </table></div>
-<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XT47M5GJTH4JRXLV3H55P3BZ4C2RNGVU/">Sun Shuzhou's PKC Forum post</a></p>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XT47M5GJTH4JRXLV3H55P3BZ4C2RNGVU/">Sun Shuzhou's PKC Forum post</a>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/NT4QDW5IZH2SKSEAI57BAY5V26JKPPUJ/">Aigis-Sig+ team's response</a></p>
 <p>Section 7.3 sets the signing-abort upper bound to</p>
 <p><code>pbar = (1-exp(-n*l*beta1/gamma1)) + (1-exp(-n*k*(beta2+eta1)/gamma2))</code>.</p>
 <p>At the Table 1 parameters this is 1.07668, 0.98003, and 1.16094 for sets I–III. The exact acceptance-probability formula in §3.4 gives repetition counts 6.408, 5.158, and 5.706, reproducing Table 2's rounded 6.41, 5.16, and 5.71 values. Theorems 1 and 2 and their supporting reductions explicitly require <code>0 &lt; pbar &lt; 1</code>, so the specification's chosen bound violates its own precondition for sets I and III. The sum double-counts overlap between the two abort events.</p>
 <p>This does not disprove the theorems or give an attack. Section 3.4's own heuristic combined-abort estimate, <code>1-exp(-(a+b))</code>, is 0.844, 0.806, and 0.825, so an immediate bound below one is available. Correcting the loose union bound is local and leaves §7.3's final bound unchanged; the consequence is therefore Low / Proof gap.</p>
+<p>The Aigis-Sig+ team confirms that the displayed sum is loose, says that
+<code>1-exp(-a-b)</code> matches the measured abort rates, and notes that the proof only
+requires some bound <code>pbar &lt; 1</code>.</p>
 <h3 id="reproducing_5">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 sign-01/reproduce_abort_bound.py

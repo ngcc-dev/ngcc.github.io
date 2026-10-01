@@ -1,9 +1,7 @@
 <!-- synchronized from harness: hash-11/perf_x86_1.md -->
+<p class="crumb"><a href="index.md">Performance x86_1</a> › <code>hash-11</code> · <a href="method.md">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101538925484527616.html">NICCS page</a> · system: <strong>x86_1</strong> · <a href="../arm_1/hash-11.md">arm_1</a></p>
+
 # hash-11 Garnet — performance on x86-64 (system x86_1)
-
-[Performance x86_1](index.md) › `hash-11` · [method](method.md) · [NICCS page](https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101538925484527616.html)
-
-**Systems:** **x86_1** · [arm_1](../arm_1/hash-11.md)
 
 Independent measurement following the structure of the NICCS x86 self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.
 
@@ -13,6 +11,7 @@ Independent measurement following the structure of the NICCS x86 self-assessment
 - Algorithm: Garnet
 - Implementation versions measured: reference
 - Parameter sets: `Garnet_512_Cap512`, `Garnet_512_Cap640`, `Garnet_512_Cap768`, `Garnet_512_Cap896`, `Garnet_512_Cap1024`, `Garnet_768`, `Garnet_1024`, `Garnet_1024_DM4x4`
+- Security evaluation: [hash-11 report](../../reports/hash-11.md)
 
 ## 2. Assessment environment
 

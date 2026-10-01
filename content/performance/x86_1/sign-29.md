@@ -1,9 +1,7 @@
 <!-- synchronized from harness: sign-29/perf_x86_1.md -->
+<p class="crumb"><a href="index.md">Performance x86_1</a> › <code>sign-29</code> · <a href="method.md">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561105320595456.html">NICCS page</a> · system: <strong>x86_1</strong> · <a href="../arm_1/sign-29.md">arm_1</a></p>
+
 # sign-29 Tins — performance on x86-64 (system x86_1)
-
-[Performance x86_1](index.md) › `sign-29` · [method](method.md) · [NICCS page](https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561105320595456.html)
-
-**Systems:** **x86_1** · [arm_1](../arm_1/sign-29.md)
 
 Independent measurement following the structure of the NICCS x86 self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.
 
@@ -13,6 +11,7 @@ Independent measurement following the structure of the NICCS x86 self-assessment
 - Algorithm: Tins
 - Implementation versions measured: reference
 - Parameter sets: `Tins128`, `Tins256`, `Tins512`
+- Security evaluation: [sign-29 report](../../reports/sign-29.md)
 
 ## 2. Assessment environment
 

@@ -1,9 +1,7 @@
 <!-- synchronized from harness: kex-06/perf_x86_1.md -->
+<p class="crumb"><a href="index.md">Performance x86_1</a> › <code>kex-06</code> · <a href="method.md">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560625907453952.html">NICCS page</a> · system: <strong>x86_1</strong> · <a href="../arm_1/kex-06.md">arm_1</a></p>
+
 # kex-06 MAMBA-NIKE — performance on x86-64 (system x86_1)
-
-[Performance x86_1](index.md) › `kex-06` · [method](method.md) · [NICCS page](https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560625907453952.html)
-
-**Systems:** **x86_1** · [arm_1](../arm_1/kex-06.md)
 
 Independent measurement following the structure of the NICCS x86 self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.
 
@@ -13,6 +11,7 @@ Independent measurement following the structure of the NICCS x86 self-assessment
 - Algorithm: MAMBA-NIKE
 - Implementation versions measured: reference
 - Parameter sets: `MAMBA-NIKE-128`, `MAMBA-NIKE-192`, `MAMBA-NIKE-256`, `MAMBA-NIKE-384`, `MAMBA-NIKE-512`
+- Security evaluation: [kex-06 report](../../reports/kex-06.md)
 
 ## 2. Assessment environment
 

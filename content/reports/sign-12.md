@@ -80,3 +80,49 @@ The witness signs 38 bytes and reserves, without physically allocating, a
 Galas-256F accept the original signature for the long message and continue to
 accept after its last byte changes; changing the first byte is rejected. The
 two runs use about 6 MiB and 13 MiB peak resident memory, respectively.
+
+## sign-12-3: Same-key S/F signatures recover the Galas secret key
+
+Severity: High
+Status: Confirmed
+Layer: Design
+Affected: Galas-160/256/384/512 S/F pairs when the same key signs the same message in both profiles
+Discovery: Moderate
+Exploitation: Usually one same-message S/F pair; exact secret-key recovery and fresh-message forgery
+Credit: Martin Feussner, with OpenAI Codex (Daybreak Blue) assistance
+Date: 2026-10-01
+Original source: [Feussner's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XCHA74UPEQCVJTWA5QLLLPWK72W4SCT6/) and [pinned attack package](https://github.com/martinfeussner/NGCC-Signature-Audit/tree/d0db6e0e0a28ef7ef41fe5dd826aa17ff743bcba/Galas)
+
+Galas defines S and F profiles at each security level over the same public
+relation and key format. Key generation depends only on `lambda` (Algorithm
+19, p. 26), and the deterministic seed derivation has no profile tag (§4.2.1,
+Table 5). The source likewise hashes `sk_key || mu`, with no profile identifier
+(`ngcc/SIG_AlgorithmInstance.c:174–183,293–310`). Thus a same-key,
+same-message S/F signature pair commits to the same VOLE randomness under two
+different opening patterns.
+
+For a geometrically suitable pair, combining the complementary openings
+exposes the missing VOLE information and recovers the exact Galas secret key.
+Failure is public and another common message can be queried; the reported
+Galas-160 sweep succeeded on 509 of 512 pairs. Our minimal replay recovers the
+key and creates a fresh signature accepted by the package's specification-oracle
+F verifier; wrong-message, wrong-key and mutated-signature controls reject.
+The package separately records validation against the submitted implementations
+for all four S/F pairs.
+
+This is conditional on composing two profiles with the same key and message;
+separately typed keys for each profile are unaffected. It therefore does not
+break the isolated single-profile EUF-CMA experiment, but it is a complete key
+recovery and forgery under a natural cross-profile use, hence High.
+
+### Reproducing
+
+```sh
+sh sign-12/reproduce_cross_variant_key_recovery.sh
+```
+
+The wrapper downloads an archive pinned by commit and SHA-256 and builds its
+minimal Galas-160 specification-oracle reproducer, including the package's
+documented helper repairs. It requires exact key recovery, an accepted
+fresh-message forgery, and rejecting controls. It does not rerun the package's
+separate all-level submitted-implementation validation.

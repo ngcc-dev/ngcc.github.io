@@ -18,14 +18,50 @@
 <h1 id="nev-kem-25">NEV (kem-25)</h1>
 <div class="table-wrap"><table class="meta">
 <tr><th>Candidate</th><td>NEV</td></tr>
-<tr><th>Family</th><td>Lattice-based</td></tr>
-<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/NEV.zip">Official submission archive</a></td></tr>
+<tr><th>Family</th><td>Lattice-based (NTRU/RLWE hybrid)</td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/NEV.zip">NEV.zip</a> (SHA-256: <code>8105c6241a322661411e870a3087338f48f4f5c477a540387b800c08955cc7fd</code>)</td></tr>
 <tr><th>Specification</th><td><a href="https://github.com/ngcc-dev/ngcc-harness/raw/dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kem-25/kem-25-spec.pdf" title="Download kem-25-spec.pdf from GitHub">kem-25-spec.pdf</a>&nbsp;<a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kem-25/kem-25-spec.pdf" title="Open the kem-25 specification PDF">PDF</a></td></tr>
+<tr><th>Performance</th><td><a href="../performance/x86_1/kem-25.html">x86_1</a> · <a href="../performance/arm_1/kem-25.html">arm_1</a></td></tr>
 </table></div>
 
-<h3 id="review-status">Review status</h3>
-<p>No vulnerability finding is currently published for this candidate. This is not a security endorsement: it records only the present state of the public finding inventory, and the candidate remains under review.</p>
-<p>See the <a href="../constant-time/kem-25.html">constant-time review</a> and the performance reports (<a href="../performance/x86_1/kem-25.html">x86_1</a> · <a href="../performance/arm_1/kem-25.html">arm_1</a>). See the <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560863040819200.html">official submission page</a>.</p>
+<h2 class="issue-heading issue-heading-first" id="kem-25-1-compressed-nev-sets-omit-the-implicit-rejection-required-by-their-security-argument">kem-25-1: Compressed NEV sets omit the implicit rejection required by their security argument</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr>
+<tr><th>Affected</th><td>Compressed NEV-C1-c, NEV-C2-c and NEV-C3-c; reference, AVX2, AArch64 and NEON implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>The stated transform argument does not cover the submitted decapsulation behavior; no IND-CCA attack demonstrated</td></tr>
+<tr><th>Credit</th><td>Yamin Liu and Tianyuan Xie</td></tr>
+<tr><th>Date</th><td>2026-10-01</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/UZPNPPDYL5APZLO573LFHXX2ZLPVLZDE/">NEV team's PKC Forum response</a></p>
+<p>The compression discussion in §4 states that the compressed sets require an
+implicit-rejection strategy for the security proof. Normative Algorithm 27,
+however, returns <code>bottom</code> when ciphertext verification fails. All four
+submitted implementation families likewise compare the reconstructed
+ciphertext, copy the real key only when the comparison succeeds, and return
+the failure flag without assigning a pseudorandom rejection key
+(<code>cca.c:33–51</code>).</p>
+<p>Thus the archived compressed KEMs expose explicit rejection while their stated
+compression argument assumes implicit rejection. In particular, compressed
+encryption has no separate randomness term on which the explicit-rejection
+proofs' spreadness argument could rely. This is a substantive
+proof-to-algorithm mismatch, but explicit rejection alone is not an IND-CCA
+break and no candidate-specific key-recovery or distinguishing attack is
+shown; the finding is therefore Medium / Proof gap.</p>
+<h3 id="proposed-fixes">Proposed fixes</h3>
+<p>The <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/UZPNPPDYL5APZLO573LFHXX2ZLPVLZDE/">NEV team response</a>
+proposes changing compressed-set decapsulation to implicit rejection. This
+section records the proposal without evaluating it.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-25/reproduce_rejection_mismatch.py
+</code></pre>
+<p>The certificate checks the specification language and all 48 submitted
+<code>cca.c</code> copies, including the three compressed sets in each implementation
+family, and requires the explicit-return pattern.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

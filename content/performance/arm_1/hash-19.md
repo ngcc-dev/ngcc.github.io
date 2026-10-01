@@ -1,9 +1,7 @@
 <!-- synchronized from harness: hash-19/perf_arm_1.md -->
+<p class="crumb"><a href="index.md">Performance arm_1</a> › <code>hash-19</code> · <a href="method.md">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101537228439769088.html">NICCS page</a> · system: <a href="../x86_1/hash-19.md">x86_1</a> · <strong>arm_1</strong></p>
+
 # hash-19 MoFang Hash Function — performance on AArch64 (system arm_1)
-
-[Performance arm_1](index.md) › `hash-19` · [method](method.md) · [NICCS page](https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101537228439769088.html)
-
-**Systems:** [x86_1](../x86_1/hash-19.md) · **arm_1**
 
 Independent measurement following the structure of the NICCS ARM self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.
 
@@ -13,6 +11,7 @@ Independent measurement following the structure of the NICCS ARM self-assessment
 - Algorithm: MoFang Hash Function
 - Implementation versions measured: reference
 - Parameter sets: `MoFang-256`, `MoFang-256-XOF`, `MoFang-512`, `MoFang-768`, `MoFang-768-XOF`, `MoFang-1024`
+- Security evaluation: [hash-19 report](../../reports/hash-19.md)
 
 ## 2. Assessment environment
 

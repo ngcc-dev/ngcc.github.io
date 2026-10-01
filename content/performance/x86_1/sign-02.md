@@ -1,9 +1,7 @@
 <!-- synchronized from harness: sign-02/perf_x86_1.md -->
+<p class="crumb"><a href="index.md">Performance x86_1</a> › <code>sign-02</code> · <a href="method.md">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561076358926336.html">NICCS page</a> · system: <strong>x86_1</strong> · <a href="../arm_1/sign-02.md">arm_1</a></p>
+
 # sign-02 BIT: Bimodal Triangular distribution based lattice signatures — performance on x86-64 (system x86_1)
-
-[Performance x86_1](index.md) › `sign-02` · [method](method.md) · [NICCS page](https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561076358926336.html)
-
-**Systems:** **x86_1** · [arm_1](../arm_1/sign-02.md)
 
 Independent measurement following the structure of the NICCS x86 self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.
 
@@ -13,6 +11,7 @@ Independent measurement following the structure of the NICCS x86 self-assessment
 - Algorithm: BIT: Bimodal Triangular distribution based lattice signatures
 - Implementation versions measured: optimized (AVX2), reference
 - Parameter sets: `BiT-128`, `BiT-128-avx2`, `BiT-256`, `BiT-256-avx2`, `BiT-512`, `BiT-512-avx2`
+- Security evaluation: [sign-02 report](../../reports/sign-02.md)
 
 ## 2. Assessment environment
 

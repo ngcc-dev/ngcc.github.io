@@ -1,9 +1,7 @@
 <!-- synchronized from harness: sign-28/perf_arm_1.md -->
+<p class="crumb"><a href="index.md">Performance arm_1</a> › <code>sign-28</code> · <a href="method.md">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561105194766336.html">NICCS page</a> · system: <a href="../x86_1/sign-28.md">x86_1</a> · <strong>arm_1</strong></p>
+
 # sign-28 SYDO — performance on AArch64 (system arm_1)
-
-[Performance arm_1](index.md) › `sign-28` · [method](method.md) · [NICCS page](https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561105194766336.html)
-
-**Systems:** [x86_1](../x86_1/sign-28.md) · **arm_1**
 
 Independent measurement following the structure of the NICCS ARM self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.
 
@@ -13,6 +11,7 @@ Independent measurement following the structure of the NICCS ARM self-assessment
 - Algorithm: SYDO
 - Implementation versions measured: reference
 - Parameter sets: `sydo_160f`, `sydo_160s`, `sydo_256f`, `sydo_256s`, `sydo_512f`, `sydo_512s`
+- Security evaluation: [sign-28 report](../../reports/sign-28.md)
 
 ## 2. Assessment environment
 

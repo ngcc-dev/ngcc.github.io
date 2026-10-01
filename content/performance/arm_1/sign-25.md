@@ -1,9 +1,7 @@
 <!-- synchronized from harness: sign-25/perf_arm_1.md -->
+<p class="crumb"><a href="index.md">Performance arm_1</a> › <code>sign-25</code> · <a href="method.md">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561096361562112.html">NICCS page</a> · system: <a href="../x86_1/sign-25.md">x86_1</a> · <strong>arm_1</strong></p>
+
 # sign-25 SQIsign2D2 — performance on AArch64 (system arm_1)
-
-[Performance arm_1](index.md) › `sign-25` · [method](method.md) · [NICCS page](https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561096361562112.html)
-
-**Systems:** [x86_1](../x86_1/sign-25.md) · **arm_1**
 
 Independent measurement following the structure of the NICCS ARM self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.
 
@@ -13,6 +11,7 @@ Independent measurement following the structure of the NICCS ARM self-assessment
 - Algorithm: SQIsign2D2
 - Implementation versions measured: reference
 - Parameter sets: `SQISign2Dsquare-Level1-eff_compressed`, `SQISign2Dsquare-Level1-eff_uncompressed`, `SQISign2Dsquare-Level1-sec_compressed`, `SQISign2Dsquare-Level1-sec_uncompressed`, `SQISign2Dsquare-Level2-eff_compressed`, `SQISign2Dsquare-Level2-eff_uncompressed`, `SQISign2Dsquare-Level2-sec_compressed`, `SQISign2Dsquare-Level2-sec_uncompressed`, `SQISign2Dsquare-Level3-eff_compressed`, `SQISign2Dsquare-Level3-eff_uncompressed`, `SQISign2Dsquare-Level3-sec_compressed`, `SQISign2Dsquare-Level3-sec_uncompressed`, `SQISign2Dsquare-Level5-eff_compressed`, `SQISign2Dsquare-Level5-eff_uncompressed`, `SQISign2Dsquare-Level5-sec_compressed`, `SQISign2Dsquare-Level5-sec_uncompressed`
+- Security evaluation: [sign-25 report](../../reports/sign-25.md)
 
 ## 2. Assessment environment
 

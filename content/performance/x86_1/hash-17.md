@@ -1,9 +1,7 @@
 <!-- synchronized from harness: hash-17/perf_x86_1.md -->
+<p class="crumb"><a href="index.md">Performance x86_1</a> › <code>hash-17</code> · <a href="method.md">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101537586067099648.html">NICCS page</a> · system: <strong>x86_1</strong> · <a href="../arm_1/hash-17.md">arm_1</a></p>
+
 # hash-17 MasterCube — performance on x86-64 (system x86_1)
-
-[Performance x86_1](index.md) › `hash-17` · [method](method.md) · [NICCS page](https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101537586067099648.html)
-
-**Systems:** **x86_1** · [arm_1](../arm_1/hash-17.md)
 
 Independent measurement following the structure of the NICCS x86 self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.
 
@@ -13,6 +11,7 @@ Independent measurement following the structure of the NICCS x86 self-assessment
 - Algorithm: MasterCube
 - Implementation versions measured: reference
 - Parameter sets: `MasterCube-512`, `MasterCube-768`, `MasterCube-1024`
+- Security evaluation: [hash-17 report](../../reports/hash-17.md)
 
 ## 2. Assessment environment
 

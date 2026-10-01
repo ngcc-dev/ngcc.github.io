@@ -1,9 +1,7 @@
 <!-- synchronized from harness: kem-02/perf_x86_1.md -->
+<p class="crumb"><a href="index.md">Performance x86_1</a> › <code>kem-02</code> · <a href="method.md">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560843117875200.html">NICCS page</a> · system: <strong>x86_1</strong> · <a href="../arm_1/kem-02.md">arm_1</a></p>
+
 # kem-02 Amoeba — performance on x86-64 (system x86_1)
-
-[Performance x86_1](index.md) › `kem-02` · [method](method.md) · [NICCS page](https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560843117875200.html)
-
-**Systems:** **x86_1** · [arm_1](../arm_1/kem-02.md)
 
 Independent measurement following the structure of the NICCS x86 self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.
 
@@ -13,6 +11,7 @@ Independent measurement following the structure of the NICCS x86 self-assessment
 - Algorithm: Amoeba
 - Implementation versions measured: reference
 - Parameter sets: `Amoeba128`, `Amoeba192`, `Amoeba256`, `Amoeba384`, `Amoeba512`
+- Security evaluation: [kem-02 report](../../reports/kem-02.md)
 
 ## 2. Assessment environment
 

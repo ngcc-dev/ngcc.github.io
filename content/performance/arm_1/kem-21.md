@@ -1,9 +1,7 @@
 <!-- synchronized from harness: kem-21/perf_arm_1.md -->
+<p class="crumb"><a href="index.md">Performance arm_1</a> › <code>kem-21</code> · <a href="method.md">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560854052425728.html">NICCS page</a> · system: <a href="../x86_1/kem-21.md">x86_1</a> · <strong>arm_1</strong></p>
+
 # kem-21 MAMBA-Viper — performance on AArch64 (system arm_1)
-
-[Performance arm_1](index.md) › `kem-21` · [method](method.md) · [NICCS page](https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560854052425728.html)
-
-**Systems:** [x86_1](../x86_1/kem-21.md) · **arm_1**
 
 Independent measurement following the structure of the NICCS ARM self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.
 
@@ -13,6 +11,7 @@ Independent measurement following the structure of the NICCS ARM self-assessment
 - Algorithm: MAMBA-Viper
 - Implementation versions measured: reference
 - Parameter sets: `MAMBA-Viper-128`, `MAMBA-Viper-192`, `MAMBA-Viper-256`, `MAMBA-Viper-384`, `MAMBA-Viper-512`
+- Security evaluation: [kem-21 report](../../reports/kem-21.md)
 
 ## 2. Assessment environment
 

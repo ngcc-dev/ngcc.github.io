@@ -153,7 +153,7 @@ The script checks the defective assignment in eight archived implementation copi
 
 ## sign-01-6: The abort bound violates the security proof's own precondition
 
-Severity: Medium
+Severity: Low
 Status: Proof gap
 Layer: Design
 Affected: Aigis-Sig+ PARAMS I and PARAMS III security analysis
@@ -162,6 +162,7 @@ Exploitation: The printed quantitative proof bound is inapplicable; no forgery o
 Credit: Sun Shuzhou, with GLM-5.3 assistance
 Date: 2026-10-01
 Original source: [Sun Shuzhou's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XT47M5GJTH4JRXLV3H55P3BZ4C2RNGVU/)
+Follow-up source: [Aigis-Sig+ team's response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/NT4QDW5IZH2SKSEAI57BAY5V26JKPPUJ/)
 
 Section 7.3 sets the signing-abort upper bound to
 
@@ -170,6 +171,10 @@ Section 7.3 sets the signing-abort upper bound to
 At the Table 1 parameters this is 1.07668, 0.98003, and 1.16094 for sets I–III. The exact acceptance-probability formula in §3.4 gives repetition counts 6.408, 5.158, and 5.706, reproducing Table 2's rounded 6.41, 5.16, and 5.71 values. Theorems 1 and 2 and their supporting reductions explicitly require `0 < pbar < 1`, so the specification's chosen bound violates its own precondition for sets I and III. The sum double-counts overlap between the two abort events.
 
 This does not disprove the theorems or give an attack. Section 3.4's own heuristic combined-abort estimate, `1-exp(-(a+b))`, is 0.844, 0.806, and 0.825, so an immediate bound below one is available. Correcting the loose union bound is local and leaves §7.3's final bound unchanged; the consequence is therefore Low / Proof gap.
+
+The Aigis-Sig+ team confirms that the displayed sum is loose, says that
+`1-exp(-a-b)` matches the measured abort rates, and notes that the proof only
+requires some bound `pbar < 1`.
 
 ### Reproducing
 

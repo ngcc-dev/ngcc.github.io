@@ -415,12 +415,23 @@ def render_table(category: str, title: str, entries: list[Entry],
 
 def render(entries: list[Entry], findings: dict[str, Counter],
            names: dict[str, tuple[str, str]],
-           system: str, target_bits: int) -> str:
+           systems: tuple[str, ...], system: str, target_bits: int) -> str:
+    system_links = []
+    for candidate in systems:
+        if candidate == system:
+            system_links.append(
+                f'<a href="index.md"><strong>{html.escape(candidate)}</strong></a>')
+        else:
+            system_links.append(
+                f'<a href="../{html.escape(candidate)}/index.md">'
+                f'{html.escape(candidate)}</a>')
+    selector = (f'<p class="crumb"><a href="../index.md">Performance measurements</a> › '
+                f'system: {" · ".join(system_links)}</p>')
     links = []
     for target in TARGETS:
         name = f"ranking-{target}.md"
         links.append(f"[{target}-bit]({name})" if target != target_bits else f"**{target}-bit**")
-    sections = [f"# Ordered measurements ({system}, {target_bits}-bit)", "",
+    sections = [selector, "", f"# Ordered measurements ({system}, {target_bits}-bit)", "",
                 "Target: " + " · ".join(links), "",
                 "This preview orders each metric independently and orders the leftmost column by the "
                 "arithmetic mean of those ordinal ranks. Lower values are better. Ties receive their "
@@ -462,6 +473,12 @@ def main() -> int:
                         help="target for stdout or --output (default: 256)")
     args = parser.parse_args()
     harness = args.harness.resolve()
+    systems = tuple(
+        row["ID"] for row in read_csv(harness / "performance" / "systems.csv")
+        if (harness / "performance" / f"summary_{row['ID']}.md").is_file()
+    )
+    if args.system not in systems:
+        raise ValueError(f"{args.system}: no published performance summary")
     entries = load_entries(harness, args.system)
     findings = load_security(args.reports.resolve())
     names = load_names(args.candidate_data.resolve())
@@ -470,14 +487,14 @@ def main() -> int:
         for target in TARGETS:
             name = f"ranking-{target}.md"
             (args.output_dir / name).write_text(
-                render(entries, findings, names, args.system, target), encoding="utf-8")
+                render(entries, findings, names, systems, args.system, target), encoding="utf-8")
         print(f"ranking preview: {len(entries)} measured reference instances -> {args.output_dir}")
     elif args.output:
-        output = render(entries, findings, names, args.system, args.target)
+        output = render(entries, findings, names, systems, args.system, args.target)
         args.output.write_text(output, encoding="utf-8")
         print(f"ranking preview: {len(entries)} measured reference instances -> {args.output}")
     else:
-        sys.stdout.write(render(entries, findings, names, args.system, args.target))
+        sys.stdout.write(render(entries, findings, names, systems, args.system, args.target))
     return 0
 
 

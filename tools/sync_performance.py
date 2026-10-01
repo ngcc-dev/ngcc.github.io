@@ -109,18 +109,39 @@ def main():
         text = text[:first_summary] + ordered + "\n" + text[first_summary:]
         return selector + text
 
-    def decorate_detail(text, sid):
-        """Put reciprocal system links beside each candidate measurement page."""
+    def decorate_detail(text, sid, cid):
+        """Move the navigation line above the H1 as a site breadcrumb and add
+        reciprocal system links. Runs after link rewriting, so hrefs are
+        already site-relative."""
+        lines = text.splitlines()
+        h1 = next((i for i, line in enumerate(lines) if line.startswith("# ")), None)
+        nav = next((i for i, line in enumerate(lines)
+                    if line.startswith(f"[Performance {sid}]")), None)
+        if h1 is None or nav is None or nav < h1:
+            sys.exit(f"sync-performance: {sid}/{cid}: navigation line not found")
         choices = []
         for system in systems:
             other = system["ID"]
-            choices.append(f"**{other}**" if other == sid else
-                           f"[{other}](perf_{other}.md)")
-        lines = text.splitlines()
-        for i, line in enumerate(lines):
-            if line.startswith(f"[Performance {sid}]"):
-                lines[i + 1:i + 1] = ["", f"**Systems:** {' · '.join(choices)}"]
-                break
+            choices.append(f"<strong>{other}</strong>" if other == sid else
+                           f'<a href="../{other}/{cid}.md">{other}</a>')
+        crumb = re.sub(r"\[([^\]]+)\]\(([^)\s]+)\)", r'<a href="\2">\1</a>', lines[nav])
+        crumb = re.sub(r"`([^`]+)`", r"<code>\1</code>", crumb)
+        crumb = f'<p class="crumb">{crumb} · system: {" · ".join(choices)}</p>'
+        del lines[nav]
+        if nav < len(lines) and not lines[nav].strip() and not lines[nav - 1].strip():
+            del lines[nav]
+        # Cross-link the security evaluation from the basic-information list.
+        info = next((i for i, line in enumerate(lines)
+                     if line.startswith("## 1. Basic information")), None)
+        if info is None:
+            sys.exit(f"sync-performance: {sid}/{cid}: basic-information section not found")
+        end = info + 1
+        while end < len(lines) and not lines[end].startswith("- "):
+            end += 1
+        while end < len(lines) and lines[end].startswith("- "):
+            end += 1
+        lines.insert(end, f"- Security evaluation: [{cid} report](../../reports/{cid}.md)")
+        lines[h1:h1] = [crumb, ""]
         return "\n".join(lines) + ("\n" if text.endswith("\n") else "")
 
     shutil.rmtree(DEST, ignore_errors=True)
@@ -129,13 +150,14 @@ def main():
         match = re.fullmatch(r"performance/([^/]+)/index\.md", dst_rel)
         if match:
             text = decorate_summary(text, match.group(1))
+        text = rewrite(text, src_rel, dst_rel)
         match = re.fullmatch(r"performance/([^/]+)/((?:sign|kem|kex|hash)-\d\d)\.md", dst_rel)
         if match:
-            text = decorate_detail(text, match.group(1))
+            text = decorate_detail(text, match.group(1), match.group(2))
         out = ROOT / "content" / dst_rel
         out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text(f"<!-- synchronized from harness: {src_rel} -->\n" +
-                       rewrite(text, src_rel, dst_rel), encoding="utf-8")
+        out.write_text(f"<!-- synchronized from harness: {src_rel} -->\n" + text,
+                       encoding="utf-8")
 
     index = ["# Performance", "",
              "Independent cycle-count measurements of the NGCC Round 1 candidates. "

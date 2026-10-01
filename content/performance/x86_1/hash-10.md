@@ -1,9 +1,7 @@
 <!-- synchronized from harness: hash-10/perf_x86_1.md -->
+<p class="crumb"><a href="index.md">Performance x86_1</a> › <code>hash-10</code> · <a href="method.md">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101539111250251776.html">NICCS page</a> · system: <strong>x86_1</strong> · <a href="../arm_1/hash-10.md">arm_1</a></p>
+
 # hash-10 FEILIAN — performance on x86-64 (system x86_1)
-
-[Performance x86_1](index.md) › `hash-10` · [method](method.md) · [NICCS page](https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101539111250251776.html)
-
-**Systems:** **x86_1** · [arm_1](../arm_1/hash-10.md)
 
 Independent measurement following the structure of the NICCS x86 self-assessment guide, §3.5 (1)–(7). Not a submitter self-assessment.
 
@@ -13,6 +11,7 @@ Independent measurement following the structure of the NICCS x86 self-assessment
 - Algorithm: FEILIAN
 - Implementation versions measured: reference
 - Parameter sets: `FEILIAN512`, `FEILIAN768`, `FEILIAN1024`
+- Security evaluation: [hash-10 report](../../reports/hash-10.md)
 
 ## 2. Assessment environment
 

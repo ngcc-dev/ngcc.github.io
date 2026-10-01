@@ -6,10 +6,12 @@ Jekyll). Requires Python 3 and the `markdown` package.
 
     make build      # content/ -> docs/
     make serve      # preview on http://localhost:8000
-    make sync-performance PERF_SOURCE=../ngcc-harness
+    make sync REPORT_SOURCE=../ngcc1 PERF_SOURCE=../ngcc-harness
     git commit -a && git push   # deploy
 
-The performance sync validates that every registered candidate has a generated
+The combined sync updates reports first and performance second, so the ordered
+measurement pages always recompute their security badges from the current
+reports. The performance sync validates that every registered candidate has a generated
 page, copies the harness summaries into `content/performance/`, and rewrites
 their internal links. Run `make check` afterward to rebuild and validate the
 published `docs/` tree.
