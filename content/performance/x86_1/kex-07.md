@@ -1,5 +1,5 @@
 <!-- synchronized from harness: kex-07/perf_x86_1.md -->
-<p class="crumb"><a href="index.md">Performance x86_1</a> › <code>kex-07</code> · <a href="method.md">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560626045865984.html">NICCS page</a> · system: <strong>x86_1</strong> · <a href="../arm_1/kex-07.md">arm_1</a></p>
+<p class="crumb"><a href="../index.md">Performance measurements</a> › <a href="index.md">x86_1</a> › <code>kex-07</code> · system: <strong>x86_1</strong> · <a href="../arm_1/kex-07.md">arm_1</a></p>
 
 # kex-07 NEV-AKE — performance on x86-64 (system x86_1)
 
@@ -12,6 +12,8 @@ Independent measurement following the structure of the NICCS x86 self-assessment
 - Implementation versions measured: reference
 - Parameter sets: `NEV_AKE_512_769`, `NEV_AKE_512_769_C`, `NEV_AKE_512_1409`, `NEV_AKE_1024_769`, `NEV_AKE_1024_769_C`, `NEV_AKE_1024_1409`, `NEV_AKE_2048_769`, `NEV_AKE_2048_769_C`, `NEV_AKE_2048_1409`
 - Security evaluation: [kex-07 report](../../reports/kex-07.md)
+- Measurement method: [x86_1 method](method.md)
+- Submission: [NICCS page](https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560626045865984.html)
 
 ## 2. Assessment environment
 

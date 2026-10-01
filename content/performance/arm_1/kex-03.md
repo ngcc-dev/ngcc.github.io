@@ -1,5 +1,5 @@
 <!-- synchronized from harness: kex-03/perf_arm_1.md -->
-<p class="crumb"><a href="index.md">Performance arm_1</a> › <code>kex-03</code> · <a href="method.md">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560625517383680.html">NICCS page</a> · system: <a href="../x86_1/kex-03.md">x86_1</a> · <strong>arm_1</strong></p>
+<p class="crumb"><a href="../index.md">Performance measurements</a> › <a href="index.md">arm_1</a> › <code>kex-03</code> · system: <a href="../x86_1/kex-03.md">x86_1</a> · <strong>arm_1</strong></p>
 
 # kex-03 CreTAKE — performance on AArch64 (system arm_1)
 
@@ -12,6 +12,8 @@ Independent measurement following the structure of the NICCS ARM self-assessment
 - Implementation versions measured: reference
 - Parameter sets: `CreTAKE-K2K-PLAC128`, `CreTAKE-K2K-PLAC256`, `CreTAKE-K2K-PLAC512`, `CreTAKE-K2K-PLAC512Star`, `CreTAKE-K2K-ZEN128`, `CreTAKE-K2K-ZEN256`, `CreTAKE-K2K-ZEN512`, `CreTAKE-K2S-PLAC128-BiT128`, `CreTAKE-K2S-PLAC256-BiT256`, `CreTAKE-K2S-PLAC512-BiT512`, `CreTAKE-K2S-ZEN128-BiT128`, `CreTAKE-K2S-ZEN256-BiT256`, `CreTAKE-K2S-ZEN512-BiT512`, `CreTAKE-S2K-BiT128-PLAC128`, `CreTAKE-S2K-BiT128-ZEN128`, `CreTAKE-S2K-BiT256-PLAC256`, `CreTAKE-S2K-BiT256-ZEN256`, `CreTAKE-S2K-BiT512-PLAC512`, `CreTAKE-S2K-BiT512-ZEN512`, `CreTAKE-S2S-BiT128-ePLAC128`, `CreTAKE-S2S-BiT128-eZEN128`, `CreTAKE-S2S-BiT256-ePLAC256`, `CreTAKE-S2S-BiT256-eZEN256`, `CreTAKE-S2S-BiT512-ePLAC512`, `CreTAKE-S2S-BiT512-eZEN512`
 - Security evaluation: [kex-03 report](../../reports/kex-03.md)
+- Measurement method: [arm_1 method](method.md)
+- Submission: [NICCS page](https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560625517383680.html)
 
 ## 2. Assessment environment
 

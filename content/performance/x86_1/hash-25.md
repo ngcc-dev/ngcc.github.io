@@ -1,5 +1,5 @@
 <!-- synchronized from harness: hash-25/perf_x86_1.md -->
-<p class="crumb"><a href="index.md">Performance x86_1</a> › <code>hash-25</code> · <a href="method.md">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101536036577955840.html">NICCS page</a> · system: <strong>x86_1</strong> · <a href="../arm_1/hash-25.md">arm_1</a></p>
+<p class="crumb"><a href="../index.md">Performance measurements</a> › <a href="index.md">x86_1</a> › <code>hash-25</code> · system: <strong>x86_1</strong> · <a href="../arm_1/hash-25.md">arm_1</a></p>
 
 # hash-25 TaiChi — performance on x86-64 (system x86_1)
 
@@ -12,6 +12,8 @@ Independent measurement following the structure of the NICCS x86 self-assessment
 - Implementation versions measured: reference
 - Parameter sets: `TaiChi-512`, `TaiChi-768`, `TaiChi-1024`
 - Security evaluation: [hash-25 report](../../reports/hash-25.md)
+- Measurement method: [x86_1 method](method.md)
+- Submission: [NICCS page](https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101536036577955840.html)
 
 ## 2. Assessment environment
 

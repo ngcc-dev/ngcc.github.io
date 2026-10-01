@@ -1,5 +1,5 @@
 <!-- synchronized from harness: kem-25/perf_arm_1.md -->
-<p class="crumb"><a href="index.md">Performance arm_1</a> › <code>kem-25</code> · <a href="method.md">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560863040819200.html">NICCS page</a> · system: <a href="../x86_1/kem-25.md">x86_1</a> · <strong>arm_1</strong></p>
+<p class="crumb"><a href="../index.md">Performance measurements</a> › <a href="index.md">arm_1</a> › <code>kem-25</code> · system: <a href="../x86_1/kem-25.md">x86_1</a> · <strong>arm_1</strong></p>
 
 # kem-25 NEV — performance on AArch64 (system arm_1)
 
@@ -12,6 +12,8 @@ Independent measurement following the structure of the NICCS ARM self-assessment
 - Implementation versions measured: reference
 - Parameter sets: `NEV_512_769_C_ICCS`, `NEV_512_769_ICCS`, `NEV_512_1409_ICCS`, `NEV_512_3329_ICCS`, `NEV_1024_769_C_ICCS`, `NEV_1024_769_ICCS`, `NEV_1024_1409_ICCS`, `NEV_1024_3329_ICCS`, `NEV_2048_769_C_ICCS`, `NEV_2048_769_ICCS`, `NEV_2048_1409_ICCS`, `NEV_2048_3329_ICCS`
 - Security evaluation: [kem-25 report](../../reports/kem-25.md)
+- Measurement method: [arm_1 method](method.md)
+- Submission: [NICCS page](https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560863040819200.html)
 
 ## 2. Assessment environment
 

@@ -1,5 +1,5 @@
 <!-- synchronized from harness: kem-20/perf_arm_1.md -->
-<p class="crumb"><a href="index.md">Performance arm_1</a> › <code>kem-20</code> · <a href="method.md">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560853918208000.html">NICCS page</a> · system: <a href="../x86_1/kem-20.md">x86_1</a> · <strong>arm_1</strong></p>
+<p class="crumb"><a href="../index.md">Performance measurements</a> › <a href="index.md">arm_1</a> › <code>kem-20</code> · system: <a href="../x86_1/kem-20.md">x86_1</a> · <strong>arm_1</strong></p>
 
 # kem-20 MAMBA-Frost — performance on AArch64 (system arm_1)
 
@@ -12,6 +12,8 @@ Independent measurement following the structure of the NICCS ARM self-assessment
 - Implementation versions measured: reference
 - Parameter sets: `MAMBA-Frost-128`, `MAMBA-Frost-192`, `MAMBA-Frost-256`, `MAMBA-Frost-384`, `MAMBA-Frost-512`, `MAMBA-Frost-CC-128`, `MAMBA-Frost-CC-192`, `MAMBA-Frost-CC-256`, `MAMBA-Frost-CC-384`, `MAMBA-Frost-CC-512`
 - Security evaluation: [kem-20 report](../../reports/kem-20.md)
+- Measurement method: [arm_1 method](method.md)
+- Submission: [NICCS page](https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560853918208000.html)
 
 ## 2. Assessment environment
 

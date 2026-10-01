@@ -1,5 +1,5 @@
 <!-- synchronized from harness: kex-09/perf_arm_1.md -->
-<p class="crumb"><a href="index.md">Performance arm_1</a> › <code>kex-09</code> · <a href="method.md">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560626335272960.html">NICCS page</a> · system: <a href="../x86_1/kex-09.md">x86_1</a> · <strong>arm_1</strong></p>
+<p class="crumb"><a href="../index.md">Performance measurements</a> › <a href="index.md">arm_1</a> › <code>kex-09</code> · system: <a href="../x86_1/kex-09.md">x86_1</a> · <strong>arm_1</strong></p>
 
 # kex-09 TriQ-KEX — performance on AArch64 (system arm_1)
 
@@ -12,6 +12,8 @@ Independent measurement following the structure of the NICCS ARM self-assessment
 - Implementation versions measured: reference
 - Parameter sets: `TriQ-KEX-128`, `TriQ-KEX-256`, `TriQ-KEX-384`, `TriQ-KEX-512`
 - Security evaluation: [kex-09 report](../../reports/kex-09.md)
+- Measurement method: [arm_1 method](method.md)
+- Submission: [NICCS page](https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560626335272960.html)
 
 ## 2. Assessment environment
 

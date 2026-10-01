@@ -1,5 +1,5 @@
 <!-- synchronized from harness: hash-32/perf_arm_1.md -->
-<p class="crumb"><a href="index.md">Performance arm_1</a> › <code>hash-32</code> · <a href="method.md">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101534201922277376.html">NICCS page</a> · system: <a href="../x86_1/hash-32.md">x86_1</a> · <strong>arm_1</strong></p>
+<p class="crumb"><a href="../index.md">Performance measurements</a> › <a href="index.md">arm_1</a> › <code>hash-32</code> · system: <a href="../x86_1/hash-32.md">x86_1</a> · <strong>arm_1</strong></p>
 
 # hash-32 The ZC-EDMC Hash Function — performance on AArch64 (system arm_1)
 
@@ -12,6 +12,8 @@ Independent measurement following the structure of the NICCS ARM self-assessment
 - Implementation versions measured: reference
 - Parameter sets: `ZC-EDMC-1280-512`, `ZC-EDMC-1280-768`, `ZC-EDMC-1280-1024`, `ZC-EDMC-1536-512`, `ZC-EDMC-1536-768`, `ZC-EDMC-1536-1024`
 - Security evaluation: [hash-32 report](../../reports/hash-32.md)
+- Measurement method: [arm_1 method](method.md)
+- Submission: [NICCS page](https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101534201922277376.html)
 
 ## 2. Assessment environment
 

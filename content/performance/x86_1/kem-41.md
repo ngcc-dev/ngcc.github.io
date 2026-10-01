@@ -1,5 +1,5 @@
 <!-- synchronized from harness: kem-41/perf_x86_1.md -->
-<p class="crumb"><a href="index.md">Performance x86_1</a> › <code>kem-41</code> · <a href="method.md">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560890563842048.html">NICCS page</a> · system: <strong>x86_1</strong> · <a href="../arm_1/kem-41.md">arm_1</a></p>
+<p class="crumb"><a href="../index.md">Performance measurements</a> › <a href="index.md">x86_1</a> › <code>kem-41</code> · system: <strong>x86_1</strong> · <a href="../arm_1/kem-41.md">arm_1</a></p>
 
 # kem-41 ZEN — performance on x86-64 (system x86_1)
 
@@ -12,6 +12,8 @@ Independent measurement following the structure of the NICCS x86 self-assessment
 - Implementation versions measured: reference
 - Parameter sets: `ZEN_128`, `ZEN_256`, `ZEN_512`
 - Security evaluation: [kem-41 report](../../reports/kem-41.md)
+- Measurement method: [x86_1 method](method.md)
+- Submission: [NICCS page](https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560890563842048.html)
 
 ## 2. Assessment environment
 

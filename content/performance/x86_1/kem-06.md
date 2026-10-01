@@ -1,5 +1,5 @@
 <!-- synchronized from harness: kem-06/perf_x86_1.md -->
-<p class="crumb"><a href="index.md">Performance x86_1</a> › <code>kem-06</code> · <a href="method.md">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560843625385984.html">NICCS page</a> · system: <strong>x86_1</strong> · <a href="../arm_1/kem-06.md">arm_1</a></p>
+<p class="crumb"><a href="../index.md">Performance measurements</a> › <a href="index.md">x86_1</a> › <code>kem-06</code> · system: <strong>x86_1</strong> · <a href="../arm_1/kem-06.md">arm_1</a></p>
 
 # kem-06 BRA — performance on x86-64 (system x86_1)
 
@@ -12,6 +12,8 @@ Independent measurement following the structure of the NICCS x86 self-assessment
 - Implementation versions measured: reference
 - Parameter sets: `BRA-128`, `BRA-256`, `BRA-512`
 - Security evaluation: [kem-06 report](../../reports/kem-06.md)
+- Measurement method: [x86_1 method](method.md)
+- Submission: [NICCS page](https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560843625385984.html)
 
 ## 2. Assessment environment
 

@@ -1,5 +1,5 @@
 <!-- synchronized from harness: sign-32/perf_arm_1.md -->
-<p class="crumb"><a href="index.md">Performance arm_1</a> › <code>sign-32</code> · <a href="method.md">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561105735831552.html">NICCS page</a> · system: <a href="../x86_1/sign-32.md">x86_1</a> · <strong>arm_1</strong></p>
+<p class="crumb"><a href="../index.md">Performance measurements</a> › <a href="index.md">arm_1</a> › <code>sign-32</code> · system: <a href="../x86_1/sign-32.md">x86_1</a> · <strong>arm_1</strong></p>
 
 # sign-32 UVW signature — performance on AArch64 (system arm_1)
 
@@ -12,6 +12,8 @@ Independent measurement following the structure of the NICCS ARM self-assessment
 - Implementation versions measured: reference
 - Parameter sets: `UVW-128`, `UVW-256`, `UVW-512`
 - Security evaluation: [sign-32 report](../../reports/sign-32.md)
+- Measurement method: [arm_1 method](method.md)
+- Submission: [NICCS page](https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561105735831552.html)
 
 ## 2. Assessment environment
 

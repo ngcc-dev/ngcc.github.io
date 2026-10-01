@@ -1,5 +1,5 @@
 <!-- synchronized from harness: kem-28/perf_arm_1.md -->
-<p class="crumb"><a href="index.md">Performance arm_1</a> › <code>kem-28</code> · <a href="method.md">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560871911772160.html">NICCS page</a> · system: <a href="../x86_1/kem-28.md">x86_1</a> · <strong>arm_1</strong></p>
+<p class="crumb"><a href="../index.md">Performance measurements</a> › <a href="index.md">arm_1</a> › <code>kem-28</code> · system: <a href="../x86_1/kem-28.md">x86_1</a> · <strong>arm_1</strong></p>
 
 # kem-28 OAEP-NTRU — performance on AArch64 (system arm_1)
 
@@ -12,6 +12,8 @@ Independent measurement following the structure of the NICCS ARM self-assessment
 - Implementation versions measured: reference
 - Parameter sets: `OAEP-NTRU-648`, `OAEP-NTRU-1296`, `OAEP-NTRU-2592`
 - Security evaluation: [kem-28 report](../../reports/kem-28.md)
+- Measurement method: [arm_1 method](method.md)
+- Submission: [NICCS page](https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560871911772160.html)
 
 ## 2. Assessment environment
 

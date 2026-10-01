@@ -1,5 +1,5 @@
 <!-- synchronized from harness: sign-10/perf_x86_1.md -->
-<p class="crumb"><a href="index.md">Performance x86_1</a> › <code>sign-10</code> · <a href="method.md">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561077457833984.html">NICCS page</a> · system: <strong>x86_1</strong> · <a href="../arm_1/sign-10.md">arm_1</a></p>
+<p class="crumb"><a href="../index.md">Performance measurements</a> › <a href="index.md">x86_1</a> › <code>sign-10</code> · system: <strong>x86_1</strong> · <a href="../arm_1/sign-10.md">arm_1</a></p>
 
 # sign-10 Facto-DSA — performance on x86-64 (system x86_1)
 
@@ -12,6 +12,8 @@ Independent measurement following the structure of the NICCS x86 self-assessment
 - Implementation versions measured: reference
 - Parameter sets: `Facto-DSA-128`, `Facto-DSA-256`, `Facto-DSA-512`
 - Security evaluation: [sign-10 report](../../reports/sign-10.md)
+- Measurement method: [x86_1 method](method.md)
+- Submission: [NICCS page](https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561077457833984.html)
 
 ## 2. Assessment environment
 

@@ -1,5 +1,5 @@
 <!-- synchronized from harness: sign-04/perf_x86_1.md -->
-<p class="crumb"><a href="index.md">Performance x86_1</a> › <code>sign-04</code> · <a href="method.md">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561076644139008.html">NICCS page</a> · system: <strong>x86_1</strong> · <a href="../arm_1/sign-04.md">arm_1</a></p>
+<p class="crumb"><a href="../index.md">Performance measurements</a> › <a href="index.md">x86_1</a> › <code>sign-04</code> · system: <strong>x86_1</strong> · <a href="../arm_1/sign-04.md">arm_1</a></p>
 
 # sign-04 CEDRUSɑ — performance on x86-64 (system x86_1)
 
@@ -12,6 +12,8 @@ Independent measurement following the structure of the NICCS x86 self-assessment
 - Implementation versions measured: reference
 - Parameter sets: `CEDRUSALPHA-160f`, `CEDRUSALPHA-160s`, `CEDRUSALPHA-256f`, `CEDRUSALPHA-256s`, `CEDRUSALPHA-384f`, `CEDRUSALPHA-384s`, `CEDRUSALPHA-512f`, `CEDRUSALPHA-512s`
 - Security evaluation: [sign-04 report](../../reports/sign-04.md)
+- Measurement method: [x86_1 method](method.md)
+- Submission: [NICCS page](https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561076644139008.html)
 
 ## 2. Assessment environment
 

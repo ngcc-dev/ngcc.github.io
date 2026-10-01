@@ -1,5 +1,5 @@
 <!-- synchronized from harness: sign-21/perf_x86_1.md -->
-<p class="crumb"><a href="index.md">Performance x86_1</a> › <code>sign-21</code> · <a href="method.md">method</a> · <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561087368974336.html">NICCS page</a> · system: <strong>x86_1</strong> · <a href="../arm_1/sign-21.md">arm_1</a></p>
+<p class="crumb"><a href="../index.md">Performance measurements</a> › <a href="index.md">x86_1</a> › <code>sign-21</code> · system: <strong>x86_1</strong> · <a href="../arm_1/sign-21.md">arm_1</a></p>
 
 # sign-21 ReSolveD-ɑ — performance on x86-64 (system x86_1)
 
@@ -12,6 +12,8 @@ Independent measurement following the structure of the NICCS x86 self-assessment
 - Implementation versions measured: reference
 - Parameter sets: `ReSolveD-alpha-160f`, `ReSolveD-alpha-160s`, `ReSolveD-alpha-256f`, `ReSolveD-alpha-256s`, `ReSolveD-alpha-384f`, `ReSolveD-alpha-384s`, `ReSolveD-alpha-512f`, `ReSolveD-alpha-512s`
 - Security evaluation: [sign-21 report](../../reports/sign-21.md)
+- Measurement method: [x86_1 method](method.md)
+- Submission: [NICCS page](https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101561087368974336.html)
 
 ## 2. Assessment environment
 

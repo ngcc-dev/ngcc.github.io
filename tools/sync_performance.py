@@ -124,9 +124,13 @@ def main():
             other = system["ID"]
             choices.append(f"<strong>{other}</strong>" if other == sid else
                            f'<a href="../{other}/{cid}.md">{other}</a>')
-        crumb = re.sub(r"\[([^\]]+)\]\(([^)\s]+)\)", r'<a href="\2">\1</a>', lines[nav])
-        crumb = re.sub(r"`([^`]+)`", r"<code>\1</code>", crumb)
-        crumb = f'<p class="crumb">{crumb} · system: {" · ".join(choices)}</p>'
+        crumb = (f'<p class="crumb"><a href="../index.md">Performance measurements</a> › '
+                 f'<a href="index.md">{sid}</a> › <code>{cid}</code> · '
+                 f'system: {" · ".join(choices)}</p>')
+        # The harness navigation line also carries reference links (method,
+        # NICCS page); they move to the basic-information list below.
+        nav_links = dict((label, href) for label, href in
+                         re.findall(r"\[([^\]]+)\]\(([^)\s]+)\)", lines[nav]))
         del lines[nav]
         if nav < len(lines) and not lines[nav].strip() and not lines[nav - 1].strip():
             del lines[nav]
@@ -140,7 +144,12 @@ def main():
             end += 1
         while end < len(lines) and lines[end].startswith("- "):
             end += 1
-        lines.insert(end, f"- Security evaluation: [{cid} report](../../reports/{cid}.md)")
+        extra = [f"- Security evaluation: [{cid} report](../../reports/{cid}.md)"]
+        if "method" in nav_links:
+            extra.append(f"- Measurement method: [{sid} method]({nav_links['method']})")
+        if "NICCS page" in nav_links:
+            extra.append(f"- Submission: [NICCS page]({nav_links['NICCS page']})")
+        lines[end:end] = extra
         lines[h1:h1] = [crumb, ""]
         return "\n".join(lines) + ("\n" if text.endswith("\n") else "")
 
