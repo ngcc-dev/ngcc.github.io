@@ -108,6 +108,27 @@
 <pre><code class="language-sh">python3 sign-28/reproduce_static_findings.py
 </code></pre>
 <p>The validator checks the identical faulty loop in all six reference trees and confirms that the supported security-parameter byte lengths all exceed eight.</p>
+<h2 class="issue-heading" id="sign-28-5-an-undocumented-exported-helper-generates-keys-from-a-public-constant">sign-28-5: An undocumented exported helper generates keys from a public constant</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Undocumented <code>sydo_ref_keygen</code> and <code>sydo_ref_sign</code> helpers in all six reference source trees; submitted NGCC APIs are unaffected</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Trivial reproduction of every key generated through the helper; no submitted API path reaches it</td></tr>
+<tr><th>Credit</th><td>Sun Shuzhou, with GLM-5.3 assistance</td></tr>
+<tr><th>Date</th><td>2026-10-01</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/HWARV6IQNFUCAC5OHNURHPKIDNTXTJCQ/">Sun Shuzhou's PKC Forum post</a></p>
+<p>The exported helper <code>sydo_ref_keygen</code> obtains its seed from <code>rand_bytes</code> (<code>sydo.c:645–657</code>). In every reference tree, <code>rand_bytes</code> initializes a static DRBG once with the public 55-byte string <code>0xA5 XOR i</code> and never reads operating-system entropy (<code>randomness.c:10–31</code>). The first key pair is therefore identical in every fresh process, and the later stream is also publicly computable. The related <code>sydo_ref_sign</code> helper uses the same generator (<code>sydo.c:887–902</code>). This contradicts Algorithm 1's random <code>seed_sk</code> and <code>seed_pk</code> and permits complete signing-key reproduction if the helper is used.</p>
+<p>Nothing in the submitted trees calls these helpers, they are documented only by declarations in <code>sydo.h</code>, and the package does not build a library exposing them. The submitted NGCC <code>sig_keygen</code> adapter instead draws an explicit seed from the framework DRNG and calls <code>sydo_ref_keygen_from_seed</code>; the optimized path also uses proper entropy. Because the cryptographic failure is confined to unused, undocumented source helpers rather than the candidate API, the finding is Medium rather than Critical.</p>
+<p>The helper must obtain cryptographic entropy from the operating system or require a caller-supplied seed through an explicit deterministic interface.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C sign-28 reproduce-fixed-rng
+</code></pre>
+<p>The witness builds the unmodified SYDO-160s reference core, invokes the helper in two fresh processes, and requires byte-identical public and secret keys. It also checks that the optimized randomness source contains an operating-system entropy path as a scope control.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

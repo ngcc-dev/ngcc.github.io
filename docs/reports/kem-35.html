@@ -30,7 +30,7 @@
 <tr><th>Scope</th><td>side-channel</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Reference and optimized Scloud+-256, -384, and -512; all AES, SHAKE, and SM3 families</td></tr>
-<tr><th>Discovery</th><td>Hard</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
 <tr><th>Exploitation</th><td>Repeatable decrypted-message-dependent timing; key recovery and IND-CCA break not demonstrated</td></tr>
 <tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance</td></tr>
 <tr><th>Date</th><td>2026-10-01</td></tr>
@@ -47,7 +47,7 @@
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">sh kem-35/reproduce_reencryption_timing.sh
 </code></pre>
-<p>The wrapper fetches the pinned artifact and runs its deterministic squeeze-count and timing experiments against the archived optimized implementation. Absolute cycle counts depend on host scheduling; the deterministic squeeze-count result does not.</p>
+<p>The wrapper fetches the pinned artifact and runs its deterministic squeeze-count and timing experiments against the archived optimized implementation. It requires network access, an x86-64 processor with AVX2 and AES-NI, and <code>taskset</code> from util-linux. Absolute cycle counts depend on host scheduling; the deterministic squeeze-count result does not.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

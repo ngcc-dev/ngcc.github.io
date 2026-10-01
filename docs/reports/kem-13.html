@@ -76,14 +76,14 @@ python3 kem-13/reproduce_malicious_key.py \
 <tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
 <tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
-<tr><th>Affected</th><td>DKEM-512 scalar reference implementation; the submitter reports the same failure magnitude for NEON</td></tr>
+<tr><th>Affected</th><td>DKEM-512 scalar reference, NEON, Cortex-M4, and auto-detected natural-order AVX2 intrinsic paths; the official packed-assembly AVX2 build is unaffected</td></tr>
 <tr><th>Discovery</th><td>Moderate</td></tr>
 <tr><th>Exploitation</th><td>Honest encapsulation and decapsulation disagree about once per 2^11 trials; no key recovery demonstrated</td></tr>
 <tr><th>Credit</th><td>Sun Shuzhou, with GLM-5.3 assistance</td></tr>
 <tr><th>Date</th><td>2026-09-28</td></tr>
 </table></div>
 <p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/GD3QWKLXKTRIRKCMKCOHTFRLBQN3REES/">NGCC PKC Forum post</a>
-Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/NRJXWUW3IRBVMQZEGW3DNPUVK6PW7YLG/">DKEM/DKEX/ADKEX team's PKC Forum response</a></p>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/NRJXWUW3IRBVMQZEGW3DNPUVK6PW7YLG/">DKEM/DKEX/ADKEX team's PKC Forum response</a> and <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XCBIRRBK5PRUUSJ6OWVVCFC5B43UHLXS/">Sun Shuzhou's recheck</a></p>
 <p>Table 1 and §3.4 claim a DKEM-512 reconciliation-failure probability of at
 most about <code>2^-167</code>. The scalar forward NTT instead stores both butterfly sums
 in <code>int16_t</code> (<code>DKEM-512/ntt.c:78–88</code>). With <code>q = 7681</code>, legitimate lazy
@@ -94,7 +94,7 @@ reports an observed honest mismatch rate near <code>2^-11</code>; this also inva
 the shipped implementation's §5.2.5 failure-boosting estimate. The <code>q = 3329</code>
 DKEM-128 and -256 sets have substantially more headroom and are controls.</p>
 <h3 id="follow-up-analysis">Follow-up Analysis</h3>
-<p>The team confirms 12 mismatches in 20,000 and 21 in 40,000 scalar DKEM-512 sessions, as well as the same defect in the submitted NEON and Cortex-M4 backends. It reports that the AVX2 implementation already reduces between layers and is unaffected. Instrumentation made every observed overflow/failure depend only on the public ciphertext, which supports limiting this finding to correctness rather than secret-key leakage.</p>
+<p>The team confirms 12 mismatches in 20,000 and 21 in 40,000 scalar DKEM-512 sessions, as well as the same defect in the submitted NEON and Cortex-M4 backends. Its official packed-assembly AVX2 build reduces between layers and is unaffected. Sun's follow-up confirms the repair on those paths but reports 21 failures in 24,000 sessions through the natural-order AVX2 intrinsic chain selected by default when the sources are built without <code>DKE_NTT512_PACKED</code>; this is not the official optimized build. Instrumentation made every observed overflow/failure depend only on the public ciphertext, which supports limiting this finding to correctness rather than secret-key leakage.</p>
 <h3 id="proposed-fixes">Proposed fixes</h3>
 <p>The team's <a href="https://github.com/dkemdkex/dkem-dkex/commit/8e3417a">fix commit</a> proposes Barrett-reducing all coefficients after the length-64 and length-8 forward-NTT layers in the reference and NEON code, and reducing between the two four-layer Cortex-M4 passes. This section records the proposal without evaluating it.</p>
 <h3 id="reproducing_2">Reproducing</h3>
@@ -110,6 +110,27 @@ python3 kem-13/reproduce_ntt_overflow.py \
 that <code>kem_dec</code> returns <code>0</code> on the mismatching session. This is a deterministic
 failure witness, not an independent statistical estimate of the <code>2^-11</code> rate
 or a failure-oracle key-recovery attack.</p>
+<h2 class="issue-heading" id="kem-13-4-dkem-ignores-input-lengths-before-fixed-size-reads">kem-13-4: DKEM ignores input lengths before fixed-size reads</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>DKEM-128, -256, and -512 API implementations; runtime witness on the reference DKEM-128 decapsulator</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Malformed-input out-of-bounds read and process termination; no disclosure demonstrated</td></tr>
+<tr><th>Credit</th><td>DKEM / DKEX / ADKEX team</td></tr>
+<tr><th>Date</th><td>2026-10-01</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/HDVKBBLQ27XTZDNG5KU6BECX3Y4TT754/">Team's PKC Forum follow-up</a></p>
+<p><code>kem_enc</code> discards <code>pk_len_bytes</code>, and <code>kem_dec</code> discards both <code>sk_len_bytes</code> and <code>ct_len_bytes</code>, before the implementation parses fixed-size objects (<code>KEM_AlgorithmInstance.c:39–55</code>). A caller-supplied truncated key or ciphertext is therefore read beyond its allocation. The team confirms the same pattern in every DKEM implementation and reports reproducing it with AddressSanitizer.</p>
+<p>The local witness passes a one-byte-short honest ciphertext to the reference DKEM-128 decapsulator and requires an AddressSanitizer heap out-of-bounds read. It demonstrates no returned memory disclosure, write, or control-flow effect, so the finding is Low.</p>
+<h3 id="proposed-fixes_1">Proposed fixes</h3>
+<p>The team's <a href="https://github.com/dkemdkex/dkem-dkex/commit/c6c2faa">fix commit</a> proposes validating every input length before reading input or drawing randomness and returning <code>-2</code> for a mismatch. This section records the proposal without evaluating it.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C kem-13 reproduce-truncated
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

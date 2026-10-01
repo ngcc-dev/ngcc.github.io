@@ -95,7 +95,7 @@ The source-built set-I tests require Linux/GCC AddressSanitizer and print separa
 
 ## sign-01-4: Honest signing writes one polynomial past the mask vector
 
-Severity: Medium
+Severity: Low
 Status: Confirmed
 Layer: Implementation
 Affected: Aigis-Sig+ reference signers, all three parameter sets; runtime witness on set I
@@ -150,3 +150,31 @@ python3 sign-01/reproduce_challenge_entropy.py
 ```
 
 The script checks the defective assignment in eight archived implementation copies across sets I and II. It computes the number of distinct outputs and the maximum output probability separately, since the outputs are not equally likely.
+
+## sign-01-6: The abort bound violates the security proof's own precondition
+
+Severity: Medium
+Status: Proof gap
+Layer: Design
+Affected: Aigis-Sig+ PARAMS I and PARAMS III security analysis
+Discovery: Moderate
+Exploitation: The printed quantitative proof bound is inapplicable; no forgery or key recovery demonstrated
+Credit: Sun Shuzhou, with GLM-5.3 assistance
+Date: 2026-10-01
+Original source: [Sun Shuzhou's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XT47M5GJTH4JRXLV3H55P3BZ4C2RNGVU/)
+
+Section 7.3 sets the signing-abort upper bound to
+
+`pbar = (1-exp(-n*l*beta1/gamma1)) + (1-exp(-n*k*(beta2+eta1)/gamma2))`.
+
+At the Table 1 parameters this is 1.07668, 0.98003, and 1.16094 for sets I–III. The exact acceptance-probability formula in §3.4 gives repetition counts 6.408, 5.158, and 5.706, reproducing Table 2's rounded 6.41, 5.16, and 5.71 values. Theorems 1 and 2 and their supporting reductions explicitly require `0 < pbar < 1`, so the specification's chosen bound violates its own precondition for sets I and III. The sum double-counts overlap between the two abort events.
+
+This does not disprove the theorems or give an attack. Section 3.4's own heuristic combined-abort estimate, `1-exp(-(a+b))`, is 0.844, 0.806, and 0.825, so an immediate bound below one is available. Correcting the loose union bound is local and leaves §7.3's final bound unchanged; the consequence is therefore Low / Proof gap.
+
+### Reproducing
+
+```sh
+python3 sign-01/reproduce_abort_bound.py
+```
+
+The script evaluates the printed formula from the Table 1 parameters and checks the Table 2 repetition-rate control.

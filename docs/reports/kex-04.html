@@ -45,6 +45,27 @@
 <pre><code class="language-sh">python3 kex-04/reproduce_correctness.py
 </code></pre>
 <p>The witness initializes honest long-term keys, runs complete authenticated three-pass sessions through the submitted API, and compares both derived keys.</p>
+<h2 class="issue-heading" id="kex-04-2-dkex-ignores-input-lengths-before-fixed-size-reads">kex-04-2: DKEX ignores input lengths before fixed-size reads</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>DKEX-128, -256, and -512 x86 and AArch64 KEX APIs, plus the Cortex-M4 KEM wrappers; runtime witness on reference DKEX-128</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Malformed-message out-of-bounds read and process termination; no disclosure demonstrated</td></tr>
+<tr><th>Credit</th><td>DKEM / DKEX / ADKEX team</td></tr>
+<tr><th>Date</th><td>2026-10-01</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/USUZ2CPOFPWB3JST6BFM4XLGDHGY7URA/">Team's PKC Forum response</a></p>
+<p>The DKEX KEX wrappers discard the declared key, state, and message lengths before parsing fixed-size protocol objects (<code>KEX_AlgorithmInstance.c:71–171</code>). A truncated pass-1 message can therefore be read beyond its allocation while producing pass 2. The team confirms that the pattern affected the submitted DKEX KEX APIs. The Cortex-M4 package has no KEX API, but its <code>KEM_AlgorithmInstance.c</code> wrappers contain the same missing checks and were included in the team's repair.</p>
+<p>The local DKEX-128 witness gives pass 2 a one-byte allocation and a declared length of one. AddressSanitizer catches the resulting fixed-size read. No returned disclosure, write, or control-flow effect is demonstrated, so the finding is Low.</p>
+<h3 id="proposed-fixes_1">Proposed fixes</h3>
+<p>The team's <a href="https://github.com/dkemdkex/dkem-dkex/commit/c6c2faa">fix commit</a> proposes exact checks for every fixed-size input and minimum checks for state buffers before any read or randomness draw. This section records the proposal without evaluating it.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C kex-04 reproduce-truncated
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -35,7 +35,8 @@
 <tr><th>Credit</th><td>Sun Shuzhou, with GLM-5.3 assistance</td></tr>
 <tr><th>Date</th><td>2026-09-29</td></tr>
 </table></div>
-<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/AGQTR6256YQJPU76ZTC3RSLY44J7Y6T7/">Sun's PKC Forum post</a></p>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/AGQTR6256YQJPU76ZTC3RSLY44J7Y6T7/">Sun's PKC Forum post</a>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/USUZ2CPOFPWB3JST6BFM4XLGDHGY7URA/">DKEM / DKEX / ADKEX team's confirmation</a></p>
 <p>The specification defines a fresh session with no matching session and claims key indistinguishability for every such session (pages 31–32). The proof following Theorem 5.1 says that this case "can be proven similarly" to its matching-session wPFS case. This is false for the responder role. An active initiator claims an honest initiator's identity, satisfying the stated freshness condition, then chooses its ephemeral key and encapsulation, decapsulates the responder's reply, and knows the public transcript. It therefore computes the responder's real session key and distinguishes it from random with advantage <code>1/2</code> without a Reveal, StateReveal, or Corrupt query.</p>
 <p>This does not attack an honestly matched exchange. It shows that the claimed no-matching-session case fails to account for the deliberately unauthenticated initiator: the theorem needs a role-scoped authentication goal rather than the stated all-session claim.</p>
 <h3 id="reproducing">Reproducing</h3>
@@ -78,9 +79,11 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <tr><th>Credit</th><td>Sun Shuzhou, with GLM-5.3 assistance</td></tr>
 <tr><th>Date</th><td>2026-09-29</td></tr>
 </table></div>
-<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/AGQTR6256YQJPU76ZTC3RSLY44J7Y6T7/">Sun's PKC Forum post</a></p>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/AGQTR6256YQJPU76ZTC3RSLY44J7Y6T7/">Sun's PKC Forum post</a>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/USUZ2CPOFPWB3JST6BFM4XLGDHGY7URA/">DKEM / DKEX / ADKEX team's confirmation</a></p>
 <p><code>kex_generate_pass2_msg_b</code> discards <code>m1_len_bytes</code>, and <code>kex_derive_ss_a</code> discards <code>mb_len_bytes</code>, before parsing the supplied pointer as a complete fixed-size protocol message (<code>KEX_AlgorithmInstance.c:79–101</code> and <code>121–134</code>). A one-byte pass-1 allocation reaches a 32-byte read 767 bytes beyond that allocation at <code>dkecca.c:60</code>; AddressSanitizer traces it through <code>ADKEX_pass2_msg_b_derand</code> and the public pass-2 API.</p>
 <p>Without a protected allocator boundary, adjacent heap bytes are consumed by encapsulation, transcript hashing, and key derivation while the API still returns success. The out-of-bounds <code>ct_S</code> is also passed to decapsulation at <code>adkex_derand.c:78</code>. The returned message contains a KEM ciphertext and derived transcript values rather than the adjacent bytes themselves, and no recovery channel has been demonstrated. The confirmed impact is therefore an attacker-triggered out-of-bounds read, with no demonstrated memory disclosure or control-flow impact, hence Low.</p>
+<p>The team independently reproduced the AddressSanitizer finding and reports that the same missing-length pattern was present in DKEX and DKEM.</p>
 <h3 id="reproducing_2">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">make -C kex-01 reproduce-truncated

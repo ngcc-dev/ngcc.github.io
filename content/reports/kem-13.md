@@ -61,13 +61,13 @@ For each parameter set, the witness encapsulates 64 times to an honestly generat
 Severity: Medium
 Status: Confirmed
 Layer: Implementation
-Affected: DKEM-512 scalar reference implementation; the submitter reports the same failure magnitude for NEON
+Affected: DKEM-512 scalar reference, NEON, Cortex-M4, and auto-detected natural-order AVX2 intrinsic paths; the official packed-assembly AVX2 build is unaffected
 Discovery: Moderate
 Exploitation: Honest encapsulation and decapsulation disagree about once per 2^11 trials; no key recovery demonstrated
 Credit: Sun Shuzhou, with GLM-5.3 assistance
 Date: 2026-09-28
 Original source: [NGCC PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/GD3QWKLXKTRIRKCMKCOHTFRLBQN3REES/)
-Follow-up source: [DKEM/DKEX/ADKEX team's PKC Forum response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/NRJXWUW3IRBVMQZEGW3DNPUVK6PW7YLG/)
+Follow-up source: [DKEM/DKEX/ADKEX team's PKC Forum response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/NRJXWUW3IRBVMQZEGW3DNPUVK6PW7YLG/) and [Sun Shuzhou's recheck](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XCBIRRBK5PRUUSJ6OWVVCFC5B43UHLXS/)
 
 Table 1 and §3.4 claim a DKEM-512 reconciliation-failure probability of at
 most about `2^-167`. The scalar forward NTT instead stores both butterfly sums
@@ -81,7 +81,7 @@ DKEM-128 and -256 sets have substantially more headroom and are controls.
 
 ### Follow-up Analysis
 
-The team confirms 12 mismatches in 20,000 and 21 in 40,000 scalar DKEM-512 sessions, as well as the same defect in the submitted NEON and Cortex-M4 backends. It reports that the AVX2 implementation already reduces between layers and is unaffected. Instrumentation made every observed overflow/failure depend only on the public ciphertext, which supports limiting this finding to correctness rather than secret-key leakage.
+The team confirms 12 mismatches in 20,000 and 21 in 40,000 scalar DKEM-512 sessions, as well as the same defect in the submitted NEON and Cortex-M4 backends. Its official packed-assembly AVX2 build reduces between layers and is unaffected. Sun's follow-up confirms the repair on those paths but reports 21 failures in 24,000 sessions through the natural-order AVX2 intrinsic chain selected by default when the sources are built without `DKE_NTT512_PACKED`; this is not the official optimized build. Instrumentation made every observed overflow/failure depend only on the public ciphertext, which supports limiting this finding to correctness rather than secret-key leakage.
 
 ### Proposed fixes
 
@@ -102,3 +102,29 @@ With a fixed DRNG seed, the witness finds a silent DKEM-512 mismatch within
 that `kem_dec` returns `0` on the mismatching session. This is a deterministic
 failure witness, not an independent statistical estimate of the `2^-11` rate
 or a failure-oracle key-recovery attack.
+
+## kem-13-4: DKEM ignores input lengths before fixed-size reads
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: DKEM-128, -256, and -512 API implementations; runtime witness on the reference DKEM-128 decapsulator
+Discovery: Trivial
+Exploitation: Malformed-input out-of-bounds read and process termination; no disclosure demonstrated
+Credit: DKEM / DKEX / ADKEX team
+Date: 2026-10-01
+Original source: [Team's PKC Forum follow-up](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/HDVKBBLQ27XTZDNG5KU6BECX3Y4TT754/)
+
+`kem_enc` discards `pk_len_bytes`, and `kem_dec` discards both `sk_len_bytes` and `ct_len_bytes`, before the implementation parses fixed-size objects (`KEM_AlgorithmInstance.c:39–55`). A caller-supplied truncated key or ciphertext is therefore read beyond its allocation. The team confirms the same pattern in every DKEM implementation and reports reproducing it with AddressSanitizer.
+
+The local witness passes a one-byte-short honest ciphertext to the reference DKEM-128 decapsulator and requires an AddressSanitizer heap out-of-bounds read. It demonstrates no returned memory disclosure, write, or control-flow effect, so the finding is Low.
+
+### Proposed fixes
+
+The team's [fix commit](https://github.com/dkemdkex/dkem-dkex/commit/c6c2faa) proposes validating every input length before reading input or drawing randomness and returning `-2` for a mismatch. This section records the proposal without evaluating it.
+
+### Reproducing
+
+```sh
+make -C kem-13 reproduce-truncated
+```

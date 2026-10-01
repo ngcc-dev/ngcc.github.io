@@ -14,6 +14,7 @@ Exploitation: One ordinary adversarially initiated responder session
 Credit: Sun Shuzhou, with GLM-5.3 assistance
 Date: 2026-09-29
 Original source: [Sun's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/AGQTR6256YQJPU76ZTC3RSLY44J7Y6T7/)
+Follow-up source: [DKEM / DKEX / ADKEX team's confirmation](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/USUZ2CPOFPWB3JST6BFM4XLGDHGY7URA/)
 
 The specification defines a fresh session with no matching session and claims key indistinguishability for every such session (pages 31–32). The proof following Theorem 5.1 says that this case "can be proven similarly" to its matching-session wPFS case. This is false for the responder role. An active initiator claims an honest initiator's identity, satisfying the stated freshness condition, then chooses its ephemeral key and encapsulation, decapsulates the responder's reply, and knows the public transcript. It therefore computes the responder's real session key and distinguishes it from random with advantage `1/2` without a Reveal, StateReveal, or Corrupt query.
 
@@ -67,10 +68,13 @@ Exploitation: Malformed-message out-of-bounds read and process termination; no d
 Credit: Sun Shuzhou, with GLM-5.3 assistance
 Date: 2026-09-29
 Original source: [Sun's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/AGQTR6256YQJPU76ZTC3RSLY44J7Y6T7/)
+Follow-up source: [DKEM / DKEX / ADKEX team's confirmation](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/USUZ2CPOFPWB3JST6BFM4XLGDHGY7URA/)
 
 `kex_generate_pass2_msg_b` discards `m1_len_bytes`, and `kex_derive_ss_a` discards `mb_len_bytes`, before parsing the supplied pointer as a complete fixed-size protocol message (`KEX_AlgorithmInstance.c:79–101` and `121–134`). A one-byte pass-1 allocation reaches a 32-byte read 767 bytes beyond that allocation at `dkecca.c:60`; AddressSanitizer traces it through `ADKEX_pass2_msg_b_derand` and the public pass-2 API.
 
 Without a protected allocator boundary, adjacent heap bytes are consumed by encapsulation, transcript hashing, and key derivation while the API still returns success. The out-of-bounds `ct_S` is also passed to decapsulation at `adkex_derand.c:78`. The returned message contains a KEM ciphertext and derived transcript values rather than the adjacent bytes themselves, and no recovery channel has been demonstrated. The confirmed impact is therefore an attacker-triggered out-of-bounds read, with no demonstrated memory disclosure or control-flow impact, hence Low.
+
+The team independently reproduced the AddressSanitizer finding and reports that the same missing-length pattern was present in DKEX and DKEM.
 
 ### Reproducing
 

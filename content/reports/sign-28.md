@@ -108,3 +108,29 @@ python3 sign-28/reproduce_static_findings.py
 ```
 
 The validator checks the identical faulty loop in all six reference trees and confirms that the supported security-parameter byte lengths all exceed eight.
+
+## sign-28-5: An undocumented exported helper generates keys from a public constant
+
+Severity: Medium
+Status: Confirmed
+Layer: Implementation
+Affected: Undocumented `sydo_ref_keygen` and `sydo_ref_sign` helpers in all six reference source trees; submitted NGCC APIs are unaffected
+Discovery: Trivial
+Exploitation: Trivial reproduction of every key generated through the helper; no submitted API path reaches it
+Credit: Sun Shuzhou, with GLM-5.3 assistance
+Date: 2026-10-01
+Original source: [Sun Shuzhou's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/HWARV6IQNFUCAC5OHNURHPKIDNTXTJCQ/)
+
+The exported helper `sydo_ref_keygen` obtains its seed from `rand_bytes` (`sydo.c:645–657`). In every reference tree, `rand_bytes` initializes a static DRBG once with the public 55-byte string `0xA5 XOR i` and never reads operating-system entropy (`randomness.c:10–31`). The first key pair is therefore identical in every fresh process, and the later stream is also publicly computable. The related `sydo_ref_sign` helper uses the same generator (`sydo.c:887–902`). This contradicts Algorithm 1's random `seed_sk` and `seed_pk` and permits complete signing-key reproduction if the helper is used.
+
+Nothing in the submitted trees calls these helpers, they are documented only by declarations in `sydo.h`, and the package does not build a library exposing them. The submitted NGCC `sig_keygen` adapter instead draws an explicit seed from the framework DRNG and calls `sydo_ref_keygen_from_seed`; the optimized path also uses proper entropy. Because the cryptographic failure is confined to unused, undocumented source helpers rather than the candidate API, the finding is Medium rather than Critical.
+
+The helper must obtain cryptographic entropy from the operating system or require a caller-supplied seed through an explicit deterministic interface.
+
+### Reproducing
+
+```sh
+make -C sign-28 reproduce-fixed-rng
+```
+
+The witness builds the unmodified SYDO-160s reference core, invokes the helper in two fresh processes, and requires byte-identical public and secret keys. It also checks that the optimized randomness source contains an operating-system entropy path as a scope control.

@@ -9,7 +9,7 @@ Severity: Medium
 Status: Confirmed
 Layer: Side-channel
 Affected: Reference and optimized Scloud+-256, -384, and -512; all AES, SHAKE, and SM3 families
-Discovery: Hard
+Discovery: Moderate
 Exploitation: Repeatable decrypted-message-dependent timing; key recovery and IND-CCA break not demonstrated
 Credit: Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance
 Date: 2026-10-01
@@ -35,4 +35,4 @@ The original post proposes processing a fixed upper-bound number of candidates w
 sh kem-35/reproduce_reencryption_timing.sh
 ```
 
-The wrapper fetches the pinned artifact and runs its deterministic squeeze-count and timing experiments against the archived optimized implementation. Absolute cycle counts depend on host scheduling; the deterministic squeeze-count result does not.
+The wrapper fetches the pinned artifact and runs its deterministic squeeze-count and timing experiments against the archived optimized implementation. It requires network access, an x86-64 processor with AVX2 and AES-NI, and `taskset` from util-linux. Absolute cycle counts depend on host scheduling; the deterministic squeeze-count result does not.

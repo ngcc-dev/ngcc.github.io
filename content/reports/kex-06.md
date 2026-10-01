@@ -53,3 +53,31 @@ sh kex-06/reproduce_reaction_recovery.sh
 ```
 
 The wrapper fetches the [pinned artifact](https://github.com/acprk/ngcc-round1-cryptanalysis/tree/e724a12a834bfc063dc0d2959d864842f269eb1e/mamba-nike-key-recovery), builds it against the archived reference sources here, and runs the demonstrated 128- and 384-bit raw-oracle recoveries.
+
+## kex-06-3: Reconciliation leakage makes the passive-security bound vacuous
+
+Severity: Medium
+Status: Proof gap
+Layer: Design
+Affected: Passive-security proof for all five MAMBA-NIKE parameter sets
+Discovery: Moderate
+Exploitation: The stated real-or-random bound is approximately one; no efficient distinguishing or key-recovery attack demonstrated
+Credit: Manoj Gyawali, with AI assistance
+Date: 2026-10-01
+Original source: [Gyawali's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/F3VFGJZMVVPWZMHYK25ID4RAHEDI4X4K/)
+
+Definition 6.2 defines `epsilon_rec` as the statistical distance of the initiator's raw key from uniform after conditioning on the complete public transcript. Given that transcript, the parties' independent private randomness remains independent, so their raw keys are conditionally independent. If their disagreement probability is `rho_key`, this implies
+
+`epsilon_rec >= 1 - rho_key - 2^-kappa`.
+
+Consequently the `epsilon_rec + rho_key` term in Theorem 6.1 and Theorem B.1 is at least `1 - 2^-kappa`: essentially one for the submitted `kappa=256` and `512`. The displayed bound therefore establishes no nontrivial passive real-or-random security, and Appendix C.1 analyzes agreement errors rather than the statistical distance needed to close this gap.
+
+This is a proof failure, not evidence of computational insecurity. No efficient distinguisher or recovery attack follows from the argument, so the finding is Medium rather than Critical.
+
+### Reproducing
+
+```sh
+python3 kex-06/reproduce_reconciliation_bound.py
+```
+
+The script checks the submitted dimensions and prints the unavoidable lower bound on the proof's additive term.

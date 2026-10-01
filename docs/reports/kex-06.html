@@ -65,6 +65,28 @@
 <pre><code class="language-sh">sh kex-06/reproduce_reaction_recovery.sh
 </code></pre>
 <p>The wrapper fetches the <a href="https://github.com/acprk/ngcc-round1-cryptanalysis/tree/e724a12a834bfc063dc0d2959d864842f269eb1e/mamba-nike-key-recovery">pinned artifact</a>, builds it against the archived reference sources here, and runs the demonstrated 128- and 384-bit raw-oracle recoveries.</p>
+<h2 class="issue-heading" id="kex-06-3-reconciliation-leakage-makes-the-passive-security-bound-vacuous">kex-06-3: Reconciliation leakage makes the passive-security bound vacuous</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr>
+<tr><th>Affected</th><td>Passive-security proof for all five MAMBA-NIKE parameter sets</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>The stated real-or-random bound is approximately one; no efficient distinguishing or key-recovery attack demonstrated</td></tr>
+<tr><th>Credit</th><td>Manoj Gyawali, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-01</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/F3VFGJZMVVPWZMHYK25ID4RAHEDI4X4K/">Gyawali's PKC Forum post</a></p>
+<p>Definition 6.2 defines <code>epsilon_rec</code> as the statistical distance of the initiator's raw key from uniform after conditioning on the complete public transcript. Given that transcript, the parties' independent private randomness remains independent, so their raw keys are conditionally independent. If their disagreement probability is <code>rho_key</code>, this implies</p>
+<p><code>epsilon_rec &gt;= 1 - rho_key - 2^-kappa</code>.</p>
+<p>Consequently the <code>epsilon_rec + rho_key</code> term in Theorem 6.1 and Theorem B.1 is at least <code>1 - 2^-kappa</code>: essentially one for the submitted <code>kappa=256</code> and <code>512</code>. The displayed bound therefore establishes no nontrivial passive real-or-random security, and Appendix C.1 analyzes agreement errors rather than the statistical distance needed to close this gap.</p>
+<p>This is a proof failure, not evidence of computational insecurity. No efficient distinguisher or recovery attack follows from the argument, so the finding is Medium rather than Critical.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kex-06/reproduce_reconciliation_bound.py
+</code></pre>
+<p>The script checks the submitted dimensions and prints the unavoidable lower bound on the proof's additive term.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

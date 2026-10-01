@@ -22,3 +22,29 @@ Section 5.1 chooses the prime size from the then-best classical `p^1/2` endomorp
 ### Reproducing
 
 Compare §5.1 and §6.4.1 of `sign-26-spec.pdf`, especially their `p^1/2` premise, with the cited paper and all four prime sizes in the specification.
+
+## sign-26-2: Missing challenge grinding drops Levels 1 and 3 below their targets
+
+Severity: Critical
+Status: Confirmed
+Layer: Implementation
+Affected: SQIsign2D-push1/2 Level-1 and Level-3 reference implementations
+Discovery: Moderate
+Exploitation: One valid signature, then about 2^123.63 or 2^247.25 hash trials for a fresh-message forgery
+Credit: Sun Shuzhou, with GLM-5.3 assistance; Level-1 extension by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-01
+Original source: [Sun Shuzhou's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/TUR2W3S22UGBUJXFZYT25VO44PHNFAOJ/)
+
+Section 5.1(4) compensates for a challenge space smaller than `2^lambda` by iterating the hash `ceil(2^lambda / 3^e2)` times. This is 21 iterations at Level-1 and 430 at Level-3. The four delivered source trees instead contain the same `hash_to_challenge` function, with one XOF call and no grinding loop (`sign.c:738–769`); signing and verification each call it once (`sign.c:819,1132`).
+
+Given one valid signature, an attacker keeps its public geometric response and searches for a fresh message whose recomputed challenge matches the transmitted challenge. Without the specified compensation, this costs `3^78 = 2^123.63` trials at Level-1 and `3^156 = 2^247.25` at Level-3, below the claimed 128- and 256-bit classical levels. Sun Shuzhou reported the Level-3 shortfall; the same calculation shows that Level-1 is also affected. Levels 2 and 4 have challenge spaces above their respective targets even without grinding. This is a concrete one-query EUF-CMA bound below target, not merely a KAT or encoding mismatch, and therefore is Critical.
+
+The signer and verifier must implement the same `k`-fold hash construction specified in §5.1(4).
+
+### Reproducing
+
+```sh
+python3 sign-26/reproduce_grinding_shortfall.py
+```
+
+The script reads each submitted exponent and the shared challenge function, checks that exactly one XOF call is made with no grinding loop, and recomputes the four challenge-space bounds and required iteration counts.
