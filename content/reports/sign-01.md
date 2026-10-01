@@ -151,14 +151,14 @@ python3 sign-01/reproduce_challenge_entropy.py
 
 The script checks the defective assignment in eight archived implementation copies across sets I and II. It computes the number of distinct outputs and the maximum output probability separately, since the outputs are not equally likely.
 
-## sign-01-6: The abort bound violates the security proof's own precondition
+## sign-01-6: The printed abort bound exceeds one, outside the theorems' hypothesis
 
 Severity: Low
-Status: Proof gap
+Status: Confirmed
 Layer: Design
 Affected: Aigis-Sig+ PARAMS I and PARAMS III security analysis
 Discovery: Moderate
-Exploitation: The printed quantitative proof bound is inapplicable; no forgery or key recovery demonstrated
+Exploitation: The printed numerical bound lies outside the theorems' hypothesis; the theorems hold for any bound below one, and no forgery or key recovery is demonstrated
 Credit: Sun Shuzhou, with GLM-5.3 assistance
 Date: 2026-10-01
 Original source: [Sun Shuzhou's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XT47M5GJTH4JRXLV3H55P3BZ4C2RNGVU/)
@@ -168,13 +168,17 @@ Section 7.3 sets the signing-abort upper bound to
 
 `pbar = (1-exp(-n*l*beta1/gamma1)) + (1-exp(-n*k*(beta2+eta1)/gamma2))`.
 
-At the Table 1 parameters this is 1.07668, 0.98003, and 1.16094 for sets I–III. The exact acceptance-probability formula in §3.4 gives repetition counts 6.408, 5.158, and 5.706, reproducing Table 2's rounded 6.41, 5.16, and 5.71 values. Theorems 1 and 2 and their supporting reductions explicitly require `0 < pbar < 1`, so the specification's chosen bound violates its own precondition for sets I and III. The sum double-counts overlap between the two abort events.
+At the Table 1 parameters this is 1.07668, 0.98003, and 1.16094 for sets I–III. The §3.4 repetition estimate, evaluated in its product form before the exponential approximation, gives 6.408, 5.158, and 5.706, matching Table 2's rounded 6.41, 5.16, and 5.71. Theorems 1 and 2 and their supporting reductions explicitly require `0 < pbar < 1`, so the specification's chosen bound violates its own precondition for sets I and III. The sum double-counts overlap between the two abort events.
 
-This does not disprove the theorems or give an attack. Section 3.4's own heuristic combined-abort estimate, `1-exp(-(a+b))`, is 0.844, 0.806, and 0.825, so an immediate bound below one is available. Correcting the loose union bound is local and leaves §7.3's final bound unchanged; the consequence is therefore Low / Proof gap.
+Theorems 1 and 2 are stated for any `0 < pbar < 1` and remain valid; the defect is confined to the printed instantiation. Section 3.4's own heuristic combined-abort estimate, `1-exp(-(a+b))`, is 0.844, 0.806, and 0.825. That estimate agrees with instrumented abort-rate measurements of the reference implementation, but it rests on the heuristic assumptions stated in §3.4 and does not by itself establish a uniform bound for every secret key. Correcting the loose union bound is local and leaves §7.3's final bound unchanged. This is a documented inconsistency in the submitted specification rather than a gap in the proof; the consequence is therefore Low / Confirmed.
 
 The Aigis-Sig+ team confirms that the displayed sum is loose, says that
 `1-exp(-a-b)` matches the measured abort rates, and notes that the proof only
 requires some bound `pbar < 1`.
+
+### Proposed fixes
+
+In a private communication to the maintainer on 2026-10-01, the team states that a post-submission revision removes the concrete `pbar` value and relies only on the existence of a bound below one. This section records the revision without evaluating it; the archived submission remains the evaluated artifact.
 
 ### Reproducing
 

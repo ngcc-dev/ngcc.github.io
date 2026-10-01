@@ -141,15 +141,15 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <pre><code class="language-sh">python3 sign-01/reproduce_challenge_entropy.py
 </code></pre>
 <p>The script checks the defective assignment in eight archived implementation copies across sets I and II. It computes the number of distinct outputs and the maximum output probability separately, since the outputs are not equally likely.</p>
-<h2 class="issue-heading" id="sign-01-6-the-abort-bound-violates-the-security-proofs-own-precondition">sign-01-6: The abort bound violates the security proof&#x27;s own precondition</h2>
+<h2 class="issue-heading" id="sign-01-6-the-printed-abort-bound-exceeds-one-outside-the-theorems-hypothesis">sign-01-6: The printed abort bound exceeds one, outside the theorems&#x27; hypothesis</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
 <tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
 <tr><th>Scope</th><td>design</td></tr>
-<tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Aigis-Sig+ PARAMS I and PARAMS III security analysis</td></tr>
 <tr><th>Discovery</th><td>Moderate</td></tr>
-<tr><th>Exploitation</th><td>The printed quantitative proof bound is inapplicable; no forgery or key recovery demonstrated</td></tr>
+<tr><th>Exploitation</th><td>The printed numerical bound lies outside the theorems' hypothesis; the theorems hold for any bound below one, and no forgery or key recovery is demonstrated</td></tr>
 <tr><th>Credit</th><td>Sun Shuzhou, with GLM-5.3 assistance</td></tr>
 <tr><th>Date</th><td>2026-10-01</td></tr>
 </table></div>
@@ -157,11 +157,13 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/NT4QDW5IZH2SKSEAI57BAY5V26JKPPUJ/">Aigis-Sig+ team's response</a></p>
 <p>Section 7.3 sets the signing-abort upper bound to</p>
 <p><code>pbar = (1-exp(-n*l*beta1/gamma1)) + (1-exp(-n*k*(beta2+eta1)/gamma2))</code>.</p>
-<p>At the Table 1 parameters this is 1.07668, 0.98003, and 1.16094 for sets I–III. The exact acceptance-probability formula in §3.4 gives repetition counts 6.408, 5.158, and 5.706, reproducing Table 2's rounded 6.41, 5.16, and 5.71 values. Theorems 1 and 2 and their supporting reductions explicitly require <code>0 &lt; pbar &lt; 1</code>, so the specification's chosen bound violates its own precondition for sets I and III. The sum double-counts overlap between the two abort events.</p>
-<p>This does not disprove the theorems or give an attack. Section 3.4's own heuristic combined-abort estimate, <code>1-exp(-(a+b))</code>, is 0.844, 0.806, and 0.825, so an immediate bound below one is available. Correcting the loose union bound is local and leaves §7.3's final bound unchanged; the consequence is therefore Low / Proof gap.</p>
+<p>At the Table 1 parameters this is 1.07668, 0.98003, and 1.16094 for sets I–III. The §3.4 repetition estimate, evaluated in its product form before the exponential approximation, gives 6.408, 5.158, and 5.706, matching Table 2's rounded 6.41, 5.16, and 5.71. Theorems 1 and 2 and their supporting reductions explicitly require <code>0 &lt; pbar &lt; 1</code>, so the specification's chosen bound violates its own precondition for sets I and III. The sum double-counts overlap between the two abort events.</p>
+<p>Theorems 1 and 2 are stated for any <code>0 &lt; pbar &lt; 1</code> and remain valid; the defect is confined to the printed instantiation. Section 3.4's own heuristic combined-abort estimate, <code>1-exp(-(a+b))</code>, is 0.844, 0.806, and 0.825. That estimate agrees with instrumented abort-rate measurements of the reference implementation, but it rests on the heuristic assumptions stated in §3.4 and does not by itself establish a uniform bound for every secret key. Correcting the loose union bound is local and leaves §7.3's final bound unchanged. This is a documented inconsistency in the submitted specification rather than a gap in the proof; the consequence is therefore Low / Confirmed.</p>
 <p>The Aigis-Sig+ team confirms that the displayed sum is loose, says that
 <code>1-exp(-a-b)</code> matches the measured abort rates, and notes that the proof only
 requires some bound <code>pbar &lt; 1</code>.</p>
+<h3 id="proposed-fixes_5">Proposed fixes</h3>
+<p>In a private communication to the maintainer on 2026-10-01, the team states that a post-submission revision removes the concrete <code>pbar</code> value and relies only on the existence of a bound below one. This section records the revision without evaluating it; the archived submission remains the evaluated artifact.</p>
 <h3 id="reproducing_5">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 sign-01/reproduce_abort_bound.py
