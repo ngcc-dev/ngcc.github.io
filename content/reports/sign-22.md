@@ -8,7 +8,7 @@ Archive: [Rhyme.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Crypto
 Severity: Critical
 Status: Confirmed
 Layer: Implementation
-Affected: Rhyme-SHAKE-384/-512 and Rhyme-SM3-384/-512 reference implementations; specification leaves the hash length undefined
+Affected: Rhyme-SHAKE-384/-512 and Rhyme-SM3-384/-512 reference and optimized implementations; specification leaves the hash length undefined
 Discovery: Trivial
 Exploitation: Approximately 2^256 hash evaluations
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
@@ -21,7 +21,7 @@ The PDF specifies the construction but never defines the output length of `H_gen
 ### Reproducing
 
 ```sh
-python3 security/design_parameter_audit.py
+python3 security/design_parameter_audit.py --report-id sign-22-1
 ```
 
 The `sign-22-1` check verifies the normative message-binding algorithm on
@@ -32,7 +32,7 @@ physical PDF pages 29–32 and 50–51 and the source digest constant.
 Severity: Critical
 Status: Confirmed
 Layer: Implementation
-Affected: Rhyme-SHAKE-384/-512 and Rhyme-SM3-384/-512 reference implementations; specification leaves the root length undefined
+Affected: Rhyme-SHAKE-384/-512 and Rhyme-SM3-384/-512 reference and optimized implementations; specification leaves the root length undefined
 Discovery: Trivial
 Exploitation: Approximately 2^256 key-generation trials
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
@@ -45,7 +45,7 @@ The normative algorithm denotes the root length by `rho_0` but never assigns `rh
 ### Reproducing
 
 ```sh
-python3 security/design_parameter_audit.py
+python3 security/design_parameter_audit.py --report-id sign-22-2
 ```
 
 The `sign-22-2` check verifies the normative KeyGen algorithm on physical PDF

@@ -86,7 +86,7 @@ overwrites, and requires the byte-distinct signature to verify.</p>
 <tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
 <tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
-<tr><th>Affected</th><td>ATLAS-192 reference implementation and specification</td></tr>
+<tr><th>Affected</th><td>ATLAS-192 reference and optimized implementations; specified parameter set unaffected</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
 <tr><th>Exploitation</th><td>Exact parameter shortfall; no separate attack required</td></tr>
 <tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
@@ -100,7 +100,7 @@ overwrites, and requires the byte-distinct signature to verify.</p>
 <h3 id="reproducing_2">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>Reproduce the exact cardinality and source check with:</p>
-<pre><code class="language-sh">python3 security/design_parameter_audit.py
+<pre><code class="language-sh">python3 security/design_parameter_audit.py --report-id sign-15-3
 </code></pre>
 <h2 class="issue-heading" id="sign-15-4-repeated-masking-coefficients-expose-the-signing-key">sign-15-4: Repeated masking coefficients expose the signing key</h2>
 

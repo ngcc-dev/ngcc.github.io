@@ -59,7 +59,7 @@ Unlike the general lattice-isomorphism problem, there is no unknown unimodular c
 
 Section 6.1.1 says the public basis can be represented in Hermite Normal Form. Publishing a canonical HNF instead of the aligned matrix could hide the column correspondence, but that passage conflicts with Algorithm 1's explicit `pk=B_pk=O*B_red`; it does not define an HNF conversion in key generation. Moreover, HNF is defined for integer lattice bases, while Algorithm 1 samples a real orthogonal matrix.
 
-This is distinct from `kem-29-1`: the submitted implementation has an even simpler public recovery function and does not faithfully implement Algorithm 1, whereas this finding breaks the construction written in the specification.
+The submitted implementation has a separate, simpler public recovery function and does not faithfully implement Algorithm 1. This finding instead breaks the construction written in the specification.
 
 ### Reproducing
 

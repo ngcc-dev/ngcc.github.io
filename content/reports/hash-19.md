@@ -20,7 +20,7 @@ MoFang uses the two 576-bit halves of each message block as cipher keys. Both ke
 
 As a concrete collision, let `M` be 120 zero bytes and let `M'` set bytes 40--47 and 112--119 to `ff`. MoFang-512 maps both to `ebbc07cddba0f381917c62cf0954fd63eb3e162065f61b14baef1a8d09982e5fbbd9f6ce5aac1e7d36d979126e11358c0635f4a8d2bda29e037ed733e1a9aca4`; the same pair collides in every other submitted instance. Because the cancellation is independent of the base key, it also supplies a same-length second preimage for every message of at least 960 bits. Independent differences in words 5 and 7 give 16 equivalent choices per complete message block and multicollisions across blocks.
 
-Further analysis: [Yufei Yuan et al., *Structural Analysis of Seven Hash Functions Submitted to the NGCC*](https://eprint.iacr.org/2026/2152), Section 3 (2026-09-23), proves the cancellation for the fixed-output and XOF variants.
+Further analysis: [Yufei Yuan et al., *Structural Analysis of Seven Hash Functions Submitted to the NGCC*](https://eprint.iacr.org/archive/2026/2152/20260923:103749), Section 3 (2026-09-23), proves the cancellation for the fixed-output and XOF variants.
 
 The frozen Round 1 archive above remains the target of this finding.
 

@@ -99,7 +99,7 @@ Original source: [GitHub issue #20](https://github.com/ngcc-dev/ngcc-harness/iss
 
 For a non-byte-aligned input, `pad_message` copies `(msg_bits + 7) / 8` complete bytes without masking the unused low bits (`CryptHash_AlgorithmInstance.c:84-90`; SIMD source `:192-198`). The API length declares those bits outside the message, and §2.3 specifies zero padding. Consequently byte buffers `80` and `81`, each declared to contain the same one-bit message `1`, produce different digests in every C instance. Passing KATs do not cover this condition because their generator clears unused bits.
 
-This is a bitstring-API correctness failure, but unlike `hash-05-3` no collision between distinct declared bitstrings has been demonstrated. Masking the unused low bits before compression repairs the defect.
+This is a bitstring-API correctness failure. No collision between distinct declared bitstrings has been demonstrated. Masking the unused low bits before compression repairs the defect.
 
 ### Reproducing
 
@@ -111,7 +111,7 @@ The runtime witness exercises the three reference libraries; source inspection c
 
 ## hash-10-5: C input-length conversion and padding arithmetic are unchecked
 
-Severity: Info
+Severity: Low
 Status: Confirmed
 Layer: Implementation
 Affected: Reference and optimized FEILIAN512/768/1024 C implementations, especially platforms where size_t is narrower than unsigned long long
@@ -123,7 +123,7 @@ Original source: [GitHub issue #20](https://github.com/ngcc-dev/ngcc-harness/iss
 
 The public API accepts an `unsigned long long` bit length and casts it to `size_t` without checking representability (`CryptHash_AlgorithmInstance.c:345-356`; SIMD source `:405-416`). `pad_message` then rounds with `msg_bits + 7` and adds the padding length without overflow checks. A narrower `size_t` truncates valid API values; even at equal width, values near `SIZE_MAX` wrap during rounding. The internal two-word counter therefore does not make the one-shot implementation support its written length domain.
 
-This is a platform- and extreme-input contract defect, not a demonstrated ordinary-input collision or out-of-bounds access. On a 64-bit platform, the wrap requires a declared input near 2^64 bits, which cannot be held in memory; narrower `size_t` platforms can reach the conversion limit earlier. That limited practical impact warrants Info. The implementation should reject unrepresentable lengths and check every rounding and allocation calculation before reading the message.
+This is a platform- and extreme-input contract defect, not a demonstrated ordinary-input collision or out-of-bounds access. On a 64-bit platform, the wrap requires a declared input near 2^64 bits, which cannot be held in memory; narrower `size_t` platforms can reach the conversion limit earlier. That limited practical impact warrants Low. The implementation should reject unrepresentable lengths and check every rounding and allocation calculation before reading the message.
 
 ### Reproducing
 

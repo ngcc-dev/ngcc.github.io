@@ -125,7 +125,7 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Aigis-Sig+-I and -II reference, AVX2, NEON, and AArch64 implementations</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
-<tr><th>Exploitation</th><td>Most likely challenge costs about 2^213.46 work in set II; Grover cost about 2^68.59 in set I</td></tr>
+<tr><th>Exploitation</th><td>Most likely challenge costs about 2^213.46 trials in set II; set I admits about 2^68.59 generic Grover iterations</td></tr>
 <tr><th>Credit</th><td>Yijian Liu, with Doubao assistance</td></tr>
 <tr><th>Date</th><td>2026-09-27</td></tr>
 </table></div>
@@ -133,7 +133,7 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/2BWLA2SMHII22YXJM6EWHVGE26WKG2PG/">Aigis-Sig+ team's confirmation and fix summary</a></p>
 <p>Algorithm 24 assigns an independent sign to every nonzero challenge coefficient. In the <code>PARAM_C &lt;= 64</code> implementation branch, however, the sampler sets one coefficient from <code>signs &amp; 1</code> and then executes <code>signs = 0</code> instead of shifting to the next bit. This affects both set I (24 nonzero coefficients) and set II (44). For each support, one sign-bit value gives the all-positive challenge; the other leaves one negative coefficient whose position can vary as the sampler swaps coefficients. Thus set II has about <code>45*binomial(512,44) = 2^217.95</code> distinct outputs, but the most likely output has probability <code>1/(2*binomial(512,44))</code>. Its min-entropy, and the corresponding generic challenge-search work, is only <code>213.4609</code> bits. The specification instead defines</p>
 <p><code>binomial(512,44) * 2^44 = 2^256.4609</code> possible uniformly signed challenges.</p>
-<p>The most likely set-II challenge therefore costs about <code>2^213.46</code> work, below its 256-bit claim. Set I similarly has <code>137.17</code> bits of min-entropy: this remains above its 128-bit classical claim, but Grover search costs about <code>2^68.59</code>, below its claimed 80-bit quantum level. Set III uses a separate branch and is unaffected. The team confirms the error.</p>
+<p>The most likely set-II challenge therefore costs about <code>2^213.46</code> trials, below its 256-bit claim. Set I similarly has <code>137.17</code> bits of min-entropy, corresponding to about <code>2^68.59</code> generic Grover queries or iterations. No end-to-end reversible-oracle gate cost is claimed for that quantum search. Set I remains above its 128-bit classical claim; set II independently sustains the Critical classification. Set III uses a separate branch and is unaffected. The team confirms the error.</p>
 <h3 id="proposed-fixes_4">Proposed fixes</h3>
 <p>The <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/2BWLA2SMHII22YXJM6EWHVGE26WKG2PG/">Aigis-Sig+ team's update</a> proposes changing the random-sign handling for sets I and II in its reference, AVX2, and ARM implementations. This section records the proposal without evaluating it.</p>
 <h3 id="reproducing_4">Reproducing</h3>

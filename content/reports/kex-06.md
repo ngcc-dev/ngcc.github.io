@@ -23,7 +23,7 @@ This limits both implementations to at most `2^256` secret-seed trials, below th
 ### Reproducing
 
 ```sh
-python3 security/design_parameter_audit.py
+python3 security/design_parameter_audit.py --report-id kex-06-1
 ```
 
 The check traces `noiseseed[32]` through `poly_getnoise` and checks the normative KeyGen description on physical PDF pages 7–15.

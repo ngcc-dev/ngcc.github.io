@@ -5,19 +5,19 @@ Archive: [SYDO.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptog
 
 ## sign-28-1: SYDO enforces two fewer grinding bits than its claimed soundness
 
-Severity: High
+Severity: Critical
 Status: Confirmed
 Layer: Design
 Affected: All six 160-, 256- and 512-bit parameter sets, reference and optimized implementations
 Discovery: Non-trivial
-Exploitation: Generic QuickSilver forgery work about 2^158, 2^254 or 2^510 hash calls, two bits below the scheme's labels but above the applicable NGCC floors
+Exploitation: Generic QuickSilver forgery work about 2^158, 2^254 or 2^510 hash calls; the 256- and 512-bit sets miss their NGCC targets
 Credit: Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance
 Date: 2026-10-01
 Original source: [Xiong and Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/HMZS3BAVGCFDQRAQKQU3UZ7DZT7EF524/) and [pinned verification package](https://github.com/acprk/ngcc-round1-cryptanalysis/tree/709d5ec64239206effb2667ca853ddcef3c060b4/sydo-grinding-and-padding)
 
 Section 5.2 requires `tau*log2(N) - log2(d) + wgrind >= lambda`, with `d=4`, and Table 5.3 takes equality. Consequently `tau*log2(N) + wgrind = lambda+2`. Algorithms 2 and 3 nevertheless divide a `lambda`-bit `chall3` into `wgrind` checked zero bits and only `lambda-wgrind` bits for `VOLE.DecodeAllChall`, whose specified input needs `tau*log2(N) = lambda-wgrind+2` bits. This two-bit type mismatch holds by construction at all six parameter sets.
 
-Both submitted implementations resolve the mismatch by making `delta_bits = lambda-wgrind+2` and checking only the remaining `wgrind-2` bits for zero. The shipped signatures corroborate the implementation behavior: only 13 of 60 KATs satisfy the specification's full grinding predicate, and their counters match two fewer enforced bits. A degree-four QuickSilver false witness can select four accepting challenge values, so the realized challenge space gives about `2^(lambda-2)` forgery work: `2^158`, `2^254`, and `2^510`. These miss the scheme's 160-, 256- and 512-bit labels but remain above the applicable NGCC floors; Theorem 25's own bound is already only about 157.0, 254.3, and 509.9 bits. The forum authors accordingly do not claim that SYDO is broken. This is High rather than Critical. The public package verifies the four-root strategy in a scaled exact field model; the full-size searches are not attempted.
+Both submitted implementations resolve the mismatch by making `delta_bits = lambda-wgrind+2` and checking only the remaining `wgrind-2` bits for zero. The shipped signatures corroborate the implementation behavior: only 13 of 60 KATs satisfy the specification's full grinding predicate, and their counters match two fewer enforced bits. A degree-four QuickSilver false witness can select four accepting challenge values, so the realized challenge space gives about `2^(lambda-2)` forgery work: `2^158`, `2^254`, and `2^510`. The 160-bit sets remain above the NGCC 128-bit floor, but the 256- and 512-bit sets miss their applicable 256- and 512-bit targets; Theorem 25's own bound is already only about 157.0, 254.3, and 509.9 bits. The reported margins are only two bits and count hash calls rather than a normalized end-to-end gate cost, so a sufficiently expensive trial implementation could close them; the classification applies the policy's strict below-target rule to the stated hash-call model. This is Critical under that rule even though the full-size searches are computationally infeasible. The forum authors do not claim a practical break. The public package verifies the four-root strategy in a scaled exact field model; the full-size searches are not attempted.
 
 ### Proposed fixes
 

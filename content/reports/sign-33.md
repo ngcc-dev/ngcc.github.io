@@ -8,7 +8,7 @@ Archive: [VDOO.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptog
 Severity: Critical
 Status: Confirmed
 Layer: Implementation
-Affected: Reference implementation, all three parameter sets
+Affected: Reference and optimized implementations, all three parameter sets
 Discovery: Trivial
 Exploitation: Trivial
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
@@ -40,7 +40,7 @@ witnesses and their controls. See `tools/README.md`.
 Severity: Critical
 Status: Confirmed
 Layer: Implementation
-Affected: VDOO-256 and VDOO-512 reference wrappers; specification leaves the wrapper prehash undefined
+Affected: VDOO-256 and VDOO-512 reference and optimized wrappers; specification leaves the wrapper prehash undefined
 Discovery: Trivial
 Exploitation: Approximately 2^128 hash evaluations
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
@@ -53,7 +53,7 @@ The specification types its message hash as mapping directly to the MQ target sp
 ### Reproducing
 
 ```sh
-python3 security/design_parameter_audit.py
+python3 security/design_parameter_audit.py --report-id sign-33-2
 ```
 
 The `sign-33-2` check traces the 32-byte wrapper prehash in the VDOO-256 and VDOO-512 sources.
@@ -76,7 +76,7 @@ This is a specification-level parameter and proof gap: the stated reduction cann
 ### Reproducing
 
 ```sh
-python3 security/design_parameter_audit.py
+python3 security/design_parameter_audit.py --report-id sign-33-3
 ```
 
 The `sign-33-3` check verifies the normative salt length and the corresponding
@@ -84,18 +84,18 @@ term in the submitted EUF-CMA bound.
 
 ## sign-33-4: Signing reuses a publicly predictable randomness stream
 
-Severity: Critical
+Severity: High
 Status: Confirmed
 Layer: Implementation
-Affected: Reference implementation, all three parameter sets
+Affected: Reference and optimized implementations, all three parameter sets
 Discovery: Trivial
-Exploitation: Repeated-vinegar UOV key-recovery vector
+Exploitation: Predictable and repeated signing randomness across fresh processes; key recovery or forgery not demonstrated
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-09-21
 
 Signing uses the same never-initialized file-local generator identified in `sign-33-1` for the salt, free vinegar variables, and random diagonal solutions. A fresh process therefore restarts a publicly predictable signing-randomness stream. The defect remains even if KeyGen is repaired without also changing signing.
 
-In a UOV-family construction, reuse of vinegar values for different message targets exposes relations in the central equations and is a key-recovery vector. Predictable salts also defeat the proof's assumption that each signing query receives fresh randomness. This finding tracks the signing failure separately from the immediately reproducible signing-key failure in `sign-33-1`.
+In a UOV-family construction, two signatures with reused vinegar values expose a difference in the secret oil-type subspace; a handful of such differences is the standard route to recovering that subspace and then the signing key. Starting one fresh process per signature supplies the reuse precondition here. VDOO's layered central map means the plain-UOV recovery does not carry over unchanged, and no VDOO-specific recovery, forgery, or complexity estimate is established. This is therefore a confirmed leak with a well-known candidate-relevant recovery path still needing a VDOO-specific step: High rather than Critical. Predictable salts also defeat the proof's assumption that each signing query receives fresh randomness.
 
 Signing must initialize a per-operation generator from the API DRNG and domain-separate the randomness used for its salt, vinegar variables, and diagonal solving.
 
@@ -112,9 +112,9 @@ It reports identical signing-key and encoded-salt digests. Source inspection sho
 ## sign-33-5: Signing branches directly on private central-map coefficients
 
 Severity: Medium
-Status: Probable
+Status: Confirmed
 Layer: Side-channel
-Affected: VDOO reference signer, all three parameter sets
+Affected: VDOO reference and optimized signers, all three parameter sets
 Discovery: Trivial
 Exploitation: Local timing/power side channel; no independent full-key extraction demonstrated
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance

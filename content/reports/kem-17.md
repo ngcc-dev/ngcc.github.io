@@ -56,7 +56,7 @@ This is a specification-level parameter-selection break of the advertised 512-bi
 Specification evidence is on physical PDF pages 12–14. Run:
 
 ```sh
-python3 security/design_parameter_audit.py
+python3 security/design_parameter_audit.py --report-id kem-17-2
 ```
 
 ## kem-17-3: First encapsulation in each process is publicly reproducible
@@ -70,7 +70,7 @@ Exploitation: Trivial for the first encapsulation in a fresh process
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-09-21
 
-`kem_enc` draws both its message `m` and salt consecutively from the same file-scope SHAKE-256 PRNG context described in `kem-17-1`. The wrapper never initializes that context from the API-provided DRNG, so it begins in the same zero-initialized state in every fresh process.
+`kem_enc` draws both its message `m` and salt consecutively from a file-scope SHAKE-256 PRNG context. The wrapper never initializes that context from the API-provided DRNG, so it begins in the same zero-initialized state in every fresh process.
 
 For a fixed public key, the first encapsulation in each fresh process consequently repeats both the ciphertext and shared secret. An attacker can run the public encapsulation algorithm in a fresh process with the recipient's public key and recover the exact first session key produced by another fresh process. Fixing key generation alone does not repair this independent KEM confidentiality failure.
 

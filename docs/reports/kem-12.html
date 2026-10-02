@@ -43,7 +43,7 @@
 <p>The <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/H47RU2HKEEAZQOJNKMUFWNEJEHHSLPQQ/">CTL submitters' response</a> proposes a 64-byte CTL-512 key-generation seed, an expansion mechanism intended to preserve the target level, corresponding private-key and deterministic-regeneration changes, and a review of the complete entropy path. This section records the proposal without evaluating it.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
-<pre><code class="language-sh">python3 security/design_parameter_audit.py
+<pre><code class="language-sh">python3 security/design_parameter_audit.py --report-id kem-12-1
 </code></pre>
 <p>The <code>kem-12-1</code> check verifies the short-key algorithms on physical PDF pages
 24 and 28–36 and the corresponding reference constants.</p>
@@ -53,7 +53,7 @@
 <tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
 <tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
-<tr><th>Affected</th><td>CTL-512 reference adapter and specification</td></tr>
+<tr><th>Affected</th><td>CTL-512 reference adapter; the specification assigns a 64-byte output</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
 <tr><th>Exploitation</th><td>The 384-bit output is 128 bits short of the required 512-bit encapsulated key</td></tr>
 <tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
@@ -66,7 +66,7 @@
 <p>For CTL-512's shared secret and <code>c2</code>, the <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/H47RU2HKEEAZQOJNKMUFWNEJEHHSLPQQ/">submitters' response</a> proposes revising the length handling, key derivation, implementation, specification, documentation, test vectors, and validation. This section records the proposal without evaluating it.</p>
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
-<pre><code class="language-sh">python3 security/design_parameter_audit.py
+<pre><code class="language-sh">python3 security/design_parameter_audit.py --report-id kem-12-2
 </code></pre>
 <p>The <code>kem-12-2</code> check verifies the CTL-512 output table and the corresponding
 reference constants.</p>

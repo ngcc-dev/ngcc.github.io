@@ -42,7 +42,7 @@
 <p>This caps both implementations at 256 bits despite their respective 384- and 512-bit classical claims. The specification is internally inconsistent: Algorithm 1 requests an <code>n</code>-bit seed, while its implementation notes on physical PDF page 25 say that one could store only a “32-byte core seed” and rerun key generation. The submitted code follows the shorter interpretation.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
-<pre><code class="language-sh">python3 security/design_parameter_audit.py
+<pre><code class="language-sh">python3 security/design_parameter_audit.py --report-id kem-11-1
 </code></pre>
 <p>The check verifies the source constants and deterministic expansion against physical PDF pages 9, 12, 16, and 25.</p>
 </main>

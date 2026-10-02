@@ -30,7 +30,7 @@
 <tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
 <tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
-<tr><th>Affected</th><td>Reference implementation, all three parameter sets</td></tr>
+<tr><th>Affected</th><td>Reference and optimized implementations, all three parameter sets</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
 <tr><th>Exploitation</th><td>Trivial</td></tr>
 <tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
@@ -56,7 +56,7 @@ witnesses and their controls. See <code>tools/README.md</code>.</p>
 <tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
 <tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
-<tr><th>Affected</th><td>VDOO-256 and VDOO-512 reference wrappers; specification leaves the wrapper prehash undefined</td></tr>
+<tr><th>Affected</th><td>VDOO-256 and VDOO-512 reference and optimized wrappers; specification leaves the wrapper prehash undefined</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
 <tr><th>Exploitation</th><td>Approximately 2^128 hash evaluations</td></tr>
 <tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
@@ -67,7 +67,7 @@ witnesses and their controls. See <code>tools/README.md</code>.</p>
 <p>The specification types its message hash as mapping directly to the MQ target space and does not clearly require this 32-byte truncation. This finding is therefore an implementation/specification conformance break, not a clean property of the normative VDOO design.</p>
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
-<pre><code class="language-sh">python3 security/design_parameter_audit.py
+<pre><code class="language-sh">python3 security/design_parameter_audit.py --report-id sign-33-2
 </code></pre>
 <p>The <code>sign-33-2</code> check traces the 32-byte wrapper prehash in the VDOO-256 and VDOO-512 sources.</p>
 <h2 class="issue-heading" id="sign-33-3-the-vdoo-256-and-512-proof-bound-contains-a-128-bit-salt-term">sign-33-3: The VDOO-256 and -512 proof bound contains a 128-bit salt term</h2>
@@ -87,25 +87,25 @@ witnesses and their controls. See <code>tools/README.md</code>.</p>
 <p>This is a specification-level parameter and proof gap: the stated reduction cannot substantiate either the 256- or 512-bit EUF-CMA claim. It is not, by itself, a concrete forgery and is reported separately from <code>sign-33-2</code>.</p>
 <h3 id="reproducing_2">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
-<pre><code class="language-sh">python3 security/design_parameter_audit.py
+<pre><code class="language-sh">python3 security/design_parameter_audit.py --report-id sign-33-3
 </code></pre>
 <p>The <code>sign-33-3</code> check verifies the normative salt length and the corresponding
 term in the submitted EUF-CMA bound.</p>
 <h2 class="issue-heading" id="sign-33-4-signing-reuses-a-publicly-predictable-randomness-stream">sign-33-4: Signing reuses a publicly predictable randomness stream</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
 <tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
-<tr><th>Affected</th><td>Reference implementation, all three parameter sets</td></tr>
+<tr><th>Affected</th><td>Reference and optimized implementations, all three parameter sets</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
-<tr><th>Exploitation</th><td>Repeated-vinegar UOV key-recovery vector</td></tr>
+<tr><th>Exploitation</th><td>Predictable and repeated signing randomness across fresh processes; key recovery or forgery not demonstrated</td></tr>
 <tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
 <tr><th>Date</th><td>2026-09-21</td></tr>
 </table></div>
 
 <p>Signing uses the same never-initialized file-local generator identified in <code>sign-33-1</code> for the salt, free vinegar variables, and random diagonal solutions. A fresh process therefore restarts a publicly predictable signing-randomness stream. The defect remains even if KeyGen is repaired without also changing signing.</p>
-<p>In a UOV-family construction, reuse of vinegar values for different message targets exposes relations in the central equations and is a key-recovery vector. Predictable salts also defeat the proof's assumption that each signing query receives fresh randomness. This finding tracks the signing failure separately from the immediately reproducible signing-key failure in <code>sign-33-1</code>.</p>
+<p>In a UOV-family construction, two signatures with reused vinegar values expose a difference in the secret oil-type subspace; a handful of such differences is the standard route to recovering that subspace and then the signing key. Starting one fresh process per signature supplies the reuse precondition here. VDOO's layered central map means the plain-UOV recovery does not carry over unchanged, and no VDOO-specific recovery, forgery, or complexity estimate is established. This is therefore a confirmed leak with a well-known candidate-relevant recovery path still needing a VDOO-specific step: High rather than Critical. Predictable salts also defeat the proof's assumption that each signing query receives fresh randomness.</p>
 <p>Signing must initialize a per-operation generator from the API DRNG and domain-separate the randomness used for its salt, vinegar variables, and diagonal solving.</p>
 <h3 id="reproducing_3">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
@@ -118,8 +118,8 @@ term in the submitted EUF-CMA bound.</p>
 <div class="table-wrap"><table class="meta issue-meta">
 <tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
 <tr><th>Scope</th><td>side-channel</td></tr>
-<tr><th>Status</th><td><span class="issue-status status-probable">Probable</span></td></tr>
-<tr><th>Affected</th><td>VDOO reference signer, all three parameter sets</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>VDOO reference and optimized signers, all three parameter sets</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
 <tr><th>Exploitation</th><td>Local timing/power side channel; no independent full-key extraction demonstrated</td></tr>
 <tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>

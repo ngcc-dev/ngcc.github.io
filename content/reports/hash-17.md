@@ -8,7 +8,7 @@ Archive: [MasterCube.zip](https://www.niccs.org.cn/niccs/Proposal/Cryptographic%
 Severity: Critical
 Status: Confirmed
 Layer: Implementation
-Affected: Reference implementation, all three parameter sets
+Affected: All submitted reference, optimized and additional implementations, all three parameter sets
 Discovery: Trivial
 Exploitation: Trivial
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
@@ -29,6 +29,8 @@ The implementation attempts to apply `pad10*1` in a single rate block. When the 
 Consequently, for any prefix `P` of length `r-2 mod r`, the implementation gives `H(P) = H(P || 1)`. The same defect was reproduced at 702/703 bits for MasterCube-768 and 446/447 bits for MasterCube-1024. It directly violates the claimed 256-, 384-, and 512-bit collision strengths and is an implementation error rather than an attack on the specified permutation.
 
 The MasterCube team subsequently confirmed the one-bit padding error. The archived Round 1 implementation assessed here remains affected.
+
+The runtime witness exercises the three reference builds; source inspection confirms the identical padding helper in every submitted optimized and additional tree.
 
 ### Proposed fixes
 

@@ -8,7 +8,7 @@ Archive: [CHAMP.zip](https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Has
 Severity: Critical
 Status: Confirmed
 Layer: Design
-Affected: CHAMP-512 and CHAMP-1024 construction and reference implementation
+Affected: CHAMP-512 and CHAMP-1024 construction and all conforming implementations
 Discovery: Non-trivial
 Exploitation: At most 2^192 and 2^384 hash evaluations and stored records for greater-than-0.39 collision probability
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
@@ -18,7 +18,15 @@ CHAMP hashes a bit string by multiplying two public `2 x 2` matrices. Both gener
 
 An invertible output encoding cannot enlarge that image. The nominal 512- and 1024-bit outputs consequently have at most approximately 384 and 768 bits of fixed-length image entropy. For any output distribution on these bounded supports, sampling `2^192` random 512-bit messages for CHAMP-512 or `2^384` random 1024-bit messages for CHAMP-1024 finds a collision with probability greater than 0.39; no mixing assumption is needed. This does not contradict the specification's explicit unequal-length theorem, but the [NGCC hash call](https://www.niccs.org.cn/niccs/Notice/pc/content/content_1975892908773478400.html) requires collision security of at least h/2 bits, 256 and 512 bits here ([Evaluation Criteria](https://www.niccs.org.cn/niccs/Notice/crlRB1ZY.pdf) §1(2)), which these bounds violate. No full-parameter collision has been computed.
 
-Follow-up analysis: [Yufei Yuan, Ruichen Wu, Shanpeng Wei, Junxu Shen, Jinpeng Liu, and Yixin Zhang, *Structural Analysis of Seven Hash Functions Submitted to the NGCC*](https://eprint.iacr.org/2026/2152), Sections 2.2 and 6 (2026-09-23), prove the stated success probability for both variants, including the correction for repeated sampled inputs.
+Follow-up analysis: [Yufei Yuan, Ruichen Wu, Shanpeng Wei, Junxu Shen, Jinpeng Liu, and Yixin Zhang, *Structural Analysis of Seven Hash Functions Submitted to the NGCC*](https://eprint.iacr.org/archive/2026/2152/20260923:103749), Sections 2.2 and 6 (2026-09-23), prove the stated success probability for both variants, including the correction for repeated sampled inputs.
+
+### Reproducing
+
+```sh
+python3 hash-04/reproduce_structure.py
+```
+
+The exact-arithmetic certificate checks both generator determinants, the two determinant-fiber sizes, and a distribution-independent collision-probability lower bound above 0.39 at the stated sample counts.
 
 ## hash-04-2: Projective positive-word collision lead for CHAMP-512
 
@@ -34,6 +42,14 @@ Date: 2026-09-21
 Because `p = 7 mod 8`, 2 is a square. Scaling both generators by the inverse square root of 2 normalizes them into `SL2` without changing equal-length collisions. The exact generators satisfy `det(AB-BA)=2`, so they have no shared projective eigenline.
 
 The Mullan-Tsaban general-generator heuristic then suggests positive-word collisions in approximately `sqrt(p)` work, around `2^64` for CHAMP-512. Its proven special case does not directly apply because `det(A-B)=-5`, so this remains a probable attack lead rather than a demonstrated collision. It should not be described as confirmed until instantiated against the exact generators.
+
+### Reproducing
+
+```sh
+python3 hash-04/reproduce_structure.py
+```
+
+The certificate checks `det(A)=det(B)=2`, `det(A-B)=-5`, and `det(AB-BA)=2`. It explicitly does not instantiate the heuristic positive-word collision search.
 
 ## hash-04-3: Known-length preimages admit an exact square-root search
 
@@ -78,7 +94,7 @@ The local reproducer allocates the full output plus a guard, proving the return 
 
 ### Reproducing
 
-The guarded check runs as part of either command for `hash-04-3`:
+The guarded check is included in:
 
 ```sh
 make -C hash-04 reproduce

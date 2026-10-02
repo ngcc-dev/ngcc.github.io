@@ -21,7 +21,7 @@ For CHIME-512, a `2^240`-message family remains in the subspace through ordinary
 
 The archived Round 1 submission remains the target of this finding.
 
-Further analysis: [Yufei Yuan et al., *Structural Analysis of Seven Hash Functions Submitted to the NGCC*](https://eprint.iacr.org/2026/2152), Section 5 (2026-09-23), gives a greater-than-0.39 collision probability within `2^64` evaluations for CHIME-512. The paper does not cover this report's CHIME-1024 extension.
+Further analysis: [Yufei Yuan et al., *Structural Analysis of Seven Hash Functions Submitted to the NGCC*](https://eprint.iacr.org/archive/2026/2152/20260923:103749), Section 5 (2026-09-23), gives a greater-than-0.39 collision probability within `2^64` evaluations for CHIME-512. The paper does not cover this report's CHIME-1024 extension.
 
 ### Proposed fixes
 

@@ -8,7 +8,7 @@ Archive: [TSUOV.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Crypto
 Severity: Critical
 Status: Confirmed
 Layer: Design
-Affected: TSUOV-512 specification and reference implementation
+Affected: TSUOV-512 specification, reference and optimized implementations
 Discovery: Trivial
 Exploitation: Approximately 2^256 hash evaluations
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
@@ -23,7 +23,7 @@ This is a specification-level design break, not an implementation-only truncatio
 ### Reproducing
 
 ```sh
-python3 security/design_parameter_audit.py
+python3 security/design_parameter_audit.py --report-id sign-31-1
 ```
 
 The check verifies the TSUOV-512 construction on physical PDF pages 18–21 and 27–29 and the submitted 64-byte `mu` constant.
@@ -31,7 +31,7 @@ The check verifies the TSUOV-512 construction on physical PDF pages 18–21 and 
 ## sign-31-2: Secret-dependent echelon pivots during signing
 
 Severity: Medium
-Status: Probable
+Status: Confirmed
 Layer: Side-channel
 Affected: TSUOV reference signer, all three parameter sets
 Discovery: Trivial

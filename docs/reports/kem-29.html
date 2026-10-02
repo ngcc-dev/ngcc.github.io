@@ -68,7 +68,7 @@ witnesses and their controls. See <code>tools/README.md</code>.</p>
 <p><code>O = B_pk * B_red^-1</code>.</p>
 <p>Unlike the general lattice-isomorphism problem, there is no unknown unimodular change of basis: the public matrix exposes the image of every vector in a known complete basis. The paper verifies exact recovery at full 128- and 256-bit dimensions using rational linear algebra. The identity applies to every defined parameter set and recovers the core decapsulation key; a Fujisaki–Okamoto transform cannot hide a secret key that is already a polynomial-time function of the public key.</p>
 <p>Section 6.1.1 says the public basis can be represented in Hermite Normal Form. Publishing a canonical HNF instead of the aligned matrix could hide the column correspondence, but that passage conflicts with Algorithm 1's explicit <code>pk=B_pk=O*B_red</code>; it does not define an HNF conversion in key generation. Moreover, HNF is defined for integer lattice bases, while Algorithm 1 samples a real orthogonal matrix.</p>
-<p>This is distinct from <code>kem-29-1</code>: the submitted implementation has an even simpler public recovery function and does not faithfully implement Algorithm 1, whereas this finding breaks the construction written in the specification.</p>
+<p>The submitted implementation has a separate, simpler public recovery function and does not faithfully implement Algorithm 1. This finding instead breaks the construction written in the specification.</p>
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 kem-29/reproduce_spec_alignment.py

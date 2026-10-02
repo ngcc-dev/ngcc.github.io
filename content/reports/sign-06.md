@@ -8,7 +8,7 @@ Archive: [COMPASS-SIG.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20
 Severity: Critical
 Status: Confirmed
 Layer: Implementation
-Affected: COMPASS-SIG-384 and COMPASS-SIG-512 reference implementations; specification leaves the hash length undefined
+Affected: COMPASS-SIG-384 and COMPASS-SIG-512 reference and optimized implementations; specification leaves the hash length undefined
 Discovery: Trivial
 Exploitation: Approximately 2^256 hash evaluations
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
@@ -21,7 +21,7 @@ An attacker finds two messages that collide under the target public key, obtains
 ### Reproducing
 
 ```sh
-python3 security/design_parameter_audit.py
+python3 security/design_parameter_audit.py --report-id sign-06-1
 ```
 
 The `sign-06-1` check verifies the construction on physical PDF pages 5 and
@@ -32,7 +32,7 @@ The `sign-06-1` check verifies the construction on physical PDF pages 5 and
 Severity: Critical
 Status: Confirmed
 Layer: Implementation
-Affected: COMPASS-SIG-384 and COMPASS-SIG-512 reference implementations and specification
+Affected: COMPASS-SIG-384 and COMPASS-SIG-512 reference and optimized implementations; the specification requires an n-bit seed
 Discovery: Trivial
 Exploitation: Approximately 2^256 key-generation trials
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
@@ -45,7 +45,7 @@ The generated public-key support is at most `2^256`; exhaustive root enumeration
 ### Reproducing
 
 ```sh
-python3 security/design_parameter_audit.py
+python3 security/design_parameter_audit.py --report-id sign-06-2
 ```
 
 The `sign-06-2` check verifies the KeyGen seed on physical PDF pages 7 and 13

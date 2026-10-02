@@ -8,7 +8,7 @@ Archive: [Eijen.zip](https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Has
 Severity: Critical
 Status: Confirmed
 Layer: Implementation
-Affected: Reference implementation, all five parameter sets
+Affected: Reference and optimized implementations, all five parameter sets
 Discovery: Trivial
 Exploitation: Trivial
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance

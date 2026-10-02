@@ -47,7 +47,7 @@ It confirms different draw counts for two private seeds (254 versus 231 on this 
 ## kem-33-2: Decryption multiplication traverses secret support positions
 
 Severity: Medium
-Status: Probable
+Status: Confirmed
 Layer: Side-channel
 Affected: QUBE reference decapsulation; demonstrated in QUBE-256 source
 Discovery: Moderate

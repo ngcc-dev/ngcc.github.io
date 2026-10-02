@@ -30,7 +30,7 @@
 <tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
 <tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
-<tr><th>Affected</th><td>DARTS-512 reference implementation and specification</td></tr>
+<tr><th>Affected</th><td>DARTS-512 reference and optimized implementations and specification</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
 <tr><th>Exploitation</th><td>Approximately 2^256 hash evaluations</td></tr>
 <tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
@@ -41,7 +41,7 @@
 <p>The PDF names <code>H1</code> but does not define its output length. The concrete implementation ceiling is confirmed, while the missing length prevents classifying 64 bytes as a clean normative design parameter. This is an implementation security ceiling and a specification omission.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
-<pre><code class="language-sh">python3 security/design_parameter_audit.py
+<pre><code class="language-sh">python3 security/design_parameter_audit.py --report-id sign-08-1
 </code></pre>
 <p>The check verifies the DARTS-512 algorithm on physical PDF pages 4, 8, and 12–13 and traces its 64-byte <code>mu</code>.</p>
 <h2 class="issue-heading" id="sign-08-2-the-compression-consistency-restart-leaks-an-equivalent-darts-128-signing-key">sign-08-2: The compression-consistency restart leaks an equivalent DARTS-128 signing key</h2>

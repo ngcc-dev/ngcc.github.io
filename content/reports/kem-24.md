@@ -6,11 +6,11 @@ Archive: [MORNING-Scabbard.zip](https://www.niccs.org.cn/niccs/Proposal/Public-K
 ## kem-24-1: Encryption omits the specified rounding constant
 
 Severity: Medium
-Status: Probable
+Status: Confirmed
 Layer: Implementation
 Affected: Reference implementation, scabbard128 and scabbard256
 Discovery: Trivial
-Exploitation: Not yet demonstrated
+Exploitation: Exact specification/source mismatch confirmed; no cryptanalytic attack demonstrated
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-09-21
 

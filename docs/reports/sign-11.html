@@ -44,6 +44,7 @@
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 security/flextree_kudinov_validation.py
 </code></pre>
+<p>The certificate recomputes the eight raw counter-grinding figures and the repeated-leaf and forced-pruning inputs. The final approximately 20–32-bit adjusted overstatement is taken from Kudinov's analysis rather than independently recomputed by this script.</p>
 <h2 class="issue-heading" id="sign-11-2-withdrawn-sm3-evaluation-mode-length-extension">sign-11-2: Withdrawn — SM3 evaluation-mode length extension</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
@@ -159,7 +160,7 @@ tools/ngcc_attack sig-pors-padding sign-11/lib/libFlextree-160f.so
 </table></div>
 
 <p>The code derives OTS digits from the leading <code>8n-zb</code> digest bits but tests the high <code>zb</code> bits of the final byte. Those regions overlap for seven sets, leaving an equal number of other bits neither encoded nor checked. The effective matched lengths are 157, 159, 252, 255, 384, 382, 511, and 509 bits for 160s through 512f: losses of 3, 1, 4, 1, 0, 2, 1, and 3 bits.</p>
-<p>This is not the best known attack because <code>sign-11-1</code> is cheaper, and injectivity is not lost. It is nevertheless a concrete implementation-level shortfall from the claimed <code>8n</code>-bit OTS digest path. The verifier must check exactly the <code>zb</code> bits excluded from digit decoding.</p>
+<p>Injectivity is not lost, but this is a concrete implementation-level shortfall from the claimed <code>8n</code>-bit OTS digest path. The verifier must check exactly the <code>zb</code> bits excluded from digit decoding.</p>
 <h3 id="reproducing_6">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 security/flextree_kudinov_validation.py

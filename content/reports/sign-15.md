@@ -75,7 +75,7 @@ overwrites, and requires the byte-distinct signature to verify.
 Severity: Critical
 Status: Confirmed
 Layer: Implementation
-Affected: ATLAS-192 reference implementation and specification
+Affected: ATLAS-192 reference and optimized implementations; specified parameter set unaffected
 Discovery: Trivial
 Exploitation: Exact parameter shortfall; no separate attack required
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
@@ -95,7 +95,7 @@ The submitted source acknowledges the mismatch directly: `params.h` comments tha
 Reproduce the exact cardinality and source check with:
 
 ```sh
-python3 security/design_parameter_audit.py
+python3 security/design_parameter_audit.py --report-id sign-15-3
 ```
 
 ## sign-15-4: Repeated masking coefficients expose the signing key

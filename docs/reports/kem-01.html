@@ -52,19 +52,19 @@ witnesses and their controls. See <code>tools/README.md</code>.</p>
 <h2 class="issue-heading" id="kem-01-2-rejection-reads-a-secret-before-the-secret-key-object">kem-01-2: Rejection reads a secret before the secret-key object</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
 <tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Reference implementation, all three parameter sets</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
-<tr><th>Exploitation</th><td>Malformed-ciphertext processing invokes an out-of-bounds read; security impact after repairing kem-01-1</td></tr>
+<tr><th>Exploitation</th><td>Every rejected ciphertext triggers an out-of-bounds read; no disclosure or control-flow impact demonstrated</td></tr>
 <tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
 <tr><th>Date</th><td>2026-09-21</td></tr>
 </table></div>
 
 <p>The rejection path reads its fallback secret from <code>sk - SEED_BYTES</code>, before the start of the caller's secret-key object. Key generation stores that value at <code>sk + SK_BYTES - SEED_BYTES</code>. All three submitted <code>kem.c</code> files contain the same pointer error.</p>
-<p>This is undefined behavior on every rejected ciphertext. In the submitted code, <code>kem-01-1</code> prevents the resulting fallback value from replacing the candidate shared secret. Correcting only that write target would expose this second defect: rejection would derive its output from unrelated memory rather than the secret value stored in the key, defeating the intended implicit-rejection construction and potentially faulting under memory-safety instrumentation.</p>
-<p>The implementation must read the final <code>SEED_BYTES</code> of the secret-key object and must validate the repair independently of <code>kem-01-1</code>.</p>
+<p>This is undefined behavior on every rejected ciphertext. Another assignment error in the submitted decapsulation path prevents the resulting fallback value from replacing the candidate shared secret. Correcting only that assignment would expose this second defect: rejection would derive its output from unrelated memory rather than the secret value stored in the key. The archived behavior is an out-of-bounds read, with no memory disclosure or control-flow impact demonstrated, hence Low.</p>
+<p>The implementation must read the final <code>SEED_BYTES</code> of the secret-key object and must validate this repair independently of the separate fallback-selection error.</p>
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>The defect is directly visible in each reference implementation's <code>kem.c</code>: <code>mkem_dec</code> passes <code>sk - SEED_BYTES</code> to <code>hash_g</code>, while <code>mkem_keygen</code> stores the rejection secret at <code>sk + SK_BYTES - SEED_BYTES</code>.</p>

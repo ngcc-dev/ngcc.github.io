@@ -30,7 +30,7 @@
 <tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
 <tr><th>Scope</th><td>design</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
-<tr><th>Affected</th><td>Origami-384 and Origami-512 specifications and reference implementations</td></tr>
+<tr><th>Affected</th><td>Origami-384 and Origami-512 specifications, reference and optimized implementations</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
 <tr><th>Exploitation</th><td>Approximately 2^256 hash evaluations</td></tr>
 <tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
@@ -42,13 +42,13 @@
 <p>The construction and length are explicit in both the PDF and source, making this a specification-level design break of both advertised classical EUF-CMA levels.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
-<pre><code class="language-sh">python3 security/design_parameter_audit.py
+<pre><code class="language-sh">python3 security/design_parameter_audit.py --report-id sign-18-1
 </code></pre>
 <p>The check verifies physical PDF pages 14–16 and 50–52 and the submitted 64-byte digest constant.</p>
 <h2 class="issue-heading" id="sign-18-2-signatures-expose-the-hidden-algebra-constraint-subspace">sign-18-2: Signatures expose the hidden-algebra constraint subspace</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
 <tr><th>Scope</th><td>design</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>All four parameter sets</td></tr>
@@ -72,7 +72,7 @@ python3 sign-18/reproduce_signature_subspace.py
 <div class="table-wrap"><table class="meta issue-meta">
 <tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
 <tr><th>Scope</th><td>side-channel</td></tr>
-<tr><th>Status</th><td><span class="issue-status status-probable">Probable</span></td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Origami reference signer, all four parameter sets</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
 <tr><th>Exploitation</th><td>Local timing/cache side channel; no key recovery demonstrated</td></tr>
@@ -90,7 +90,7 @@ python3 sign-18/reproduce_signature_subspace.py
 <div class="table-wrap"><table class="meta issue-meta">
 <tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
 <tr><th>Scope</th><td>side-channel</td></tr>
-<tr><th>Status</th><td><span class="issue-status status-probable">Probable</span></td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Origami reference signer, all four parameter sets</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
 <tr><th>Exploitation</th><td>Local cache/address trace of secret intermediates; forgery not demonstrated</td></tr>

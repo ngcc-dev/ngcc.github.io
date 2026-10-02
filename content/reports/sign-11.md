@@ -26,6 +26,8 @@ The repair is to bind the counter into the hash that selects the PORS instance, 
 python3 security/flextree_kudinov_validation.py
 ```
 
+The certificate recomputes the eight raw counter-grinding figures and the repeated-leaf and forced-pruning inputs. The final approximately 20–32-bit adjusted overstatement is taken from Kudinov's analysis rather than independently recomputed by this script.
+
 ## sign-11-2: Withdrawn — SM3 evaluation-mode length extension
 
 Severity: Info
@@ -152,7 +154,7 @@ Date: 2026-09-22
 
 The code derives OTS digits from the leading `8n-zb` digest bits but tests the high `zb` bits of the final byte. Those regions overlap for seven sets, leaving an equal number of other bits neither encoded nor checked. The effective matched lengths are 157, 159, 252, 255, 384, 382, 511, and 509 bits for 160s through 512f: losses of 3, 1, 4, 1, 0, 2, 1, and 3 bits.
 
-This is not the best known attack because `sign-11-1` is cheaper, and injectivity is not lost. It is nevertheless a concrete implementation-level shortfall from the claimed `8n`-bit OTS digest path. The verifier must check exactly the `zb` bits excluded from digit decoding.
+Injectivity is not lost, but this is a concrete implementation-level shortfall from the claimed `8n`-bit OTS digest path. The verifier must check exactly the `zb` bits excluded from digit decoding.
 
 ### Reproducing
 

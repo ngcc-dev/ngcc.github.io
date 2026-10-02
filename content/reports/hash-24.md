@@ -18,11 +18,11 @@ Follow-up source: [QSH submitters' 2026-09-24 response](https://list.niccs.org.c
 
 As [reported on the CryptHash mailing list](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/BUUGULWWDDQT2XCVX5GICOLHQB5H6CXT/), the full ChaCha Bahru permutation commutes with translation of the `x2` coordinate. Consequently the subspace in which the four words differing only in `x2` are equal is invariant through every round and the final layer. It has dimension `16w` inside the `64w`-bit state. One evaluation on a chosen member therefore distinguishes the permutation from random with advantage `1 - 2^-1536` for QSH-512 and `1 - 2^-3072` for QSH-768/1024.
 
-This is a structural distinguisher on the independently specified core permutation, not by itself a collision, preimage, or distinguisher through the prescribed QSH hash interface. The fixed IV and compression-function injection do not give an attacker a chosen full-state permutation input. It has since been extended to full-mode free-start and semi-free-start collisions in `hash-24-3`, but no sub-generic ordinary collision under QSH's prescribed initialization is presently known.
+This is a structural distinguisher on the independently specified core permutation, not by itself a collision, preimage, or distinguisher through the prescribed QSH hash interface. The fixed IV and compression-function injection do not give an attacker a chosen full-state permutation input. The same structure also yields full-mode free-start and semi-free-start collisions when the initial state can be chosen, but no sub-generic ordinary collision under QSH's prescribed initialization is presently known.
 
 The [QSH submitters' response](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/XUAXWJADVANE33OZYPLNT4IEOLJU4IOJ/) makes the same interface distinction and notes that the fixed IV places the first compression input outside this subspace. The core-permutation finding is unchanged; no whole-hash weakness is inferred from it.
 
-Further analysis: [Yufei Yuan et al., *Structural Analysis of Seven Hash Functions Submitted to the NGCC*](https://eprint.iacr.org/2026/2152), Section 7 (revised 2026-09-28), proves the invariant and derives the separate free-start results recorded in `hash-24-3`.
+Further analysis: [Yufei Yuan et al., *Structural Analysis of Seven Hash Functions Submitted to the NGCC*](https://eprint.iacr.org/archive/2026/2152/20260928:060753), Section 7 (revised 2026-09-28), proves the invariant and derives the free-start results.
 
 ### Reproducing
 
@@ -70,7 +70,7 @@ Discovery: Non-trivial
 Exploitation: Explicit free-start collisions; theoretical semi-free-start bounds of 2^64, 2^128, and 2^128 compression calls under one chosen reset
 Credit: Yufei Yuan, Ruichen Wu, Shanpeng Wei, Junxu Shen, Jinpeng Liu, and Yixin Zhang
 Date: 2026-09-28
-Reference: [*Structural Analysis of Seven Hash Functions Submitted to the NGCC*, ePrint 2026/2152, revised 2026-09-28](https://eprint.iacr.org/2026/2152)
+Reference: [*Structural Analysis of Seven Hash Functions Submitted to the NGCC*, ePrint 2026/2152, revised 2026-09-28](https://eprint.iacr.org/archive/2026/2152/20260928:060753)
 
 For every message block `M` and flag `f`, QSH compression is invertible in the complete incoming state. Given a chosen output `Z`, subtracting the feed-forwarded `M`, inverting the public core permutation, undoing the flag XOR, and subtracting `M` from the right half recovers the unique input state. Two distinct messages can therefore be inverted from the same final state to give explicit collisions in the complete hash mode when each message may use its own full reset.
 

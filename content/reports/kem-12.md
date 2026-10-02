@@ -26,7 +26,7 @@ The [CTL submitters' response](https://list.niccs.org.cn/archives/list/pkcforum@
 ### Reproducing
 
 ```sh
-python3 security/design_parameter_audit.py
+python3 security/design_parameter_audit.py --report-id kem-12-1
 ```
 
 The `kem-12-1` check verifies the short-key algorithms on physical PDF pages
@@ -37,7 +37,7 @@ The `kem-12-1` check verifies the short-key algorithms on physical PDF pages
 Severity: Critical
 Status: Confirmed
 Layer: Implementation
-Affected: CTL-512 reference adapter and specification
+Affected: CTL-512 reference adapter; the specification assigns a 64-byte output
 Discovery: Trivial
 Exploitation: The 384-bit output is 128 bits short of the required 512-bit encapsulated key
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
@@ -55,7 +55,7 @@ For CTL-512's shared secret and `c2`, the [submitters' response](https://list.ni
 ### Reproducing
 
 ```sh
-python3 security/design_parameter_audit.py
+python3 security/design_parameter_audit.py --report-id kem-12-2
 ```
 
 The `kem-12-2` check verifies the CTL-512 output table and the corresponding

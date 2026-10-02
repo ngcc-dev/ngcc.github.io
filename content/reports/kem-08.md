@@ -15,7 +15,7 @@ Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assi
 Date: 2026-09-23
 Follow-up source: [BW-KEM team's confirmation and fix](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/SRZRQZCBXGYWB4IFIMUWO6EFETFPRRYP/)
 
-Decapsulation computes `mp = v - sᵀu` from the recipient secret and chosen ciphertext (`indcpa.c:321-331`), then branches on the sign of each centered coefficient while converting it to a message (`poly.c:174-193`). GCC `-O2` retains a conditional `jns`; the FO comparison occurs later (`kem.c:155-170`). The function is identical to the AFS-KEX C128 path in `kex-02-2`. This establishes secret-dependent control flow, not a measured remote oracle or a transferable KyberSlash key-recovery attack; see `constant_time.md`.
+Decapsulation computes `mp = v - sᵀu` from the recipient secret and chosen ciphertext (`indcpa.c:321-331`), then branches on the sign of each centered coefficient while converting it to a message (`poly.c:174-193`). GCC `-O2` retains a conditional `jns`; the FO comparison occurs later (`kem.c:155-170`). The same submitted routine is also embedded in the related AFS-KEX C128 implementation. This establishes secret-dependent control flow, not a measured remote oracle or a transferable KyberSlash key-recovery attack; see `constant_time.md`.
 
 The BW-KEM team confirmed the branch and reports that its AVX2 path was already branch-free.
 

@@ -30,7 +30,7 @@
 <tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
 <tr><th>Scope</th><td>design</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
-<tr><th>Affected</th><td>CHAMP-512 and CHAMP-1024 construction and reference implementation</td></tr>
+<tr><th>Affected</th><td>CHAMP-512 and CHAMP-1024 construction and all conforming implementations</td></tr>
 <tr><th>Discovery</th><td>Non-trivial</td></tr>
 <tr><th>Exploitation</th><td>At most 2^192 and 2^384 hash evaluations and stored records for greater-than-0.39 collision probability</td></tr>
 <tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
@@ -39,7 +39,12 @@
 
 <p>CHAMP hashes a bit string by multiplying two public <code>2 x 2</code> matrices. Both generators have determinant 2, so every message of a fixed bit length <code>n</code> has determinant <code>2^n</code>. All fixed-length outputs therefore lie in one determinant fiber of size exactly <code>p(p^2-1)</code>, approximately <code>p^3</code>, rather than the full approximately <code>p^4</code> matrix space.</p>
 <p>An invertible output encoding cannot enlarge that image. The nominal 512- and 1024-bit outputs consequently have at most approximately 384 and 768 bits of fixed-length image entropy. For any output distribution on these bounded supports, sampling <code>2^192</code> random 512-bit messages for CHAMP-512 or <code>2^384</code> random 1024-bit messages for CHAMP-1024 finds a collision with probability greater than 0.39; no mixing assumption is needed. This does not contradict the specification's explicit unequal-length theorem, but the <a href="https://www.niccs.org.cn/niccs/Notice/pc/content/content_1975892908773478400.html">NGCC hash call</a> requires collision security of at least h/2 bits, 256 and 512 bits here (<a href="https://www.niccs.org.cn/niccs/Notice/crlRB1ZY.pdf">Evaluation Criteria</a> §1(2)), which these bounds violate. No full-parameter collision has been computed.</p>
-<p>Follow-up analysis: <a href="https://eprint.iacr.org/2026/2152">Yufei Yuan, Ruichen Wu, Shanpeng Wei, Junxu Shen, Jinpeng Liu, and Yixin Zhang, <em>Structural Analysis of Seven Hash Functions Submitted to the NGCC</em></a>, Sections 2.2 and 6 (2026-09-23), prove the stated success probability for both variants, including the correction for repeated sampled inputs.</p>
+<p>Follow-up analysis: <a href="https://eprint.iacr.org/archive/2026/2152/20260923:103749">Yufei Yuan, Ruichen Wu, Shanpeng Wei, Junxu Shen, Jinpeng Liu, and Yixin Zhang, <em>Structural Analysis of Seven Hash Functions Submitted to the NGCC</em></a>, Sections 2.2 and 6 (2026-09-23), prove the stated success probability for both variants, including the correction for repeated sampled inputs.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 hash-04/reproduce_structure.py
+</code></pre>
+<p>The exact-arithmetic certificate checks both generator determinants, the two determinant-fiber sizes, and a distribution-independent collision-probability lower bound above 0.39 at the stated sample counts.</p>
 <h2 class="issue-heading" id="hash-04-2-projective-positive-word-collision-lead-for-champ-512">hash-04-2: Projective positive-word collision lead for CHAMP-512</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
@@ -55,6 +60,11 @@
 
 <p>Because <code>p = 7 mod 8</code>, 2 is a square. Scaling both generators by the inverse square root of 2 normalizes them into <code>SL2</code> without changing equal-length collisions. The exact generators satisfy <code>det(AB-BA)=2</code>, so they have no shared projective eigenline.</p>
 <p>The Mullan-Tsaban general-generator heuristic then suggests positive-word collisions in approximately <code>sqrt(p)</code> work, around <code>2^64</code> for CHAMP-512. Its proven special case does not directly apply because <code>det(A-B)=-5</code>, so this remains a probable attack lead rather than a demonstrated collision. It should not be described as confirmed until instantiated against the exact generators.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 hash-04/reproduce_structure.py
+</code></pre>
+<p>The certificate checks <code>det(A)=det(B)=2</code>, <code>det(A-B)=-5</code>, and <code>det(AB-BA)=2</code>. It explicitly does not instantiate the heuristic positive-word collision search.</p>
 <h2 class="issue-heading" id="hash-04-3-known-length-preimages-admit-an-exact-square-root-search">hash-04-3: Known-length preimages admit an exact square-root search</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
@@ -70,7 +80,7 @@
 <p>Original source: <a href="https://github.com/ngcc-dev/ngcc-harness/issues/7">GitHub issue #7</a></p>
 <p>Decode the public finalization of a target digest to obtain its matrix <code>T</code>, and split an <code>m</code>-bit candidate as <code>uv</code>. Store every <code>M(u)</code> for <code>floor(m/2)</code>-bit prefixes and search the suffixes for <code>T M(v)^-1</code>. The actual split of any target generated by an <code>m</code>-bit message guarantees a match, giving an exact meet-in-the-middle preimage search without a mixing or integer-lifting assumption.</p>
 <p>For a uniformly sampled 512-bit input to CHAMP-512, this gives a preimage in <code>2^256</code> time and storage; for a 1024-bit input to CHAMP-1024, it costs <code>2^512</code>. Both are below the NGCC requirement of <code>h</code>-bit preimage security for an <code>h</code>-bit digest (<a href="https://www.niccs.org.cn/niccs/Notice/crlRB1ZY.pdf">Evaluation Criteria</a> §1(2)), so the result is Critical even though these full-scale costs are infeasible. The submitted witness recovers a 40-bit input for both variants with two lists of about <code>2^20</code> products. It does not give a distinct second preimage or a full-parameter collision.</p>
-<h3 id="reproducing">Reproducing</h3>
+<h3 id="reproducing_2">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>The quick target uses 32-bit inputs; the full target repeats the submitted 40-bit experiment. Both generate and verify targets through the submitted C libraries and include a changed-input control:</p>
 <pre><code class="language-sh">make -C hash-04 reproduce
@@ -91,9 +101,9 @@ make -C hash-04 reproduce-full
 <p>Original source: <a href="https://github.com/ngcc-dev/ngcc-harness/issues/8">GitHub issue #8</a></p>
 <p>Every implementation explicitly discards <code>digest_len_bits</code>, returns success, and unconditionally writes the instance's complete 512- or 1024-bit digest. For example, requesting 256 bits from CHAMP-512 still writes 64 bytes; requesting 512 bits from CHAMP-1024 still writes 128 bytes. A caller allocating the output buffer from the requested length therefore receives a fixed 32- or 64-byte overflow.</p>
 <p>The local reproducer allocates the full output plus a guard, proving the return value and write extent without itself writing out of bounds. It also verifies that the full result equals an ordinary full-length call and that the trailing guard remains intact. Fixed-output instances should reject every request unequal to <code>DIGEST_BIT_LENGTH</code> before writing.</p>
-<h3 id="reproducing_1">Reproducing</h3>
+<h3 id="reproducing_3">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
-<p>The guarded check runs as part of either command for <code>hash-04-3</code>:</p>
+<p>The guarded check is included in:</p>
 <pre><code class="language-sh">make -C hash-04 reproduce
 </code></pre>
 <h2 class="issue-heading" id="hash-04-5-message-bytes-index-a-large-precomputed-matrix-table">hash-04-5: Message bytes index a large precomputed matrix table</h2>
@@ -111,7 +121,7 @@ make -C hash-04 reproduce-full
 
 <p>The absorption loop selects <code>byte_table[(unsigned char)msg[i]]</code> directly from each message byte (<code>CryptHash_AlgorithmInstance.c:279</code> in CHAMP-512; <code>:308</code> in CHAMP-1024). Entries contain four field elements and occupy distinct cache lines. The memory-address trace therefore reveals every absorbed byte to an observer able to distinguish table lines. Field reduction and inverse dispatch also branch on secret-dependent state. No end-to-end cache-extraction experiment was run. See <a href="../constant-time/hash-04.html">constant_time.md</a>.</p>
 <p>Constant-time fix (hard, hence High and Design): the design's speed comes from indexing a 256-entry table of precomputed matrix products by each message byte. A constant-time version must scan the whole table with a masked select for every byte or build each byte's matrix from eight per-bit products, and field reduction and inversion need branch-free forms. We estimate this makes absorption several times slower. No competitive constant-time path is supplied or known, so the leakage is a property of the specified design rather than of this code.</p>
-<h3 id="reproducing_2">Reproducing</h3>
+<h3 id="reproducing_4">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>Inspect the cited table access. For equal-length first-byte choices <code>0x00</code> and <code>0x80</code>, the first table addresses differ by 128 entries; the two inputs differ only in secret content.</p>
 </main>

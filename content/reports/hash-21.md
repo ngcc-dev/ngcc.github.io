@@ -19,7 +19,7 @@ For a register module whose only nonzero word is its discarded first stage, the 
 
 The reporters give equal-length fixed-IV messages `00^d || BE32(x) || 00^60`, with `d=56,88,120` bytes for the three instances and `x` chosen from the colliding pair. The submitted Neulaser-512 implementation maps both 120-byte messages to `f899bf50663e6e04fa5374baf28886153ea332bf25443817eb2abbca88072458dbd7a077712aae99fb112b7672c85a705700e027b348516cc45f8fff537713d3`; full-round collisions reproduce for all three instances.
 
-Further analysis: [Yufei Yuan et al., *Structural Analysis of Seven Hash Functions Submitted to the NGCC*](https://eprint.iacr.org/2026/2152), Section 4 (2026-09-23), derives this local-feedback collision and its fixed-IV message pairs. It does not address the separate `hash-21-2` mechanism below.
+Further analysis: [Yufei Yuan et al., *Structural Analysis of Seven Hash Functions Submitted to the NGCC*](https://eprint.iacr.org/archive/2026/2152/20260923:103749), Section 4 (2026-09-23), derives this local-feedback collision and its fixed-IV message pairs. This finding concerns the feedback merger rather than the separate modular-reduction mechanism described below.
 
 ### Reproducing
 
@@ -44,7 +44,7 @@ Original source: [CryptHashForum report](https://list.niccs.org.cn/archives/list
 
 Neulaser loads unrestricted 32-bit message words but overwrites stages 8, 12, and 15 after reduction modulo `p=2^32-5`. Each value `y` from 0 through 4 therefore has two encodings, `y` and `y+p`. Stages 8 and 12 do not enter any other tap feeding that round, so choosing the two pre-reduction values makes the entire state merge after one round.
 
-The public comment supplies deterministic one-block collisions for every parameter set. For Neulaser-512, two otherwise-zero 888-bit messages place `45d27672` and `ba2d8989` at bytes 24--27; both produce the published digest beginning `a4cfaefc283b5d78`. Four independently mergeable words give 16-message multicollisions. This is a second, independent full-round collision mechanism, not a restatement of `hash-21-1`.
+The public comment supplies deterministic one-block collisions for every parameter set. For Neulaser-512, two otherwise-zero 888-bit messages place `45d27672` and `ba2d8989` at bytes 24–27; both produce the published digest beginning `a4cfaefc283b5d78`. Four independently mergeable words give 16-message multicollisions. This modular-reduction merger is independent of the local-feedback collision described above.
 
 ### Reproducing
 

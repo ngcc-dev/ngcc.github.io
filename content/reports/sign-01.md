@@ -127,7 +127,7 @@ Status: Confirmed
 Layer: Implementation
 Affected: Aigis-Sig+-I and -II reference, AVX2, NEON, and AArch64 implementations
 Discovery: Trivial
-Exploitation: Most likely challenge costs about 2^213.46 work in set II; Grover cost about 2^68.59 in set I
+Exploitation: Most likely challenge costs about 2^213.46 trials in set II; set I admits about 2^68.59 generic Grover iterations
 Credit: Yijian Liu, with Doubao assistance
 Date: 2026-09-27
 Original source: [Liu's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/PKKXNPUY433TLJHGCS365LENBN75SHAZ/)
@@ -137,7 +137,7 @@ Algorithm 24 assigns an independent sign to every nonzero challenge coefficient.
 
 `binomial(512,44) * 2^44 = 2^256.4609` possible uniformly signed challenges.
 
-The most likely set-II challenge therefore costs about `2^213.46` work, below its 256-bit claim. Set I similarly has `137.17` bits of min-entropy: this remains above its 128-bit classical claim, but Grover search costs about `2^68.59`, below its claimed 80-bit quantum level. Set III uses a separate branch and is unaffected. The team confirms the error.
+The most likely set-II challenge therefore costs about `2^213.46` trials, below its 256-bit claim. Set I similarly has `137.17` bits of min-entropy, corresponding to about `2^68.59` generic Grover queries or iterations. No end-to-end reversible-oracle gate cost is claimed for that quantum search. Set I remains above its 128-bit classical claim; set II independently sustains the Critical classification. Set III uses a separate branch and is unaffected. The team confirms the error.
 
 ### Proposed fixes
 

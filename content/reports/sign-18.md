@@ -8,7 +8,7 @@ Archive: [Origami.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryp
 Severity: Critical
 Status: Confirmed
 Layer: Design
-Affected: Origami-384 and Origami-512 specifications and reference implementations
+Affected: Origami-384 and Origami-512 specifications, reference and optimized implementations
 Discovery: Trivial
 Exploitation: Approximately 2^256 hash evaluations
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
@@ -23,14 +23,14 @@ The construction and length are explicit in both the PDF and source, making this
 ### Reproducing
 
 ```sh
-python3 security/design_parameter_audit.py
+python3 security/design_parameter_audit.py --report-id sign-18-1
 ```
 
 The check verifies physical PDF pages 14–16 and 50–52 and the submitted 64-byte digest constant.
 
 ## sign-18-2: Signatures expose the hidden-algebra constraint subspace
 
-Severity: High
+Severity: Medium
 Status: Confirmed
 Layer: Design
 Affected: All four parameter sets
@@ -58,7 +58,7 @@ The witness verifies every collected signature with the official verifier before
 ## sign-18-3: Variable-time hidden-zone linear solving
 
 Severity: Medium
-Status: Probable
+Status: Confirmed
 Layer: Side-channel
 Affected: Origami reference signer, all four parameter sets
 Discovery: Trivial
@@ -77,7 +77,7 @@ In each reference instance, follow `sign` → `build_zone_system` → `solve_rec
 ## sign-18-4: Signing indexes field tables and signature state with private values
 
 Severity: Low
-Status: Probable
+Status: Confirmed
 Layer: Side-channel
 Affected: Origami reference signer, all four parameter sets
 Discovery: Trivial

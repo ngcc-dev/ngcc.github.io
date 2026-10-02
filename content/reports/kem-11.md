@@ -23,7 +23,7 @@ This caps both implementations at 256 bits despite their respective 384- and 512
 ### Reproducing
 
 ```sh
-python3 security/design_parameter_audit.py
+python3 security/design_parameter_audit.py --report-id kem-11-1
 ```
 
 The check verifies the source constants and deterministic expansion against physical PDF pages 9, 12, 16, and 25.

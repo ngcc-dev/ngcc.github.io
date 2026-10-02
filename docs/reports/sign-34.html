@@ -30,7 +30,7 @@
 <tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
 <tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
-<tr><th>Affected</th><td>YuanYang.DSA-512, -1024, and -2048 reference implementations</td></tr>
+<tr><th>Affected</th><td>YuanYang.DSA-512, -1024, and -2048 reference and optimized implementations</td></tr>
 <tr><th>Discovery</th><td>Non-trivial</td></tr>
 <tr><th>Exploitation</th><td>Key-dependent transcript distinguisher from a few thousand signatures; complete key recovery not demonstrated</td></tr>
 <tr><th>Credit</th><td>Kris Kwiatkowski <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#99;&#111;&#110;&#116;&#97;&#99;&#116;&#64;&#97;&#109;&#111;&#110;&#103;&#98;&#121;&#116;&#101;&#115;&#46;&#99;&#111;&#109;">&#99;&#111;&#110;&#116;&#97;&#99;&#116;&#64;&#97;&#109;&#111;&#110;&#103;&#98;&#121;&#116;&#101;&#115;&#46;&#99;&#111;&#109;</a></td></tr>
@@ -48,8 +48,9 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <pre><code class="language-sh">make -C sign-34 exploit
 sign-34/reproduce_transcript_leak sign-34/lib/libyuanyang-512.so 4000
 </code></pre>
-<p>The same run prints the <code>sign-34-2</code> packing witness; its 4,000-signature count
-is needed by the <code>sign-34-1</code> statistical test, not by this encoding check.</p>
+<p>The same run also prints a separate public-key packing witness. Its
+4,000-signature count is needed by this statistical test, not by the encoding
+check.</p>
 <h2 class="issue-heading" id="sign-34-2-non-injective-public-key-packing-creates-key-aliases">sign-34-2: Non-injective public-key packing creates key aliases</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">

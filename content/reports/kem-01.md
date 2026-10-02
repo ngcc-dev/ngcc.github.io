@@ -36,20 +36,20 @@ witnesses and their controls. See `tools/README.md`.
 
 ## kem-01-2: Rejection reads a secret before the secret-key object
 
-Severity: High
+Severity: Low
 Status: Confirmed
 Layer: Implementation
 Affected: Reference implementation, all three parameter sets
 Discovery: Trivial
-Exploitation: Malformed-ciphertext processing invokes an out-of-bounds read; security impact after repairing kem-01-1
+Exploitation: Every rejected ciphertext triggers an out-of-bounds read; no disclosure or control-flow impact demonstrated
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-09-21
 
 The rejection path reads its fallback secret from `sk - SEED_BYTES`, before the start of the caller's secret-key object. Key generation stores that value at `sk + SK_BYTES - SEED_BYTES`. All three submitted `kem.c` files contain the same pointer error.
 
-This is undefined behavior on every rejected ciphertext. In the submitted code, `kem-01-1` prevents the resulting fallback value from replacing the candidate shared secret. Correcting only that write target would expose this second defect: rejection would derive its output from unrelated memory rather than the secret value stored in the key, defeating the intended implicit-rejection construction and potentially faulting under memory-safety instrumentation.
+This is undefined behavior on every rejected ciphertext. Another assignment error in the submitted decapsulation path prevents the resulting fallback value from replacing the candidate shared secret. Correcting only that assignment would expose this second defect: rejection would derive its output from unrelated memory rather than the secret value stored in the key. The archived behavior is an out-of-bounds read, with no memory disclosure or control-flow impact demonstrated, hence Low.
 
-The implementation must read the final `SEED_BYTES` of the secret-key object and must validate the repair independently of `kem-01-1`.
+The implementation must read the final `SEED_BYTES` of the secret-key object and must validate this repair independently of the separate fallback-selection error.
 
 ### Reproducing
 

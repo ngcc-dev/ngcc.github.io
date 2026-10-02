@@ -8,7 +8,7 @@ Archive: [DARTS.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Crypto
 Severity: Critical
 Status: Confirmed
 Layer: Implementation
-Affected: DARTS-512 reference implementation and specification
+Affected: DARTS-512 reference and optimized implementations and specification
 Discovery: Trivial
 Exploitation: Approximately 2^256 hash evaluations
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
@@ -21,7 +21,7 @@ The PDF names `H1` but does not define its output length. The concrete implement
 ### Reproducing
 
 ```sh
-python3 security/design_parameter_audit.py
+python3 security/design_parameter_audit.py --report-id sign-08-1
 ```
 
 The check verifies the DARTS-512 algorithm on physical PDF pages 4, 8, and 12–13 and traces its 64-byte `mu`.

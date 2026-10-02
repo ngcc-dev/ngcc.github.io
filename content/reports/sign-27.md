@@ -53,7 +53,7 @@ Status: Confirmed
 Layer: Design
 Affected: All four SQIsignTriangle parameter sets
 Discovery: Moderate
-Exploitation: About 2^64, 2^80, 2^128, or 2^256 classical hash trials at the 128-, 160-, 256-, or 512-bit levels; about 2^(lambda/4) quantum search work
+Exploitation: About 2^64, 2^80, 2^128, or 2^256 classical hash trials; about 2^(lambda/4) generic quantum queries
 Credit: Tako Boris Fouotsa
 Date: 2026-09-26
 Original source: [Fouotsa's PKC Forum post and attached analysis](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/F3RT6SYIAB7MLENH3OUBX6OSWQQTJ2LE/)
@@ -61,7 +61,7 @@ Follow-up source: [SQIsignTriangle team's confirmation](https://list.niccs.org.c
 
 A signature exposes its response degree `q`; its auxiliary curve and torsion data recover the same commitment independently of the message. Verification hashes the public-key curve, commitment curve and message to `(c1,c2)`, then checks `q mod c1 = c2`. A forger therefore keeps any valid signature and searches for a different message whose challenge satisfies that single congruence.
 
-Each challenge component is only `lambda/2` bits: the implementation sets `byte_len = SECURITY_BITS / 16` and imports that many bytes into each integer, agreeing with the specification's challenge interval of size `2^(lambda/2)`. The verifier checks `(q - c2) mod c1 = 0` without requiring `c2 < c1`, so several `c2` values can succeed for one `c1`; either codomain component can also supply `c1`. The search still costs on the order of `2^(lambda/2)` classical trials, rather than the claimed `2^lambda`. Grover search brings the quantum work to about `2^(lambda/4)`. A chosen-message signing query supplies the starting signature, making this a direct EUF-CMA attack. It violates every claimed security level and is therefore Critical, even though the larger instances remain computationally infeasible.
+Each challenge component is only `lambda/2` bits: the implementation sets `byte_len = SECURITY_BITS / 16` and imports that many bytes into each integer, agreeing with the specification's challenge interval of size `2^(lambda/2)`. The verifier checks `(q - c2) mod c1 = 0` without requiring `c2 < c1`, so several `c2` values can succeed for one `c1`; either codomain component can also supply `c1`. The search still costs on the order of `2^(lambda/2)` classical trials, rather than the claimed `2^lambda`. Grover search uses about `2^(lambda/4)` generic quantum queries or iterations; no end-to-end gate cost is claimed. A chosen-message signing query supplies the starting signature, making this a direct EUF-CMA attack. It violates every claimed classical security level and is therefore Critical, even though the larger instances remain computationally infeasible.
 
 ### Reproducing
 
@@ -78,7 +78,7 @@ Status: Proof gap
 Layer: Design
 Affected: The SQIsignTriangle special-soundness argument for all four parameter sets
 Discovery: Moderate
-Exploitation: Proof failure; no attack beyond sign-27-3 is claimed
+Exploitation: Deterministic counterexample to the stated soundness lemma; no additional forgery demonstrated
 Credit: Tako Boris Fouotsa
 Date: 2026-09-26
 Original source: [Fouotsa's PKC Forum post and attached analysis](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/F3RT6SYIAB7MLENH3OUBX6OSWQQTJ2LE/)
@@ -86,7 +86,7 @@ Follow-up source: [SQIsignTriangle team's confirmation](https://list.niccs.org.c
 
 The proof claims that two accepting transcripts with the same commitment and distinct challenges yield two different response isogenies, except with negligible probability. That implication is false. In the submitted hash-to-challenge implementation, given one response of degree `q`, choose any different accepted prime `c1'` and set `c2' = q mod c1'`; the unchanged response is valid for the distinct challenge `(c1',c2')`. In the proof's shifted interval description, one instead samples `c1'` until this remainder lies in the stated interval. Composing the two identical responses in the extractor produces a scalar endomorphism, not the required non-scalar witness.
 
-This is a deterministic counterexample to the stated two-special-soundness claim, not merely a loose probability bound. It is closely related to sign-27-3 and does not establish an additional faster forgery, so it is tracked separately as a proof failure rather than a second Critical break.
+This is a deterministic counterexample to the stated two-special-soundness claim, not merely a loose probability bound. It does not establish an additional forgery, so it is tracked as a proof failure rather than a Critical break.
 
 ### Reproducing
 

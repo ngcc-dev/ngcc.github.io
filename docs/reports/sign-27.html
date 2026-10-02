@@ -71,14 +71,14 @@ security/ngcc_security sign-27/lib/libSQIsignTriangle_lvl1.so sig-zero
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>All four SQIsignTriangle parameter sets</td></tr>
 <tr><th>Discovery</th><td>Moderate</td></tr>
-<tr><th>Exploitation</th><td>About 2^64, 2^80, 2^128, or 2^256 classical hash trials at the 128-, 160-, 256-, or 512-bit levels; about 2^(lambda/4) quantum search work</td></tr>
+<tr><th>Exploitation</th><td>About 2^64, 2^80, 2^128, or 2^256 classical hash trials; about 2^(lambda/4) generic quantum queries</td></tr>
 <tr><th>Credit</th><td>Tako Boris Fouotsa</td></tr>
 <tr><th>Date</th><td>2026-09-26</td></tr>
 </table></div>
 <p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/F3RT6SYIAB7MLENH3OUBX6OSWQQTJ2LE/">Fouotsa's PKC Forum post and attached analysis</a>
 Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/AD6OWNGXIO365OS2TU27TNSBKKCJZV4T/">SQIsignTriangle team's confirmation</a></p>
 <p>A signature exposes its response degree <code>q</code>; its auxiliary curve and torsion data recover the same commitment independently of the message. Verification hashes the public-key curve, commitment curve and message to <code>(c1,c2)</code>, then checks <code>q mod c1 = c2</code>. A forger therefore keeps any valid signature and searches for a different message whose challenge satisfies that single congruence.</p>
-<p>Each challenge component is only <code>lambda/2</code> bits: the implementation sets <code>byte_len = SECURITY_BITS / 16</code> and imports that many bytes into each integer, agreeing with the specification's challenge interval of size <code>2^(lambda/2)</code>. The verifier checks <code>(q - c2) mod c1 = 0</code> without requiring <code>c2 &lt; c1</code>, so several <code>c2</code> values can succeed for one <code>c1</code>; either codomain component can also supply <code>c1</code>. The search still costs on the order of <code>2^(lambda/2)</code> classical trials, rather than the claimed <code>2^lambda</code>. Grover search brings the quantum work to about <code>2^(lambda/4)</code>. A chosen-message signing query supplies the starting signature, making this a direct EUF-CMA attack. It violates every claimed security level and is therefore Critical, even though the larger instances remain computationally infeasible.</p>
+<p>Each challenge component is only <code>lambda/2</code> bits: the implementation sets <code>byte_len = SECURITY_BITS / 16</code> and imports that many bytes into each integer, agreeing with the specification's challenge interval of size <code>2^(lambda/2)</code>. The verifier checks <code>(q - c2) mod c1 = 0</code> without requiring <code>c2 &lt; c1</code>, so several <code>c2</code> values can succeed for one <code>c1</code>; either codomain component can also supply <code>c1</code>. The search still costs on the order of <code>2^(lambda/2)</code> classical trials, rather than the claimed <code>2^lambda</code>. Grover search uses about <code>2^(lambda/4)</code> generic quantum queries or iterations; no end-to-end gate cost is claimed. A chosen-message signing query supplies the starting signature, making this a direct EUF-CMA attack. It violates every claimed classical security level and is therefore Critical, even though the larger instances remain computationally infeasible.</p>
 <h3 id="reproducing_2">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 sign-27/reproduce_modular_challenge.py
@@ -92,14 +92,14 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr>
 <tr><th>Affected</th><td>The SQIsignTriangle special-soundness argument for all four parameter sets</td></tr>
 <tr><th>Discovery</th><td>Moderate</td></tr>
-<tr><th>Exploitation</th><td>Proof failure; no attack beyond sign-27-3 is claimed</td></tr>
+<tr><th>Exploitation</th><td>Deterministic counterexample to the stated soundness lemma; no additional forgery demonstrated</td></tr>
 <tr><th>Credit</th><td>Tako Boris Fouotsa</td></tr>
 <tr><th>Date</th><td>2026-09-26</td></tr>
 </table></div>
 <p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/F3RT6SYIAB7MLENH3OUBX6OSWQQTJ2LE/">Fouotsa's PKC Forum post and attached analysis</a>
 Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/AD6OWNGXIO365OS2TU27TNSBKKCJZV4T/">SQIsignTriangle team's confirmation</a></p>
 <p>The proof claims that two accepting transcripts with the same commitment and distinct challenges yield two different response isogenies, except with negligible probability. That implication is false. In the submitted hash-to-challenge implementation, given one response of degree <code>q</code>, choose any different accepted prime <code>c1'</code> and set <code>c2' = q mod c1'</code>; the unchanged response is valid for the distinct challenge <code>(c1',c2')</code>. In the proof's shifted interval description, one instead samples <code>c1'</code> until this remainder lies in the stated interval. Composing the two identical responses in the extractor produces a scalar endomorphism, not the required non-scalar witness.</p>
-<p>This is a deterministic counterexample to the stated two-special-soundness claim, not merely a loose probability bound. It is closely related to sign-27-3 and does not establish an additional faster forgery, so it is tracked separately as a proof failure rather than a second Critical break.</p>
+<p>This is a deterministic counterexample to the stated two-special-soundness claim, not merely a loose probability bound. It does not establish an additional forgery, so it is tracked as a proof failure rather than a Critical break.</p>
 <h3 id="reproducing_3">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 sign-27/reproduce_modular_challenge.py

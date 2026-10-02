@@ -8,7 +8,7 @@ Archive: [AXIS.zip](https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash
 Severity: Low
 Status: Confirmed
 Layer: Implementation
-Affected: Reference AXIS-512/768/1024 bitstring-input paths
+Affected: Reference and optimized AXIS-512/768/1024 bitstring-input paths
 Discovery: Moderate
 Exploitation: Resource-contingent false-success digest; not a normal-operation cryptanalytic collision
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
@@ -31,7 +31,7 @@ The Linux witness preallocates the input, caps process virtual memory at its cur
 Severity: Low
 Status: Confirmed
 Layer: Side-channel
-Affected: Reference AXIS-512/768/1024 on non-byte-aligned messages
+Affected: Reference and optimized AXIS-512/768/1024 on non-byte-aligned messages
 Discovery: Moderate
 Exploitation: Branch side-channel dependent
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance

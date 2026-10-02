@@ -59,6 +59,8 @@ May and Sá Diogo's pinned DS-DOOM estimator gives:
 
 The attacks are passive, use fewer than 2^80 observed encapsulations, and need no decapsulation queries. The specification describes cached public-key state for encapsulation and reuse of decoded secret-key state across calls (§7.4), and states no per-key session cap. A hypothetical 2^64-ciphertext limit would avoid the crossings, but neither the NGCC call nor QCTM imposes one. The 128- and 256-bit claims are therefore missed and the finding is Critical.
 
+The margins are narrow: 0.339 and 0.664 bits under this single heuristic DS-DOOM cost model, with memory estimates of 2^95.592 and 2^96.271 bits. Reducing the allowed observation exponent by one removes both reported crossings. The classification applies the policy's strict below-target rule to the cited model; it should be revisited if a better-supported cost model moves either estimate above its target.
+
 ### Reproducing
 
 Install `numpy` and `scipy`, then run:

@@ -30,7 +30,7 @@ The static witness checks all three independent implementation copies and fails 
 ## kem-40-2: Decapsulation addresses a private array with a secret-derived index
 
 Severity: Low
-Status: Probable
+Status: Confirmed
 Layer: Side-channel
 Affected: Reference decapsulation, all three parameter sets
 Discovery: Trivial

@@ -42,7 +42,7 @@
 <p>This limits both implementations to at most <code>2^256</code> secret-seed trials, below their respective 384- and 512-bit classical claims. It is an implementation/specification conformance break, not a limitation of the normative secret distribution.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
-<pre><code class="language-sh">python3 security/design_parameter_audit.py
+<pre><code class="language-sh">python3 security/design_parameter_audit.py --report-id kex-06-1
 </code></pre>
 <p>The check traces <code>noiseseed[32]</code> through <code>poly_getnoise</code> and checks the normative KeyGen description on physical PDF pages 7–15.</p>
 <h2 class="issue-heading" id="kex-06-2-static-key-reconciliation-admits-an-active-reaction-recovery-path">kex-06-2: Static-key reconciliation admits an active reaction-recovery path</h2>

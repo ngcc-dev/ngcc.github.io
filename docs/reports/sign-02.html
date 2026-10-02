@@ -30,7 +30,7 @@
 <tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
 <tr><th>Scope</th><td>design</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
-<tr><th>Affected</th><td>BiT-512 specification and reference implementation</td></tr>
+<tr><th>Affected</th><td>BiT-512 specification, reference and optimized implementations</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
 <tr><th>Exploitation</th><td>Approximately 2^256 hash evaluations</td></tr>
 <tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
@@ -42,7 +42,7 @@
 <p>This is a specification-level design break of the advertised 512-bit classical EUF-CMA level. It is a generic <code>2^256</code> security ceiling, not a computation performed by the harness.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
-<pre><code class="language-sh">python3 security/design_parameter_audit.py
+<pre><code class="language-sh">python3 security/design_parameter_audit.py --report-id sign-02-1
 </code></pre>
 <p>The check verifies the normative BiT-512 construction on physical PDF pages 18 and 33–34 and the 64-byte source constant.</p>
 <h2 class="issue-heading" id="sign-02-2-a-shared-bimodal-sign-leaks-an-equivalent-bit-128-signing-key">sign-02-2: A shared bimodal sign leaks an equivalent BiT-128 signing key</h2>

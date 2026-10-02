@@ -8,7 +8,7 @@ Archive: [YuanYang.DSA.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%2
 Severity: High
 Status: Confirmed
 Layer: Implementation
-Affected: YuanYang.DSA-512, -1024, and -2048 reference implementations
+Affected: YuanYang.DSA-512, -1024, and -2048 reference and optimized implementations
 Discovery: Non-trivial
 Exploitation: Key-dependent transcript distinguisher from a few thousand signatures; complete key recovery not demonstrated
 Credit: Kris Kwiatkowski <contact@amongbytes.com>
@@ -33,8 +33,9 @@ make -C sign-34 exploit
 sign-34/reproduce_transcript_leak sign-34/lib/libyuanyang-512.so 4000
 ```
 
-The same run prints the `sign-34-2` packing witness; its 4,000-signature count
-is needed by the `sign-34-1` statistical test, not by this encoding check.
+The same run also prints a separate public-key packing witness. Its
+4,000-signature count is needed by this statistical test, not by the encoding
+check.
 
 ## sign-34-2: Non-injective public-key packing creates key aliases
 

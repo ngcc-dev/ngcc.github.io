@@ -68,7 +68,7 @@ witnesses and their controls. See <code>tools/README.md</code>.</p>
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>Specification evidence is on physical PDF pages 12–14. Run:</p>
-<pre><code class="language-sh">python3 security/design_parameter_audit.py
+<pre><code class="language-sh">python3 security/design_parameter_audit.py --report-id kem-17-2
 </code></pre>
 <h2 class="issue-heading" id="kem-17-3-first-encapsulation-in-each-process-is-publicly-reproducible">kem-17-3: First encapsulation in each process is publicly reproducible</h2>
 
@@ -83,7 +83,7 @@ witnesses and their controls. See <code>tools/README.md</code>.</p>
 <tr><th>Date</th><td>2026-09-21</td></tr>
 </table></div>
 
-<p><code>kem_enc</code> draws both its message <code>m</code> and salt consecutively from the same file-scope SHAKE-256 PRNG context described in <code>kem-17-1</code>. The wrapper never initializes that context from the API-provided DRNG, so it begins in the same zero-initialized state in every fresh process.</p>
+<p><code>kem_enc</code> draws both its message <code>m</code> and salt consecutively from a file-scope SHAKE-256 PRNG context. The wrapper never initializes that context from the API-provided DRNG, so it begins in the same zero-initialized state in every fresh process.</p>
 <p>For a fixed public key, the first encapsulation in each fresh process consequently repeats both the ciphertext and shared secret. An attacker can run the public encapsulation algorithm in a fresh process with the recipient's public key and recover the exact first session key produced by another fresh process. Fixing key generation alone does not repair this independent KEM confidentiality failure.</p>
 <p>Every encapsulation operation must obtain fresh entropy from the API DRNG or initialize a per-operation generator from it. Message and salt generation must not use predictable global state.</p>
 <h3 id="reproducing_2">Reproducing</h3>
