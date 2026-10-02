@@ -113,3 +113,32 @@ python3 sign-06/reproduce_xof_replay.py
 ```
 
 The witness checks all eight parameter-specific reference and optimized wrapper copies, generates fresh keys through the submitted API, unpacks every `s1` and `s2` polynomial, and requires a long prefix-equal suffix in every high-level polynomial. Fresh 128- and 256-bit keys are negative controls.
+
+## sign-06-5: A byte-wide position index and 64 sign bits shrink the 384- and 512-bit challenge spaces below their levels
+
+Severity: Critical
+Status: Confirmed
+Layer: Implementation
+Affected: COMPASS-SIG-384 and COMPASS-SIG-512 reference and optimized implementations (byte-identical `poly_challenge`); the 128- and 256-bit sets are unaffected
+Discovery: Moderate
+Exploitation: Generic challenge-guessing forgery costs at most about 2^335.6 or 2^454.9 hash evaluations; not executed
+Credit: Sun Shuzhou, with GLM-5.3 assistance
+Date: 2026-10-02
+Original source: [Sun Shuzhou's PKC Forum post of 2026-10-02](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/7IKAN5MO7PADYUNOO6PUQNQP6VP7YW7C/)
+
+Section 2.2.3 (physical p. 8) hashes challenges onto `B_tau`, the `2^tau * binomial(n,tau)` polynomials with `tau` coefficients in `{-1,+1}`, and Figure 1 (p. 8) draws each position `j` uniformly from `{0,...,i}` and a fresh sign `s` from `{0,1}` in every step `i = n-tau,...,n-1`. Table 1 (p. 15) sets `n = 512` with `tau = 78` for the 384-bit set and `tau = 120` for the 512-bit set, and §3.3 (p. 15) states that the growing `tau` ensures "sufficient difficulty against brute-force attacks".
+
+The delivered `poly_challenge` (`poly.c:870–902`, byte-identical in all eight per-set reference and optimized copies) reads each position as one byte, `b = buf[pos++]`, and keeps the signs in a 64-bit word that is shifted once per placement. For `n = 512` the loop index `i` starts at 434 or 392, so `b <= 255 < i` and the rejection test `while(b > i)` never fires: positions 256 to `n-tau-1` (178 in the 384-bit set, 136 in the 512-bit set) can never hold a nonzero coefficient, and after 64 placements every remaining coefficient is `+1`, so no challenge has more than 64 negative coefficients. The 128- and 256-bit sets use `n = 256` and `tau <= 64`, where one byte covers every index and the sign word suffices.
+
+Rebuilt from the archived sources, 20,000 challenges per set show zero dead-zone coefficients against 542,344 and 637,500 expected under Figure 1, mean negative counts 31.97 and 32.01 against 39 and 60, maxima of 48, and position-histogram chi-square/df of 1,990 and 2,349 (df = 511); the 128- and 256-bit controls give 0.95 and 0.67. The ten KAT signatures per set that the harness generated from the archived libraries show the same structure (no dead-zone coefficient, at most 37 negatives), and the original post reports the same for the shipped KAT files.
+
+Counting the reachable outputs bounds the challenge image by `binomial(334,78) * sum_{j<=64} binomial(78,j) = 2^335.6` and `binomial(376,120) * sum_{j<=64} binomial(120,j) = 2^454.9`, whereas Figure 1 spans `2^388.9` and `2^517.6`, capped at `2^384` and `2^512` by the 48- and 64-byte challenge hash. Verify (Algorithm 3, p. 13) accepts `(z, c~)` for a message `m` when `||z||_inf < gamma1 - eta_s*tau`, `||delta*z||^2 + ||w0'||^2 >= B*gamma2^2`, and `H(mu || w1') = c~`, with `c' = SampleInBall(c~)` and `(w1', w0') = Split(A*z - c'*Decomp_d(t1))`. A forger therefore fixes a challenge polynomial `c'` and a vector `z` meeting both norm conditions (the quadratic condition is a lower bound that a large enough `z` within the infinity-norm bound satisfies), computes `w1'`, and grinds messages: each trial costs two hash evaluations, `mu = H(pk || m)` and `H(mu || w1')`, and succeeds when the output falls in the sampler's preimage fiber of `c'`. Taking `c'` as the sampler output of a random hash gives an expected success probability of at least `1/|image|` per trial (Cauchy–Schwarz over the fiber sizes), so a fresh-message forgery costs at most about `2^335.6` or `2^454.9` hash evaluations, below the 384- and 512-bit levels claimed in Table 1 and the NGCC 512-bit target; hence Critical. The figures count reachable challenges rather than an executed attack, and the true cost can only be lower. Quantum square-root iteration counts are not end-to-end gate costs and are not claimed here.
+
+### Reproducing
+
+```sh
+make -C sign-06 reproduce-challenge-image
+python3 sign-06/reproduce_challenge_image.py
+```
+
+The first command builds the delivered sampler of every set against the archived `COMPASS-SIG-<N>` sources, derives 20,000 challenge hashes per set, and requires zero dead-zone coefficients, at most 64 negative signs and a large chi-square statistic at 384 and 512 with clean 128 and 256 controls; given a KAT file, it repeats the counts on the archived signatures' challenge hashes. The certificate checks the sampler's source in all eight copies and computes the image bounds.

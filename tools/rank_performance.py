@@ -311,12 +311,15 @@ def assign_ranks(entries: list[Entry], metric_names: list[str]) -> list[Entry]:
 
 
 def select_fastest(entries: list[Entry], category: str) -> list[Entry]:
-    """Keep one reference instance per candidate and security target.
+    """Keep one comparison-eligible reference instance per candidate and target.
 
-    Selection uses only cycle metrics: sizes participate in the final ordering,
-    but they do not cause a slower implementation to represent a candidate.
-    As elsewhere on the page, tied cycle values receive their average ordinal
-    position.
+    performance/security_targets.csv first decides which parameter sets are
+    eligible.  Thus an optional parameter set cannot displace a submitter's
+    designated primary set merely by being faster.  If more than one eligible
+    reference instance remains, selection uses only cycle metrics: sizes
+    participate in the final ordering, but do not cause a slower instance to
+    represent a candidate.  As elsewhere on the page, tied cycle values receive
+    their average ordinal position.
     """
     metrics = METRICS[category]
     required = [name for name, _, _ in metrics]
@@ -437,9 +440,12 @@ def render(entries: list[Entry], findings: dict[str, Counter],
                 "arithmetic mean of those ordinal ranks. Lower values are better. Ties receive their "
                 "average rank.", "",
                 "Key-generation latency and secret-key size are excluded. Only reference instances "
-                f"assigned to the {target_bits}-bit NGCC target and having every metric required by "
-                "their category are ordered. If a candidate has several such instances, the one with "
-                "the lowest mean ordinal position across the cycle measurements represents it. "
+                f"marked comparison-eligible for the {target_bits}-bit NGCC target and having every "
+                "metric required by their category are ordered. A submitter-designated primary or "
+                "recommended parameter set represents the candidate; optional and illustrative "
+                "parameter sets remain in the detailed report. If several eligible reference "
+                "instances remain, the one with the lowest mean ordinal position across the cycle "
+                "measurements represents the candidate. "
                 "For public-key schemes, the percentage after each cycle "
                 "count is the measured share spent in the ICCS placeholder hash functions. For hash "
                 "functions, the multiplier is relative to ICCS `pseudoXOF` with the same output width "

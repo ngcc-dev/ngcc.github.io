@@ -43,6 +43,16 @@ substantive proof-to-algorithm mismatch, but explicit rejection alone is not
 an IND-CCA break and no candidate-specific key-recovery or distinguishing
 attack is shown; the finding is therefore Medium / Proof gap.
 
+In a second private communication relayed on 2026-10-02, the NEV team further
+pointed to Remark 5 (printed pp. 15–16; physical pp. 18–19), which presents the
+compressed sets only to demonstrate possible efficiency gains and favors the
+uncompressed construction for standardization. That clarification reinforces
+the limited affected scope; it does not resolve the archived compressed
+variants' internal mismatch between §4 and their normative decapsulation
+algorithm. The project's performance comparisons therefore use the recommended
+NEV-R sets, while retaining the alternative measurements in the detailed
+performance record.
+
 ### Proposed fixes
 
 The [NEV team response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/UZPNPPDYL5APZLO573LFHXX2ZLPVLZDE/)
