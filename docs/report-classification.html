@@ -174,6 +174,8 @@ claim violation. Examples include:</p>
   a local mask, fixed-bound loop, small-table replacement, or existing
   constant-time path removes it;</li>
 <li>a limited robustness or interoperability defect;</li>
+<li>a candidate-specific cross-profile key-separation defect under a plausible
+  shared-key composition, when no joint-security claim covers that composition;</li>
 <li>use of a generic random-bit-generator interface as a protocol PRG when
   correctness requires an exact seed-to-stream mapping that the scheme does
   not specify;</li>
@@ -203,6 +205,15 @@ informal robustness remark in a submission does not create a formal claim.
 Use <code>Status: Confirmed</code> when the reported behavior was reproduced;
 reproduction confirms the behavior, not an in-model attack. State the
 out-of-model capability in the title and Exploitation line.</p>
+<p>The same principle applies to cross-profile composition.  A reproduced attack
+that requires one key to be installed simultaneously in distinct parameter
+profiles is not an attack on either profile's ordinary EUF-CMA experiment.  Use
+Info when the composition also depends on an auxiliary non-default mode and the
+specification neither supports shared-profile keys nor claims joint security.
+Use Low as a hardening finding when shared key generation and formats make the
+reuse a plausible deployment mistake and missing profile separation is the
+only extra precondition.  Use a higher severity only when a formal claim or a
+supported public interface covers the composition.</p>
 <p>The ICCS KAT environment fixes <code>drng.c</code> and its seed-to-stream mapping, so a
 report may pin a KAT seed as a reproducible test fixture. Byte identity is not
 promised for a different secure RBG. One seeded witness establishes existence
@@ -383,7 +394,7 @@ with the same external dimensions and parameters. A finding that disappears
 solely on that replacement is not publishable.</p>
 </main>
 <footer class="site-footer">
-<p>Updated 2026-10-03 11:10:38 UTC · Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Updated 2026-10-03 15:13:09 UTC · Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
 <p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
 </footer>
 </body>

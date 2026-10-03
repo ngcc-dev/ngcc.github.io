@@ -188,6 +188,47 @@ requires some bound <code>pbar &lt; 1</code>.</p>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 security/rbg_protocol_dependency.py --report-id sign-01-7
 </code></pre>
+<h2 class="issue-heading" id="sign-01-8-short-message-representatives-cap-aigis-sig-ii-and-iii-below-their-claimed-levels">sign-01-8: Short message representatives cap Aigis-Sig+ II and III below their claimed levels</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Aigis-Sig+ II and III specification, reference and AVX2 implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Generic collision and signature transfer in about 2^192 or 2^384 hash evaluations; no full-width collision was computed</td></tr>
+<tr><th>Credit</th><td>Sun Shuzhou, with GLM-5.3 assistance</td></tr>
+<tr><th>Date</th><td>2026-10-03</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/PT5IXZ64ERV2IJY355ZM7ZFTMSJZGRB2/">Sun Shuzhou's PKC Forum post</a>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/4SWZLXSTHJ5JMM2XTDHVYOEG2VFQZTBJ/">Aigis-Sig+ team's confirmation</a></p>
+<p>Table 1 claims 256- and 512-bit classical security for PARAMS II and III.
+Table 3, however, fixes their unsalted message representatives to
+<code>XOF-256(tr || M, 48)</code> and <code>XOF-512(tr || M, 96)</code>, only 384 and 768 bits.
+Signing and verification use the message only through that representative.
+Consequently, a generic collision costs about <code>2^192</code> or <code>2^384</code> evaluations;
+a signature requested on one colliding message transfers unchanged to the
+other. PARAMS I uses the same 384-bit representative but remains above its
+128-bit classical target.</p>
+<p>The submitted reference and AVX2 implementations use the same 48- and 96-byte
+values (<code>params.h</code>) and compute the representative before the remaining
+signing or verification transcript (<code>sign.c</code>). Replacing the contest hash
+placeholders with ideal primitives of the same external dimensions therefore
+does not change the ceiling. The forum post additionally reports a
+reduced-output collision-and-transfer experiment against v1.0.1; no
+full-width collision was attempted. The explicit below-target forgery bounds
+make this Critical under the classification policy.</p>
+<p>The Aigis-Sig+ team confirms the issue and says that it will increase the CRH
+output lengths for PARAMS II and III.</p>
+<h3 id="proposed-fixes_6">Proposed fixes</h3>
+<p>The team proposes increasing the CRH output length to 512 bits for PARAMS II
+and to 1024 bits for PARAMS III, with no other changes.</p>
+<h3 id="reproducing_7">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 security/design_parameter_audit.py --report-id sign-01-8
+</code></pre>
+<p>The certificate checks the normative output lengths and security claims and
+the corresponding reference source constants and message-hash data flow.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -43,14 +43,10 @@
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 security/design_parameter_audit.py --report-id kem-23-1
 </code></pre>
-<p>The <code>kem-23-1</code> check verifies this data-flow defect in the six reference
-E-variant source trees retained in the public harness and the corresponding
-errors-and-erasures requirement in the PDF. The command does not inspect the
-optimized trees.</p>
-<p>To check the six optimized counterparts mentioned above, download the
-SHA-256-identified official archive and inspect each optimized E-variant's
-<code>code.c</code> and <code>reed_solomon.h</code> for the same discarded <code>t</code>/<code>pos</code> values and
-two-argument <code>reed_solomon_decode(m, tmp)</code> call:</p>
+<p>The <code>kem-23-1</code> check verifies this data-flow defect in all twelve E-variant
+source trees retained in the public harness—six reference and six optimized
+trees—and checks the corresponding errors-and-erasures requirement in the
+PDF.</p>
 <pre><code class="language-sh">IDS=kem-23 ./download.sh
 ./extract.sh kem-23
 rg -n 'reed_muller_decode\(tmp, pos, em\)|reed_solomon_decode\(m, tmp\)' kem-23/Implementations --glob code.c

@@ -37,10 +37,24 @@
 <tr><th>Date</th><td>2026-10-01</td></tr>
 </table></div>
 <p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/PH6Q6UHS7YJAN3RHER7YWUNXOHOZYIFF/">Xiong and Wang's PKC Forum post</a>
-Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/WI3PDQ3FGAT6H7TSKV4STFL5X6WCZEQF/">ReSolveD-α team's acknowledgment</a> and <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/GEDCFLSHBQTVSIW5K7ACXWGY7GKOXASI/">confirmation</a></p>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/WI3PDQ3FGAT6H7TSKV4STFL5X6WCZEQF/">ReSolveD-α team's acknowledgment</a>, <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/GEDCFLSHBQTVSIW5K7ACXWGY7GKOXASI/">initial confirmation</a>, and <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/LENFP6BEMJ3FLXKLKGXM4GGTCAC4IAKU/">gate-count response</a>; <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/PIHDF2YFZDOURZJXDI5USKT6KPGTAFC2/">Xiong and Wang's reply</a></p>
 <p><code>BAVC.Commit</code> expands every internal node of one signature with the same TCCR parameters <code>(s, iv)</code>. The reference code passes no node position to <code>tccr_hash</code> (<code>bavc.c:50–69</code>, <code>tccr.c:13–51</code>); the optimized AES and Rijndael paths likewise compute the node position but do not pass it into TCCR (<code>prgs.hpp:494–516</code>; the generic fallback is at 521–540). The output-block byte inside TCCR is not a tree-node tweak. A signature reveals <code>T</code> sibling nodes, each a public function of a different hidden parent under this one TCCR instance.</p>
 <p>An attacker enumerates a parent candidate once and tests its derived child values against all <code>T</code> revealed nodes with a hash table. A match identifies a hidden subtree, from which the attacker derives the hidden leaf, reconstructs the complete witness, and signs a fresh message. The expected search is <code>2^lambda/(T+1)</code>: median <code>T</code> values of 221/217, 330/328, and 437/439 for the small/fast 256-, 384-, and 512-bit sets give about 2^248.2, 2^375.6, and 2^503.2 evaluations. The target mapping is recorded in the archived <code>Algorithm specifications Addition.pdf</code>, Table 24; the 160-bit sets target 128 bits and remain above that target.</p>
 <p>This directly contradicts §7.1.2's conclusion that no multi-target attack improves on a single target. A fresh <code>iv</code> separates different signatures, not the hundreds of targets inside one signature; the specification's own Theorem 8.12 includes a multi-target term proportional to the number of construction queries under a fixed tweak. Each affected set therefore has a concrete classical signing-key recovery bound below its claimed level, hence Critical. The full exponential search was not run, but source/specification reasoning and scaled searches establish the <code>/T</code> speedup, the recovery chain, and accepted fresh-message forgeries. The ReSolveD-α team confirms that the missing per-node tweak is a specification bug.</p>
+<p>The team later gave a gate-count analysis and Xiong and Wang confirmed its
+arithmetic under that model. Their <code>2^247.66</code> figure for the 256-bit set uses
+the maximum target count and 50% success; the <code>2^248.2</code> figure above uses the
+median target count and expected work. This approximately half-bit difference
+is only a convention. The classification follows the frozen specification's
+§5.2, which defines a <code>lambda</code>-bit target as at least <code>2^lambda</code>
+symmetric-key operations. Charging roughly two block-cipher operations per
+TCCR test gives about <code>2^248.66</code> such operations at the 256-bit level, still
+about 7.3 bits below that target. Adding a circuit cost only to the attack while
+leaving the target in evaluations mixes units; converting both sides preserves
+the multi-target advantage. This is a certificational shortfall, not a
+practical attack. Multi-instance PPRF losses and instance-specific tweaks in
+MPC-in-the-head signatures are discussed in <a href="https://eprint.iacr.org/2024/252">Bui et al., ePrint
+2024/252</a>.</p>
 <h3 id="proposed-fixes">Proposed fixes</h3>
 <p>The <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/PH6Q6UHS7YJAN3RHER7YWUNXOHOZYIFF/">original post</a> proposes adding a node-index/instance tweak to TCCR and the leaf PRG, or increasing <code>lambda</code> by <code>ceil(log2(T_open)) + 1</code> bits and removing the single-target claim. The <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/GEDCFLSHBQTVSIW5K7ACXWGY7GKOXASI/">team response</a> proposes node-index tweaks as in FAEST v2. This section records those proposals without evaluating them.</p>
 <h3 id="reproducing">Reproducing</h3>
@@ -83,6 +97,19 @@ target; their approximately 156-bit costs remain above it.</p>
 although the final exponential enumeration was not run. A repair that changes
 only internal tree-node expansion does not separate <code>LeafHash</code>; the leaf PRG
 requires its own instance-specific domain input.</p>
+<p>The team's later <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/LENFP6BEMJ3FLXKLKGXM4GGTCAC4IAKU/">gate-count response</a>
+prices each candidate test as a circuit, and <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/PIHDF2YFZDOURZJXDI5USKT6KPGTAFC2/">Xiong and Wang</a>
+confirm that arithmetic under the stated model. The response uses maximum
+<code>tau</code> and 50% success, giving <code>2^250.33</code> leaf evaluations at the 256-bit level;
+the <code>2^250.87</code> value above uses the report's expected-work convention. Under
+the frozen §5.2 metric, charging roughly two block-cipher operations per test,
+the attack remains roughly 4–5 bits below the claimed level. Applying the
+per-test implementation cost consistently to attack and
+baseline does not remove the multi-target factor. This too is a
+certificational result; no full-width enumeration was attempted. See <a href="https://eprint.iacr.org/2024/252">Bui et
+al., ePrint 2024/252</a> for the corresponding
+multi-instance PPRF concern and per-instance tweaking in MPC-in-the-head
+signatures.</p>
 <h3 id="proposed-fixes_1">Proposed fixes</h3>
 <p>The <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/PH6Q6UHS7YJAN3RHER7YWUNXOHOZYIFF/">original post</a>
 proposes assigning every leaf-PRG invocation a node/instance tweak, as in
@@ -94,15 +121,15 @@ FAEST v2. This section records the proposal without evaluating it.</p>
 <p>The certificate checks the fixed zero tweak in every submitted reference and
 optimized profile and recomputes the multi-target bounds. It explicitly
 records that the full exponential search is not executed.</p>
-<h2 class="issue-heading" id="sign-21-3-same-key-deterministic-sf-signatures-recover-an-equivalent-witness">sign-21-3: Same-key deterministic S/F signatures recover an equivalent witness</h2>
+<h2 class="issue-heading" id="sign-21-3-same-key-cross-profile-access-is-outside-euf-cma-despite-reproduced-witness-recovery">sign-21-3: Same-key cross-profile access is outside EUF-CMA despite reproduced witness recovery</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-info">Info</span></td></tr>
 <tr><th>Scope</th><td>design</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>ReSolveD-α-160/256/384/512 S/F pairs in the optional deterministic mode permitted by the specification</td></tr>
 <tr><th>Discovery</th><td>Moderate</td></tr>
-<tr><th>Exploitation</th><td>Two same-message signatures recover an equivalent signing witness and permit fresh-message forgery</td></tr>
+<tr><th>Exploitation</th><td>Outside the evaluated model: two same-message signatures from distinct profiles sharing a key in the optional deterministic mode recover an equivalent witness and permit forgery</td></tr>
 <tr><th>Credit</th><td>Martin Feussner, with OpenAI Codex (Daybreak Blue) assistance</td></tr>
 <tr><th>Date</th><td>2026-10-01</td></tr>
 </table></div>
@@ -121,11 +148,22 @@ fresh-message signature accepted by the untouched verifier; different-key,
 different-message and different-<code>rho</code> controls reject. The submitted API's
 ordinary randomized signing path samples fresh <code>rho</code> and is not affected
 unless randomness repeats.</p>
-<p>This conditional cross-profile composition is outside the isolated
-single-profile EUF-CMA experiment, but it gives complete equivalent-key
-recovery and forgery whenever the optional deterministic profiles share a
-key, hence High.</p>
-<p>The team replies that keys should be generated independently for S and F, that randomized signing is the intended operational mode, and that deterministic signing is for implementation checking. This agrees with the scope above and does not change the classification.</p>
+<p>This conditional composition is outside the isolated single-profile EUF-CMA
+experiment: it requires one key to be installed in two profiles and use of an
+optional non-default signing mode. The reproduced recovery therefore confirms
+the behavior but not an attack on either profile's claimed game, hence Info.
+Key reuse across cryptographic contexts is a recognized composition question,
+but requires a joint-security model; see Patton and Shrimpton, <a href="https://eprint.iacr.org/2019/519"><em>Security in
+the Presence of Key Reuse</em></a>.</p>
+<p>The team replies that keys should be generated independently for S and F, that
+randomized signing is the intended operational mode, and that deterministic
+signing is for implementation checking. The frozen specification nevertheless
+expressly defines deterministic signing in §4.2.2 and §4.9.2. The Info
+classification rests on cross-profile same-key access being outside EUF-CMA,
+not on treating the specified deterministic option as nonexistent. Feussner's
+<a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/K3QX7GB7RL5CPG7NUQ3BXO37PLCRI2YU/">follow-up</a>
+likewise states that the result does not break ordinary single-profile
+EUF-CMA.</p>
 <h3 id="reproducing_2">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">sh sign-21/reproduce_cross_profile_recovery.sh

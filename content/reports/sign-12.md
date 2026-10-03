@@ -83,12 +83,12 @@ two runs use about 6 MiB and 13 MiB peak resident memory, respectively.
 
 ## sign-12-3: Same-key S/F signatures recover the Galas secret key
 
-Severity: High
+Severity: Low
 Status: Confirmed
 Layer: Design
 Affected: Galas-160/256/384/512 S/F pairs when the same key signs the same message in both profiles
 Discovery: Moderate
-Exploitation: Usually one same-message S/F pair; exact secret-key recovery and fresh-message forgery
+Exploitation: Outside single-profile EUF-CMA: usually one same-message S/F pair under a shared key; exact secret-key recovery and fresh-message forgery
 Credit: Martin Feussner, with OpenAI Codex (Daybreak Blue) assistance
 Date: 2026-10-01
 Original source: [Feussner's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XCHA74UPEQCVJTWA5QLLLPWK72W4SCT6/) and [pinned attack package](https://github.com/martinfeussner/NGCC-Signature-Audit/tree/d0db6e0e0a28ef7ef41fe5dd826aa17ff743bcba/Galas)
@@ -111,9 +111,14 @@ The package separately records validation against the submitted implementations
 for all four S/F pairs.
 
 This is conditional on composing two profiles with the same key and message;
-separately typed keys for each profile are unaffected. It therefore does not
-break the isolated single-profile EUF-CMA experiment, but it is a complete key
-recovery and forgery under a natural cross-profile use, hence High.
+separately typed keys for each profile are unaffected. Galas makes that mistake
+plausible because key generation and the key format are shared by security
+level, deterministic signing is the only mode, and the derivation has no
+profile separation. It nevertheless lies outside the isolated single-profile
+EUF-CMA experiment and no joint-security claim was found. The record is
+therefore a Low cross-profile key-separation hardening finding, not a break of
+either profile in isolation. Cross-context key reuse is treated more generally
+by Patton and Shrimpton, [*Security in the Presence of Key Reuse*](https://eprint.iacr.org/2019/519).
 
 ### Reproducing
 

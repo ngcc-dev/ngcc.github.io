@@ -93,12 +93,12 @@ two runs use about 6 MiB and 13 MiB peak resident memory, respectively.</p>
 <h2 class="issue-heading" id="sign-12-3-same-key-sf-signatures-recover-the-galas-secret-key">sign-12-3: Same-key S/F signatures recover the Galas secret key</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
 <tr><th>Scope</th><td>design</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Galas-160/256/384/512 S/F pairs when the same key signs the same message in both profiles</td></tr>
 <tr><th>Discovery</th><td>Moderate</td></tr>
-<tr><th>Exploitation</th><td>Usually one same-message S/F pair; exact secret-key recovery and fresh-message forgery</td></tr>
+<tr><th>Exploitation</th><td>Outside single-profile EUF-CMA: usually one same-message S/F pair under a shared key; exact secret-key recovery and fresh-message forgery</td></tr>
 <tr><th>Credit</th><td>Martin Feussner, with OpenAI Codex (Daybreak Blue) assistance</td></tr>
 <tr><th>Date</th><td>2026-10-01</td></tr>
 </table></div>
@@ -119,9 +119,14 @@ F verifier; wrong-message, wrong-key and mutated-signature controls reject.
 The package separately records validation against the submitted implementations
 for all four S/F pairs.</p>
 <p>This is conditional on composing two profiles with the same key and message;
-separately typed keys for each profile are unaffected. It therefore does not
-break the isolated single-profile EUF-CMA experiment, but it is a complete key
-recovery and forgery under a natural cross-profile use, hence High.</p>
+separately typed keys for each profile are unaffected. Galas makes that mistake
+plausible because key generation and the key format are shared by security
+level, deterministic signing is the only mode, and the derivation has no
+profile separation. It nevertheless lies outside the isolated single-profile
+EUF-CMA experiment and no joint-security claim was found. The record is
+therefore a Low cross-profile key-separation hardening finding, not a break of
+either profile in isolation. Cross-context key reuse is treated more generally
+by Patton and Shrimpton, <a href="https://eprint.iacr.org/2019/519"><em>Security in the Presence of Key Reuse</em></a>.</p>
 <h3 id="reproducing_2">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">sh sign-12/reproduce_cross_variant_key_recovery.sh

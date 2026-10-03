@@ -18,15 +18,54 @@
 <h1 id="zen-kem-41">ZEN (kem-41)</h1>
 <div class="table-wrap"><table class="meta">
 <tr><th>Candidate</th><td>ZEN</td></tr>
-<tr><th>Family</th><td>Lattice-based</td></tr>
-<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/ZEN.zip">Official submission archive</a></td></tr>
+<tr><th>Family</th><td>Lattice (NTRU)</td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/ZEN.zip">ZEN.zip</a> (SHA-256: <code>69eba070320fc6cb365fb6d43d2b74460487732aeb7e607fac2d6c1b3a64a80e</code>)</td></tr>
 <tr><th>Specification</th><td><a href="https://github.com/ngcc-dev/ngcc-harness/raw/dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kem-41/kem-41-spec.pdf" title="Download kem-41-spec.pdf from GitHub">kem-41-spec.pdf</a>&nbsp;<a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kem-41/kem-41-spec.pdf" title="Open the kem-41 specification PDF">PDF</a></td></tr>
 <tr><th>Performance</th><td><a href="../performance/x86_1/kem-41.html">x86_1</a> · <a href="../performance/arm_1/kem-41.html">arm_1</a></td></tr>
 </table></div>
 
-<h3 id="review-status">Review status</h3>
-<p>No vulnerability finding is currently published for this candidate. This is not a security endorsement: it records only the present state of the public finding inventory, and the candidate remains under review.</p>
-<p>See the <a href="../constant-time/kem-41.html">constant-time review</a> and the performance reports (<a href="../performance/x86_1/kem-41.html">x86_1</a> · <a href="../performance/arm_1/kem-41.html">arm_1</a>). See the <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560890563842048.html">official submission page</a>.</p>
+<h2 class="issue-heading issue-heading-first" id="kem-41-1-the-numerical-dfr-model-averages-over-messages-while-the-proof-assumes-worst-case-correctness">kem-41-1: The numerical DFR model averages over messages while the proof assumes worst-case correctness</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr>
+<tr><th>Affected</th><td>All ZEN parameter rows analyzed in Tables 2 and 3</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Model lower bounds on the per-key worst-case failure probability exceed the averaged estimates, but no attack within 2^80 decapsulations is demonstrated</td></tr>
+<tr><th>Credit</th><td>Leo Luo (archive sender <code>leoluo</code>)</td></tr>
+<tr><th>Date</th><td>2026-10-03</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/LHS3HBDIJHUIDAKS5Q7H3FXGDY7CLNHZ/">Leo Luo's PKC Forum post</a></p>
+<p>Theorem 2 in §5.2 writes the PKE correctness error as
+<code>delta_ZEN = max_m Pr[Decrypt(sk, Encrypt(pk,m,rho)) != m]</code>, with the
+probability over key generation and encryption coins. The HHK17 and QROM
+Fujisaki--Okamoto theorems cited there require the stronger per-key quantity
+<code>E_sk[max_m Pr_rho[failure]]</code>, with the maximum inside the expectation over
+keys. Thus the specification's displayed definition does not match the cited
+theorems. The numerical model in §5.3 is weaker still: it assigns the message
+coefficients an independent uniform binary distribution and therefore
+averages over messages. Tables 2 and 3 use that model for the stated DFRs and
+failure-attack margins.</p>
+<p>The original post chooses each message bit as a function of three secret-key
+coefficients. Such a per-key choice is admissible under the inner maximum
+required by the cited theorems. Its script reproduces the specification's
+averaged values and obtains much larger failure-model values, with gaps from
+16.88 to 124.42 bits across the six rows. Those values are therefore model
+lower bounds on the per-key worst-case quantity the reduction needs, rather
+than merely diagnostics. They range from about <code>2^-104.69</code> to <code>2^-214.41</code>, so
+even the largest still requires more than <code>2^80</code> decapsulations for an
+expected failure. The result establishes a Medium proof gap, not a demonstrated
+decryption-failure attack within the evaluation budget or a revised security
+level.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-41/reproduce_dfr_model.py
+</code></pre>
+<p>The script is the model published with the forum post, parallelized and given
+assertions for all six reported pairs. It labels the second result as a model
+lower bound on the per-key worst-case DFR required by the cited reduction.
+NumPy is required; the calculation is CPU intensive.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

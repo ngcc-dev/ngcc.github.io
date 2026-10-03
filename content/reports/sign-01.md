@@ -208,3 +208,51 @@ The archived `drng.c` is self-consistent, so no forgery or key recovery follows.
 ```sh
 python3 security/rbg_protocol_dependency.py --report-id sign-01-7
 ```
+
+## sign-01-8: Short message representatives cap Aigis-Sig+ II and III below their claimed levels
+
+Severity: Critical
+Status: Confirmed
+Layer: Design
+Affected: Aigis-Sig+ II and III specification, reference and AVX2 implementations
+Discovery: Trivial
+Exploitation: Generic collision and signature transfer in about 2^192 or 2^384 hash evaluations; no full-width collision was computed
+Credit: Sun Shuzhou, with GLM-5.3 assistance
+Date: 2026-10-03
+Original source: [Sun Shuzhou's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/PT5IXZ64ERV2IJY355ZM7ZFTMSJZGRB2/)
+Follow-up source: [Aigis-Sig+ team's confirmation](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/4SWZLXSTHJ5JMM2XTDHVYOEG2VFQZTBJ/)
+
+Table 1 claims 256- and 512-bit classical security for PARAMS II and III.
+Table 3, however, fixes their unsalted message representatives to
+`XOF-256(tr || M, 48)` and `XOF-512(tr || M, 96)`, only 384 and 768 bits.
+Signing and verification use the message only through that representative.
+Consequently, a generic collision costs about `2^192` or `2^384` evaluations;
+a signature requested on one colliding message transfers unchanged to the
+other. PARAMS I uses the same 384-bit representative but remains above its
+128-bit classical target.
+
+The submitted reference and AVX2 implementations use the same 48- and 96-byte
+values (`params.h`) and compute the representative before the remaining
+signing or verification transcript (`sign.c`). Replacing the contest hash
+placeholders with ideal primitives of the same external dimensions therefore
+does not change the ceiling. The forum post additionally reports a
+reduced-output collision-and-transfer experiment against v1.0.1; no
+full-width collision was attempted. The explicit below-target forgery bounds
+make this Critical under the classification policy.
+
+The Aigis-Sig+ team confirms the issue and says that it will increase the CRH
+output lengths for PARAMS II and III.
+
+### Proposed fixes
+
+The team proposes increasing the CRH output length to 512 bits for PARAMS II
+and to 1024 bits for PARAMS III, with no other changes.
+
+### Reproducing
+
+```sh
+python3 security/design_parameter_audit.py --report-id sign-01-8
+```
+
+The certificate checks the normative output lengths and security claims and
+the corresponding reference source constants and message-hash data flow.

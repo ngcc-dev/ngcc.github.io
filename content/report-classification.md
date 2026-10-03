@@ -176,6 +176,8 @@ claim violation. Examples include:
   a local mask, fixed-bound loop, small-table replacement, or existing
   constant-time path removes it;
 - a limited robustness or interoperability defect;
+- a candidate-specific cross-profile key-separation defect under a plausible
+  shared-key composition, when no joint-security claim covers that composition;
 - use of a generic random-bit-generator interface as a protocol PRG when
   correctness requires an exact seed-to-stream mapping that the scheme does
   not specify;
@@ -209,6 +211,16 @@ informal robustness remark in a submission does not create a formal claim.
 Use `Status: Confirmed` when the reported behavior was reproduced;
 reproduction confirms the behavior, not an in-model attack. State the
 out-of-model capability in the title and Exploitation line.
+
+The same principle applies to cross-profile composition.  A reproduced attack
+that requires one key to be installed simultaneously in distinct parameter
+profiles is not an attack on either profile's ordinary EUF-CMA experiment.  Use
+Info when the composition also depends on an auxiliary non-default mode and the
+specification neither supports shared-profile keys nor claims joint security.
+Use Low as a hardening finding when shared key generation and formats make the
+reuse a plausible deployment mistake and missing profile separation is the
+only extra precondition.  Use a higher severity only when a formal claim or a
+supported public interface covers the composition.
 
 The ICCS KAT environment fixes `drng.c` and its seed-to-stream mapping, so a
 report may pin a KAT seed as a reproducible test fixture. Byte identity is not
