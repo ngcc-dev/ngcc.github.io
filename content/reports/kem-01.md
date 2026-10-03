@@ -54,3 +54,24 @@ The implementation must read the final `SEED_BYTES` of the secret-key object and
 ### Reproducing
 
 The defect is directly visible in each reference implementation's `kem.c`: `mkem_dec` passes `sk - SEED_BYTES` to `hash_g`, while `mkem_keygen` stores the rejection secret at `sk + SK_BYTES - SEED_BYTES`.
+
+## kem-01-3: The external DRBG is used as a KDF
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: Aigis-Enc+-I, -II and -III ICCS reference implementations
+Discovery: Trivial
+Exploitation: Replacing the external RBG changes deterministic matrix expansion and breaks interoperability; the frozen submitted build is internally consistent
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-03
+
+Under `USE_NICCS_API`, `kdf_init` resets an ICCS `DRNG_ctx` from its input and `kdf_squeezeblocks` reads the resulting stream (`hashkdf.c:91–98`). Matrix generation calls this interface from public seeds (`gen_a.c:50–63`). Thus a nominally external RBG supplies a deterministic KDF whose exact byte stream is part of the algorithm. A different secure RBG need not reproduce it.
+
+The shipped `drng.c` makes the three implementations work and this is not a cryptanalytic break. The defect is the unstated seed-to-stream dependency; it should be a scheme-defined XOF/KDF.
+
+### Reproducing
+
+```sh
+python3 security/rbg_protocol_dependency.py --report-id kem-01-3
+```

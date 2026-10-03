@@ -39,3 +39,24 @@ IDS=kem-23 ./download.sh
 ./extract.sh kem-23
 rg -n 'reed_muller_decode\(tmp, pos, em\)|reed_solomon_decode\(m, tmp\)' kem-23/Implementations --glob code.c
 ```
+
+## kem-23-2: Mito uses the external DRBG as an XOF
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: All nine Mito reference implementations
+Discovery: Trivial
+Exploitation: Replacing the external RBG changes deterministic key, ciphertext and parsing expansions; the frozen submitted build is internally consistent
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-03
+
+Mito's function named `xof_init` is exactly `init_random_number(xof_ctx, seed, seed_size)`, and `xof_get_bytes` reads the external DRBG stream (`symmetric.c:50–67`). Key generation, parsing and encryption seed this wrapper from protocol values (`mito_pke.c:39–45,87`; `parsing.c:17–33`). Correct operation therefore depends on one particular RBG's deterministic stream.
+
+The archive is self-consistent and no confidentiality break is asserted. The Low defect is using an external RBG contract where the scheme requires a specified XOF.
+
+### Reproducing
+
+```sh
+python3 security/rbg_protocol_dependency.py --report-id kem-23-2
+```

@@ -165,3 +165,24 @@ python3 kem-38/reproduce_dfr_reaction.py
 ```
 
 The witness checks both allocation paths and derives their byte counts from the archived parameters.
+
+## kem-38-7: UVW-KEM resets the external DRBG for key expansion and re-encryption
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: UVW-KEM-128, -256 and -512 reference implementations
+Discovery: Trivial
+Exploitation: Serialized secret keys and FO re-encryption depend on the particular external RBG stream; the frozen submitted build is internally consistent
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-03
+
+Encapsulation derives `H1(m)` and resets an external DRBG to sample `(r,e)`; decapsulation repeats the reset from `H1(m')` before re-encryption (`KEM_AlgorithmInstance.c:312–330,411–426`). Secret-key parsing likewise reconstructs `GU`, `GW` and `D` by resetting local DRBG contexts from stored seeds (`:1485–1616`). Correctness and serialized-key interpretation therefore depend on one particular ICCS DRBG stream.
+
+The archive is internally consistent and this finding adds no key recovery. The deterministic operations should use a specified XOF/PRG.
+
+### Reproducing
+
+```sh
+python3 security/rbg_protocol_dependency.py --report-id kem-38-7
+```

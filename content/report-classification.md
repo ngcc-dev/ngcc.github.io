@@ -176,6 +176,9 @@ claim violation. Examples include:
   a local mask, fixed-bound loop, small-table replacement, or existing
   constant-time path removes it;
 - a limited robustness or interoperability defect;
+- use of a generic random-bit-generator interface as a protocol PRG when
+  correctness requires an exact seed-to-stream mapping that the scheme does
+  not specify;
 - a disclosed internal status whose existence alone does not defeat the
   claimed transform.
 
@@ -187,6 +190,48 @@ violation.
 
 Use Info for withdrawn records or non-security tracking entries. A live
 security finding should normally be Low or above.
+
+Info may also record a reported property that is generic to a class of
+designs, such as the multi-ciphertext loss of every unsalted deterministic FO
+KEM, when the submission makes no stronger claim and the property has no
+candidate-specific consequence. Keep the cross-candidate discussion in an
+analysis note rather than singling out one submission with a higher severity.
+
+Info may record an attack requiring state-control capabilities outside the
+evaluated security model, such as seeding, cloning, resetting or rewinding the
+signer's DRBG, unless the submitted public interface or a formal security
+claim grants that capability. Randomized security experiments instead give
+each algorithm call fresh coins with the specified distribution. This rule
+does not cover ordinary reuse of scheme state exposed by the API, or an
+implementation that ignores, bypasses or predictably initializes its
+randomness source; classify those by their demonstrated consequence. An
+informal robustness remark in a submission does not create a formal claim.
+Use `Status: Confirmed` when the reported behavior was reproduced;
+reproduction confirms the behavior, not an in-model attack. State the
+out-of-model capability in the title and Exploitation line.
+
+The ICCS KAT environment fixes `drng.c` and its seed-to-stream mapping, so a
+report may pin a KAT seed as a reproducible test fixture. Byte identity is not
+promised for a different secure RBG. One seeded witness establishes existence
+in the frozen implementation, not a general rate or an adversary's ability to
+choose that stream; broader claims require an analytic argument or multi-seed
+controls.
+
+The supplied `init_random_number`/`get_random_number` interface is an external
+RBG interface, not a scheme XOF. Reinitializing or resetting a local instance
+from protocol data and relying on byte-for-byte replay uses that RBG as a
+deterministic PRG, KDF, or XOF. When correct decoding, verification,
+re-encryption, serialized-key interpretation, or cross-implementation behavior
+depends on the particular ICCS `drng.c` stream, record a Low Implementation
+finding unless a stronger consequence is demonstrated. A scheme-defined XOF
+with an explicit seed-to-stream mapping does not have this defect. If a
+specification defines and builds its own internal XOF but calls it a PRNG or
+DRBG, that is a labeling error and is not reported; the defect is reliance on
+the determinism of the external RBG. Use `Layer: Implementation` when the
+code wires a specified internal expander to the external RBG, and
+`Layer: Design` when the specification itself routes the expansion through the
+external RBG. Ordinary fresh-randomness calls and KAT seeding are not
+affected.
 
 ## Side-channel severity
 

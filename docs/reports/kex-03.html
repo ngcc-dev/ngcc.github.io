@@ -67,12 +67,14 @@ rg -n -F 'buf, SEED_BYTES, buf2' kex-03/Implementations/Reference_Implementation
 <tr><th>Credit</th><td>ManojG</td></tr>
 <tr><th>Date</th><td>2026-09-30</td></tr>
 </table></div>
-<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/E7ZJE4X2VS7GIUMYIAAJXKRNIUYPYUWG/">ManojG's PKC Forum post</a></p>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/E7ZJE4X2VS7GIUMYIAAJXKRNIUYPYUWG/">ManojG's PKC Forum post</a>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/SXWBPLGXZT2GP6LFHK24VX3Y53A76GTC/">CreTAKE team's response</a></p>
 <p>CreTAKE says its KDF binds the complete public transcript and claims IND-AA or IND-StAA security for the four frameworks (§4.1). However, Figures 1, 2, and 4 include signature bytes in the exchanged messages while their KDF inputs omit those signatures. The reference implementation does the same in every signature-bearing instance.</p>
 <p>An adversary corrupts the signature-credential holder and replaces its valid signature with a distinct valid signature on the same authenticated string. It chooses that holder's session as the test session, without revealing its state; this is not excluded by the adopted <a href="https://eprint.iacr.org/2018/928">IND-(St)AA game</a>. The peer accepts, but the two sessions are non-matching because their complete wire transcripts differ. Their KDF inputs and session keys are nevertheless identical. Revealing the non-matching peer session therefore supplies the test session's real key and distinguishes it from random. This is a polynomial-time break of the claimed AKE security, hence Critical; it requires no signature forgery.</p>
 <p>The submitted BiT signer is randomized. Two calls with the same key and message readily produce distinct signatures that both verify, so the condition needed by the attack holds in the concrete instances rather than only for a contrived EUF-CMA scheme.</p>
 <h3 id="proposed-fixes">Proposed fixes</h3>
 <p>The CreTAKE authors' revised KDFs, as quoted in the original post, include the signature bytes in the transcript hash. This section records the proposal without evaluating it.</p>
+<p>The later team response says its revised reductions carry the complete signed messages through the games and announces separate framework-and-role tags when credentials are shared. These proposals are recorded without evaluating them.</p>
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">make -C kex-03 lib/libCreTAKE-K2S-PLAC128-BiT128.so
@@ -91,12 +93,14 @@ python3 kex-03/reproduce_binding_attacks.py
 <tr><th>Credit</th><td>ManojG</td></tr>
 <tr><th>Date</th><td>2026-09-30</td></tr>
 </table></div>
-<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/E7ZJE4X2VS7GIUMYIAAJXKRNIUYPYUWG/">ManojG's PKC Forum post</a></p>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/E7ZJE4X2VS7GIUMYIAAJXKRNIUYPYUWG/">ManojG's PKC Forum post</a>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/SXWBPLGXZT2GP6LFHK24VX3Y53A76GTC/">CreTAKE team's response</a></p>
 <p>Figure 7 derives the double-key KEM output as <code>h(pk1,K1,m')</code>, omitting the second public key and both ciphertext components. The five generic <code>twokem.c</code> implementations reproduce this construction. It is not <code>[IND-CCA,IND-CPA]</code> secure under Definition 8.</p>
 <p>The first-key CCA game lets the adversary obtain two generated second-key pairs. For the challenge <code>(c1*,c2*)</code> under <code>pk2*</code>, it decrypts <code>c2*</code> with the leaked <code>sk2*</code>, re-encrypts the recovered <code>m'</code> under the other leaked <code>pk2'</code>, and asks the permitted CCA query <code>(pk2',(c1*,c2'))</code>. Decapsulation recovers the unchanged <code>K1</code> and <code>m'</code>, so it returns exactly the challenge key. The adversary distinguishes with overwhelming probability without learning the first secret key.</p>
 <p>This breaks an explicitly claimed component property. The outer K2K framework hashes the complete AKE transcript, so the post does not establish a session-key attack on CreTAKE-K2K itself; the finding is therefore High rather than Critical.</p>
 <h3 id="proposed-fixes_1">Proposed fixes</h3>
 <p>The original post proposes deriving the key from a domain-separation tag, both public keys, both ciphertexts, <code>K1</code>, and <code>m'</code>. It does not supply a proof. This section records the proposal without evaluating it.</p>
+<p>The team separately proposes <code>K = h(pk', K1, m', c)</code> with the complete two-part ciphertext and says it will revise Figure 7 and the component proof. This proposal is recorded without evaluating it.</p>
 <h3 id="reproducing_2">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 kex-03/reproduce_binding_attacks.py

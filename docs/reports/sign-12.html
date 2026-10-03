@@ -131,6 +131,25 @@ minimal Galas-160 specification-oracle reproducer, including the package's
 documented helper repairs. It requires exact key recovery, an accepted
 fresh-message forgery, and rejecting controls. It does not rerun the package's
 separate all-level submitted-implementation validation.</p>
+<h2 class="issue-heading" id="sign-12-4-key-generation-resets-the-external-drbg-as-a-seed-expander">sign-12-4: Key generation resets the external DRBG as a seed expander</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All eight Galas reference implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Deterministic key generation depends on the particular external RBG stream; the stronger default-zero-seed failure is recorded separately</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-03</td></tr>
+</table></div>
+
+<p><code>sig_keygen</code> creates a local <code>DRNG_ctx</code>, resets it from the selected seed, and draws the secret key material from that stream (<code>ngcc/SIG_AlgorithmInstance.c:61–83</code>). This uses the external RBG as a deterministic seed expander: changing the RBG changes the key pair derived from the same seed. The issue is distinct from the implementation's use of a zero default seed.</p>
+<p>The submitted <code>drng.c</code> fixes one working mapping, so this note records a Low deterministic-key/interoperability dependency rather than another key-recovery result. Key derivation should use a specified XOF.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 security/rbg_protocol_dependency.py --report-id sign-12-4
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

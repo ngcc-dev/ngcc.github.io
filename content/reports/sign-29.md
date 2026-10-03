@@ -31,3 +31,24 @@ On 2026-09-25, the Tins team [confirmed Xie's attack and withdrew the proposal](
 ```sh
 make -C sign-29 exploit
 ```
+
+## sign-29-2: Deterministic TINS expansion depends on the external DRBG
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: Tins128, Tins256 and Tins512 reference implementations
+Discovery: Trivial
+Exploitation: Public-key expansion and transcript generation depend on the particular external RBG stream; the frozen submitted build is internally consistent
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-03
+
+TINS resets local external DRBG contexts from the public and secret seeds during key generation, signing and verification (`SIG_TINS256.c:57–58,167–168,380`). BAVC commitment and challenge expansion does the same (`bavc_commit.c:339,485,573`). Since the verifier must reconstruct identical values, the exact ICCS DRBG stream is an unstated part of the signature format.
+
+The archived implementation interoperates with itself. The Low defect is the use of an external RBG as a protocol PRG; these expansions should use a specified XOF.
+
+### Reproducing
+
+```sh
+python3 security/rbg_protocol_dependency.py --report-id sign-29-2
+```

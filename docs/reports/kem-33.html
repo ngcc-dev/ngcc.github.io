@@ -77,6 +77,29 @@ cc -std=c99 -O2 -ffunction-sections -fdata-sections -Wl,--gc-sections \
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>Inspect <code>src/common/kem.c:155</code>, <code>src/ref/qube.c:182-192</code>, and <code>src/ref/gf2x.c:14-25,44-63</code> under <code>Implementations/Reference_Implementation/qube-256/</code>. This source-level witness identifies the secret-to-address path, not a measured cache attack.</p>
+<h2 class="issue-heading" id="kem-33-3-the-optimized-api-generates-predictable-keys-and-encapsulations">kem-33-3: The optimized API generates predictable keys and encapsulations</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Optimized QUBE-128, QUBE-256, QUBE-384 and QUBE-512; reference implementation unaffected</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>A fresh-process key-generation call reproduces the complete decapsulation key; encapsulation under an honest public key reproduces the ciphertext and shared secret</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance</td></tr>
+<tr><th>Date</th><td>2026-10-03</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/RFAWJMFS3YHSQG4HMPKOCVYLX7BZK3YX/">Xiong and Wang's PKC Forum post</a></p>
+<p>The optimized API draws all key-generation and encapsulation randomness from a file-scope SHAKE context (<code>src/common/symmetric.c:15,27–45</code>; <code>src/common/kem.c:43–58,125–157</code>). That context is zero-initialized, and <code>prng_init</code> is called only by the benchmark and standalone test, never by the API wrapper. Seeding the separate ICCS DRNG therefore has no effect: every fresh process starts from the same key, message and salt stream.</p>
+<p>We reproduced complete public/secret-key recovery and sender-side ciphertext/session-key prediction on all four optimized sets. A corrected-PRNG control and the reference implementation both vary across seeds.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>The quick certificate checks the call graph and exercises the raw stream:</p>
+<pre><code class="language-sh">python3 kem-33/reproduce_unseeded_optimized.py
+</code></pre>
+<p>The full replay downloads a hash-pinned artifact, builds against the local submitted trees, and asserts both recovery paths and controls:</p>
+<pre><code class="language-sh">JOBS=8 kem-33/reproduce_unseeded_optimized.sh
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -54,6 +54,7 @@ Exploitation: One alternate valid signature and standard AKE reveal queries
 Credit: ManojG
 Date: 2026-09-30
 Original source: [ManojG's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/E7ZJE4X2VS7GIUMYIAAJXKRNIUYPYUWG/)
+Follow-up source: [CreTAKE team's response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/SXWBPLGXZT2GP6LFHK24VX3Y53A76GTC/)
 
 CreTAKE says its KDF binds the complete public transcript and claims IND-AA or IND-StAA security for the four frameworks (§4.1). However, Figures 1, 2, and 4 include signature bytes in the exchanged messages while their KDF inputs omit those signatures. The reference implementation does the same in every signature-bearing instance.
 
@@ -64,6 +65,8 @@ The submitted BiT signer is randomized. Two calls with the same key and message 
 ### Proposed fixes
 
 The CreTAKE authors' revised KDFs, as quoted in the original post, include the signature bytes in the transcript hash. This section records the proposal without evaluating it.
+
+The later team response says its revised reductions carry the complete signed messages through the games and announces separate framework-and-role tags when credentials are shared. These proposals are recorded without evaluating them.
 
 ### Reproducing
 
@@ -85,6 +88,7 @@ Exploitation: Two allowed second-key leaks and one allowed decapsulation query
 Credit: ManojG
 Date: 2026-09-30
 Original source: [ManojG's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/E7ZJE4X2VS7GIUMYIAAJXKRNIUYPYUWG/)
+Follow-up source: [CreTAKE team's response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/SXWBPLGXZT2GP6LFHK24VX3Y53A76GTC/)
 
 Figure 7 derives the double-key KEM output as `h(pk1,K1,m')`, omitting the second public key and both ciphertext components. The five generic `twokem.c` implementations reproduce this construction. It is not `[IND-CCA,IND-CPA]` secure under Definition 8.
 
@@ -95,6 +99,8 @@ This breaks an explicitly claimed component property. The outer K2K framework ha
 ### Proposed fixes
 
 The original post proposes deriving the key from a domain-separation tag, both public keys, both ciphertexts, `K1`, and `m'`. It does not supply a proof. This section records the proposal without evaluating it.
+
+The team separately proposes `K = h(pk', K1, m', c)` with the complete two-part ciphertext and says it will revise Figure 7 and the component proof. This proposal is recorded without evaluating it.
 
 ### Reproducing
 

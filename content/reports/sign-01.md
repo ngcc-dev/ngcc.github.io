@@ -187,3 +187,24 @@ python3 sign-01/reproduce_abort_bound.py
 ```
 
 The script evaluates the printed formula from the Table 1 parameters and checks the Table 2 repetition-rate control.
+
+## sign-01-7: The external DRBG is used as a KDF
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: Aigis-Sig+-I, -II and -III ICCS reference implementations
+Discovery: Trivial
+Exploitation: Replacing the external RBG changes deterministic polynomial and matrix expansion and breaks interoperability; the frozen submitted build is internally consistent
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-03
+
+Under `USE_ICCS`, `kdf_init` resets an ICCS `DRNG_ctx` from protocol input and `kdf_squeezeblocks` reads the stream (`hashkdf.c:82–89`). Signing and verification use it for deterministic polynomial and matrix expansion (`polyvec.c:61–82`; `poly.c:358–378`). The implementation therefore treats the external RBG as a scheme KDF whose exact output must agree across parties.
+
+The archived `drng.c` is self-consistent, so no forgery or key recovery follows. A scheme-defined XOF/KDF should specify the required seed-to-stream mapping.
+
+### Reproducing
+
+```sh
+python3 security/rbg_protocol_dependency.py --report-id sign-01-7
+```

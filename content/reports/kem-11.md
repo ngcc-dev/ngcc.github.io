@@ -27,3 +27,27 @@ python3 security/design_parameter_audit.py --report-id kem-11-1
 ```
 
 The check verifies the source constants and deterministic expansion against physical PDF pages 9, 12, 16, and 25.
+
+## kem-11-2: The Biased-MLWR reduction does not instantiate the concrete small-secret sets
+
+Severity: Medium
+Status: Proof gap
+Layer: Design
+Affected: All four COMPASS-KEM parameter sets
+Discovery: Moderate
+Exploitation: Proof gap; no distinguishing or key-recovery attack demonstrated
+Credit: Make
+Date: 2026-10-02
+Original source: [Make's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/VQEI56DFEV7TIEGRXDN6O4P2T6DZ66DE/)
+
+COMPASS-KEM's IND-CPA proof states Theorem 2 on physical p. 20 and uses Biased MLWR for its Game 2-to-Game 3 transition on p. 21. Definition 2 instead defines that problem with a uniform secret, and Theorem 1 relies on a uniformly random bounded component satisfying its leftover-hash-lemma inequality (physical pp. 16–17). Concrete encryption samples `r` from `CBD_eta` with `eta` in `{2,3,4}` (Algorithm 2, physical p. 14; Table 1, p. 18; `indcpa.c:336–337`). The submission gives no reduction from these concrete distributions to the stated assumption.
+
+Further extension to Make's analysis: even granting each concrete coefficient the greater entropy of a uniform draw over its full `2 eta + 1` support leaves the displayed inequality short by 6,307, 7,121, 14,629 and 14,357 bits at the 128-, 256-, 384- and 512-bit sets. This quantifies a missing proof bridge, not an attack; the heuristic lattice estimates are separate.
+
+### Reproducing
+
+```sh
+python3 kem-11/reproduce_biased_mlwr_gap.py
+```
+
+The certificate extracts the theorem's condition, checks each implementation's parameters and CBD call, and evaluates the optimistic entropy bound.

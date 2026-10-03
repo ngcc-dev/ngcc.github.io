@@ -158,6 +158,47 @@ python3 security/trike_threshold_differential.py --trials 1000
 <pre><code class="language-sh">python3 kem-36/reproduce_implementation_issues.py
 </code></pre>
 <p>The certificate traces the index from the secret key into the syndrome address in every submitted source tree.</p>
+<h2 class="issue-heading" id="kem-36-7-trike-shares-the-generic-unsalted-fo-multi-ciphertext-loss-no-trike-specific-weakness">kem-36-7: TRIKE shares the generic unsalted-FO multi-ciphertext loss, no TRIKE-specific weakness</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-info">Info</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>TRIKE-2, -5, -7 and -9 specification and implementations, in common with other unsalted deterministic FO KEMs</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>None specific to TRIKE; with T observed ciphertexts under one key, one shared secret is found in about 2^l/T public encapsulations, which does not break the required single-challenge IND-CCA2 game</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-03</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/MM2JSFZV6NOP4XH3EKBO3RGK4R5LVGPO/">Xiong and Wang's PKC Forum post</a></p>
+<p>Reference: <a href="https://eprint.iacr.org/2025/343">Andreeva et al., ePrint 2025/343</a></p>
+<p>TRIKE encapsulation samples one <code>l</code>-bit message and deterministically derives both ciphertext and shared secret from it and the public key, without a salt (Algorithm 5, physical p. 7; <code>KEM_AlgorithmInstance.c:242–273</code>). Given <code>T</code> ciphertext fingerprints under one key, public re-encapsulation therefore recovers one message and its shared secret after about <code>2^l/(T+1)</code> trials; for <code>T=2^32</code> this is about <code>2^224</code> encapsulations for TRIKE-5 and <code>2^480</code> for TRIKE-9. The scaled witness confirms the mechanism on the submitted code.</p>
+<p>This is recorded for information. The amortization is the generic multi-ciphertext loss of any unsalted deterministic FO KEM whose message length equals its target, a property shared by many submissions and by standardized designs. It is not a break of the single-challenge IND-CCA2 game required by the call, and the <code>2^80</code> evaluation budget limits chosen decapsulation queries rather than the number of honest ciphertexts available to such a passive search. TRIKE's specification makes no multi-target claim beyond its IND-CCA2 statement and adds nothing that would make the loss worse than in the generic case. A public salt, or a message longer than the target level, would prevent the amortization.</p>
+<h3 id="reproducing_6">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C kem-36 reproduce-multitarget
+python3 kem-36/reproduce_multitarget_bounds.py
+</code></pre>
+<p>The native scaled witness links the unmodified submitted encapsulation and decapsulation code, forces only the small model message, checks the single global RNG read, and requires the recovered key to match both parties. The certificate checks the full-size source paths and the <code>2^l/T</code> accounting; the full searches are extrapolated.</p>
+<h2 class="issue-heading" id="kem-36-8-trike-resets-the-external-drbg-for-deterministic-re-encryption">kem-36-8: TRIKE resets the external DRBG for deterministic re-encryption</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>TRIKE-2, -5, -7 and -9 reference implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Encapsulation and FO re-encryption agree only for the particular external RBG stream; the frozen submitted build is internally consistent</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-03</td></tr>
+</table></div>
+
+<p><code>generate_error_vector</code> hashes <code>msg || r2</code>, resets a local external <code>DRNG_ctx</code> from that value, and draws the deterministic error vector (<code>sample.c:230–244</code>). Encapsulation and decapsulation both call it to make the FO re-encryption comparison (<code>KEM_AlgorithmInstance.c:252,353</code>). This is XOF/PRG functionality: changing the RBG mapping makes honest ciphertexts fail verification.</p>
+<p>The bundled <code>drng.c</code> gives a working frozen implementation. The Low defect is making correctness depend on a nominally external RBG rather than a specified deterministic expander.</p>
+<h3 id="reproducing_7">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 security/rbg_protocol_dependency.py --report-id kem-36-8
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -24,6 +24,12 @@
 <tr><th>Performance</th><td><a href="../performance/x86_1/sign-20.html">x86_1</a> · <a href="../performance/arm_1/sign-20.html">arm_1</a></td></tr>
 </table></div>
 
+<p>Evaluation scope: Qing Luan instantiates the CROSS-RSDP protocol but fixes its
+multi-pipe hash, counter-mode XOF and Hash-DRBG as concrete SM3-based
+constructions rather than ICCS placeholder functions. These symmetric
+constructions are therefore part of the submitted design and require evaluation
+alongside the public-key protocol; replacing them would evaluate a revised
+instantiation.</p>
 <h2 class="issue-heading issue-heading-first" id="sign-20-1-qingluan-128s-own-quantum-accounting-falls-below-the-80-bit-target">sign-20-1: Qingluan-128&#x27;s own quantum accounting falls below the 80-bit target</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
@@ -45,6 +51,87 @@
 <pre><code class="language-sh">python3 sign-20/reproduce_quantum_accounting.py
 </code></pre>
 <p>The witness extracts the relevant statements and numbers from the submitted PDF, recomputes <code>128.8/2 = 64.4</code> and <code>143/2 = 71.5</code>, and checks that both fall below the specification's own 80-bit row. It does not simulate a quantum circuit or claim an executed attack.</p>
+<h2 class="issue-heading" id="sign-20-2-drbg-rollback-is-outside-the-security-model-so-the-reported-witness-recovery-is-not-an-attack">sign-20-2: DRBG rollback is outside the security model, so the reported witness recovery is not an attack</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-info">Info</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All four Qing Luan parameter sets, only if the signer's DRBG is rewound to an earlier internal state</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>None within the security model; the reported recovery requires rewinding the signer's DRBG</td></tr>
+<tr><th>Credit</th><td>Martin Feussner, with OpenAI Codex (Daybreak Blue) assistance</td></tr>
+<tr><th>Date</th><td>2026-10-02</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/OBQXT2H5IIQPMNT6TQFP3OHJNBDBJKQD/">Feussner's PKC Forum post</a></p>
+<p>The post rewinds the signer's DRBG to the same internal state before two signatures on different messages. The round seeds then repeat while the Fiat–Shamir challenges differ: a type-1 opening in one signature reveals a round seed and hence <code>eta'_i</code>, a type-0 opening in the other reveals <code>v_i = eta - eta'_i mod 7</code>, and combining them recovers the long-term exponent witness. We reproduced the extraction and a fresh-message forgery, with fresh-state, wrong-key, wrong-message and corruption controls, at all four levels.</p>
+<p>This is recorded for information and is not a vulnerability. The evaluation's randomized-signature model supplies fresh coins; it does not give the adversary access to seed, clone, reset or rewind the generator's internal state. Qing Luan's only per-signature freshness is the DRBG output, so rolling the DRBG back repeats it; signing that binds its per-signature seed to the secret key and message, as hedged or deterministic signing does, would tolerate such repetition. Ordinary signing with a correctly operating random bit generator is unaffected.</p>
+<p>The specification's §3.3.4 (physical p. 17) discusses DRBG reset under "Temporary Key Reuse". It concedes that a reset across two different messages repeats the round seeds while the challenges differ, yet concludes that Qing Luan "demonstrates strong robustness under DRBG temporary-state reuse". The reproduced witness refutes that informal robustness conclusion. It does not break Qing Luan's stated EUF-CMA model (§3.1.1, p. 13), and the submission states no formal security property under DRBG rollback.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sign-20/reproduce_rollback.sh
+</code></pre>
+<p>The wrapper downloads a hash-pinned artifact and requires every level and control to pass.</p>
+<h2 class="issue-heading" id="sign-20-3-nested-sm3-multicollisions-give-sub-target-message-binding-for-qingluan-384-and-512">sign-20-3: Nested SM3 multicollisions give sub-target message binding for QingLuan-384 and -512</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>QingLuan-256 security analysis; below-target forgery bounds for QingLuan-384 and QingLuan-512</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>One signing query; a fixed-prefix second preimage costs about 2^256 times a polynomial in the pipe count and transfers the signature to a fresh message</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance</td></tr>
+<tr><th>Date</th><td>2026-10-03</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/4GD326C4OBZ6TEJQCSJ3QSCI3QBNTYGV/">Xiong and Wang's PKC Forum post</a></p>
+<p>Qing Luan concatenates <code>P</code> domain-separated SM3 pipes and claims full <code>2^(256P)</code> (second-)preimage and target-collision resistance (§§1.5.2, 2.4.1 and Theorem 1). Joux's recursive multicollision construction finds preimages of a concatenation of any fixed number of Merkle–Damgård pipes in about <code>2^256</code> times a polynomial in 256 and <code>P</code>, rather than exponential work per pipe. The signature's revealed salt is a fixed prefix for this single-target construction, not a barrier.</p>
+<p>The standard accounting is <code>poly(256^P) 2^256</code>; one published refinement gives a leading factor <code>256^(P-2)/2^(P-4)</code>, about <code>2^258</code>, <code>2^265</code> and <code>2^272</code> for two, three and four pipes. A second preimage for the fixed <code>salt || message</code> digest transfers an observed signature to a fresh message. Thus the 384- and 512-bit sets miss their required targets; the 256-bit set is not claimed below target under this accounting. The scaled witness demonstrates the basic two-pipe construction and a less efficient direct extension; the decisive higher-pipe bound is a literature-backed analytic certificate, not a full-size computation.</p>
+<p>References: <a href="https://www.iacr.org/archive/crypto2004/31520306/multicollisions.pdf">Joux, CRYPTO 2004, §§4.2–4.3 and Appendix A</a>; <a href="https://eprint.iacr.org/2008/441">Bernstein et al., <em>How Risky is the Random-Oracle Model?</em>, §2.2</a></p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">QING_KEYS=1000 sign-20/reproduce_qing_hash_sampler.sh
+</code></pre>
+<h2 class="issue-heading" id="sign-20-4-signing-re-expands-the-secret-through-a-variable-work-sampler">sign-20-4: Signing re-expands the secret through a variable-work sampler</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>side-channel</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All four reference implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Repeatable secret-seed-dependent execution trace; no witness or key recovery demonstrated</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance</td></tr>
+<tr><th>Date</th><td>2026-10-03</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/4GD326C4OBZ6TEJQCSJ3QSCI3QBNTYGV/">Xiong and Wang's PKC Forum post</a></p>
+<p>Every signature re-expands the persistent secret seed through <code>rsdp_csprng_fz</code> (<code>sign.c:54–57</code>; <code>rsdp.c:68–76</code>). That sampler squeezes bytes until the masked value is not seven. Its draw count is therefore a repeatable function of the secret seed, contrary to §1.7's constant-time description.</p>
+<p>Instrumentation that changes no sampler decision finds variable but exactly repeatable counts at all four levels. The trace's marginal entropy is about 4.2–5.2 bits under an ideal-XOF model. Xiong and Wang report no significant correlation with the accepted secret coefficients; our witness does not test that negative result. This is not a demonstrated conditional leak beyond the public key, and no recovery path is known.</p>
+<p>Constant-time fix (easy, hence Low): pre-squeeze a bounded oversized buffer and masked-compact the non-seven candidates, with a public failure/retry bound.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>Run the same wrapper as above. It checks both the scaled hash construction and the submitted-source sampler with controls.</p>
+<h2 class="issue-heading" id="sign-20-5-qing-luans-random-generation-state-caps-the-384-and-512-bit-sets-at-256-bits">sign-20-5: Qing Luan&#x27;s random-generation state caps the 384- and 512-bit sets at 256 bits</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Specified/standalone QingLuan-384 and QingLuan-512 key generation; QingLuan-512 counter-XOF in both core paths</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>At most 2^256 trials to enumerate a key-generation root or equivalent level-512 witness</td></tr>
+<tr><th>Credit</th><td>Martin Feussner, with OpenAI Codex (Daybreak Blue) assistance</td></tr>
+<tr><th>Date</th><td>2026-10-02</td></tr>
+</table></div>
+<p>Additional reference: <a href="https://github.com/martinfeussner/NGCC-Signature-Audit/tree/91f2ddf0590a24ad39afc2ce2ee4f2627ec54726/Qing-Luan">Feussner's pinned Qing Luan artifact</a></p>
+<p>The specification fixes the SM3 Hash-DRBG seed at 32 bytes (§1.5.4). In the standalone implementation, the 32-byte <code>V</code> determines <code>C</code>, the counter starts fixed, and the entire output schedule has at most <code>2^256</code> roots (<code>utils.c:28,45–46,83–88</code>). Enumerating those roots and comparing the public key recovers the corresponding signing seed, below the 384- and 512-bit claims. The API KAT adapter uses a different 55-byte state and is not covered by this first argument.</p>
+<p>Independently, QingLuan-512's counter-XOF evaluates <code>SM3(K || BE32(i))</code> with a 128-byte, block-aligned <code>K</code> (<code>hash.c:348–371</code>). One 256-bit SM3 chaining state after the two key blocks determines every output. The public <code>Seed_pk</code> blocks test a guessed state; a match reconstructs the preceding secret <code>Seed_e</code> blocks and an equivalent signing witness. The 96-byte QingLuan-384 key is not block-aligned, so this second argument does not apply there.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-20/reproduce_state_ceiling.py
+sign-20/reproduce_rollback.sh
+</code></pre>
+<p>The static certificate checks the DRBG and XOF dimensions. The hash-pinned replay independently implements SM3 compression and reconstructs eight level-512 output blocks from one post-key state.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

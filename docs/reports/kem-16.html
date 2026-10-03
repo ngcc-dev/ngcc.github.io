@@ -47,6 +47,30 @@
 <pre><code class="language-sh">python3 kem-16/reproduce_model1_dfr.py
 </code></pre>
 <p>It recomputes all four values above and checks the two specification-published Model-1 controls before printing <code>CONFIRMED</code>.</p>
+<h2 class="issue-heading" id="kem-16-2-same-key-multi-instance-decoding-misses-three-hare-targets">kem-16-2: Same-key multi-instance decoding misses three HARE targets</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>HARE-256, HARE-384 and HARE-512 (HARE-5, HARE-7 and HARE-9)</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>About 2^255.44 work after 2^72 ciphertexts, 2^383.18 after 2^64, or 2^511.70 after 2^75</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance</td></tr>
+<tr><th>Date</th><td>2026-10-03</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/5M6UUTE7ZUSDW7XRVMLAMZGNU55A4IYT/">Xiong and Wang's PKC Forum post</a></p>
+<p>Additional reference: <a href="https://eprint.iacr.org/2026/517">May and Sá Diogo, ePrint 2026/517</a></p>
+<p>Each HARE ciphertext exposes the uncompressed syndrome <code>u = r1 + h*r2</code>, where <code>h</code> is fixed by the public key and both errors have weight <code>wr</code> (Algorithm 4, physical p. 10; <code>_shared/hare_core/ref/hqc.c</code>). From <code>Q</code> ciphertexts and their public cyclic shifts, an attacker obtains <code>nQ</code> targets for one same-code Decoding-One-Out-of-Many search. Recovering one error pair decodes that ciphertext's message and derives its session key.</p>
+<p>The pinned heuristic estimator gives the following first below-target points: HARE-256 at <code>Q=2^72</code>, time <code>2^255.440</code> and memory <code>2^103.356</code>; HARE-384 at <code>Q=2^64</code>, time <code>2^383.175</code> and memory <code>2^97.358</code>; HARE-512 at <code>Q=2^75</code>, time <code>2^511.699</code> and memory <code>2^109.820</code>. HARE-128 remains above its target at the <code>2^80</code> evaluation ceiling.</p>
+<p>Further extension to Xiong and Wang's analysis: using the conservative ordinary code dimension <code>n</code>, rather than <code>n-2</code>, preserves all three crossings. Checking every observation exponent also moves HARE-512's first crossing from the reported grid point <code>2^76</code> to <code>2^75</code>; the preceding costs are <code>2^256.300</code>, <code>2^384.046</code> and <code>2^512.163</code>.</p>
+<p>These passive attacks need no decapsulation oracle and stay within the <code>2^80</code> evaluation ceiling, but their first-crossing margins are only 0.56, 0.82 and 0.30 bits and the estimates require <code>2^97</code>–<code>2^110</code> bits of memory. The crossings use one pinned heuristic DS-DOOM estimator; alternate operation-count or memory-cost conventions could close these sub-bit margins. We reproduced the estimator calculations and the public ciphertext-to-session-key mapping; we did not execute the full decoding searches.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-16/reproduce_multi_instance.py
+make -C kem-16 reproduce-multi-instance
+</code></pre>
+<p>The first command requires NumPy and SciPy, hash-pins the estimator and checks each target crossing; set <code>NGCC_ESTIMATOR_PYTHON</code> to a suitable Python executable if they are not available to <code>python3</code>. The native witness links the submitted code and validates syndrome formation, rotations, decoded-message recovery, session-key recovery and a wrong-output control on all four shipped sets.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

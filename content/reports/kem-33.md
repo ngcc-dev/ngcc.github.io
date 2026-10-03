@@ -62,3 +62,33 @@ Constant-time fix (moderate, hence Medium): multiply by the private support with
 ### Reproducing
 
 Inspect `src/common/kem.c:155`, `src/ref/qube.c:182-192`, and `src/ref/gf2x.c:14-25,44-63` under `Implementations/Reference_Implementation/qube-256/`. This source-level witness identifies the secret-to-address path, not a measured cache attack.
+
+## kem-33-3: The optimized API generates predictable keys and encapsulations
+
+Severity: Critical
+Status: Confirmed
+Layer: Implementation
+Affected: Optimized QUBE-128, QUBE-256, QUBE-384 and QUBE-512; reference implementation unaffected
+Discovery: Trivial
+Exploitation: A fresh-process key-generation call reproduces the complete decapsulation key; encapsulation under an honest public key reproduces the ciphertext and shared secret
+Credit: Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance
+Date: 2026-10-03
+Original source: [Xiong and Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/RFAWJMFS3YHSQG4HMPKOCVYLX7BZK3YX/)
+
+The optimized API draws all key-generation and encapsulation randomness from a file-scope SHAKE context (`src/common/symmetric.c:15,27–45`; `src/common/kem.c:43–58,125–157`). That context is zero-initialized, and `prng_init` is called only by the benchmark and standalone test, never by the API wrapper. Seeding the separate ICCS DRNG therefore has no effect: every fresh process starts from the same key, message and salt stream.
+
+We reproduced complete public/secret-key recovery and sender-side ciphertext/session-key prediction on all four optimized sets. A corrected-PRNG control and the reference implementation both vary across seeds.
+
+### Reproducing
+
+The quick certificate checks the call graph and exercises the raw stream:
+
+```sh
+python3 kem-33/reproduce_unseeded_optimized.py
+```
+
+The full replay downloads a hash-pinned artifact, builds against the local submitted trees, and asserts both recovery paths and controls:
+
+```sh
+JOBS=8 kem-33/reproduce_unseeded_optimized.sh
+```

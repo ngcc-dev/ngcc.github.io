@@ -67,7 +67,7 @@ Exploitation: Honest encapsulation and decapsulation disagree about once per 2^1
 Credit: Sun Shuzhou, with GLM-5.3 assistance
 Date: 2026-09-28
 Original source: [NGCC PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/GD3QWKLXKTRIRKCMKCOHTFRLBQN3REES/)
-Follow-up source: [DKEM/DKEX/ADKEX team's PKC Forum response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/NRJXWUW3IRBVMQZEGW3DNPUVK6PW7YLG/) and [Sun Shuzhou's recheck](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XCBIRRBK5PRUUSJ6OWVVCFC5B43UHLXS/)
+Follow-up source: [DKEM/DKEX/ADKEX team's PKC Forum response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/NRJXWUW3IRBVMQZEGW3DNPUVK6PW7YLG/), [Sun Shuzhou's recheck](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XCBIRRBK5PRUUSJ6OWVVCFC5B43UHLXS/), and [the team's wider-backend update](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/R6FDY3X75YFNUEMAUMEXLMTC5CCWPCY7/)
 
 Table 1 and §3.4 claim a DKEM-512 reconciliation-failure probability of at
 most about `2^-167`. The scalar forward NTT instead stores both butterfly sums
@@ -83,9 +83,13 @@ DKEM-128 and -256 sets have substantially more headroom and are controls.
 
 The team confirms 12 mismatches in 20,000 and 21 in 40,000 scalar DKEM-512 sessions, as well as the same defect in the submitted NEON and Cortex-M4 backends. Its official packed-assembly AVX2 build reduces between layers and is unaffected. Sun's follow-up confirms the repair on those paths but reports 21 failures in 24,000 sessions through the natural-order AVX2 intrinsic chain selected by default when the sources are built without `DKE_NTT512_PACKED`; this is not the official optimized build. Instrumentation made every observed overflow/failure depend only on the public ciphertext, which supports limiting this finding to correctness rather than secret-key leakage.
 
+The team's later review confirms the same missing reductions in the non-default `DKE_NTT512_RB` and `DKE_NTT512_ASM` forward transforms. It reports fixed-scalar equivalence over 700,000 transforms per configuration and no failures in its post-fix session tests; the official packed path remains unchanged.
+
 ### Proposed fixes
 
 The team's [fix commit](https://github.com/dkemdkex/dkem-dkex/commit/8e3417a) proposes Barrett-reducing all coefficients after the length-64 and length-8 forward-NTT layers in the reference and NEON code, and reducing between the two four-layer Cortex-M4 passes. This section records the proposal without evaluating it.
+
+For the three natural-order AVX2 configurations, the team proposes the corresponding changes in [commit `5900418`](https://github.com/dkemdkex/dkem-dkex/commit/5900418). This section records that proposal without evaluating it.
 
 ### Reproducing
 

@@ -45,6 +45,25 @@
 tools/reproduce.sh sign-23
 </code></pre>
 <p>The <a href="https://github.com/ngcc-dev/ngcc-harness/blob/dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/security/shuttle_covariance_recovery.c">independent driver</a> parses verified signatures, accumulates challenge-conditioned covariance, checks recovered secret coefficients through the public-key relation and key-generation bounds, and signs a fresh message with the resulting equivalent key. It splits ordinary signing queries over eight independent processes by default; no original secret data enters the estimator or public completion. The <a href="https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/5ao-Ebsa_Ow/m/zwYJk_Q-BAAJ">original post</a> describes the same mechanism.</p>
+<h2 class="issue-heading" id="sign-23-2-shuttles-iccs-build-uses-the-external-drbg-as-an-xof">sign-23-2: Shuttle&#x27;s ICCS build uses the external DRBG as an XOF</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>SHUTTLE-128, -256 and -512 ICCS reference builds; the SHAKE build is not affected</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Signer and verifier depend on the particular external RBG stream; the frozen ICCS build is internally consistent</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-03</td></tr>
+</table></div>
+
+<p>In the ICCS path, <code>xof256_init</code> resets an external <code>DRNG_ctx</code> from protocol input and <code>xof256_squeeze</code> reads its output (<code>symmetric.c:73–86</code>). Shuttle uses this wrapper for public expansion, commitments, challenges and signing/verification transcripts (<code>sign.c:319,423,702,714</code>; <code>polyvec.c:109–135</code>). The exact ICCS DRBG stream is consequently part of signature interoperability.</p>
+<p>The specification makes this choice itself: under the default NGCC mode its unified XOF "collapses onto a single SM3 Hash-DRBG" supplied by the API, and the squeeze schedule is pinned to that DRBG's generate calls (physical p. 109). The reliance on the external RBG's determinism is therefore in the design, not only in the code. The alternate SHAKE path supplies a defined XOF and is outside this finding. The ICCS mode should likewise use a scheme-defined XOF rather than reset an external RBG.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 security/rbg_protocol_dependency.py --report-id sign-23-2
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

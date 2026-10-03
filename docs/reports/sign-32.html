@@ -93,6 +93,25 @@ witnesses and their controls. See <code>tools/README.md</code>.</p>
 <pre><code class="language-sh">sign-32/reproduce_pair_leakage_forgery.sh
 </code></pre>
 <p>The wrapper downloads and hash-checks Feussner's <a href="https://github.com/martinfeussner/NGCC-Signature-Audit/tree/91f2ddf0590a24ad39afc2ce2ee4f2627ec54726/UVW">package at commit <code>91f2ddf</code></a>, compiles the public recovery against the frozen local UVW source, and recomputes the public candidate list. It checks the recovered rank and pair set, fresh-message acceptance, changed-message rejection and exact API encoding. The likelihood scores are floating-point values, so the wrapper intentionally does not require a byte-identical score table across NumPy and BLAS versions. It needs Python with NumPy; regenerating the 300 signatures is documented in the pinned package but is not part of this approximately one-minute replay.</p>
+<h2 class="issue-heading" id="sign-32-4-uvw-sign-resets-the-external-drbg-for-deterministic-matrix-expansion">sign-32-4: UVW-Sign resets the external DRBG for deterministic matrix expansion</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>UVW-128, -256 and -512 reference implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Signing and verification depend on the particular external RBG stream; the frozen submitted build is internally consistent</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-03</td></tr>
+</table></div>
+
+<p><code>generate_f3_matrix</code> builds a local seed-and-nonce value, resets an external <code>DRNG_ctx</code>, and draws the matrix from it (<code>SIG_AlgorithmInstance.c:106–123</code>). Key generation, signing and verification all regenerate protocol matrices through this path. Their agreement therefore depends on the exact ICCS DRBG mapping rather than on a scheme-defined XOF.</p>
+<p>The specification defines this expander itself, a PRNG "constructed based on the Chinese national standard SM3-DRNG" with an explicit seed-and-nonce input and conversion to F3 elements (§1.5, physical p. 12); calling that internal expander a PRNG is only a labeling matter. The defect is in the code, which wires the expander to the external ICCS RBG interface (<code>drng.c</code>, identical to the supplied API copy) instead of building it as an internal function. The three archived implementations are self-consistent. This is a Low interoperability dependency; no additional forgery is claimed.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 security/rbg_protocol_dependency.py --report-id sign-32-4
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

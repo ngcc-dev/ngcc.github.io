@@ -106,7 +106,8 @@ records that the full exponential search is not executed.</p>
 <tr><th>Credit</th><td>Martin Feussner, with OpenAI Codex (Daybreak Blue) assistance</td></tr>
 <tr><th>Date</th><td>2026-10-01</td></tr>
 </table></div>
-<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/HNQWNWEIP44QKJGMBCNRQIZCRHDLIAZC/">Feussner's PKC Forum post</a> and <a href="https://github.com/martinfeussner/NGCC-Signature-Audit/tree/d0db6e0e0a28ef7ef41fe5dd826aa17ff743bcba/ReSolveD-alpha">pinned attack package</a></p>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/HNQWNWEIP44QKJGMBCNRQIZCRHDLIAZC/">Feussner's PKC Forum post</a> and <a href="https://github.com/martinfeussner/NGCC-Signature-Audit/tree/d0db6e0e0a28ef7ef41fe5dd826aa17ff743bcba/ReSolveD-alpha">pinned attack package</a>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/TE3JLRXYSLPJUTFXC34R5NF7QIAZIQIB/">ReSolveD-α team's response</a></p>
 <p>ReSolveD-α permits optional deterministic signing by setting <code>rho = 0^lambda</code>
 (§4.2.2 and §4.9.2); the default path samples <code>rho</code> randomly. At each level the
 S and F profiles share the key format and RSD relation, while <code>CoinHash</code> binds
@@ -124,6 +125,7 @@ unless randomness repeats.</p>
 single-profile EUF-CMA experiment, but it gives complete equivalent-key
 recovery and forgery whenever the optional deterministic profiles share a
 key, hence High.</p>
+<p>The team replies that keys should be generated independently for S and F, that randomized signing is the intended operational mode, and that deterministic signing is for implementation checking. This agrees with the scope above and does not change the classification.</p>
 <h3 id="reproducing_2">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">sh sign-21/reproduce_cross_profile_recovery.sh

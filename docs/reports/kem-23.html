@@ -55,6 +55,25 @@ two-argument <code>reed_solomon_decode(m, tmp)</code> call:</p>
 ./extract.sh kem-23
 rg -n 'reed_muller_decode\(tmp, pos, em\)|reed_solomon_decode\(m, tmp\)' kem-23/Implementations --glob code.c
 </code></pre>
+<h2 class="issue-heading" id="kem-23-2-mito-uses-the-external-drbg-as-an-xof">kem-23-2: Mito uses the external DRBG as an XOF</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All nine Mito reference implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Replacing the external RBG changes deterministic key, ciphertext and parsing expansions; the frozen submitted build is internally consistent</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-03</td></tr>
+</table></div>
+
+<p>Mito's function named <code>xof_init</code> is exactly <code>init_random_number(xof_ctx, seed, seed_size)</code>, and <code>xof_get_bytes</code> reads the external DRBG stream (<code>symmetric.c:50–67</code>). Key generation, parsing and encryption seed this wrapper from protocol values (<code>mito_pke.c:39–45,87</code>; <code>parsing.c:17–33</code>). Correct operation therefore depends on one particular RBG's deterministic stream.</p>
+<p>The archive is self-consistent and no confidentiality break is asserted. The Low defect is using an external RBG contract where the scheme requires a specified XOF.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 security/rbg_protocol_dependency.py --report-id kem-23-2
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

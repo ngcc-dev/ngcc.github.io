@@ -45,3 +45,24 @@ Constant-time fix (easy, hence Low): read `finvint` at fixed addresses and apply
 ### Reproducing
 
 The same source path occurs in `yuanyang-512`, `yuanyang-1024`, and `yuanyang-2048` reference `kem.c` files. Inspect lines 181–224 and the call from `yy_decapsulate_API` at line 249. This is a source/dataflow witness; a measured cache attack remains open.
+
+## kem-40-3: YuanYang resets the external DRBG for deterministic encryption
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: yuanyang-512, -1024 and -2048 reference implementations
+Discovery: Trivial
+Exploitation: Encapsulation and FO re-encryption agree only for the particular external RBG stream; the frozen submitted build is internally consistent
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-03
+
+`yy_encrypt` resets a local external `DRNG_ctx` from its deterministic encryption seed, then draws the blinding message and error polynomials (`kem.c:105–122`). Both encapsulation and decapsulation call `yy_encode_message`, which invokes this path (`:138–143,165,260`). Replacing the RBG changes the re-encryption result and makes honest ciphertexts fail validation.
+
+The three frozen implementations work with their bundled `drng.c`. The Low defect is using a replaceable RBG interface as the scheme's deterministic encryption PRG.
+
+### Reproducing
+
+```sh
+python3 security/rbg_protocol_dependency.py --report-id kem-40-3
+```

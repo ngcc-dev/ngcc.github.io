@@ -45,6 +45,26 @@
 <pre><code class="language-sh">python3 security/design_parameter_audit.py --report-id kem-11-1
 </code></pre>
 <p>The check verifies the source constants and deterministic expansion against physical PDF pages 9, 12, 16, and 25.</p>
+<h2 class="issue-heading" id="kem-11-2-the-biased-mlwr-reduction-does-not-instantiate-the-concrete-small-secret-sets">kem-11-2: The Biased-MLWR reduction does not instantiate the concrete small-secret sets</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr>
+<tr><th>Affected</th><td>All four COMPASS-KEM parameter sets</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Proof gap; no distinguishing or key-recovery attack demonstrated</td></tr>
+<tr><th>Credit</th><td>Make</td></tr>
+<tr><th>Date</th><td>2026-10-02</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/VQEI56DFEV7TIEGRXDN6O4P2T6DZ66DE/">Make's PKC Forum post</a></p>
+<p>COMPASS-KEM's IND-CPA proof states Theorem 2 on physical p. 20 and uses Biased MLWR for its Game 2-to-Game 3 transition on p. 21. Definition 2 instead defines that problem with a uniform secret, and Theorem 1 relies on a uniformly random bounded component satisfying its leftover-hash-lemma inequality (physical pp. 16–17). Concrete encryption samples <code>r</code> from <code>CBD_eta</code> with <code>eta</code> in <code>{2,3,4}</code> (Algorithm 2, physical p. 14; Table 1, p. 18; <code>indcpa.c:336–337</code>). The submission gives no reduction from these concrete distributions to the stated assumption.</p>
+<p>Further extension to Make's analysis: even granting each concrete coefficient the greater entropy of a uniform draw over its full <code>2 eta + 1</code> support leaves the displayed inequality short by 6,307, 7,121, 14,629 and 14,357 bits at the 128-, 256-, 384- and 512-bit sets. This quantifies a missing proof bridge, not an attack; the heuristic lattice estimates are separate.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-11/reproduce_biased_mlwr_gap.py
+</code></pre>
+<p>The certificate extracts the theorem's condition, checks each implementation's parameters and CBD call, and evaluates the optimistic entropy bound.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

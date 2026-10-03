@@ -88,3 +88,29 @@ make -C kem-14 exploit-rejection-contract
 ```
 
 The witness generates two different keys, copies only the first key's 32-byte rejection seed into the second secret key, and decapsulates one invalid ciphertext under both. The rejection keys become identical; retaining the second key's original seed is a negative control and produces a different value. It prints `ATTACK kem-14-3 ... CONFIRMED`.
+
+## kem-14-4: Ring-paired DoubleE8 blocks invalidate DTRU's failure estimates
+
+Severity: Medium
+Status: Proof gap
+Layer: Design
+Affected: DTRU-648, DTRU-768, DTRU-1024, conditionally DTRU-Prime, DTRU-1536 and DTRU-2048; DTRU-Light is a control
+Discovery: Hard
+Exploitation: Covariance-aware failure estimates undermine the submitted proof, but no full-size failure search or key recovery was executed
+Credit: Yuyang Xiao, Institute of Software, Chinese Academy of Sciences <xiaoyuyang2023@iscas.ac.cn>
+Date: 2026-09-28
+Reference: [Xiao, ePrint 2026/2250](https://eprint.iacr.org/archive/2026/2250/1790598276.pdf)
+
+DoubleE8 places each E8 octet beside its `n/2`-shifted copy (§1.1, physical p. 2). Multiplication in `Z[x]/(x^n-x^(n/2)+1)` couples exactly those coordinates, whereas the submitted DFR analysis treats the 16 decoder inputs as independent (Theorem 1 and §2.3, physical pp. 8–9). Xiao's covariance-aware model gives block eigenvalues around 0.3 and 1.6–2.1 times the marginal variance. Its uncapped first-failure estimates are about `2^85.4`, `2^97.9`, `2^104.6`, `2^96.3`, `2^100.7` and `2^110.8` in the Affected order above, 50–110 bits below the submitted DFR exponents. At the call's `2^80` decapsulation ceiling, Table 5 gives total costs of `2^83.7`, `2^86.0`, `2^98.9`, `2^79.8`, `2^94.5` and `2^116.1`. DTRU-Light's power-of-two ring does not have this pairing. For odd-dimensional DTRU-Prime, the specification does not state the DoubleE8 layout; its listed result is conditional on Xiao's assumed offset `floor(n/2)=543`.
+
+A failing honest encapsulation is recognizable from its known shared key. The paper develops directional follow-ups and a toy secret-correlation experiment, but no full-size recovery. Its normal-tail fits use 200 ciphertexts, the extreme tails are extrapolated, and the Prime result assumes a layout absent from the specification. The result therefore establishes a substantive failure-proof gap rather than a completed attack.
+
+Further extension to Xiao's analysis: direct public multiplication-matrix calculations on all five tricyclotomic dimensions give paired correlations around `-0.65` and normalized 16-row covariance eigenvalues from about 0.27 to 2.12. This independently certifies structural non-independence, not the extreme-tail DFR estimates. Even the submission's own DFR values leave Theorem 3's `(qH+qD) delta` term far above every target when `qD=2^80` (physical p. 12).
+
+### Reproducing
+
+```sh
+python3 kem-14/reproduce_dtru_covariance.py
+```
+
+The dependency-free certificate constructs the multiplication rows, checks their paired correlations and spectrum, and evaluates the submitted DFR exponents at `2^80` queries. It does not reproduce the paper's tail fitting or a key-recovery attack.

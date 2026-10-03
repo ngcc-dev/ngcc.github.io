@@ -89,3 +89,24 @@ sign-32/reproduce_pair_leakage_forgery.sh
 ```
 
 The wrapper downloads and hash-checks Feussner's [package at commit `91f2ddf`](https://github.com/martinfeussner/NGCC-Signature-Audit/tree/91f2ddf0590a24ad39afc2ce2ee4f2627ec54726/UVW), compiles the public recovery against the frozen local UVW source, and recomputes the public candidate list. It checks the recovered rank and pair set, fresh-message acceptance, changed-message rejection and exact API encoding. The likelihood scores are floating-point values, so the wrapper intentionally does not require a byte-identical score table across NumPy and BLAS versions. It needs Python with NumPy; regenerating the 300 signatures is documented in the pinned package but is not part of this approximately one-minute replay.
+
+## sign-32-4: UVW-Sign resets the external DRBG for deterministic matrix expansion
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: UVW-128, -256 and -512 reference implementations
+Discovery: Trivial
+Exploitation: Signing and verification depend on the particular external RBG stream; the frozen submitted build is internally consistent
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-03
+
+`generate_f3_matrix` builds a local seed-and-nonce value, resets an external `DRNG_ctx`, and draws the matrix from it (`SIG_AlgorithmInstance.c:106–123`). Key generation, signing and verification all regenerate protocol matrices through this path. Their agreement therefore depends on the exact ICCS DRBG mapping rather than on a scheme-defined XOF.
+
+The specification defines this expander itself, a PRNG "constructed based on the Chinese national standard SM3-DRNG" with an explicit seed-and-nonce input and conversion to F3 elements (§1.5, physical p. 12); calling that internal expander a PRNG is only a labeling matter. The defect is in the code, which wires the expander to the external ICCS RBG interface (`drng.c`, identical to the supplied API copy) instead of building it as an internal function. The three archived implementations are self-consistent. This is a Low interoperability dependency; no additional forgery is claimed.
+
+### Reproducing
+
+```sh
+python3 security/rbg_protocol_dependency.py --report-id sign-32-4
+```

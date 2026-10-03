@@ -27,3 +27,24 @@ tools/reproduce.sh sign-23
 ```
 
 The [independent driver](https://github.com/ngcc-dev/ngcc-harness/blob/dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/security/shuttle_covariance_recovery.c) parses verified signatures, accumulates challenge-conditioned covariance, checks recovered secret coefficients through the public-key relation and key-generation bounds, and signs a fresh message with the resulting equivalent key. It splits ordinary signing queries over eight independent processes by default; no original secret data enters the estimator or public completion. The [original post](https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/5ao-Ebsa_Ow/m/zwYJk_Q-BAAJ) describes the same mechanism.
+
+## sign-23-2: Shuttle's ICCS build uses the external DRBG as an XOF
+
+Severity: Low
+Status: Confirmed
+Layer: Design
+Affected: SHUTTLE-128, -256 and -512 ICCS reference builds; the SHAKE build is not affected
+Discovery: Trivial
+Exploitation: Signer and verifier depend on the particular external RBG stream; the frozen ICCS build is internally consistent
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-03
+
+In the ICCS path, `xof256_init` resets an external `DRNG_ctx` from protocol input and `xof256_squeeze` reads its output (`symmetric.c:73–86`). Shuttle uses this wrapper for public expansion, commitments, challenges and signing/verification transcripts (`sign.c:319,423,702,714`; `polyvec.c:109–135`). The exact ICCS DRBG stream is consequently part of signature interoperability.
+
+The specification makes this choice itself: under the default NGCC mode its unified XOF "collapses onto a single SM3 Hash-DRBG" supplied by the API, and the squeeze schedule is pinned to that DRBG's generate calls (physical p. 109). The reliance on the external RBG's determinism is therefore in the design, not only in the code. The alternate SHAKE path supplies a defined XOF and is outside this finding. The ICCS mode should likewise use a scheme-defined XOF rather than reset an external RBG.
+
+### Reproducing
+
+```sh
+python3 security/rbg_protocol_dependency.py --report-id sign-23-2
+```

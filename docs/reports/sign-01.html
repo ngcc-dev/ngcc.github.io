@@ -169,6 +169,25 @@ requires some bound <code>pbar &lt; 1</code>.</p>
 <pre><code class="language-sh">python3 sign-01/reproduce_abort_bound.py
 </code></pre>
 <p>The script evaluates the printed formula from the Table 1 parameters and checks the Table 2 repetition-rate control.</p>
+<h2 class="issue-heading" id="sign-01-7-the-external-drbg-is-used-as-a-kdf">sign-01-7: The external DRBG is used as a KDF</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Aigis-Sig+-I, -II and -III ICCS reference implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Replacing the external RBG changes deterministic polynomial and matrix expansion and breaks interoperability; the frozen submitted build is internally consistent</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-03</td></tr>
+</table></div>
+
+<p>Under <code>USE_ICCS</code>, <code>kdf_init</code> resets an ICCS <code>DRNG_ctx</code> from protocol input and <code>kdf_squeezeblocks</code> reads the stream (<code>hashkdf.c:82–89</code>). Signing and verification use it for deterministic polynomial and matrix expansion (<code>polyvec.c:61–82</code>; <code>poly.c:358–378</code>). The implementation therefore treats the external RBG as a scheme KDF whose exact output must agree across parties.</p>
+<p>The archived <code>drng.c</code> is self-consistent, so no forgery or key recovery follows. A scheme-defined XOF/KDF should specify the required seed-to-stream mapping.</p>
+<h3 id="reproducing_6">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 security/rbg_protocol_dependency.py --report-id sign-01-7
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

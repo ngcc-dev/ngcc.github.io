@@ -126,3 +126,24 @@ minimal Galas-160 specification-oracle reproducer, including the package's
 documented helper repairs. It requires exact key recovery, an accepted
 fresh-message forgery, and rejecting controls. It does not rerun the package's
 separate all-level submitted-implementation validation.
+
+## sign-12-4: Key generation resets the external DRBG as a seed expander
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: All eight Galas reference implementations
+Discovery: Trivial
+Exploitation: Deterministic key generation depends on the particular external RBG stream; the stronger default-zero-seed failure is recorded separately
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-03
+
+`sig_keygen` creates a local `DRNG_ctx`, resets it from the selected seed, and draws the secret key material from that stream (`ngcc/SIG_AlgorithmInstance.c:61–83`). This uses the external RBG as a deterministic seed expander: changing the RBG changes the key pair derived from the same seed. The issue is distinct from the implementation's use of a zero default seed.
+
+The submitted `drng.c` fixes one working mapping, so this note records a Low deterministic-key/interoperability dependency rather than another key-recovery result. Key derivation should use a specified XOF.
+
+### Reproducing
+
+```sh
+python3 security/rbg_protocol_dependency.py --report-id sign-12-4
+```

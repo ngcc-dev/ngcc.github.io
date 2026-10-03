@@ -163,6 +163,25 @@ BB_NPROC=12 BB_PROBE_SHARDS=8 BB_SCAN_SHARDS=1000 \
 <pre><code class="language-sh">python3 kem-38/reproduce_dfr_reaction.py
 </code></pre>
 <p>The witness checks both allocation paths and derives their byte counts from the archived parameters.</p>
+<h2 class="issue-heading" id="kem-38-7-uvw-kem-resets-the-external-drbg-for-key-expansion-and-re-encryption">kem-38-7: UVW-KEM resets the external DRBG for key expansion and re-encryption</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>UVW-KEM-128, -256 and -512 reference implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Serialized secret keys and FO re-encryption depend on the particular external RBG stream; the frozen submitted build is internally consistent</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-03</td></tr>
+</table></div>
+
+<p>Encapsulation derives <code>H1(m)</code> and resets an external DRBG to sample <code>(r,e)</code>; decapsulation repeats the reset from <code>H1(m')</code> before re-encryption (<code>KEM_AlgorithmInstance.c:312–330,411–426</code>). Secret-key parsing likewise reconstructs <code>GU</code>, <code>GW</code> and <code>D</code> by resetting local DRBG contexts from stored seeds (<code>:1485–1616</code>). Correctness and serialized-key interpretation therefore depend on one particular ICCS DRBG stream.</p>
+<p>The archive is internally consistent and this finding adds no key recovery. The deterministic operations should use a specified XOF/PRG.</p>
+<h3 id="reproducing_6">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 security/rbg_protocol_dependency.py --report-id kem-38-7
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

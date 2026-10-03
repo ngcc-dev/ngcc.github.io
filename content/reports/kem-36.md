@@ -173,3 +173,51 @@ python3 kem-36/reproduce_implementation_issues.py
 ```
 
 The certificate traces the index from the secret key into the syndrome address in every submitted source tree.
+
+## kem-36-7: TRIKE shares the generic unsalted-FO multi-ciphertext loss, no TRIKE-specific weakness
+
+Severity: Info
+Status: Confirmed
+Layer: Design
+Affected: TRIKE-2, -5, -7 and -9 specification and implementations, in common with other unsalted deterministic FO KEMs
+Discovery: Moderate
+Exploitation: None specific to TRIKE; with T observed ciphertexts under one key, one shared secret is found in about 2^l/T public encapsulations, which does not break the required single-challenge IND-CCA2 game
+Credit: Zhenyu Xiong and Mingsheng Wang, with AI assistance
+Date: 2026-10-03
+Original source: [Xiong and Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/MM2JSFZV6NOP4XH3EKBO3RGK4R5LVGPO/)
+
+Reference: [Andreeva et al., ePrint 2025/343](https://eprint.iacr.org/2025/343)
+
+TRIKE encapsulation samples one `l`-bit message and deterministically derives both ciphertext and shared secret from it and the public key, without a salt (Algorithm 5, physical p. 7; `KEM_AlgorithmInstance.c:242–273`). Given `T` ciphertext fingerprints under one key, public re-encapsulation therefore recovers one message and its shared secret after about `2^l/(T+1)` trials; for `T=2^32` this is about `2^224` encapsulations for TRIKE-5 and `2^480` for TRIKE-9. The scaled witness confirms the mechanism on the submitted code.
+
+This is recorded for information. The amortization is the generic multi-ciphertext loss of any unsalted deterministic FO KEM whose message length equals its target, a property shared by many submissions and by standardized designs. It is not a break of the single-challenge IND-CCA2 game required by the call, and the `2^80` evaluation budget limits chosen decapsulation queries rather than the number of honest ciphertexts available to such a passive search. TRIKE's specification makes no multi-target claim beyond its IND-CCA2 statement and adds nothing that would make the loss worse than in the generic case. A public salt, or a message longer than the target level, would prevent the amortization.
+
+### Reproducing
+
+```sh
+make -C kem-36 reproduce-multitarget
+python3 kem-36/reproduce_multitarget_bounds.py
+```
+
+The native scaled witness links the unmodified submitted encapsulation and decapsulation code, forces only the small model message, checks the single global RNG read, and requires the recovered key to match both parties. The certificate checks the full-size source paths and the `2^l/T` accounting; the full searches are extrapolated.
+
+## kem-36-8: TRIKE resets the external DRBG for deterministic re-encryption
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: TRIKE-2, -5, -7 and -9 reference implementations
+Discovery: Trivial
+Exploitation: Encapsulation and FO re-encryption agree only for the particular external RBG stream; the frozen submitted build is internally consistent
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-03
+
+`generate_error_vector` hashes `msg || r2`, resets a local external `DRNG_ctx` from that value, and draws the deterministic error vector (`sample.c:230–244`). Encapsulation and decapsulation both call it to make the FO re-encryption comparison (`KEM_AlgorithmInstance.c:252,353`). This is XOF/PRG functionality: changing the RBG mapping makes honest ciphertexts fail verification.
+
+The bundled `drng.c` gives a working frozen implementation. The Low defect is making correctness depend on a nominally external RBG rather than a specified deterministic expander.
+
+### Reproducing
+
+```sh
+python3 security/rbg_protocol_dependency.py --report-id kem-36-8
+```

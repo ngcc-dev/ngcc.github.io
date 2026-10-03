@@ -86,6 +86,8 @@ Algorithm 15 publishes `b' = Compress(A·s+e)`, and Algorithm 16 encrypts with `
 
 Liu estimates corrected log2 failure rates of about −77.85, −51.54, −115.07, and −198.96, versus the submission's −129, −176, −189, and −243. Those **numerical** estimates have not been independently reproduced or measured against the full KEM here. The confirmed result is the missing nonzero term, which invalidates the quoted derivation; this report does not claim a practical decapsulation attack.
 
+Follow-up analysis: [Xiao, ePrint 2026/2250, §§10–11](https://eprint.iacr.org/archive/2026/2250/1790598276.pdf) independently derives the omitted `e_pk*r` term and models rates near `2^-79.1`, `2^-51.8`, `2^-116.1` and `2^-201.0`. Its far tails remain model-based and it gives no completed key recovery, so this additional evidence does not change the classification.
+
 ### Reproducing
 
 ```sh

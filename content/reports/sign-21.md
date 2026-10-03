@@ -99,6 +99,7 @@ Exploitation: Two same-message signatures recover an equivalent signing witness 
 Credit: Martin Feussner, with OpenAI Codex (Daybreak Blue) assistance
 Date: 2026-10-01
 Original source: [Feussner's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/HNQWNWEIP44QKJGMBCNRQIZCRHDLIAZC/) and [pinned attack package](https://github.com/martinfeussner/NGCC-Signature-Audit/tree/d0db6e0e0a28ef7ef41fe5dd826aa17ff743bcba/ReSolveD-alpha)
+Follow-up source: [ReSolveD-α team's response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/TE3JLRXYSLPJUTFXC34R5NF7QIAZIQIB/)
 
 ReSolveD-α permits optional deterministic signing by setting `rho = 0^lambda`
 (§4.2.2 and §4.9.2); the default path samples `rho` randomly. At each level the
@@ -119,6 +120,8 @@ This conditional cross-profile composition is outside the isolated
 single-profile EUF-CMA experiment, but it gives complete equivalent-key
 recovery and forgery whenever the optional deterministic profiles share a
 key, hence High.
+
+The team replies that keys should be generated independently for S and F, that randomized signing is the intended operational mode, and that deterministic signing is for implementation checking. This agrees with the scope above and does not change the classification.
 
 ### Reproducing
 

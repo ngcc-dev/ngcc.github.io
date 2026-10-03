@@ -68,6 +68,25 @@ witnesses and their controls. See <code>tools/README.md</code>.</p>
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>The defect is directly visible in each reference implementation's <code>kem.c</code>: <code>mkem_dec</code> passes <code>sk - SEED_BYTES</code> to <code>hash_g</code>, while <code>mkem_keygen</code> stores the rejection secret at <code>sk + SK_BYTES - SEED_BYTES</code>.</p>
+<h2 class="issue-heading" id="kem-01-3-the-external-drbg-is-used-as-a-kdf">kem-01-3: The external DRBG is used as a KDF</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Aigis-Enc+-I, -II and -III ICCS reference implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Replacing the external RBG changes deterministic matrix expansion and breaks interoperability; the frozen submitted build is internally consistent</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-03</td></tr>
+</table></div>
+
+<p>Under <code>USE_NICCS_API</code>, <code>kdf_init</code> resets an ICCS <code>DRNG_ctx</code> from its input and <code>kdf_squeezeblocks</code> reads the resulting stream (<code>hashkdf.c:91–98</code>). Matrix generation calls this interface from public seeds (<code>gen_a.c:50–63</code>). Thus a nominally external RBG supplies a deterministic KDF whose exact byte stream is part of the algorithm. A different secure RBG need not reproduce it.</p>
+<p>The shipped <code>drng.c</code> makes the three implementations work and this is not a cryptanalytic break. The defect is the unstated seed-to-stream dependency; it should be a scheme-defined XOF/KDF.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 security/rbg_protocol_dependency.py --report-id kem-01-3
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

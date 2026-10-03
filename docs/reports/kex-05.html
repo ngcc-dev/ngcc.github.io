@@ -107,6 +107,25 @@ make -C sign-23 exploit
 tools/reproduce.sh sign-23
 </code></pre>
 <p>The first command checks the exact three-level source embedding and Loom authentication calls. The remaining commands run the public signature-only recovery and accepted-forgery witness against the byte-identical signing module; the original post reports the additional complete Loom handshake and impersonation trials.</p>
+<h2 class="issue-heading" id="kex-05-4-looms-iccs-build-uses-the-external-drbg-as-an-xof">kex-05-4: Loom&#x27;s ICCS build uses the external DRBG as an XOF</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>LoomKEX-128, -256 and -512 ICCS reference builds; the SHAKE build is not affected</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Protocol expansion depends on the particular external RBG stream; the frozen ICCS build is internally consistent</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-03</td></tr>
+</table></div>
+
+<p>Loom's ICCS <code>xof256_init</code> resets an external <code>DRNG_ctx</code> from protocol input, and its squeeze function reads that stream (<code>loom/symmetric-iccs.c:90–103</code>). The wrapper is used throughout deterministic matrix, sampler and transcript expansion. A different secure RBG therefore changes the protocol values even though the interface is nominally a randomness source.</p>
+<p>The submitted ICCS build works with its bundled <code>drng.c</code>, and Loom's SHAKE build supplies a defined XOF. This is a Low implementation/interoperability issue in the ICCS adaptation, not a key-exchange attack.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 security/rbg_protocol_dependency.py --report-id kex-05-4
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

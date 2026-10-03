@@ -105,6 +105,25 @@ sh kem-06/reproduce_ciphertext_crash.sh
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 kem-06/reproduce_padding_alias.py
 </code></pre>
+<h2 class="issue-heading" id="kem-06-5-secret-key-expansion-depends-on-the-external-drbg">kem-06-5: Secret-key expansion depends on the external DRBG</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>BRA-128, -256 and -512 reference implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>A serialized secret key changes meaning if the external RBG implementation changes; the frozen submitted build is internally consistent</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-03</td></tr>
+</table></div>
+
+<p>BRA stores a seed and reconstructs its secret supports and polynomials by resetting a local <code>random_source</code> from that seed (<code>parsing.c:56–89</code>). <code>random_source_seed_with_len</code> is a direct call to the external <code>init_random_number</code> (<code>lib/random_source/random_source.c:27–32</code>). Correct decapsulation therefore depends on the particular ICCS DRBG stream, although this operation is deterministic key expansion rather than fresh randomness.</p>
+<p>The shipped implementation works with its bundled <code>drng.c</code>; the Low impact is key-format and implementation interoperability. The expansion should use a scheme-defined XOF.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 security/rbg_protocol_dependency.py --report-id kem-06-5
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

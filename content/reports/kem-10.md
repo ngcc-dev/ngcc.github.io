@@ -73,3 +73,24 @@ The specification's Algorithm 9 (§3.4) compares the received `(U, V)` with the 
 ```sh
 python3 kem-10/reproduce_padding_alias.py
 ```
+
+## kem-10-4: Secret-key expansion depends on the external DRBG
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: CMultiURAG-128, -256 and -512 reference implementations
+Discovery: Trivial
+Exploitation: A serialized secret key changes meaning if the external RBG implementation changes; the frozen submitted build is internally consistent
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-03
+
+C-Multi-UR-AG stores a seed and reconstructs secret supports and matrices by resetting a local `random_source` (`parsing.c:50–71`). Its seed operation directly calls the external `init_random_number` (`lib/random_source/random_source.c:27–32`). Correct decapsulation therefore makes the particular ICCS DRBG stream part of the serialized secret-key format.
+
+The bundled implementation works consistently. The Low impact is key-format and implementation interoperability; deterministic expansion should use a scheme-defined XOF.
+
+### Reproducing
+
+```sh
+python3 security/rbg_protocol_dependency.py --report-id kem-10-4
+```

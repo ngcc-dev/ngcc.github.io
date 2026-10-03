@@ -84,7 +84,7 @@ python3 kem-13/reproduce_malicious_key.py \
 <tr><th>Date</th><td>2026-09-28</td></tr>
 </table></div>
 <p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/GD3QWKLXKTRIRKCMKCOHTFRLBQN3REES/">NGCC PKC Forum post</a>
-Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/NRJXWUW3IRBVMQZEGW3DNPUVK6PW7YLG/">DKEM/DKEX/ADKEX team's PKC Forum response</a> and <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XCBIRRBK5PRUUSJ6OWVVCFC5B43UHLXS/">Sun Shuzhou's recheck</a></p>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/NRJXWUW3IRBVMQZEGW3DNPUVK6PW7YLG/">DKEM/DKEX/ADKEX team's PKC Forum response</a>, <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XCBIRRBK5PRUUSJ6OWVVCFC5B43UHLXS/">Sun Shuzhou's recheck</a>, and <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/R6FDY3X75YFNUEMAUMEXLMTC5CCWPCY7/">the team's wider-backend update</a></p>
 <p>Table 1 and §3.4 claim a DKEM-512 reconciliation-failure probability of at
 most about <code>2^-167</code>. The scalar forward NTT instead stores both butterfly sums
 in <code>int16_t</code> (<code>DKEM-512/ntt.c:78–88</code>). With <code>q = 7681</code>, legitimate lazy
@@ -96,8 +96,10 @@ the shipped implementation's §5.2.5 failure-boosting estimate. The <code>q = 33
 DKEM-128 and -256 sets have substantially more headroom and are controls.</p>
 <h3 id="follow-up-analysis">Follow-up Analysis</h3>
 <p>The team confirms 12 mismatches in 20,000 and 21 in 40,000 scalar DKEM-512 sessions, as well as the same defect in the submitted NEON and Cortex-M4 backends. Its official packed-assembly AVX2 build reduces between layers and is unaffected. Sun's follow-up confirms the repair on those paths but reports 21 failures in 24,000 sessions through the natural-order AVX2 intrinsic chain selected by default when the sources are built without <code>DKE_NTT512_PACKED</code>; this is not the official optimized build. Instrumentation made every observed overflow/failure depend only on the public ciphertext, which supports limiting this finding to correctness rather than secret-key leakage.</p>
+<p>The team's later review confirms the same missing reductions in the non-default <code>DKE_NTT512_RB</code> and <code>DKE_NTT512_ASM</code> forward transforms. It reports fixed-scalar equivalence over 700,000 transforms per configuration and no failures in its post-fix session tests; the official packed path remains unchanged.</p>
 <h3 id="proposed-fixes">Proposed fixes</h3>
 <p>The team's <a href="https://github.com/dkemdkex/dkem-dkex/commit/8e3417a">fix commit</a> proposes Barrett-reducing all coefficients after the length-64 and length-8 forward-NTT layers in the reference and NEON code, and reducing between the two four-layer Cortex-M4 passes. This section records the proposal without evaluating it.</p>
+<p>For the three natural-order AVX2 configurations, the team proposes the corresponding changes in <a href="https://github.com/dkemdkex/dkem-dkex/commit/5900418">commit <code>5900418</code></a>. This section records that proposal without evaluating it.</p>
 <h3 id="reproducing_2">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">make -C api harness

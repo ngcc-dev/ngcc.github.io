@@ -91,6 +91,27 @@
 <pre><code class="language-sh">make -C kem-14 exploit-rejection-contract
 </code></pre>
 <p>The witness generates two different keys, copies only the first key's 32-byte rejection seed into the second secret key, and decapsulates one invalid ciphertext under both. The rejection keys become identical; retaining the second key's original seed is a negative control and produces a different value. It prints <code>ATTACK kem-14-3 ... CONFIRMED</code>.</p>
+<h2 class="issue-heading" id="kem-14-4-ring-paired-doublee8-blocks-invalidate-dtrus-failure-estimates">kem-14-4: Ring-paired DoubleE8 blocks invalidate DTRU&#x27;s failure estimates</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr>
+<tr><th>Affected</th><td>DTRU-648, DTRU-768, DTRU-1024, conditionally DTRU-Prime, DTRU-1536 and DTRU-2048; DTRU-Light is a control</td></tr>
+<tr><th>Discovery</th><td>Hard</td></tr>
+<tr><th>Exploitation</th><td>Covariance-aware failure estimates undermine the submitted proof, but no full-size failure search or key recovery was executed</td></tr>
+<tr><th>Credit</th><td>Yuyang Xiao, Institute of Software, Chinese Academy of Sciences <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#120;&#105;&#97;&#111;&#121;&#117;&#121;&#97;&#110;&#103;&#50;&#48;&#50;&#51;&#64;&#105;&#115;&#99;&#97;&#115;&#46;&#97;&#99;&#46;&#99;&#110;">&#120;&#105;&#97;&#111;&#121;&#117;&#121;&#97;&#110;&#103;&#50;&#48;&#50;&#51;&#64;&#105;&#115;&#99;&#97;&#115;&#46;&#97;&#99;&#46;&#99;&#110;</a></td></tr>
+<tr><th>Date</th><td>2026-09-28</td></tr>
+</table></div>
+<p>Reference: <a href="https://eprint.iacr.org/archive/2026/2250/1790598276.pdf">Xiao, ePrint 2026/2250</a></p>
+<p>DoubleE8 places each E8 octet beside its <code>n/2</code>-shifted copy (§1.1, physical p. 2). Multiplication in <code>Z[x]/(x^n-x^(n/2)+1)</code> couples exactly those coordinates, whereas the submitted DFR analysis treats the 16 decoder inputs as independent (Theorem 1 and §2.3, physical pp. 8–9). Xiao's covariance-aware model gives block eigenvalues around 0.3 and 1.6–2.1 times the marginal variance. Its uncapped first-failure estimates are about <code>2^85.4</code>, <code>2^97.9</code>, <code>2^104.6</code>, <code>2^96.3</code>, <code>2^100.7</code> and <code>2^110.8</code> in the Affected order above, 50–110 bits below the submitted DFR exponents. At the call's <code>2^80</code> decapsulation ceiling, Table 5 gives total costs of <code>2^83.7</code>, <code>2^86.0</code>, <code>2^98.9</code>, <code>2^79.8</code>, <code>2^94.5</code> and <code>2^116.1</code>. DTRU-Light's power-of-two ring does not have this pairing. For odd-dimensional DTRU-Prime, the specification does not state the DoubleE8 layout; its listed result is conditional on Xiao's assumed offset <code>floor(n/2)=543</code>.</p>
+<p>A failing honest encapsulation is recognizable from its known shared key. The paper develops directional follow-ups and a toy secret-correlation experiment, but no full-size recovery. Its normal-tail fits use 200 ciphertexts, the extreme tails are extrapolated, and the Prime result assumes a layout absent from the specification. The result therefore establishes a substantive failure-proof gap rather than a completed attack.</p>
+<p>Further extension to Xiao's analysis: direct public multiplication-matrix calculations on all five tricyclotomic dimensions give paired correlations around <code>-0.65</code> and normalized 16-row covariance eigenvalues from about 0.27 to 2.12. This independently certifies structural non-independence, not the extreme-tail DFR estimates. Even the submission's own DFR values leave Theorem 3's <code>(qH+qD) delta</code> term far above every target when <code>qD=2^80</code> (physical p. 12).</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-14/reproduce_dtru_covariance.py
+</code></pre>
+<p>The dependency-free certificate constructs the multiplication rows, checks their paired correlations and spectrum, and evaluates the submitted DFR exponents at <code>2^80</code> queries. It does not reproduce the paper's tail fitting or a key-recovery attack.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -109,3 +109,24 @@ tools/reproduce.sh sign-23
 ```
 
 The first command checks the exact three-level source embedding and Loom authentication calls. The remaining commands run the public signature-only recovery and accepted-forgery witness against the byte-identical signing module; the original post reports the additional complete Loom handshake and impersonation trials.
+
+## kex-05-4: Loom's ICCS build uses the external DRBG as an XOF
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: LoomKEX-128, -256 and -512 ICCS reference builds; the SHAKE build is not affected
+Discovery: Trivial
+Exploitation: Protocol expansion depends on the particular external RBG stream; the frozen ICCS build is internally consistent
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-03
+
+Loom's ICCS `xof256_init` resets an external `DRNG_ctx` from protocol input, and its squeeze function reads that stream (`loom/symmetric-iccs.c:90–103`). The wrapper is used throughout deterministic matrix, sampler and transcript expansion. A different secure RBG therefore changes the protocol values even though the interface is nominally a randomness source.
+
+The submitted ICCS build works with its bundled `drng.c`, and Loom's SHAKE build supplies a defined XOF. This is a Low implementation/interoperability issue in the ICCS adaptation, not a key-exchange attack.
+
+### Reproducing
+
+```sh
+python3 security/rbg_protocol_dependency.py --report-id kex-05-4
+```
