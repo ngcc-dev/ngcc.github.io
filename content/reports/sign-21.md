@@ -26,14 +26,21 @@ The team later gave a gate-count analysis and Xiong and Wang confirmed its
 arithmetic under that model. Their `2^247.66` figure for the 256-bit set uses
 the maximum target count and 50% success; the `2^248.2` figure above uses the
 median target count and expected work. This approximately half-bit difference
-is only a convention. The classification follows the frozen specification's
-§5.2, which defines a `lambda`-bit target as at least `2^lambda`
-symmetric-key operations. Charging roughly two block-cipher operations per
-TCCR test gives about `2^248.66` such operations at the 256-bit level, still
-about 7.3 bits below that target. Adding a circuit cost only to the attack while
-leaving the target in evaluations mixes units; converting both sides preserves
-the multi-target advantage. This is a certificational shortfall, not a
-practical attack. Multi-instance PPRF losses and instance-specific tweaks in
+is only a convention. The classification counts attacks in the
+specification's own units. §5.1 bounds a coin-enumeration forgery by an
+expected work of `2^lambda` trials. §5.2, although headed "Selection of RSD
+Parameters", converts the target into gates by charging `lambda^2.3` per
+symmetric-key operation and requiring `(lambda + 2.3 log lambda)`-bit
+security, about `2^274.4` gates at `lambda = 256`. Charging roughly two
+block-cipher operations per TCCR test gives about `2^248.66` operations at the
+256-bit level, still about 7.3 bits below the `2^256` trial count, and the
+team's `2^262.6`-gate estimate likewise falls below the specification's
+gate-equivalent target. Adding a circuit cost only to the attack while leaving
+the target in evaluations mixes units; converting both sides preserves the
+multi-target advantage. This is a certificational shortfall, not a practical
+attack. It shares its root cause, the absence of a per-node tweak, and its
+fix with the leaf-commitment multi-target loss; the two are recorded
+separately because they refute different claims (§7.1.2 and §7.1.3). Multi-instance PPRF losses and instance-specific tweaks in
 MPC-in-the-head signatures are discussed in [Bui et al., ePrint
 2024/252](https://eprint.iacr.org/2024/252).
 
@@ -91,12 +98,17 @@ The team's later [gate-count response](https://list.niccs.org.cn/archives/list/p
 prices each candidate test as a circuit, and [Xiong and Wang](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/PIHDF2YFZDOURZJXDI5USKT6KPGTAFC2/)
 confirm that arithmetic under the stated model. The response uses maximum
 `tau` and 50% success, giving `2^250.33` leaf evaluations at the 256-bit level;
-the `2^250.87` value above uses the report's expected-work convention. Under
-the frozen §5.2 metric, charging roughly two block-cipher operations per test,
-the attack remains roughly 4–5 bits below the claimed level. Applying the
-per-test implementation cost consistently to attack and
-baseline does not remove the multi-target factor. This too is a
-certificational result; no full-width enumeration was attempted. See [Bui et
+the `2^250.87` value above uses the report's expected-work convention.
+Counting primitive evaluations as in §5.1, and charging roughly two
+block-cipher operations per test, the attack remains roughly 4–5 bits below
+the claimed level. In gates, the team's `2^265.26` estimate also falls below
+the `(lambda + 2.3 log lambda)`-bit target that §5.2 applies, about `2^274.4`
+gates at `lambda = 256`. Applying the per-test implementation cost
+consistently to attack and baseline does not remove the multi-target factor.
+This too is a certificational result; no full-width enumeration was attempted.
+It shares its root cause, the absence of a per-node tweak, and its fix with
+the TCCR multi-target loss; the two are recorded separately because they
+refute different claims (§7.1.3 and §7.1.2). See [Bui et
 al., ePrint 2024/252](https://eprint.iacr.org/2024/252) for the corresponding
 multi-instance PPRF concern and per-instance tweaking in MPC-in-the-head
 signatures.
