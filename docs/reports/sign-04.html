@@ -47,23 +47,28 @@
 <h2 class="issue-heading" id="sign-04-2-forc-chain-addresses-are-truncated-to-eight-bits">sign-04-2: FORC chain addresses are truncated to eight bits</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
 <tr><th>Scope</th><td>implementation</td></tr>
-<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
-<tr><th>Affected</th><td>All eight CEDRUSALPHA parameter sets, reference and optimized implementations</td></tr>
-<tr><th>Discovery</th><td>Trivial</td></tr>
-<tr><th>Exploitation</th><td>Address and secret-key aliases; a complete full-scheme forgery is not demonstrated</td></tr>
-<tr><th>Credit</th><td>shiyuan (NGCC PKC Forum sender)</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-probable">Probable</span></td></tr>
+<tr><th>Affected</th><td>Address aliasing affects all eight reference and optimized sets; the below-target forgery estimate is for CEDRUSALPHA-160f</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>With 2^64 signatures, a conservative model estimates about 2^123.3 public target-hash trials for a fresh-message forgery on CEDRUSALPHA-160f</td></tr>
+<tr><th>Credit</th><td>shiyuan (NGCC PKC Forum sender); 2^64-signature accumulation extension by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
 <tr><th>Date</th><td>2026-09-22</td></tr>
 </table></div>
 <p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/DZLVOKPTO2KZTN76AGZ2SST2T5ZCIUB7/">NGCC PKC Forum report</a></p>
 <p>Shiyuan reported the defect in the <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/DZLVOKPTO2KZTN76AGZ2SST2T5ZCIUB7/">NGCC PKC Forum</a>. The specification assigns a full 32-bit <code>chainAddr</code> with domain <code>0..k*2^a-1</code>. The implementation writes the value only to address byte 27, so indices congruent modulo 256 generate identical PRF and FORC-chain inputs. The intended <code>k*2^a</code> leaf secrets consequently draw from at most 256 distinct values inside a fixed FORC address context.</p>
-<p>This invalidates the specification's independence model and aliases leaves both within and across FORC trees. It does not establish the forum post's coupon-collector claim: ordinary signatures select fresh FORC contexts through their hypertree address, so observations from different contexts cannot be pooled as the same 256 keys without a separate address-reuse attack. A complete adaptive forgery exploiting the aliases remains to be constructed.</p>
+<p>This invalidates the specification's independence model and aliases leaves both within and across FORC trees. Observations from different complete FORC contexts cannot be pooled, so the forum post's original coupon-collector argument alone did not establish a forgery.</p>
+<h3 id="follow-up-analysis">Follow-up Analysis</h3>
+<p>Follow-up date: 2026-10-04</p>
+<p>Further extension to shiyuan's analysis combines the aliases with repeated-address accumulation. For CEDRUSALPHA-160f, <code>2^64</code> signatures distributed over <code>2^66</code> complete bottom addresses give mean bucket occupancy <code>1/4</code>. Inside one bucket, each disclosed chain node is shared by 14 same-parity FORC coordinates. The attacker advances these nodes to leaf endpoints, retains the coordinate-specific authentication siblings disclosed by the signatures, and publicly hashes known child pairs into further Merkle nodes. It then grinds the public <code>R</code> on a fresh message until <code>H_msg</code> selects a covered address and digest, and reuses that address's authenticated hypertree suffix.</p>
+<p>A deliberately conservative deterministic-seed model performs only the first level of this public Merkle closure. Its Poisson mixture estimates success near <code>2^-123.28</code> per target trial, hence about <code>2^123.28</code> public <code>H_msg</code> trials after <code>2^64</code> signatures. Independent native and Python audit implementations agree; unrestricted valid closure estimates about <code>2^109.64</code>. Because no exact combinatorial proof or full-size verifier forgery has been produced, the extension is <code>Probable</code>, not <code>Confirmed</code>.</p>
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">make -C sign-04 exploit
+make -C sign-04 reproduce-q64-alias
 </code></pre>
-<p>The second control links the submitted address code and SM3 PRF and confirms that indices 0 and 256 produce identical 32-byte addresses and identical secret values.</p>
+<p>The first command links the submitted address code and SM3 PRF and confirms that indices 0 and 256 produce identical 32-byte addresses and identical secret values. The second runs the conservative <code>2^64</code>-signature coverage estimate locally; it does not execute the astronomically large full attack.</p>
 <h2 class="issue-heading" id="sign-04-3-specified-and-implemented-hash-instantiations-are-incompatible">sign-04-3: Specified and implemented hash instantiations are incompatible</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
@@ -84,6 +89,27 @@
 <pre><code class="language-sh">pdftotext -layout sign-04/sign-04-spec.pdf - | grep -A8 'pad the PK.seed'
 sed -n '12,30p' sign-04/Implementations/Reference_Implementation/CEDRUSALPHA-160s/hash_sm3.c
 sed -n '12,24p' sign-04/Implementations/Reference_Implementation/CEDRUSALPHA-160s/thash_sm3_simple.c
+</code></pre>
+<h2 class="issue-heading" id="sign-04-4-forc-accumulation-gives-below-target-fresh-message-forgeries">sign-04-4: FORC accumulation gives below-target fresh-message forgeries</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Specification, all eight parameter sets</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Concrete forgeries use fewer than 2^80 signatures, but the specification-only route remains above the 128-bit target when restricted to 2^64 signatures</td></tr>
+<tr><th>Credit</th><td>Martin Feussner, with OpenAI Codex (Daybreak Blue) assistance</td></tr>
+<tr><th>Date</th><td>2026-10-04</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/LKP3BFFIZPFG5R5YTRC6WDLY7XPW7CKK/">Feussner's PKC Forum post</a></p>
+<p>The <a href="https://github.com/martinfeussner/NGCC-Signature-Audit/tree/6ebb3b4ab00c68d8e72b1c08ba839ed7056dc166/CEDRUS-alpha">pinned analysis and reproducer</a> validates the following result.</p>
+<p>At a repeated complete bottom address, ordinary independently randomized signatures reveal different FORC chain nodes and authentication paths under the same address-specific public key (Algorithms 20–21, physical pp. 35–36; §3.2, p. 45). Forward-compatible nodes from different signatures can be combined coordinate by coordinate, while one retained hypertree suffix authenticates the mixed FORC result. The fresh-message step enumerates the serialized public <code>R</code> until <code>H_msg</code> selects covered coordinates; the verifier cannot test whether <code>R</code> came from <code>PRF_msg</code>.</p>
+<p>Across all eight sets, optimized constant-success strategies have signing-query means from about <code>2^71.2</code> to <code>2^77.5</code>, below the evaluation's <code>2^80</code> chosen-message ceiling. Attacker public-<code>H_msg</code> work is below <code>2^77.6</code>, below every claimed level. This is the few-time degradation already parameterized by <code>q_sig</code> in §3.2, combined into a concrete forgery. With exactly <code>2^64</code> signatures, the best specification-only 160f route instead has mean one-target success about <code>2^-161.74</code>, so it does not break the 128-bit target. The design finding is therefore High while the call's <code>2^64</code> operational requirement and <code>2^80</code> evaluation ceiling remain unresolved. The separate implementation alias extension above does cross the target with <code>2^64</code> signatures.</p>
+<p>The full specification attack is certificational rather than physically practical. For 160f the fully provisioned table is about <code>2^79.18</code> bytes and returned signatures about <code>2^88.70</code> bits. The artifact demonstrates scaled fresh-message forgeries, full-parameter FORC splicing with controls, and the absence of a normative per-key cap that excludes the attack.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh sign-04/reproduce_forc_accumulation.sh
 </code></pre>
 </main>
 <footer class="site-footer">

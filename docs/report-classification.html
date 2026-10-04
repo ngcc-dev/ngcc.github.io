@@ -275,13 +275,30 @@ the primary severity determinant:</p>
 <td>High</td>
 </tr>
 <tr>
-<td>End-to-end key/secret recovery or forgery</td>
+<td>End-to-end key/secret recovery or forgery, without an explicit side-channel-resistance claim</td>
+<td>High</td>
+</tr>
+<tr>
+<td>End-to-end key/secret recovery or forgery that contradicts an explicit claim of resistance to the relevant side-channel class</td>
 <td>Critical</td>
 </tr>
 </tbody>
 </table></div>
 <p>The table is a default, not a substitute for candidate-specific cryptanalysis.
 Public-value branches and lookups are not vulnerabilities.</p>
+<p>Remediation burden supplies a second floor when no stronger consequence has
+been demonstrated: a local constant-time rewrite is Low, a material rewrite
+using known moderate-cost techniques is Medium, and a leak intrinsic to the
+advertised fast path with no supplied or known competitive constant-time
+realization may be High and <code>Layer: Design</code>. Use the higher of this floor and
+the consequence-based severity. Thus an easy fix does not lower a demonstrated
+recovery, and a hard design-level fix can raise a source-only leak.</p>
+<p>Full recovery demonstrates that the implementation requires countermeasures
+and is therefore High even when the submission makes no side-channel claim.
+Critical is reserved for a demonstrated primary attack that additionally
+contradicts an explicit constant-time or relevant side-channel-resistance
+claim; merely supplying ordinary reference or optimized code does not imply
+such a claim.</p>
 <h3 id="hash-function-portability-rule">Hash-function portability rule</h3>
 <p>For this audit, hash inputs and internal states are treated as potentially
 secret. Hash functions are routinely used on passwords, key material,
@@ -394,7 +411,7 @@ with the same external dimensions and parameters. A finding that disappears
 solely on that replacement is not publishable.</p>
 </main>
 <footer class="site-footer">
-<p>Updated 2026-10-03 15:13:09 UTC · Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Updated 2026-10-04 11:17:13 UTC · Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
 <p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
 </footer>
 </body>

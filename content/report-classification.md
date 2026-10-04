@@ -268,10 +268,26 @@ the primary severity determinant:
 | Repeated secret leakage, measured channel, or material constant-time rewrite; no recovery | Medium |
 | Direct fine-grained leakage intrinsic to the advertised fast path, with no competitive constant-time realization supplied or known | High may be justified |
 | Stable oracle plus candidate-specific recovery path, one channel/scale gap remains | High |
-| End-to-end key/secret recovery or forgery | Critical |
+| End-to-end key/secret recovery or forgery, without an explicit side-channel-resistance claim | High |
+| End-to-end key/secret recovery or forgery that contradicts an explicit claim of resistance to the relevant side-channel class | Critical |
 
 The table is a default, not a substitute for candidate-specific cryptanalysis.
 Public-value branches and lookups are not vulnerabilities.
+
+Remediation burden supplies a second floor when no stronger consequence has
+been demonstrated: a local constant-time rewrite is Low, a material rewrite
+using known moderate-cost techniques is Medium, and a leak intrinsic to the
+advertised fast path with no supplied or known competitive constant-time
+realization may be High and `Layer: Design`. Use the higher of this floor and
+the consequence-based severity. Thus an easy fix does not lower a demonstrated
+recovery, and a hard design-level fix can raise a source-only leak.
+
+Full recovery demonstrates that the implementation requires countermeasures
+and is therefore High even when the submission makes no side-channel claim.
+Critical is reserved for a demonstrated primary attack that additionally
+contradicts an explicit constant-time or relevant side-channel-resistance
+claim; merely supplying ordinary reference or optimized code does not imply
+such a claim.
 
 ### Hash-function portability rule
 

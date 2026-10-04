@@ -27,27 +27,52 @@
 <h2 class="issue-heading issue-heading-first" id="kem-30-1-re-encryption-rejection-sampling-leaks-the-decrypted-message-class">kem-30-1: Re-encryption rejection sampling leaks the decrypted-message class</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
 <tr><th>Scope</th><td>side-channel</td></tr>
-<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
-<tr><th>Affected</th><td>PolarLAC-Light reference implementation; shared sampler pattern appears in the other reference sets</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-probable">Probable</span></td></tr>
+<tr><th>Affected</th><td>The rejection sampler occurs in all 20 reference and optimized x86/ARM trees; practical recovery demonstrated on PolarLAC-Light reference</td></tr>
 <tr><th>Discovery</th><td>Hard</td></tr>
-<tr><th>Exploitation</th><td>Measured timing classification of a decrypted-message-dependent rejection count; key recovery and IND-CCA break explicitly not demonstrated</td></tr>
-<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang</td></tr>
+<tr><th>Exploitation</th><td>Complete recovery of all 512 secret coefficients from physical decapsulation timings, followed by decryption of a fresh ciphertext</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang; practical recovery by Jian Weng, Chi Cheng, Haochen Dou, Qian Guo, Thomas Johansson, Yanbin Pan, Dachao Wang, and Tianrun Yu</td></tr>
 <tr><th>Date</th><td>2026-09-27</td></tr>
 </table></div>
 <p>Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/NUOASTPTGEHI4GSVCJKRJFHSIXOECO5T/">PolarLAC team's PKC Forum response</a></p>
+<p>Practical follow-up: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/PKC56RYJY3CKBY4NLXIWOZMU7LI3FV5V/">Weng et al.'s PKC Forum post</a>, <a href="https://github.com/Yutianrun/polarlac-timing-attack/tree/424c88cf44fa4330fa56ad19d275306d5c85692f">pinned recovery artifact</a>, and <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/JPI7NMTEE2PZMSUYOVCYC7YFVCRZQJQC/">the PolarLAC team's confirmation</a></p>
 <p>Reference: <a href="https://eprint.iacr.org/archive/2026/2232/1790581014.pdf">Xiong and Wang, ePrint 2026/2232, 2026-09-28 revision, §§3.3 and 3.7–3.8</a></p>
-<p>Decapsulation re-encrypts the decrypted message for its Fujisaki--Okamoto check. The derived seed enters <code>sample_screened_poly</code>, whose spectral rejection loop repeats until a bound is met (<code>pke.c:30–42</code>). Its total rejection count <code>R</code> is therefore a deterministic public function of the secret-derived decrypted message, and execution time reveals that count. This contradicts the specification's claims that the polar-code implementation has constant-time control flow and intrinsically supports constant-time implementation.</p>
-<p>On PolarLAC-Light, the artifact measures adjacent <code>R</code> classes about 9,000–10,600 cycles apart and classifies them with low error after repeated measurements. The timing channel is real. The paper also carefully reports the negative result: the chosen-ciphertext message-flip predicate needed by its algebraic recovery has 68–99% error through this timing channel, and a genuine-timing run recovers 0/512 coefficients. This report therefore claims secret-dependent timing leakage, not key recovery or an IND-CCA break.</p>
+<p>Decapsulation re-encrypts the decrypted message for its Fujisaki--Okamoto check. The derived seed enters <code>sample_screened_poly</code>, whose spectral rejection loop repeats until a bound is met (<code>pke.c:30–42</code>). Its total rejection count <code>R</code> is therefore a deterministic public function of the secret-derived decrypted message, and execution time reveals that count. The generic statement that polar coding supports constant-time implementation (physical p. 4) is not contradicted; the relevant claim is that this implementation keeps constant-time control flow (§8.4, physical p. 39). The leaking rejection loop is data-dependent control flow.</p>
+<p>The first artifact measured adjacent <code>R</code> classes about 9,000–10,600 cycles apart, but its attempted algebraic use of that coarse class recovered 0/512 coefficients. A later physical attack uses differential timing directly. On PolarLAC-Light it made 17,010,803 differential comparisons, each based on seven target/reference pairs (about 238 million decapsulation calls), recovered all 512 secret coefficients in 66.1 minutes, and used the recovered key to decrypt a fresh ciphertext. A second recorded run again recovered 512/512 coefficients.</p>
 <h3 id="follow-up-analysis">Follow-up Analysis</h3>
-<p>The PolarLAC team confirms the measurable rejection-count timing leakage and agrees that it does not presently give the plaintext predicate required by the reported key-recovery method. It notes that the re-encryption coins are derived from <code>Hash(m || pk)</code>, making the observed class a pseudorandom function of the decrypted message rather than a direct structured relation to its bits. This is consistent with the report's Medium scope and does not change its classification.</p>
-<p>Use fixed-work, message-independent sampling in the re-encryption path. The complete decapsulation, including reconstruction of its coins, must have a trace independent of the decrypted message and long-term key.</p>
+<p>The PolarLAC team first confirmed the rejection-count channel while noting the earlier negative recovery result. It subsequently acknowledged the practical timing attack. Complete key recovery contradicts the explicit control-flow claim and is Critical under the classification policy. We validated the pinned source and both recorded recovery transcripts but have not independently rerun the 66-minute physical acquisition, so the status is Probable.</p>
+<p>Constant-time fix (moderate): use fixed-work, message-independent sampling in the re-encryption path. The complete decapsulation, including reconstruction of its coins, must have a trace independent of the decrypted message and long-term key. This gives a Medium remediation floor; the demonstrated recovery and contradicted control-flow claim determine the higher Critical severity.</p>
+<h3 id="proposed-fixes">Proposed fixes</h3>
+<p>The team's response proposes removing data-dependent rejection sampling. This records the proposal without assessing it.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
-<pre><code class="language-sh">sh kem-30/reproduce_timing_leak.sh
+<pre><code class="language-sh">sh kem-30/reproduce_full_timing_recovery.sh
 </code></pre>
-<p>The wrapper fetches the <a href="https://github.com/acprk/ngcc-round1-cryptanalysis/tree/e724a12a834bfc063dc0d2959d864842f269eb1e/polarlac-timing-leak">pinned artifact</a>, builds its timing harnesses against the unmodified PolarLAC-Light sources here, and runs both the measured-channel experiment and the negative exploitability controls. Results depend on host scheduling; use <code>CORE=&lt;idle CPU&gt;</code> to select a pinned core.</p>
+<p>The wrapper fetches and hash-checks the pinned artifact, builds it, and validates both recorded complete-recovery runs and their fresh-ciphertext check. Set <code>NGCC_SLOW=1</code> to repeat the roughly 66-minute physical experiment; timing results depend on the host.</p>
+<h2 class="issue-heading" id="kem-30-2-secret-indexed-llr-tables-expose-polarlac-decoding-through-the-cache">kem-30-2: Secret-indexed LLR tables expose PolarLAC decoding through the cache</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>side-channel</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Reference x86 and optimized x86/ARM implementations, all five parameter sets and both ARM hash families</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Secret-dependent cache addresses in decapsulation; no key-recovery experiment supplied</td></tr>
+<tr><th>Credit</th><td>Yamin Liu and Tianyuan Xie</td></tr>
+<tr><th>Date</th><td>2026-10-04</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/TEJHQONRU25BANZ2F24Q4CC2VRKEP4LH/">PolarLAC team's PKC Forum acknowledgment</a></p>
+<p>PolarLAC computes each decoder log-likelihood ratio as <code>llr_table[centered + RATIO - 1]</code>, where <code>centered</code> comes directly from a decrypted coefficient (<code>poly.c:359–369</code> in the reference PolarLAC-512 tree). The table address therefore depends on secret-key and ciphertext data during decapsulation. The same lookup occurs in all 20 submitted <code>poly.c</code> copies.</p>
+<p>The team confirms the cache leakage. No measured cache trace or candidate-specific recovery is public.</p>
+<p>Constant-time fix (moderate, hence Medium): replace each 256-entry secret-indexed lookup with an oblivious lookup or an arithmetic LLR computation. Because this operation is repeated for every decoded coefficient, it is a material rewrite or slowdown rather than a small local mask.</p>
+<h3 id="proposed-fixes_1">Proposed fixes</h3>
+<p>The team's response proposes replacing the lookup with an implementation having no secret-dependent memory access. This records the proposal without assessing it.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-30/reproduce_llr_cache_lookup.py
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -81,6 +81,26 @@
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 security/rbg_protocol_dependency.py --report-id kem-40-3
 </code></pre>
+<h2 class="issue-heading" id="kem-40-4-dead-even-rounding-corrections-invalidate-the-submitted-failure-estimates">kem-40-4: Dead even-rounding corrections invalidate the submitted failure estimates</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>YuanYang.KEM-1024 and -2048, reference and optimized implementations; -512 is the odd-parameter control</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Model lower bounds of about 2^-193.47 and 2^-315.78 miss the 256- and 512-bit targets by 62.5 and 196.2 bits; no failure oracle or key recovery demonstrated</td></tr>
+<tr><th>Credit</th><td>Sun Shuzhou, with GLM-5.3 assistance</td></tr>
+<tr><th>Date</th><td>2026-10-04</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/PE673XVURNT46OQUVSIFJNEXWJFSJLLX/">Sun's PKC Forum post</a></p>
+<p>The specification says that Decrypt's line 3 removes the low-part message bias and the even-<code>k</code> compression bias before the centered lift (Algorithm 4, physical p. 10), and §5.5 (physical pp. 17–18) models centered compression noise. In all submitted 1024/2048 implementations, however, <code>yy_kem_expand_private_key</code> writes the extra even-parameter term behind an impossible comparison, so the expanded table is only <code>floor(f·sum_{i&lt;d/4} X^i/2)</code> (<code>kem.c:279–297</code>). Encryption also uses the even-scale offset <code>sc/2+1</code> rather than nearest rounding (<code>kem.c:127</code>).</p>
+<p>Under the specification's Gaussian model, the post's exact-convolution calculation gives adjacent-pair lower bounds near <code>2^-193.47</code> and <code>2^-315.78</code>, respectively. These miss the 256-/512-bit targets by 62.5 and 196.2 bits, and exceed the submitted <code>2^-270.2</code> and <code>2^-531.5</code> estimates by 76.7 and 215.7 bits. The post also reports direct code replay of the bias and large simulations of the rare-key distribution. The specification is self-consistent; the confirmed defect is that the implementation's operator-precedence error and rounding offset do not implement it. No concrete decapsulation failure, oracle, or key recovery was executed, so the consequence remains Medium rather than a demonstrated CCA attack.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-40/reproduce_bias_correction.py
+</code></pre>
+<p>The local certificate verifies both defective expressions in all six reference and optimized source trees and checks that only the even-parameter 1024/2048 sets are affected. The numerical failure bounds are those reported from the specification's model and are not independently recomputed by this short certificate.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

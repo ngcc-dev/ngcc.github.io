@@ -66,3 +66,27 @@ The three frozen implementations work with their bundled `drng.c`. The Low defec
 ```sh
 python3 security/rbg_protocol_dependency.py --report-id kem-40-3
 ```
+
+## kem-40-4: Dead even-rounding corrections invalidate the submitted failure estimates
+
+Severity: Medium
+Status: Confirmed
+Layer: Implementation
+Affected: YuanYang.KEM-1024 and -2048, reference and optimized implementations; -512 is the odd-parameter control
+Discovery: Moderate
+Exploitation: Model lower bounds of about 2^-193.47 and 2^-315.78 miss the 256- and 512-bit targets by 62.5 and 196.2 bits; no failure oracle or key recovery demonstrated
+Credit: Sun Shuzhou, with GLM-5.3 assistance
+Date: 2026-10-04
+Original source: [Sun's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/PE673XVURNT46OQUVSIFJNEXWJFSJLLX/)
+
+The specification says that Decrypt's line 3 removes the low-part message bias and the even-`k` compression bias before the centered lift (Algorithm 4, physical p. 10), and §5.5 (physical pp. 17–18) models centered compression noise. In all submitted 1024/2048 implementations, however, `yy_kem_expand_private_key` writes the extra even-parameter term behind an impossible comparison, so the expanded table is only `floor(f·sum_{i<d/4} X^i/2)` (`kem.c:279–297`). Encryption also uses the even-scale offset `sc/2+1` rather than nearest rounding (`kem.c:127`).
+
+Under the specification's Gaussian model, the post's exact-convolution calculation gives adjacent-pair lower bounds near `2^-193.47` and `2^-315.78`, respectively. These miss the 256-/512-bit targets by 62.5 and 196.2 bits, and exceed the submitted `2^-270.2` and `2^-531.5` estimates by 76.7 and 215.7 bits. The post also reports direct code replay of the bias and large simulations of the rare-key distribution. The specification is self-consistent; the confirmed defect is that the implementation's operator-precedence error and rounding offset do not implement it. No concrete decapsulation failure, oracle, or key recovery was executed, so the consequence remains Medium rather than a demonstrated CCA attack.
+
+### Reproducing
+
+```sh
+python3 kem-40/reproduce_bias_correction.py
+```
+
+The local certificate verifies both defective expressions in all six reference and optimized source trees and checks that only the even-parameter 1024/2048 sets are affected. The numerical failure bounds are those reported from the specification's model and are not independently recomputed by this short certificate.

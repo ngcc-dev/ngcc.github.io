@@ -18,15 +18,36 @@
 <h1 id="mamba-frost-kem-20">MAMBA-Frost (kem-20)</h1>
 <div class="table-wrap"><table class="meta">
 <tr><th>Candidate</th><td>MAMBA-Frost</td></tr>
-<tr><th>Family</th><td>Lattice-based</td></tr>
-<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/MAMBA-Frost.zip">Official submission archive</a></td></tr>
+<tr><th>Family</th><td>Lattice-based (learning with quantization)</td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/MAMBA-Frost.zip">MAMBA-Frost.zip</a> (SHA-256: <code>ae363dbefd69d64e99987b64105d60bfa376d97c8b58b055665761559c44c78b</code>)</td></tr>
 <tr><th>Specification</th><td><a href="https://github.com/ngcc-dev/ngcc-harness/raw/dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kem-20/kem-20-spec.pdf" title="Download kem-20-spec.pdf from GitHub">kem-20-spec.pdf</a>&nbsp;<a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kem-20/kem-20-spec.pdf" title="Open the kem-20 specification PDF">PDF</a></td></tr>
 <tr><th>Performance</th><td><a href="../performance/x86_1/kem-20.html">x86_1</a> · <a href="../performance/arm_1/kem-20.html">arm_1</a></td></tr>
 </table></div>
 
-<h3 id="review-status">Review status</h3>
-<p>No vulnerability finding is currently published for this candidate. This is not a security endorsement: it records only the present state of the public finding inventory, and the candidate remains under review.</p>
-<p>See the <a href="../constant-time/kem-20.html">constant-time review</a> and the performance reports (<a href="../performance/x86_1/kem-20.html">x86_1</a> · <a href="../performance/arm_1/kem-20.html">arm_1</a>). See the <a href="https://www.niccs.org.cn/niccs/Round1Additional/pc/content/content_2101560853918208000.html">official submission page</a>.</p>
+<h2 class="issue-heading issue-heading-first" id="kem-20-1-fail-open-key-generation-creates-publicly-decapsulatable-keys">kem-20-1: Fail-open key generation creates publicly decapsulatable keys</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All ten reference MAMBA-Frost and MAMBA-Frost-CC instances; optimized implementation excluded</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>An allocation failure during key generation returns success and makes every subsequently encapsulated shared secret recoverable from the public key; remote triggering is not demonstrated</td></tr>
+<tr><th>Credit</th><td>Yamin Liu, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-04</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XYDLYDGUCEQ6QPUCAL3T3RWJBIIGPDU4/">Liu's PKC Forum post</a></p>
+<p>Reference key generation calls <code>frost_mul_add_as_plus_e</code> to compute the public matrix product (<code>Frost/src/kem.c:262</code>). That function returns zero when its <code>N×N</code> <code>calloc</code> fails (<code>frost_macrify_reference.c:64–70</code>), but the caller ignores the result. Its zero-initialized <code>B_raw</code> is then packed into a public key corresponding to secret matrix <code>S = 0</code>, while the stored secret key still contains the sampled nonzero <code>S</code>, and key generation returns success.</p>
+<p>Anyone with the faulty public key can build the accepting-path secret-key layout <code>[S=0 | pk | H(pk) | z]</code>; <code>z</code> is irrelevant when ciphertext verification succeeds. The all-zero packed matrix makes faulty public keys recognizable from their public bytes, so an observer can scan for them. Forced-allocation tests recover the sender's shared secret from ordinary ciphertexts in all ten reference instances, while decapsulation with the returned holder key fails. On this host, an ordinary <code>RLIMIT_AS</code> of 22–32 MiB reaches the same MAMBA-Frost-512 state without interposition or candidate-code changes. No remote method of forcing the allocation failure is claimed. The optimized implementation does not allocate this matrix and is excluded.</p>
+<h3 id="proposed-fixes">Proposed fixes</h3>
+<p>The original post proposes checking the matrix-product return values and propagating pseudo-XOF failures, zeroizing partial outputs, and returning an API error on failure. This records the proposal without assessing it.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C kem-20
+python3 kem-20/reproduce_fail_open.py
+python3 kem-20/reproduce_rlimit.py
+</code></pre>
+<p>The first witness interposes only the identified matrix allocation. For every reference instance it confirms that key generation reports success, the zero-secret layout recovers the encapsulated key, and the returned holder secret does not. It copies the stored <code>H(pk)</code> field from the holder key while using the remaining secret-key bytes only as a negative control; <code>H(pk)</code> is publicly computable from <code>pk</code>. The second witness uses util-linux <code>prlimit</code> and scans for the host-dependent address-space window in which the same fail-open state occurs without interposition.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

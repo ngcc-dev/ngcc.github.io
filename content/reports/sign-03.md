@@ -30,3 +30,29 @@ This invalidates the submitted concrete-security analysis and enables low-query 
 make -C sign-03 exploit
 sign-03/reproduce_forgery sign-03/lib/libCEDRUSC-160f.so
 ```
+
+## sign-03-2: FORS+C accumulation gives a below-target fresh-message forgery
+
+Severity: High
+Status: Confirmed
+Layer: Design
+Affected: CEDRUS+C-160f and CEDRUS+C-160s specification
+Discovery: Moderate
+Exploitation: A concrete forgery falls below the target with 2^71–2^76 signatures, but no below-target route is known within the call's 2^64 per-key operational requirement
+Credit: Martin Feussner, with OpenAI Codex (Daybreak Blue) assistance
+Date: 2026-10-04
+Original source: [Feussner's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/KIMAVVYXPRBYTA4VPSKYF6XKVMMLT23J/)
+
+The [pinned analysis and reproducer](https://github.com/martinfeussner/NGCC-Signature-Audit/tree/6ebb3b4ab00c68d8e72b1c08ba839ed7056dc166/CEDRUS%2BC) validates the following result.
+
+Ordinary independently randomized signatures that reach one complete bottom address disclose different FORS+C leaves and authentication paths under the same address-specific public key (Algorithms 17–18, physical pp. 35–36; §3.2, p. 45). An attacker can combine covered coordinates and retain one valid hypertree suffix. For a fresh message it then enumerates the public serialized `R` and counter fields until `H_msg` selects the accumulated address and covered coordinates; verification has no secret test for how those public values were generated.
+
+For the two 128-bit-target sets, constant-success strategies use about `2^71.220` signing queries plus `2^66.934` target trials for 160f, or `2^75.587` plus `2^71.982` for 160s. This is the few-time degradation already parameterized by `q_sig` in §3.2, combined into a concrete forgery. At exactly `2^64` signatures, however, the one-target success probabilities are only about `2^-160.09` and `2^-160.49`; roughly `2^159.6` and `2^160.0` public target trials are needed for 50% success. We found no specification-only route below `2^128` within the call's `2^64` per-key operational requirement. The broader attack remains inside the separate `2^80` evaluation ceiling, so it is retained as High while that mismatch remains unresolved.
+
+The full attack is certificational rather than physically practical. For 160f the fully provisioned table is about `2^79.27` bytes and returned signatures about `2^88.49` bits; for 160s they are about `2^79.73` bytes and `2^91.80` bits. A scaled strict-verifier forgery and native full-parameter coordinate-splicing checks pass.
+
+### Reproducing
+
+```sh
+sh sign-03/reproduce_fors_accumulation.sh
+```
