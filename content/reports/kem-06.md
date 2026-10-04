@@ -58,24 +58,29 @@ make -C kem-06 exploit-field
 
 The ordinary, unsanitized guard-page test confirms faults for GF(2^67) and GF(2^83), then confirms GF(2^127) as an in-bounds negative control.
 
-## kem-06-3: Secret-derived decoder pivots select memory addresses
+## kem-06-3: The decoder address trace gives a candidate-specific key-recovery route
 
-Severity: Low
-Status: Confirmed
+Severity: High
+Status: Lead
 Layer: Side-channel
 Affected: Reference implementations, all three parameter sets
-Discovery: Moderate
-Exploitation: Local cache observer; key recovery not demonstrated
-Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Discovery: Non-trivial
+Exploitation: Exact BRA-128 secret-support recovery from an address-trace oracle; full-key costs are modeled, not executed
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance; recovery extension by Sun Shuzhou, with GLM-5.3 assistance
 Date: 2026-09-23
+Follow-up source: [Sun Shuzhou's PKC Forum post of 2026-10-04](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/5ZU7YRLNCOLVVV3RHDBKQFSDETQVTTRY/)
 
-BRA decryption computes `v-u*y` using private `y` and the public ciphertext (`src/bra.c:277-288`). The augmented-Gabidulin decoder derives pivot `next` from discrepancies in that word and uses `next` directly to load and store `u0` and `u1` (`src/augmented_gabidulin.c:184-205`). A cache observer can therefore learn a secret-key-dependent intermediate. The final KEM ciphertext comparison and fallback selection are masked, but occur after the decoder. No complete key recovery or remote timing channel is demonstrated.
+BRA decryption computes `v-u*y` using private `y` and the public ciphertext (`src/bra.c:277-288`). The augmented-Gabidulin decoder derives pivot `next` from discrepancies in that word and uses `next` directly to load and store `u0` and `u1` (`src/augmented_gabidulin.c:184-205`). Its memory-address trace is therefore a rank oracle on a secret-key-dependent word. The final KEM ciphertext comparison and fallback selection are masked, but occur after the decoder.
 
-Constant-time fix (easy, hence Low): the decoder already follows the constant-time Gabidulin decoding of Bettaieb, Bidoux, Gaborit and Marcatel, PQCrypto 2019: the pivot `next` is computed with masks and the swap is masked. Only the accesses to `u0[next]` and `u1[next]` use the secret index. A masked swap over all n positions removes them; it adds at most n field-element copies per iteration, O(n^2) in total, which is below the decoder's existing q-polynomial work. The specification states that the provided implementations run in constant time (physical PDF page 17), which this access contradicts.
+Further extension to the original analysis: Sun shows that ciphertexts `(u,v)=(1,t)` reveal membership in the secret support `E_y`, and that intersections with public random subspaces recover the full support adaptively. Instrumented formal BRA-128 decapsulation recovered `E_y` exactly for 3/3 keys in 3,443, 5,044, and 6,467 queries. Guessing the remaining `x` support and solving the resulting linear system gives modeled full-key costs of about `2^49.9`, `2^57.4`, and `2^71.5` at the three levels; a sharper accounting is lower.
+
+No physical cache channel or wall-clock signal was demonstrated, BRA-256's real-decoder support experiment did not converge, and the final algebraic phase was not run at full parameters. The exact address-trace oracle plus a candidate-specific recovery chain warrants High / Lead. Although the specification explicitly claims that running time leaks no sensitive decoder information (physical p. 17), Critical under the side-channel policy requires end-to-end key recovery or forgery, which is not shown here.
+
+Constant-time fix (local-to-moderate; High consequence floor): the decoder already computes the pivot and swap masks without branches. Scanning all positions and selecting `u0[next]` and `u1[next]` with masks removes the indexed access. The candidate-specific recovery route keeps the classification at High regardless of that remediation cost.
 
 ### Reproducing
 
-Inspect `src/kem.c:214`, `src/bra.c:277-288`, and `src/augmented_gabidulin.c:184-205` under `Implementations/Reference_Implementation/BRA-128/`; the same pivot code is present in BRA-256/512. See `constant_time.md` for the fuller trace.
+Inspect `src/kem.c:214`, `src/bra.c:277-288`, and `src/augmented_gabidulin.c:184-205` under `Implementations/Reference_Implementation/BRA-128/`; the same pivot code is present in BRA-256/512. See `constant_time.md` for the source trace. The full recovery extension has no public reproducer and remains a Lead.
 
 ## kem-06-4: Ignored padding bits make ciphertexts malleable without changing the key
 

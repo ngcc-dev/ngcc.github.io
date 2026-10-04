@@ -58,6 +58,10 @@ even the largest still requires more than <code>2^80</code> decapsulations for a
 expected failure. The result establishes a Medium proof gap, not a demonstrated
 decryption-failure attack within the evaluation budget or a revised security
 level.</p>
+<h3 id="follow-up-analysis">Follow-up Analysis</h3>
+<p>The <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/7XCR7SE5QOJMFTS5WCNTKX7FA7M7P3TC/">ZEN team's response</a> agrees that the generic FO reduction's worst-case correctness notion and the concrete averaged failure behavior differ. It argues that locating a key-dependent bad message from the public key adds substantial work, and reports tighter classical/quantum failure-attack estimates above the three claimed levels even with a <code>2^80</code> online-query budget. Those new estimates were not independently reproduced here and do not repair the displayed theorem/model mismatch in the frozen submission, so the classification is unchanged.</p>
+<h3 id="proposed-fixes">Proposed fixes</h3>
+<p>The team states that it will clarify the distinction, provide tighter DFR estimates, and investigate proofs using average- or independent-key correctness. This records the proposal without evaluating it.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 kem-41/reproduce_dfr_model.py

@@ -154,3 +154,29 @@ sh sign-05/reproduce_em_constraints.sh
 ```
 
 The Vistrutith portion prints five signer/verifier constant-term mismatches, followed by two controls in which all 1,728 honest constraint values are zero.
+
+## sign-05-6: The specified SM4th-EM relation omits the public output
+
+Severity: Low
+Status: Confirmed
+Layer: Design
+Affected: Specified SM4th-EM-d2-128s/f-loose/tight relation; delivered code is not affected
+Discovery: Moderate
+Exploitation: A closed-form witness gives a public-key-only forgery for about 74% of keys under the literal inconsistent relation; 0.34 seconds reported
+Credit: Sun Shuzhou, with GLM-5.3 assistance
+Date: 2026-10-04
+Original source: [Sun Shuzhou's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/CK2POU5VLEHP35QIY5FY4PFNJNDEI3KM/)
+
+For every SM4th-EM set, Table 2 gives `l_ke=0` and `l_enc=1024`. `SM4th.OWFConstraints` nevertheless selects `w[0..1024)` as the encryption witness after separately taking `w[0..128)` as the secret input (physical p. 58). `SM4th-EM.EncCstrnts` then prepends that input again (p. 57). Its effective word sequence is therefore `X0,...,X3,X0,...,X31,out`, and its 32 five-word windows stop at `X31`: the public output `out=X0 xor pk2` is never read.
+
+The first four duplicated-output constraints form an invertible four-word linear system in `X0,...,X3` once the public round keys and patched-inversion constants are fixed. Every later witness word can then be computed forward. This gives a closed-form satisfying witness independent of `pk2`; only the separate two-bit keyspace constraint filters candidates. The post reports that the witness satisfies the literal relation for 2,048/2,048 random keys, with 74.22% passing that filter, and that a signer built with the specified offset produces an accepted public-key-only forgery in 0.34 seconds.
+
+The surrounding specification contradicts that literal slice: the witness layouts on physical pp. 51, 53, 55, and 57 define the encryption witness as the 896-bit middle portion, and the constraint input on p. 57 has length `32(R-4)` bits. The post also reports that none of 2,048 honest witnesses satisfies the literal relation, so a functioning implementation cannot use it unchanged. The delivered prover and verifier instead skip the already supplied input block (`Implementations/Reference_Implementation/sm4th_em_d2_128s_loose/sm4th_sm4_128.c:216–244, 835–859`); all eight reference and optimized copies agree. This is therefore a confirmed transcription/type inconsistency in the frozen design, but the submitted implementation follows the only interoperable reading and is unaffected. It is Low rather than a break of the working signature scheme.
+
+### Reproducing
+
+```sh
+python3 sign-05/reproduce_sm4th_em_spec_relation.py
+```
+
+The certificate checks the PDF's slice and prepend operations, the four parameter rows, the window boundary that excludes `out`, the invertibility of the four-word system, and both corrected prover/verifier calls in all eight SM4th-EM source copies. It does not replay the reported 0.34-second patched-build forgery.

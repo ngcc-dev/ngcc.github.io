@@ -3,24 +3,29 @@ Candidate: BRQC
 Family: Code-based (rank metric)
 Archive: [BRQC.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/BRQC.zip) (SHA-256: `2c76bdd4e4df7829bf22fa4949a3c744b9af692425f6f2e5fae5317d41e366ae`)
 
-## kem-07-1: Secret-derived decoder pivots select memory addresses
+## kem-07-1: The decoder address trace gives a candidate-specific key-recovery route
 
-Severity: Low
-Status: Confirmed
+Severity: High
+Status: Lead
 Layer: Side-channel
 Affected: Reference implementations, all three parameter sets
-Discovery: Moderate
-Exploitation: Local cache observer; key recovery not demonstrated
-Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Discovery: Non-trivial
+Exploitation: Full scaled key recovery from an address-trace oracle; formal-parameter costs are modeled, not executed
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance; recovery extension by Sun Shuzhou, with GLM-5.3 assistance
 Date: 2026-09-23
+Follow-up source: [Sun Shuzhou's PKC Forum post of 2026-10-04](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/5ZU7YRLNCOLVVV3RHDBKQFSDETQVTTRY/)
 
-BRQC decryption computes `v-u*y` using private `y` and the public ciphertext (`src/brqc.c:277-288`). The Gabidulin decoder chooses pivot `next` from discrepancies in that word, then uses `next` as the load/store index of `u0` and `u1` (`src/gabidulin.c:185-201`). Those addresses vary with a secret-key-derived intermediate. The final KEM ciphertext comparison is masked, but it executes after this leakage. No complete key recovery or remote timing channel is demonstrated.
+BRQC decryption computes `v-u*y` using private `y` and the public ciphertext (`src/brqc.c:277-288`). The Gabidulin decoder chooses pivot `next` from discrepancies in that word, then uses `next` as the load/store index of `u0` and `u1` (`src/gabidulin.c:185-201`). The address trace is therefore a rank oracle on a secret-key-dependent word. The final KEM ciphertext comparison is masked, but it executes after this leakage.
 
-Constant-time fix (easy, hence Low): the decoder already follows the constant-time Gabidulin decoding of Bettaieb, Bidoux, Gaborit and Marcatel, PQCrypto 2019: the pivot `next` is computed with masks and the swap is masked. Only the accesses to `u0[next]` and `u1[next]` use the secret index. A masked swap over all n positions removes them; it adds at most n field-element copies per iteration, O(n^2) in total, which is below the decoder's existing q-polynomial work. The specification states that the provided implementations run in constant time (physical PDF page 16), which this access contradicts.
+Further extension to the original analysis: Sun derives secret-support intersection dimensions from chosen ciphertexts and uses them to recover `E_y`; guessing the remaining `x` support then completes the key. The complete chain recovered 3/3 keys on a scaled BRQC instance, with wrong-support, wrong-key, and ciphertext-bit controls. At the submitted dimensions, the modeled adaptive-query costs are about `2^71.4`, `2^86.6`, and `2^119.8`, below the claimed 181-, 295-, and 566-bit classical strengths.
+
+The formal-parameter figures are accounting rather than completed experiments, the complete run changes the field size and dominant index, and no physical cache or wall-clock channel is shown. The stable source-level oracle plus this candidate-specific recovery chain warrants High / Lead. The specification makes an explicit no-leakage claim (physical p. 16), but the side-channel policy reserves Critical for end-to-end recovery at the affected parameters.
+
+Constant-time fix (local-to-moderate; High consequence floor): scan all positions and select `u0[next]` and `u1[next]` with masks. The decoder already computes the pivot and swap masks without branches. The candidate-specific recovery route keeps the classification at High regardless of that remediation cost.
 
 ### Reproducing
 
-Inspect `src/kem.c:214`, `src/brqc.c:277-288`, and `src/gabidulin.c:185-201` under `Implementations/Reference_Implementation/BRQC-128/`; the same pivot code is present in BRQC-256/512. See `constant_time.md` for the fuller trace.
+Inspect `src/kem.c:214`, `src/brqc.c:277-288`, and `src/gabidulin.c:185-201` under `Implementations/Reference_Implementation/BRQC-128/`; the same pivot code is present in BRQC-256/512. See `constant_time.md` for the source trace. The recovery extension has no public reproducer and remains a Lead.
 
 ## kem-07-2: Ignored padding bits make ciphertexts malleable without changing the key
 

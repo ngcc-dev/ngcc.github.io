@@ -1,13 +1,15 @@
 <!-- synchronized report: security/REPORT_CLASSIFICATION.md -->
 # Vulnerability report classification
 
-This document defines how NGCC findings receive `Severity`, `Status`, and
-`Layer` labels. These labels answer different questions and must be assigned
+This document defines how NGCC findings receive `Severity`, `Status`, `Layer`,
+and `Discovery` labels. These labels answer different questions and must be assigned
 independently:
 
 - **Severity** describes the demonstrated or bounded security impact.
 - **Status** describes the strength of the evidence for the stated finding.
 - **Layer** identifies where the vulnerable behavior enters.
+- **Discovery** describes the effort needed to identify and substantiate the
+  finding, not its impact or attack cost.
 - **Remediation burden** describes the cost of removing the behavior. It is
   normally separate context. For side-channel findings, however, the absence
   of a portable and reasonably efficient constant-time realization can be
@@ -32,6 +34,26 @@ When a report records a publicly proposed change, it places that material in a
 the proposal only: it does not assert that the change is correct, sufficient,
 complete, compatible, or secure, and it does not alter the report's evaluation
 of the archived submission. A revised candidate requires separate evaluation.
+
+## Discovery effort
+
+Discovery effort is independent of severity, reproducibility, attribution, and
+whether AI tools assisted the work. Rate the reasoning needed to find and
+substantiate the mechanism—not the cost of executing the resulting attack:
+
+- **Trivial:** direct local inspection, an immediately visible API or bounds
+  error, or elementary arithmetic with no meaningful search.
+- **Moderate:** focused source/specification review, a standard attack pattern,
+  or a short calculation or experiment connecting the defect to its effect.
+- **Non-trivial:** a multi-step candidate-specific argument, specialized
+  cryptanalytic technique, or substantial experimental construction.
+- **Hard:** a genuinely difficult attack chain, proof analysis, or recovery
+  experiment requiring substantial new cryptanalytic insight or engineering.
+
+Do not use Hard merely because the final attack is computationally expensive,
+the reproduced experiment is large, the severity is Critical, or the report
+was AI-assisted. If a later extension becomes the principal basis for the
+finding, reassess Discovery using the extension's reasoning.
 
 ## Security targets
 

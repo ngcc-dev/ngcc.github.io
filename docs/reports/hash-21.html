@@ -84,6 +84,28 @@ three submitted libraries:</p>
 <h3 id="reproducing_2">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>Inspect the four <code>NL_SBOX</code> accesses in any reference variant and compare indices for unequal state words; they select different table lines.</p>
+<h2 class="issue-heading" id="hash-21-4-long-random-messages-admit-second-preimages-in-one-scan">hash-21-4: Long random messages admit second preimages in one scan</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Neulaser-512, Neulaser-768, and Neulaser-1024</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>The reporter's one-pass scans of 12 GB random targets had approximately 60% success</td></tr>
+<tr><th>Credit</th><td>Sun Shuzhou, with GLM-5.3 assistance</td></tr>
+<tr><th>Date</th><td>2026-10-04</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/6YCZ2YOTJLU6NGXZJZCSYOAACDCYNGJZ/">Sun Shuzhou's CryptHash Forum post</a></p>
+<p>The modular reduction used at state positions 8 and 12 has five double fibers: for <code>p=2^32-5</code>, each <code>y</code> in <code>{0,...,4}</code> has the two 32-bit representatives <code>y</code> and <code>y+p</code>. The round value XORed into either position is independent of that position's current word (<code>CryptHash_AlgorithmInstance.c:140–172</code>; the specified tap update is on physical p. 8). For a random message word, the pre-reduction value therefore lands in one of the ten fiber inputs with probability <code>10/2^32</code>; replacing it by the other representative makes the complete states merge after that round.</p>
+<p>Each full message block exposes 4, 5, or 6 such independently loaded words in Neulaser-512/768/1024. A 12,000,000,111-byte random target therefore contains about 400, 395, or 391 million eligible positions, giving exact success probabilities <code>1-(1-10/2^32)^T</code> of 60.60%, 60.11%, and 59.79%. The replacement changes four bytes, preserves the message length, and leaves the remaining chaining path and full digest unchanged. The post reports end-to-end same-length second preimages for 4/4, 1/4, and 2/4 preregistered targets, with independent rehash controls.</p>
+<p>These messages are far below the required maximum length, and Table 1 claims 512-, 768-, and 1024-bit second-preimage security (physical p. 5). The attack is one linear scan of the target. Treating each eligible word as an independent opportunity gives geometric expected positions equivalent to about <code>2^26.7</code>, <code>2^26.4</code>, or <code>2^26.1</code> message blocks before the first merger; these are not the cost of scanning the complete 12 GB target used for the reported success rates. Either accounting violates every claimed and required second-preimage target.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C hash-21 reproduce
+python3 hash-21/reproduce_long_second_preimage.py
+</code></pre>
+<p>The submitted-library witness confirms planted modular-reduction mergers at every tier and rejects byte-flipped controls. The second command checks the source dependencies, counts the message-loaded merge positions, and recomputes the long-target probabilities and work factors. It does not allocate or rehash a 12 GB message.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

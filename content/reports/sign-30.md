@@ -33,7 +33,7 @@ Severity: Critical
 Status: Confirmed
 Layer: Design
 Affected: TRINE-128 Balanced and TRINE-128 ShortSig specification; submitted C implementation is salted and excluded
-Discovery: Hard
+Discovery: Non-trivial
 Exploitation: At most 2^64−1 ordinary signatures and about 2^94.25 or 2^96.99 attacker cycles, below the 128-bit target; full-size execution was not run
 Credit: Martin Feussner, with OpenAI Codex (Daybreak Blue) assistance
 Date: 2026-10-04

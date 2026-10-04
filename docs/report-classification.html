@@ -15,13 +15,15 @@
 <main class="">
 <!-- synchronized report: security/REPORT_CLASSIFICATION.md -->
 <h1 id="vulnerability-report-classification">Vulnerability report classification</h1>
-<p>This document defines how NGCC findings receive <code>Severity</code>, <code>Status</code>, and
-<code>Layer</code> labels. These labels answer different questions and must be assigned
+<p>This document defines how NGCC findings receive <code>Severity</code>, <code>Status</code>, <code>Layer</code>,
+and <code>Discovery</code> labels. These labels answer different questions and must be assigned
 independently:</p>
 <ul>
 <li><strong>Severity</strong> describes the demonstrated or bounded security impact.</li>
 <li><strong>Status</strong> describes the strength of the evidence for the stated finding.</li>
 <li><strong>Layer</strong> identifies where the vulnerable behavior enters.</li>
+<li><strong>Discovery</strong> describes the effort needed to identify and substantiate the
+  finding, not its impact or attack cost.</li>
 <li><strong>Remediation burden</strong> describes the cost of removing the behavior. It is
   normally separate context. For side-channel findings, however, the absence
   of a portable and reasonably efficient constant-time realization can be
@@ -43,6 +45,24 @@ constant-time decoder or solver). The same meaning applies to hash functions.</p
 the proposal only: it does not assert that the change is correct, sufficient,
 complete, compatible, or secure, and it does not alter the report's evaluation
 of the archived submission. A revised candidate requires separate evaluation.</p>
+<h2 id="discovery-effort">Discovery effort</h2>
+<p>Discovery effort is independent of severity, reproducibility, attribution, and
+whether AI tools assisted the work. Rate the reasoning needed to find and
+substantiate the mechanism—not the cost of executing the resulting attack:</p>
+<ul>
+<li><strong>Trivial:</strong> direct local inspection, an immediately visible API or bounds
+  error, or elementary arithmetic with no meaningful search.</li>
+<li><strong>Moderate:</strong> focused source/specification review, a standard attack pattern,
+  or a short calculation or experiment connecting the defect to its effect.</li>
+<li><strong>Non-trivial:</strong> a multi-step candidate-specific argument, specialized
+  cryptanalytic technique, or substantial experimental construction.</li>
+<li><strong>Hard:</strong> a genuinely difficult attack chain, proof analysis, or recovery
+  experiment requiring substantial new cryptanalytic insight or engineering.</li>
+</ul>
+<p>Do not use Hard merely because the final attack is computationally expensive,
+the reproduced experiment is large, the severity is Critical, or the report
+was AI-assisted. If a later extension becomes the principal basis for the
+finding, reassess Discovery using the extension's reasoning.</p>
 <h2 id="security-targets">Security targets</h2>
 <p>A finding is judged against the NGCC call as well as the specification's own
 claims. The canonical documents are published by ICCS.</p>
@@ -411,7 +431,7 @@ with the same external dimensions and parameters. A finding that disappears
 solely on that replacement is not publishable.</p>
 </main>
 <footer class="site-footer">
-<p>Updated 2026-10-04 13:23:24 UTC · Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Updated 2026-10-04 21:18:03 UTC · Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
 <p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
 </footer>
 </body>

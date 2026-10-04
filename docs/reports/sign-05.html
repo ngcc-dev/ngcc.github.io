@@ -142,6 +142,27 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <pre><code class="language-sh">sh sign-05/reproduce_em_constraints.sh
 </code></pre>
 <p>The Vistrutith portion prints five signer/verifier constant-term mismatches, followed by two controls in which all 1,728 honest constraint values are zero.</p>
+<h2 class="issue-heading" id="sign-05-6-the-specified-sm4th-em-relation-omits-the-public-output">sign-05-6: The specified SM4th-EM relation omits the public output</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Specified SM4th-EM-d2-128s/f-loose/tight relation; delivered code is not affected</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>A closed-form witness gives a public-key-only forgery for about 74% of keys under the literal inconsistent relation; 0.34 seconds reported</td></tr>
+<tr><th>Credit</th><td>Sun Shuzhou, with GLM-5.3 assistance</td></tr>
+<tr><th>Date</th><td>2026-10-04</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/CK2POU5VLEHP35QIY5FY4PFNJNDEI3KM/">Sun Shuzhou's PKC Forum post</a></p>
+<p>For every SM4th-EM set, Table 2 gives <code>l_ke=0</code> and <code>l_enc=1024</code>. <code>SM4th.OWFConstraints</code> nevertheless selects <code>w[0..1024)</code> as the encryption witness after separately taking <code>w[0..128)</code> as the secret input (physical p. 58). <code>SM4th-EM.EncCstrnts</code> then prepends that input again (p. 57). Its effective word sequence is therefore <code>X0,...,X3,X0,...,X31,out</code>, and its 32 five-word windows stop at <code>X31</code>: the public output <code>out=X0 xor pk2</code> is never read.</p>
+<p>The first four duplicated-output constraints form an invertible four-word linear system in <code>X0,...,X3</code> once the public round keys and patched-inversion constants are fixed. Every later witness word can then be computed forward. This gives a closed-form satisfying witness independent of <code>pk2</code>; only the separate two-bit keyspace constraint filters candidates. The post reports that the witness satisfies the literal relation for 2,048/2,048 random keys, with 74.22% passing that filter, and that a signer built with the specified offset produces an accepted public-key-only forgery in 0.34 seconds.</p>
+<p>The surrounding specification contradicts that literal slice: the witness layouts on physical pp. 51, 53, 55, and 57 define the encryption witness as the 896-bit middle portion, and the constraint input on p. 57 has length <code>32(R-4)</code> bits. The post also reports that none of 2,048 honest witnesses satisfies the literal relation, so a functioning implementation cannot use it unchanged. The delivered prover and verifier instead skip the already supplied input block (<code>Implementations/Reference_Implementation/sm4th_em_d2_128s_loose/sm4th_sm4_128.c:216–244, 835–859</code>); all eight reference and optimized copies agree. This is therefore a confirmed transcription/type inconsistency in the frozen design, but the submitted implementation follows the only interoperable reading and is unaffected. It is Low rather than a break of the working signature scheme.</p>
+<h3 id="reproducing_5">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-05/reproduce_sm4th_em_spec_relation.py
+</code></pre>
+<p>The certificate checks the PDF's slice and prepend operations, the four parameter rows, the window boundary that excludes <code>out</code>, the invertibility of the four-word system, and both corrected prover/verifier calls in all eight SM4th-EM source copies. It does not replay the reported 0.34-second patched-build forgery.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

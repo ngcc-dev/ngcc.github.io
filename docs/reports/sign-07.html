@@ -109,6 +109,33 @@ CFLAGS='-O3 -flto -fcommon -std=gnu11 -Wno-error=implicit-int' \
   ./verify_evidence.sh
 </code></pre>
 <p>The extra warning flag lets current GCC accept two pre-existing implicit-<code>int</code> declarations in the archived source. The replay verifies all evidence and submitted-source hashes, recomputes the posterior/refinement ladder, requires rejection through 1.2 million refinement signatures and an accepted fresh-message forgery at 1.3 million, then repeats with poisoned diagnostic truth. <code>run_full.sh</code> performs the approximately 2.3-million-signature collection instead.</p>
+<h2 class="issue-heading" id="sign-07-4-a-missing-nonce-collapses-every-secret-and-error-polynomial-to-one-value">sign-07-4: A missing nonce collapses every secret and error polynomial to one value</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>CS-128, CS-256, and CS-512, reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Public-key recovery estimates of about 2^42.6, 2^114.7, and 2^95.5 operations</td></tr>
+<tr><th>Credit</th><td>Sun Shuzhou, with GLM-5.3 assistance</td></tr>
+<tr><th>Date</th><td>2026-10-04</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/2OEX5VKCOX3NZV2DFKG3DF7B3OA6Z3FC/">Sun Shuzhou's PKC Forum post</a></p>
+<p>The specification says that <code>ExpandS</code> derives a child seed for each component of <code>s1</code> and <code>s2</code> (physical p. 9). <code>RejBoundedPoly</code> writes the intended two-byte nonce at <code>rho[HBYTES]</code>, but seeds the ICCS DRBG expander with only <code>SEEDBYTES+2</code> bytes (<code>sampling.c:240–253</code>). Since <code>HBYTES=2*SEEDBYTES</code>, the nonce lies outside the consumed prefix. All <code>l+k</code> calls therefore return the same ternary polynomial <code>p</code>; fresh keys confirm that every packed <code>s1</code> and <code>s2</code> block is identical. The bug is byte-identical in all six submitted source trees.</p>
+<p>The public relation consequently collapses from module-LWE to one secret polynomial. If <code>A_ij</code> are the public matrix entries and <code>2^beta*t1_i+t0_i=sum_j A_ij*s_j+e_i</code>, then</p>
+<pre><code class="language-text">2^beta*t1_i = (1 + sum_j A_ij)*p - t0_i  (mod q),
+</code></pre>
+<p>where every coefficient of the public-key rounding residual <code>t0_i</code> is bounded by <code>2^(beta-1)</code>. Here <code>beta</code> denotes the implementation's rounding exponent, not the unrelated parameter β in the specification. Scalarizing these public negacyclic equations gives ordinary bounded-error LWE with dimension <code>n</code> and <code>k*n</code> samples, instead of the submitted MLWE instance.</p>
+<p>At pinned <code>lattice-estimator</code> commit <code>53da598</code>, the ADPS16/Core-SVP model gives best costs of about 42.6, 114.7, and 95.5 bits for CS-128/256/512. The post's independent models give 43.7/113.3/94.0 bits under its Core-SVP settings and 68.8/135.9/118.0 with MATZOV costing. All are far below the respective 128-, 256-, and 512-bit targets claimed on physical pp. 33 and 35. The estimates are heuristic lattice costs rather than completed full-size runs; the post reports exact recovery on otherwise faithful <code>n=32</code> and <code>n=64</code> scaled instances. The exact public reduction plus the large modeled shortfalls violate the claimed levels and are Critical.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C sign-07 libs
+python3 sign-07/reproduce_expand_s_collapse.py
+LATTICE_ESTIMATOR_PATH=/path/to/lattice-estimator \
+  /path/to/sage/python sign-07/reproduce_expand_s_estimate.py
+</code></pre>
+<p>The first witness generates fresh submitted keys, requires every packed secret/error polynomial to be identical, checks a changed-seed control, and verifies the faulty seed length in all source copies. The Sage witness checks the estimator commit and reproduces the three independent Core-SVP estimates; it does not perform full-size key recovery.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

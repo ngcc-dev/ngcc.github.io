@@ -103,3 +103,38 @@ CFLAGS='-O3 -flto -fcommon -std=gnu11 -Wno-error=implicit-int' \
 ```
 
 The extra warning flag lets current GCC accept two pre-existing implicit-`int` declarations in the archived source. The replay verifies all evidence and submitted-source hashes, recomputes the posterior/refinement ladder, requires rejection through 1.2 million refinement signatures and an accepted fresh-message forgery at 1.3 million, then repeats with poisoned diagnostic truth. `run_full.sh` performs the approximately 2.3-million-signature collection instead.
+
+## sign-07-4: A missing nonce collapses every secret and error polynomial to one value
+
+Severity: Critical
+Status: Confirmed
+Layer: Implementation
+Affected: CS-128, CS-256, and CS-512, reference and optimized implementations
+Discovery: Moderate
+Exploitation: Public-key recovery estimates of about 2^42.6, 2^114.7, and 2^95.5 operations
+Credit: Sun Shuzhou, with GLM-5.3 assistance
+Date: 2026-10-04
+Original source: [Sun Shuzhou's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/2OEX5VKCOX3NZV2DFKG3DF7B3OA6Z3FC/)
+
+The specification says that `ExpandS` derives a child seed for each component of `s1` and `s2` (physical p. 9). `RejBoundedPoly` writes the intended two-byte nonce at `rho[HBYTES]`, but seeds the ICCS DRBG expander with only `SEEDBYTES+2` bytes (`sampling.c:240–253`). Since `HBYTES=2*SEEDBYTES`, the nonce lies outside the consumed prefix. All `l+k` calls therefore return the same ternary polynomial `p`; fresh keys confirm that every packed `s1` and `s2` block is identical. The bug is byte-identical in all six submitted source trees.
+
+The public relation consequently collapses from module-LWE to one secret polynomial. If `A_ij` are the public matrix entries and `2^beta*t1_i+t0_i=sum_j A_ij*s_j+e_i`, then
+
+```text
+2^beta*t1_i = (1 + sum_j A_ij)*p - t0_i  (mod q),
+```
+
+where every coefficient of the public-key rounding residual `t0_i` is bounded by `2^(beta-1)`. Here `beta` denotes the implementation's rounding exponent, not the unrelated parameter β in the specification. Scalarizing these public negacyclic equations gives ordinary bounded-error LWE with dimension `n` and `k*n` samples, instead of the submitted MLWE instance.
+
+At pinned `lattice-estimator` commit `53da598`, the ADPS16/Core-SVP model gives best costs of about 42.6, 114.7, and 95.5 bits for CS-128/256/512. The post's independent models give 43.7/113.3/94.0 bits under its Core-SVP settings and 68.8/135.9/118.0 with MATZOV costing. All are far below the respective 128-, 256-, and 512-bit targets claimed on physical pp. 33 and 35. The estimates are heuristic lattice costs rather than completed full-size runs; the post reports exact recovery on otherwise faithful `n=32` and `n=64` scaled instances. The exact public reduction plus the large modeled shortfalls violate the claimed levels and are Critical.
+
+### Reproducing
+
+```sh
+make -C sign-07 libs
+python3 sign-07/reproduce_expand_s_collapse.py
+LATTICE_ESTIMATOR_PATH=/path/to/lattice-estimator \
+  /path/to/sage/python sign-07/reproduce_expand_s_estimate.py
+```
+
+The first witness generates fresh submitted keys, requires every packed secret/error polynomial to be identical, checks a changed-seed control, and verifies the faulty seed length in all source copies. The Sage witness checks the estimator commit and reproduces the three independent Core-SVP estimates; it does not perform full-size key recovery.

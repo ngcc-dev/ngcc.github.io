@@ -68,24 +68,26 @@ sh kem-06/reproduce_ciphertext_crash.sh
 <pre><code class="language-sh">make -C kem-06 exploit-field
 </code></pre>
 <p>The ordinary, unsanitized guard-page test confirms faults for GF(2^67) and GF(2^83), then confirms GF(2^127) as an in-bounds negative control.</p>
-<h2 class="issue-heading" id="kem-06-3-secret-derived-decoder-pivots-select-memory-addresses">kem-06-3: Secret-derived decoder pivots select memory addresses</h2>
+<h2 class="issue-heading" id="kem-06-3-the-decoder-address-trace-gives-a-candidate-specific-key-recovery-route">kem-06-3: The decoder address trace gives a candidate-specific key-recovery route</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
 <tr><th>Scope</th><td>side-channel</td></tr>
-<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Status</th><td><span class="issue-status status-lead">Lead</span></td></tr>
 <tr><th>Affected</th><td>Reference implementations, all three parameter sets</td></tr>
-<tr><th>Discovery</th><td>Moderate</td></tr>
-<tr><th>Exploitation</th><td>Local cache observer; key recovery not demonstrated</td></tr>
-<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Discovery</th><td>Non-trivial</td></tr>
+<tr><th>Exploitation</th><td>Exact BRA-128 secret-support recovery from an address-trace oracle; full-key costs are modeled, not executed</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance; recovery extension by Sun Shuzhou, with GLM-5.3 assistance</td></tr>
 <tr><th>Date</th><td>2026-09-23</td></tr>
 </table></div>
-
-<p>BRA decryption computes <code>v-u*y</code> using private <code>y</code> and the public ciphertext (<code>src/bra.c:277-288</code>). The augmented-Gabidulin decoder derives pivot <code>next</code> from discrepancies in that word and uses <code>next</code> directly to load and store <code>u0</code> and <code>u1</code> (<code>src/augmented_gabidulin.c:184-205</code>). A cache observer can therefore learn a secret-key-dependent intermediate. The final KEM ciphertext comparison and fallback selection are masked, but occur after the decoder. No complete key recovery or remote timing channel is demonstrated.</p>
-<p>Constant-time fix (easy, hence Low): the decoder already follows the constant-time Gabidulin decoding of Bettaieb, Bidoux, Gaborit and Marcatel, PQCrypto 2019: the pivot <code>next</code> is computed with masks and the swap is masked. Only the accesses to <code>u0[next]</code> and <code>u1[next]</code> use the secret index. A masked swap over all n positions removes them; it adds at most n field-element copies per iteration, O(n^2) in total, which is below the decoder's existing q-polynomial work. The specification states that the provided implementations run in constant time (physical PDF page 17), which this access contradicts.</p>
+<p>Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/5ZU7YRLNCOLVVV3RHDBKQFSDETQVTTRY/">Sun Shuzhou's PKC Forum post of 2026-10-04</a></p>
+<p>BRA decryption computes <code>v-u*y</code> using private <code>y</code> and the public ciphertext (<code>src/bra.c:277-288</code>). The augmented-Gabidulin decoder derives pivot <code>next</code> from discrepancies in that word and uses <code>next</code> directly to load and store <code>u0</code> and <code>u1</code> (<code>src/augmented_gabidulin.c:184-205</code>). Its memory-address trace is therefore a rank oracle on a secret-key-dependent word. The final KEM ciphertext comparison and fallback selection are masked, but occur after the decoder.</p>
+<p>Further extension to the original analysis: Sun shows that ciphertexts <code>(u,v)=(1,t)</code> reveal membership in the secret support <code>E_y</code>, and that intersections with public random subspaces recover the full support adaptively. Instrumented formal BRA-128 decapsulation recovered <code>E_y</code> exactly for 3/3 keys in 3,443, 5,044, and 6,467 queries. Guessing the remaining <code>x</code> support and solving the resulting linear system gives modeled full-key costs of about <code>2^49.9</code>, <code>2^57.4</code>, and <code>2^71.5</code> at the three levels; a sharper accounting is lower.</p>
+<p>No physical cache channel or wall-clock signal was demonstrated, BRA-256's real-decoder support experiment did not converge, and the final algebraic phase was not run at full parameters. The exact address-trace oracle plus a candidate-specific recovery chain warrants High / Lead. Although the specification explicitly claims that running time leaks no sensitive decoder information (physical p. 17), Critical under the side-channel policy requires end-to-end key recovery or forgery, which is not shown here.</p>
+<p>Constant-time fix (local-to-moderate; High consequence floor): the decoder already computes the pivot and swap masks without branches. Scanning all positions and selecting <code>u0[next]</code> and <code>u1[next]</code> with masks removes the indexed access. The candidate-specific recovery route keeps the classification at High regardless of that remediation cost.</p>
 <h3 id="reproducing_2">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
-<p>Inspect <code>src/kem.c:214</code>, <code>src/bra.c:277-288</code>, and <code>src/augmented_gabidulin.c:184-205</code> under <code>Implementations/Reference_Implementation/BRA-128/</code>; the same pivot code is present in BRA-256/512. See <code>constant_time.md</code> for the fuller trace.</p>
+<p>Inspect <code>src/kem.c:214</code>, <code>src/bra.c:277-288</code>, and <code>src/augmented_gabidulin.c:184-205</code> under <code>Implementations/Reference_Implementation/BRA-128/</code>; the same pivot code is present in BRA-256/512. See <code>constant_time.md</code> for the source trace. The full recovery extension has no public reproducer and remains a Lead.</p>
 <h2 class="issue-heading" id="kem-06-4-ignored-padding-bits-make-ciphertexts-malleable-without-changing-the-key">kem-06-4: Ignored padding bits make ciphertexts malleable without changing the key</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">

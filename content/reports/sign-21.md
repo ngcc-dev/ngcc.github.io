@@ -186,3 +186,65 @@ minimal reproducer. The paired-signature generator uses the package's
 documented `CoinHash` patch; final acceptance is checked by a binary linked to
 the untouched submitted verifier. The wrapper requires recovery, an accepted
 fresh-message forgery, and all negative controls.
+
+## sign-21-4: The quantum EUF-CMA proof misses every target through its TCCR error term
+
+Severity: High
+Status: Proof gap
+Layer: Design
+Affected: ReSolveD-α-160/256/384/512 S/F
+Discovery: Moderate
+Exploitation: With one signing query the submitted bound provides only about 22, 117, 116, and 244 bits against the respective 80-, 128-, 192-, and 256-bit quantum targets; no forgery or key recovery is demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-04
+
+Theorem 8.13 (physical p. 114) bounds quantum TCCR advantage with an additive
+term `D/2^(lambda-n)`, where `D` is the number of classical construction
+queries and `n` is the block size. Lemma 8.11's multi-hiding reduction
+(physical pp. 90–91) invokes this bound with
+`D = (2 ceil(log2 L) + 5) tau`, a factor two, and `Q` independent commitments.
+Theorem 8.5 (physical pp. 91–96) uses it with `Q = Q_sig`, the number of signing
+queries.
+
+Ignoring the unstated constant hidden by Theorem 8.13's big-O notation, the
+multi-hiding contribution is `2 Q_sig D/2^(lambda-n)`. At `Q_sig = 1`, its
+negative base-two logarithm is 22.1/21.7 bits for 160s/f, 117.3/116.9 for
+256s/f, 116.6/116.3 for 384s/f, and 244.2/243.8 for 512s/f. Each is below its
+80-, 128-, 192-, or 256-bit quantum target. These are proof-error exponents,
+not attack costs: because the term is
+independent of the adversary's ideal-cipher work, the bound cannot exclude a
+negligible-work adversary succeeding with that probability. A `lambda_q`-bit
+target requires the term to be at most about `2^-lambda_q`. The small 160-bit
+bounds arise because AES has a 128-bit block: with `L = 28,672`, `tau = 14`
+and `D = 490` for 160s, or `L = 3,328`, `tau = 21` and `D = 609` for 160f, the
+term reaches one near `2^22.1` or `2^21.7` signatures.
+
+The loss accumulates linearly with signing queries. At the call's `2^80`
+evaluation budget, the 160-bit bounds are vacuous and the remaining terms are
+only about 37, 36, and 164 bits for the 256-, 384- and 512-bit levels. Even the
+required `2^64` supported messages leave only about 53, 52, and 180 bits at
+those three levels. The separate quantum-list-unpredictability use in Lemma
+8.10 has no `tau` factor and is weaker than this multi-hiding loss.
+
+The loss is not a demonstrated attack. A formal chosen-query TCCR distinguisher
+does realize the construction's block-birthday behavior: with a fixed right
+input and tweak, Equations (87)–(88) make the transformed first output block a
+permutation of the left input, while a random function collides after about
+`2^(n/2)` queries. Ordinary signatures do not expose that oracle. Tree inputs
+are hidden pseudorandom nodes, neither the right key part nor the plaintext
+half is chosen or known by the attacker, and every signature uses a fresh
+120-bit IV. We found no route from the proof term or component distinguisher to
+a signature forgery or signing-key recovery, and do not claim that the bound
+is tight.
+
+### Reproducing
+
+```sh
+python3 sign-21/reproduce_quantum_tccr_bound.py
+```
+
+The certificate derives `L` from the submitted parameter constants, computes
+both Lemma 8.10 and Lemma 8.11 query counts and thresholds, checks the block
+sizes in the delivered implementations, and demonstrates the supporting TCCR
+permutation invariant in a scaled model. It certifies the bound failure, not a
+signature attack.

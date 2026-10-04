@@ -72,3 +72,30 @@ Constant-time fix (easy, hence Low): the S-box is field inversion followed by an
 ### Reproducing
 
 Inspect the four `NL_SBOX` accesses in any reference variant and compare indices for unequal state words; they select different table lines.
+
+## hash-21-4: Long random messages admit second preimages in one scan
+
+Severity: Critical
+Status: Confirmed
+Layer: Design
+Affected: Neulaser-512, Neulaser-768, and Neulaser-1024
+Discovery: Moderate
+Exploitation: The reporter's one-pass scans of 12 GB random targets had approximately 60% success
+Credit: Sun Shuzhou, with GLM-5.3 assistance
+Date: 2026-10-04
+Original source: [Sun Shuzhou's CryptHash Forum post](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/6YCZ2YOTJLU6NGXZJZCSYOAACDCYNGJZ/)
+
+The modular reduction used at state positions 8 and 12 has five double fibers: for `p=2^32-5`, each `y` in `{0,...,4}` has the two 32-bit representatives `y` and `y+p`. The round value XORed into either position is independent of that position's current word (`CryptHash_AlgorithmInstance.c:140–172`; the specified tap update is on physical p. 8). For a random message word, the pre-reduction value therefore lands in one of the ten fiber inputs with probability `10/2^32`; replacing it by the other representative makes the complete states merge after that round.
+
+Each full message block exposes 4, 5, or 6 such independently loaded words in Neulaser-512/768/1024. A 12,000,000,111-byte random target therefore contains about 400, 395, or 391 million eligible positions, giving exact success probabilities `1-(1-10/2^32)^T` of 60.60%, 60.11%, and 59.79%. The replacement changes four bytes, preserves the message length, and leaves the remaining chaining path and full digest unchanged. The post reports end-to-end same-length second preimages for 4/4, 1/4, and 2/4 preregistered targets, with independent rehash controls.
+
+These messages are far below the required maximum length, and Table 1 claims 512-, 768-, and 1024-bit second-preimage security (physical p. 5). The attack is one linear scan of the target. Treating each eligible word as an independent opportunity gives geometric expected positions equivalent to about `2^26.7`, `2^26.4`, or `2^26.1` message blocks before the first merger; these are not the cost of scanning the complete 12 GB target used for the reported success rates. Either accounting violates every claimed and required second-preimage target.
+
+### Reproducing
+
+```sh
+make -C hash-21 reproduce
+python3 hash-21/reproduce_long_second_preimage.py
+```
+
+The submitted-library witness confirms planted modular-reduction mergers at every tier and rejects byte-flipped controls. The second command checks the source dependencies, counts the message-loaded merge positions, and recomputes the long-target probabilities and work factors. It does not allocate or rehash a 12 GB message.
