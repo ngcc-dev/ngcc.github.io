@@ -113,3 +113,25 @@ python3 -m venv /tmp/ngcc-code-estimator
 The script prints the optimized Stern parameters, raw time and memory, the
 QC/DOOM discount, the discounted result, and the expected number of unrelated
 fixed-weight solutions.
+
+## kem-26-4: A 256-bit decryption sub-seed caps NSS-HQC-384 and -512
+
+Severity: Critical
+Status: Confirmed
+Layer: Design
+Affected: NSS-HQC-384 and NSS-HQC-512 specification, reference, and optimized implementations
+Discovery: Moderate
+Exploitation: About 2^279.4 and 2^280.6 bit operations, respectively
+Credit: Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance
+Date: 2026-10-05
+Original source: [Xiong and Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/SZSEV56NMNPV7244JS57WKI27Z3MDZLP/) and [pinned verification package](https://github.com/acprk/ngcc-round1-cryptanalysis/tree/a3f0a6adb6b695922247d4b771f4deb73777a619/nss-hqc-seedy-width)
+
+Key generation splits SHA3-512 output into two 256-bit sub-seeds (Algorithm 1, physical p. 17), even when Table 3 selects a 384- or 512-bit `seed_sk`. Decryption needs only `y`, which is determined by `seed_y` (physical p. 20). The code agrees: `NSS_HQC_I_SEED_BYTES` is 32 and `derive_xy_seeds` copies two 32-byte halves (`nss_hqc_core.c:25,432–439`). This contradicts the 384/512-bit seed-search costs in Table 7 (physical p. 40).
+
+An attacker enumerates `seed_y`, expands `y`, recognizes it through the public relation `wt(s+h*y)=w_sk`, and then decrypts. About `2^255` candidates on average, with sparse-product costs near `2^24.35` and `2^25.60`, give about `2^279.4` and `2^280.6` bit operations—below both claims. The witness rebuilds `y` and decrypts at full size, then demonstrates the public enumeration end to end in an 8-bit scale model with random-candidate controls. It does not run the full `2^256` search.
+
+### Reproducing
+
+```sh
+./kem-26/reproduce_seed_y_width.sh
+```

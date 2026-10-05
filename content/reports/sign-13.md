@@ -26,3 +26,26 @@ python3 sign-13/reproduce_shake_capacity.py
 ```
 
 The witness checks the archived SHAKE256 selection and message-hash path, then executes the exact two-block construction in a scaled permutation model. It certifies the structural attack and full-size generic bound; it does not perform the infeasible `2^256` search.
+
+## sign-13-2: Malformed public-key padding aborts verification
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: All eight profiles in both reference and optimized GreatWall source trees under the submitted build flags
+Discovery: Trivial
+Exploitation: Unauthenticated process termination; no forgery or memory corruption
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
+Date: 2026-10-05
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/UQJ3OVIKPMTVMMWCZ2NDHRUH2HYSHVS7/)
+
+`sig_verify` unpacks attacker-supplied public-key field elements through `faest_unpack_public_key` (`faest.c:117–130,609`). The `block*_load_to_block` routines use live `assert` statements to validate their high padding bits; the submitted Makefiles do not define `NDEBUG`. A noncanonical public key therefore terminates the verifier with `SIGABRT` instead of returning invalid.
+
+The local witness generates an honest GreatWall128f signature, checks the valid-key control, and forks a fresh verifier for each of the two field-padding bytes. Both mutations reach the assertion and abort. The forum post additionally reproduced reference 128s/128f/192f/256f and optimized 128f; the remaining source trees contain the analogous assertion.
+
+### Reproducing
+
+```sh
+make -C sign-13
+python3 sign-13/reproduce_malformed_pk_abort.py
+```

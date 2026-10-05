@@ -152,6 +152,25 @@ below every affected target, hence Critical.</p>
 <p>The script prints the optimized Stern parameters, raw time and memory, the
 QC/DOOM discount, the discounted result, and the expected number of unrelated
 fixed-weight solutions.</p>
+<h2 class="issue-heading" id="kem-26-4-a-256-bit-decryption-sub-seed-caps-nss-hqc-384-and-512">kem-26-4: A 256-bit decryption sub-seed caps NSS-HQC-384 and -512</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>NSS-HQC-384 and NSS-HQC-512 specification, reference, and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>About 2^279.4 and 2^280.6 bit operations, respectively</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance</td></tr>
+<tr><th>Date</th><td>2026-10-05</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/SZSEV56NMNPV7244JS57WKI27Z3MDZLP/">Xiong and Wang's PKC Forum post</a> and <a href="https://github.com/acprk/ngcc-round1-cryptanalysis/tree/a3f0a6adb6b695922247d4b771f4deb73777a619/nss-hqc-seedy-width">pinned verification package</a></p>
+<p>Key generation splits SHA3-512 output into two 256-bit sub-seeds (Algorithm 1, physical p. 17), even when Table 3 selects a 384- or 512-bit <code>seed_sk</code>. Decryption needs only <code>y</code>, which is determined by <code>seed_y</code> (physical p. 20). The code agrees: <code>NSS_HQC_I_SEED_BYTES</code> is 32 and <code>derive_xy_seeds</code> copies two 32-byte halves (<code>nss_hqc_core.c:25,432–439</code>). This contradicts the 384/512-bit seed-search costs in Table 7 (physical p. 40).</p>
+<p>An attacker enumerates <code>seed_y</code>, expands <code>y</code>, recognizes it through the public relation <code>wt(s+h*y)=w_sk</code>, and then decrypts. About <code>2^255</code> candidates on average, with sparse-product costs near <code>2^24.35</code> and <code>2^25.60</code>, give about <code>2^279.4</code> and <code>2^280.6</code> bit operations—below both claims. The witness rebuilds <code>y</code> and decrypts at full size, then demonstrates the public enumeration end to end in an 8-bit scale model with random-candidate controls. It does not run the full <code>2^256</code> search.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">./kem-26/reproduce_seed_y_width.sh
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

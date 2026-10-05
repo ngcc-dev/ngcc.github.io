@@ -41,8 +41,6 @@ rg -n -F 'buf, SEED_BYTES, buf2' kex-03/Implementations/Reference_Implementation
 
 The same defect reduces the claimed weak forward secrecy of K2S and S2K instances to `2^64` after compromise of the complementary long-term KEM key. This is an implementation error, not a cryptanalytic attack on the specified primitives.
 
-A related initiator-side call passes `SEED_BYTES * 8` as the requested output length but only `SEED_BYTES + SKI_LEN` as the `pseudohash` input bit count. In those instances `SKI_LEN/8 > 56`, so all 64 random bytes are still absorbed and this second units error does not reduce entropy further. It confirms that the bits-versus-bytes confusion is systematic.
-
 ## kex-03-2: Omitting signatures from the KDF breaks transcript matching
 
 Severity: Critical
@@ -109,3 +107,47 @@ python3 kex-03/reproduce_binding_attacks.py
 ```
 
 The witness checks the five submitted generic implementations and executes the cross-key query algebra with a correctness-preserving PKE model. The attack depends only on PKE correctness and on the displayed KDF inputs.
+
+## kex-03-4: Initiator length-unit error removes the NAXOS long-term-key binding
+
+Severity: Critical
+Status: Confirmed
+Layer: Implementation
+Affected: All 12 S2K and S2S instances in the reference and optimized source trees
+Discovery: Moderate
+Exploitation: One permitted initiator StateReveal and public data recover the session key without search
+Credit: Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance
+Date: 2026-10-05
+Original source: [Xiong and Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/VFESLNXKIUQ44DF72VJJCBSVOHOEN6FO/) and [pinned verification package](https://github.com/acprk/ngcc-round1-cryptanalysis/tree/996e9e01bb71210b4debd44e565f543833d0d135/cretake-naxos-binding)
+
+The initiator hashes `r || sk_i` with a byte count passed to a bit-length API (`KEX_AlgorithmInstance.c:107–118,173–198`; `auxfunc.c:460`). It absorbs all 64 bytes of `r` but only 177, 464, or 1,072 bytes of the BiT secret key. Those bytes are exactly a public-key prefix. A permitted initiator StateReveal therefore supplies the only nonpublic input: the attacker regenerates the ephemeral wKEM key, decrypts the transcript, and derives the session key without search.
+
+This contradicts the specification's state-reveal argument (physical pp. 19–20; Theorems 2 and 4 on physical pp. 23–26). All 12 reference instances recovered 20/20 keys. Changing the length to bits gave 0/20, while correcting only the responder's expansion length left recovery intact. Source inspection confirms the same call in all 12 optimized wrappers; four optimized ZEN runs hit an unrelated alignment crash on this host.
+
+### Reproducing
+
+```sh
+./kex-03/reproduce_naxos_and_lengths.sh
+```
+
+## kex-03-5: Ignored KEX message lengths cause pre-authentication out-of-bounds reads
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: All 25 CreTAKE instances in the reference and optimized source trees
+Discovery: Trivial
+Exploitation: Out-of-bounds reads on truncated unauthenticated messages; no disclosure, write, or control-flow effect demonstrated
+Credit: Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance
+Date: 2026-10-05
+Original source: [Xiong and Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/VFESLNXKIUQ44DF72VJJCBSVOHOEN6FO/) and [pinned verification package](https://github.com/acprk/ngcc-round1-cryptanalysis/tree/996e9e01bb71210b4debd44e565f543833d0d135/cretake-naxos-binding)
+
+The KEX wrappers parse fixed-size fields while discarding the caller's `m1_len_bytes` or `m2_len_bytes`. In K2S, for example, a buffer allocated to the attacker-supplied length is passed to PKE code that reads the fixed `TPK_LEN`; K2S and K2K reach these paths before authentication.
+
+With buffers sized to the bytes received, AddressSanitizer reported invalid reads for all 150 tested truncations across the 25 reference instances. No out-of-bounds write, memory disclosure, or control-flow consequence was demonstrated, so this is Low.
+
+### Reproducing
+
+```sh
+./kex-03/reproduce_naxos_and_lengths.sh
+```

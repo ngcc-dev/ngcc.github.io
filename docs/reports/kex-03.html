@@ -54,7 +54,6 @@ second <code>pseudoXOF</code> length argument is 64 <strong>bits</strong>, not t
 rg -n -F 'buf, SEED_BYTES, buf2' kex-03/Implementations/Reference_Implementation
 </code></pre>
 <p>The same defect reduces the claimed weak forward secrecy of K2S and S2K instances to <code>2^64</code> after compromise of the complementary long-term KEM key. This is an implementation error, not a cryptanalytic attack on the specified primitives.</p>
-<p>A related initiator-side call passes <code>SEED_BYTES * 8</code> as the requested output length but only <code>SEED_BYTES + SKI_LEN</code> as the <code>pseudohash</code> input bit count. In those instances <code>SKI_LEN/8 &gt; 56</code>, so all 64 random bytes are still absorbed and this second units error does not reduce entropy further. It confirms that the bits-versus-bytes confusion is systematic.</p>
 <h2 class="issue-heading" id="kex-03-2-omitting-signatures-from-the-kdf-breaks-transcript-matching">kex-03-2: Omitting signatures from the KDF breaks transcript matching</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
@@ -106,6 +105,44 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <pre><code class="language-sh">python3 kex-03/reproduce_binding_attacks.py
 </code></pre>
 <p>The witness checks the five submitted generic implementations and executes the cross-key query algebra with a correctness-preserving PKE model. The attack depends only on PKE correctness and on the displayed KDF inputs.</p>
+<h2 class="issue-heading" id="kex-03-4-initiator-length-unit-error-removes-the-naxos-long-term-key-binding">kex-03-4: Initiator length-unit error removes the NAXOS long-term-key binding</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All 12 S2K and S2S instances in the reference and optimized source trees</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>One permitted initiator StateReveal and public data recover the session key without search</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance</td></tr>
+<tr><th>Date</th><td>2026-10-05</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/VFESLNXKIUQ44DF72VJJCBSVOHOEN6FO/">Xiong and Wang's PKC Forum post</a> and <a href="https://github.com/acprk/ngcc-round1-cryptanalysis/tree/996e9e01bb71210b4debd44e565f543833d0d135/cretake-naxos-binding">pinned verification package</a></p>
+<p>The initiator hashes <code>r || sk_i</code> with a byte count passed to a bit-length API (<code>KEX_AlgorithmInstance.c:107–118,173–198</code>; <code>auxfunc.c:460</code>). It absorbs all 64 bytes of <code>r</code> but only 177, 464, or 1,072 bytes of the BiT secret key. Those bytes are exactly a public-key prefix. A permitted initiator StateReveal therefore supplies the only nonpublic input: the attacker regenerates the ephemeral wKEM key, decrypts the transcript, and derives the session key without search.</p>
+<p>This contradicts the specification's state-reveal argument (physical pp. 19–20; Theorems 2 and 4 on physical pp. 23–26). All 12 reference instances recovered 20/20 keys. Changing the length to bits gave 0/20, while correcting only the responder's expansion length left recovery intact. Source inspection confirms the same call in all 12 optimized wrappers; four optimized ZEN runs hit an unrelated alignment crash on this host.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">./kex-03/reproduce_naxos_and_lengths.sh
+</code></pre>
+<h2 class="issue-heading" id="kex-03-5-ignored-kex-message-lengths-cause-pre-authentication-out-of-bounds-reads">kex-03-5: Ignored KEX message lengths cause pre-authentication out-of-bounds reads</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All 25 CreTAKE instances in the reference and optimized source trees</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Out-of-bounds reads on truncated unauthenticated messages; no disclosure, write, or control-flow effect demonstrated</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance</td></tr>
+<tr><th>Date</th><td>2026-10-05</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/VFESLNXKIUQ44DF72VJJCBSVOHOEN6FO/">Xiong and Wang's PKC Forum post</a> and <a href="https://github.com/acprk/ngcc-round1-cryptanalysis/tree/996e9e01bb71210b4debd44e565f543833d0d135/cretake-naxos-binding">pinned verification package</a></p>
+<p>The KEX wrappers parse fixed-size fields while discarding the caller's <code>m1_len_bytes</code> or <code>m2_len_bytes</code>. In K2S, for example, a buffer allocated to the attacker-supplied length is passed to PKE code that reads the fixed <code>TPK_LEN</code>; K2S and K2K reach these paths before authentication.</p>
+<p>With buffers sized to the bytes received, AddressSanitizer reported invalid reads for all 150 tested truncations across the 25 reference instances. No out-of-bounds write, memory disclosure, or control-flow consequence was demonstrated, so this is Low.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">./kex-03/reproduce_naxos_and_lengths.sh
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

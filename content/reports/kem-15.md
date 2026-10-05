@@ -34,3 +34,31 @@ python3 kem-15/reproduce_interop.py
 ```
 
 The script builds both archived implementations in a temporary directory, exercises their submitted APIs with one common seed, checks self-decapsulation controls, and prints `CONFIRMED kem-15-1` only when both cross-decapsulations silently derive the wrong key.
+
+## kem-15-2: Optimized equality check accepts invalid ciphertexts and exposes a plaintext-checking oracle
+
+Severity: High
+Status: Confirmed
+Layer: Implementation
+Affected: All five AVX2 trees: FLIT128/256/512 and FIPS202 OPT128/256
+Discovery: Moderate
+Exploitation: Near-total bypass of re-encryption rejection on unrelated ciphertexts and a plaintext-checking oracle; full key recovery not executed
+Credit: Zhenyu Xiong and Mingsheng Wang, with AI assistance
+Date: 2026-10-05
+Original source: [Xiong and Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/KP5VT25RVLVRBBJ7XFPTNMBSZV6PIPEN/) and [pinned verification package](https://github.com/acprk/ngcc-round1-cryptanalysis/tree/b1b7e429d4bf9673f2040f3e951df827a6d0dbe6/flit-opt-verify-fo-bypass)
+Follow-up source: [FLIT team's response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/35QW2XAG22E5OWR3HRRVTD5HAKEDITQH/)
+
+The optimized equality check folds ciphertext differences into a 64-bit word and returns `(-(int64_t)r)>>63` (`verify.c:18–38`). This is not a nonzero test and also invokes signed-overflow undefined behavior at `r=2^63`. In our GCC 15.2 build it reported equality for about 3.8% of ciphertexts with one to four random bit changes; reference and patched controls rejected all of them. When differences cover the high bit of the accumulator, rejection fails, so the flaw is much broader for unrelated ciphertexts. A direct 2,000-pair comparison of unrelated 1 KiB inputs found 2,000 false equalities, while the reference rejected all 2,000. The exact frequency and edge behavior depend on the compiler.
+
+The result feeds the Fujisaki–Okamoto conditional move (`kem.c:107–126`). When an invalid ciphertext is misclassified, decapsulation returns the accept-path KDF value. For five such ciphertexts the witness recomputed that value from the public key, ciphertext, and correct plaintext guess, while a wrong guess failed. The mismatch return is `-1` rather than `1`, so the AVX2 conditional move's byte mask becomes `0x01`; even correctly rejected ciphertexts replace only bit 0 of each pre-key byte with the rejection secret. The witness establishes a plaintext-checking oracle, but no FLIT key-recovery or IND-CCA distinguisher has been completed, so the finding is High.
+
+### Proposed fixes
+
+The original post proposes replacing the return expression with a constant-time 64-bit nonzero fold whose result is exactly 0 or 1. The [FLIT team reports](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/35QW2XAG22E5OWR3HRRVTD5HAKEDITQH/) applying `return (int)((r | (UINT64_C(0) - r)) >> 63);` in all five affected trees, states that this also restores the conditional move, and reports that the corrected trees pass its rejection-path regression tests with unchanged KATs. The change is committed to the team's [GitHub repository](https://github.com/MathEternal/FLIT-NGCC); the frozen submission is unchanged. This records the fix without evaluating it.
+
+### Reproducing
+
+```sh
+./kem-15/reproduce_fo_bypass.sh
+python3 kem-15/reproduce_random_compare.py
+```

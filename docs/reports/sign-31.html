@@ -68,6 +68,80 @@ lines 680–790 and 960–985, and trace the matrix construction from
 <code>TSUOV_Sign</code>. The corresponding <code>tsuov_core.c</code> files for TSUOV_256 and
 TSUOV_512 are also included for comparison. This confirms secret-dependent
 control flow, not a measured remote timing exploit.</p>
+<h2 class="issue-heading" id="sign-31-3-allocation-failure-reuses-a-stale-message-representative">sign-31-3: Allocation failure reuses a stale message representative</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All three reference and optimized TSUOV implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>An attacker-supplied oversized message can induce acceptance of a prior signature on a different message under a constrained verifier</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance</td></tr>
+<tr><th>Date</th><td>2026-10-05</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/FQMMQX3BFR473NUCIPK5IIFXKO3X6QKO/">Xiong and Wang's PKC Forum post</a> and <a href="https://github.com/acprk/ngcc-round1-cryptanalysis/tree/6756633dfa096e729aeeb4dfce281ad5f345091f/tsuov-impl-failopen">pinned verification package</a></p>
+<p><code>Expand_mu</code> returns without changing its output when <code>malloc(seed_len+message_len)</code> fails (<code>tsuov_core.c:415–425</code>). Signing and verification do not propagate that failure. After one valid verification initializes the reused stack slot, forcing the allocation for a 256 MiB unrelated message to fail leaves the previous <code>mu</code> in place, and the prior signature is accepted for the new message in all six trees. Signing has an analogous stale-output path.</p>
+<p>An attacker can choose the message length and exhaust a constrained verifier's allocation budget, then reuse a signature already checked in the same process. The accepted signature is on a new message, but the witness requires a memory limit and a primed stack; remote triggering and reliability outside those conditions are untested. The demonstrated forgery path with these preconditions is High.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">./sign-31/reproduce_implementation_findings.sh
+</code></pre>
+<h2 class="issue-heading" id="sign-31-4-declared-public-key-and-signature-lengths-are-ignored">sign-31-4: Declared public-key and signature lengths are ignored</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All three reference and optimized TSUOV implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Out-of-bounds reads from short buffers and acceptance of trailing bytes; no disclosure demonstrated</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance</td></tr>
+<tr><th>Date</th><td>2026-10-05</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/FQMMQX3BFR473NUCIPK5IIFXKO3X6QKO/">Xiong and Wang's PKC Forum post</a> and <a href="https://github.com/acprk/ngcc-round1-cryptanalysis/tree/6756633dfa096e729aeeb4dfce281ad5f345091f/tsuov-impl-failopen">pinned verification package</a></p>
+<p><code>sig_verify</code> discards <code>pk_len_bytes</code> and <code>sn_len_bytes</code> and parses fixed-size fields (<code>SIG_AlgorithmInstance.c:100–118</code>). Short buffers therefore cause out-of-bounds reads; longer signatures with trailing bytes are accepted. AddressSanitizer reproduced the reads across all parameter sets and both implementation families. No memory disclosure, write, or control-flow effect follows from this length defect alone, so it is Low.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">./sign-31/reproduce_implementation_findings.sh
+</code></pre>
+<h2 class="issue-heading" id="sign-31-5-impossible-length-input-wraps-the-message-allocation">sign-31-5: Impossible-length input wraps the message allocation</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All three reference and optimized TSUOV implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>AddressSanitizer detects a heap write only when the caller claims a near-2^64-byte buffer it cannot supply</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance</td></tr>
+<tr><th>Date</th><td>2026-10-05</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/FQMMQX3BFR473NUCIPK5IIFXKO3X6QKO/">Xiong and Wang's PKC Forum post</a> and <a href="https://github.com/acprk/ngcc-round1-cryptanalysis/tree/6756633dfa096e729aeeb4dfce281ad5f345091f/tsuov-impl-failopen">pinned verification package</a></p>
+<p>The same <code>Expand_mu</code> allocates <code>TSUOV_SEED_LEN + message_length</code> without checking addition overflow, then copies the public-key seed and the caller's message. A near-<code>SIZE_MAX</code> length wraps to a small allocation before the fixed seed copy already writes beyond it. AddressSanitizer confirms this in every parameter set and both implementation families. The trigger requires a caller to claim a message of at least <code>2^64 - TSUOV_SEED_LEN</code> bytes without providing such a buffer. That is not a valid message in a 64-bit address space, so no realistic remote write path is demonstrated; the missing length check is Low.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">./sign-31/reproduce_implementation_findings.sh
+</code></pre>
+<h2 class="issue-heading" id="sign-31-6-noncanonical-field-encodings-create-signature-and-public-key-aliases">sign-31-6: Noncanonical field encodings create signature and public-key aliases</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>TSUOV specification and all reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Distinct encodings of the same signature or public key; no fresh-message forgery</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance; independently confirmed by LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
+<tr><th>Date</th><td>2026-10-05</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/FQMMQX3BFR473NUCIPK5IIFXKO3X6QKO/">Xiong and Wang's PKC Forum post</a> and <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/URUZDSBCKZL4XEH7FC7RL6GNW75OG6GI/">LK-PQC-Hunter's independent post</a></p>
+<p>Five-bit field encodings do not reject the unused value 31 for <code>q=31</code>. Unpacking reduces it to zero, so changing zero coefficients to 31 in a signature or the <code>P3</code> portion of a public key preserves verification. The specification's <code>Unpack</code> step likewise has no canonical rejection and claims EUF-CMA only (Algorithm 3, physical p. 21; Theorem 6.12, p. 30). The 128/256 implementations additionally ignore final public-key padding bits.</p>
+<p>All coefficient rewrites cross-verified between reference and optimized implementations for all three sets, with honest controls. Signature and public-key aliases undermine canonical identity and strong unforgeability, though the specification claims only EUF-CMA and no fresh-message forgery follows. As with other accepted encoding aliases, this is Medium.</p>
+<h3 id="reproducing_5">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">./sign-31/reproduce_implementation_findings.sh
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

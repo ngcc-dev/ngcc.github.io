@@ -191,3 +191,109 @@ ATLAS_FULL=1 NGCC_SAGE_PYTHON=/path/to/python make -C sign-15 exploit-spec-key-r
 ```
 
 The first command uses stored recovered `s1` and `t0` values to rebuild an equivalent key and forgery, then verifies the fresh-message signature and changed-message control. It does not rederive that key from signatures. The second regenerates three million signatures and performs the full public recovery; it needs NumPy, SciPy, and fpylll. Our 12-worker run took 996 seconds; a smaller CPU may take substantially longer.
+
+## sign-15-8: The specified ATLAS-512 challenge space is only 322.67 bits
+
+Severity: Critical
+Status: Confirmed
+Layer: Design
+Affected: ATLAS-512 specification and conforming implementations
+Discovery: Trivial
+Exploitation: About 2^322.67 message trials for a public-key-only forgery
+Credit: Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance
+Date: 2026-10-05
+Original source: [Xiong and Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/6UCTMUFIYLOOSNAC7EAMPVCVANTUTFEO/) and [pinned verification package](https://github.com/acprk/ngcc-round1-cryptanalysis/tree/5e9e7d7b325415cd355a81667f3bd825a0a8a935/morning-atlas-512-shortfalls)
+
+ATLAS-512 specifies `n=512,kappa=60`, so its signed sparse challenge space has `binomial(512,60)*2^60 = 2^322.67` elements, far below the 512-bit claim. The smallest `kappa` meeting the claim is 118. An attacker chooses a challenge and a short response, computes the verifier's public commitment, then grinds messages until their hash maps to that challenge. No signing query is needed. Verification checks the response bound and challenge equality, so the specified challenge space caps this forgery at about `2^322.67` trials. This is a counting bound, not a full-width run.
+
+### Reproducing
+
+```sh
+./sign-15/reproduce_512_shortfalls.sh
+```
+
+## sign-15-9: A 384-bit message representative caps ATLAS-256 and -512 forgery security at 192 bits
+
+Severity: Critical
+Status: Confirmed
+Layer: Design
+Affected: ATLAS-256 and ATLAS-512 specification, reference, and optimized implementations
+Discovery: Trivial
+Exploitation: About 2^192 hash evaluations and one signing query
+Credit: Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance
+Date: 2026-10-05
+Original source: [Xiong and Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/6UCTMUFIYLOOSNAC7EAMPVCVANTUTFEO/) and [pinned verification package](https://github.com/acprk/ngcc-round1-cryptanalysis/tree/5e9e7d7b325415cd355a81667f3bd825a0a8a935/morning-atlas-512-shortfalls)
+
+The specification fixes `CRH` to 48 output bytes and uses the unsalted `mu=CRH(tr||M)` before challenge generation; every implementation sets `CRHBYTES=48`. A generic `mu` collision costs about `2^192`. A signature requested on one colliding message then verifies unchanged on the other, breaking EUF-CMA below both targets. Replacing the placeholder hash with an ideal 384-bit-output primitive does not change this bound.
+
+The witness truncates only this output to five bytes, finds a collision from the public key, transfers a real signature to the never-signed message, and requires a control message to reject.
+
+### Reproducing
+
+```sh
+./sign-15/reproduce_512_shortfalls.sh
+```
+
+## sign-15-10: A 256-bit mask key and key-generation seed cap ATLAS-512
+
+Severity: Critical
+Status: Confirmed
+Layer: Design
+Affected: ATLAS-512 specification, reference, and optimized implementations
+Discovery: Moderate
+Exploitation: About 2^256 trials, below the 512-bit claim
+Credit: Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance
+Date: 2026-10-05
+Original source: [Xiong and Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/6UCTMUFIYLOOSNAC7EAMPVCVANTUTFEO/) and [pinned verification package](https://github.com/acprk/ngcc-round1-cryptanalysis/tree/5e9e7d7b325415cd355a81667f3bd825a0a8a935/morning-atlas-512-shortfalls)
+
+The specification samples a 256-bit `K` and deterministically derives each signing mask from `K`, the message representative, and a small counter. One known signature lets an attacker enumerate `K`; the correct guess makes `z-y=c*s1` short and yields the signing secret. Independently, the implementation draws only 256 bits in key generation and derives the complete key pair from that value (`SIG_lwrdsa512.c:191–206`), so public-key matching recovers an equivalent secret in `2^256` key generations.
+
+The witness checks the key-generation-seed path: it observes the single 256-bit draw and uses a 14-bit scale model to enumerate it from the public key, recover the exact key, and produce an accepted signature. The mask-key route is argued from the specified 256-bit dimension; it is not executed. No full-width search was run.
+
+### Reproducing
+
+```sh
+./sign-15/reproduce_512_shortfalls.sh
+```
+
+## sign-15-11: Unused challenge-sign bits violate ATLAS strong unforgeability
+
+Severity: High
+Status: Confirmed
+Layer: Implementation
+Affected: ATLAS-128, ATLAS-256, and ATLAS-512 reference and optimized implementations; ATLAS-192 uses all 64 bits
+Discovery: Trivial
+Exploitation: One valid signature; unused-bit flips give distinct accepted encodings
+Credit: Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance
+Date: 2026-10-05
+Original source: [Xiong and Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/6UCTMUFIYLOOSNAC7EAMPVCVANTUTFEO/) and [pinned verification package](https://github.com/acprk/ngcc-round1-cryptanalysis/tree/5e9e7d7b325415cd355a81667f3bd825a0a8a935/morning-atlas-512-shortfalls)
+
+The packed challenge contains a 64-bit sign word, but `unpack_sig` reads only `kappa` sign bits. Flipping bits 31–63 for ATLAS-128 or 60–63 for ATLAS-256/512 therefore changes the signature byte string without changing its decoded challenge. Every such flip verified in both implementation families; flipping a used bit rejected. ATLAS-512 also allocates one extra signature byte (`params.h:165`) that `pack_sig` and `unpack_sig` never use (`packing.c:211–338`); changing that byte leaves verification unchanged. These aliases violate the specification's SUF-CMA claim (Definition 3.4 and Theorem 3.1, physical p. 12), though they do not sign a fresh message.
+
+### Reproducing
+
+```sh
+./sign-15/reproduce_512_shortfalls.sh
+make -C sign-15 lib/liblwrdsa512.so
+python3 sign-15/reproduce_last_byte_alias.py
+```
+
+## sign-15-12: A byte-wide position index shrinks the ATLAS-512 challenge image
+
+Severity: Critical
+Status: Confirmed
+Layer: Implementation
+Affected: ATLAS-512 reference and optimized implementations
+Discovery: Trivial
+Exploitation: At most 2^277.45 candidate challenges, below the 512-bit target
+Credit: Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance
+Date: 2026-10-05
+Original source: [Xiong and Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/6UCTMUFIYLOOSNAC7EAMPVCVANTUTFEO/) and [pinned verification package](https://github.com/acprk/ngcc-round1-cryptanalysis/tree/5e9e7d7b325415cd355a81667f3bd825a0a8a935/morning-atlas-512-shortfalls)
+
+The specified sampler draws positions from `0..i` for `i` up to 511, but the code reads only one byte per draw (`SIG_lwrdsa512.c:151–152`). Positions 256–451 can never be selected, leaving at most 316 reachable positions. With `kappa=60`, the implemented challenge image is bounded by `binomial(316,60)*2^60 = 2^277.45`. Even increasing the specified weight alone would leave the byte-index defect and a below-target image. The witness checks the actual output support and computes the image bound; a full-width forgery search was not run.
+
+### Reproducing
+
+```sh
+./sign-15/reproduce_512_shortfalls.sh
+```

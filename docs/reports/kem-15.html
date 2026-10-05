@@ -48,6 +48,29 @@
 <pre><code class="language-sh">python3 kem-15/reproduce_interop.py
 </code></pre>
 <p>The script builds both archived implementations in a temporary directory, exercises their submitted APIs with one common seed, checks self-decapsulation controls, and prints <code>CONFIRMED kem-15-1</code> only when both cross-decapsulations silently derive the wrong key.</p>
+<h2 class="issue-heading" id="kem-15-2-optimized-equality-check-accepts-invalid-ciphertexts-and-exposes-a-plaintext-checking-oracle">kem-15-2: Optimized equality check accepts invalid ciphertexts and exposes a plaintext-checking oracle</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All five AVX2 trees: FLIT128/256/512 and FIPS202 OPT128/256</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Near-total bypass of re-encryption rejection on unrelated ciphertexts and a plaintext-checking oracle; full key recovery not executed</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-05</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/KP5VT25RVLVRBBJ7XFPTNMBSZV6PIPEN/">Xiong and Wang's PKC Forum post</a> and <a href="https://github.com/acprk/ngcc-round1-cryptanalysis/tree/b1b7e429d4bf9673f2040f3e951df827a6d0dbe6/flit-opt-verify-fo-bypass">pinned verification package</a>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/35QW2XAG22E5OWR3HRRVTD5HAKEDITQH/">FLIT team's response</a></p>
+<p>The optimized equality check folds ciphertext differences into a 64-bit word and returns <code>(-(int64_t)r)&gt;&gt;63</code> (<code>verify.c:18–38</code>). This is not a nonzero test and also invokes signed-overflow undefined behavior at <code>r=2^63</code>. In our GCC 15.2 build it reported equality for about 3.8% of ciphertexts with one to four random bit changes; reference and patched controls rejected all of them. When differences cover the high bit of the accumulator, rejection fails, so the flaw is much broader for unrelated ciphertexts. A direct 2,000-pair comparison of unrelated 1 KiB inputs found 2,000 false equalities, while the reference rejected all 2,000. The exact frequency and edge behavior depend on the compiler.</p>
+<p>The result feeds the Fujisaki–Okamoto conditional move (<code>kem.c:107–126</code>). When an invalid ciphertext is misclassified, decapsulation returns the accept-path KDF value. For five such ciphertexts the witness recomputed that value from the public key, ciphertext, and correct plaintext guess, while a wrong guess failed. The mismatch return is <code>-1</code> rather than <code>1</code>, so the AVX2 conditional move's byte mask becomes <code>0x01</code>; even correctly rejected ciphertexts replace only bit 0 of each pre-key byte with the rejection secret. The witness establishes a plaintext-checking oracle, but no FLIT key-recovery or IND-CCA distinguisher has been completed, so the finding is High.</p>
+<h3 id="proposed-fixes_1">Proposed fixes</h3>
+<p>The original post proposes replacing the return expression with a constant-time 64-bit nonzero fold whose result is exactly 0 or 1. The <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/35QW2XAG22E5OWR3HRRVTD5HAKEDITQH/">FLIT team reports</a> applying <code>return (int)((r | (UINT64_C(0) - r)) &gt;&gt; 63);</code> in all five affected trees, states that this also restores the conditional move, and reports that the corrected trees pass its rejection-path regression tests with unchanged KATs. The change is committed to the team's <a href="https://github.com/MathEternal/FLIT-NGCC">GitHub repository</a>; the frozen submission is unchanged. This records the fix without evaluating it.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">./kem-15/reproduce_fo_bypass.sh
+python3 kem-15/reproduce_random_compare.py
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

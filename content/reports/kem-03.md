@@ -67,3 +67,49 @@ make -C kem-03 reproduce-public-supports
 ```
 
 The first command checks all four archived samplers, the `S=H*X+Y` source operation, and the reported reduced-system dimensions. The second builds the submitted 128-bit source and recovers `X` from five fresh public keys, requiring full rank and a byte-for-byte match with the secret used to generate each key. The ePrint reports the full 40-key elimination and unmodified-decapsulation experiment; its solver code was not released with the paper.
+
+## kem-03-4: Merged support reduces rank-decoding costs below three claimed levels
+
+Severity: Critical
+Status: Confirmed
+Layer: Design
+Affected: BAG-Loong-256, -384, and -512 parameters
+Discovery: Non-trivial
+Exploitation: Estimated classical key-recovery costs of 2^243.3, 2^333.3, and 2^432.9; no full-parameter attack executed
+Credit: Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance
+Date: 2026-10-05
+Original source: [Xiong and Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/632RW5CKKAJXJ3GBZ7ZL6RE7CLCVYFGQ/) and [pinned verification package](https://github.com/acprk/ngcc-round1-cryptanalysis/tree/e6b324cd411758ab5b18a08de999276bf260c9aa/bag-loong-spec-level)
+
+The key-recovery instance in Equation (1) (physical p. 11) has error rank `t1+t2-g`, because the two secret supports share a `g`-dimensional intersection. The matching analysis in §3.3.2 and Table 5 instead price two separate ranks `t1+t2`. Measured keys have merged ranks 6, 8, 9, and 10. CryptographicEstimators 2.1.1 gives conservative `omega=3` key-recovery costs of `2^243.3`, `2^333.3`, and `2^432.9` for the affected sets, all below their claims. The reported `2^403.5` cost for the 512-bit ciphertext instance assumes its message is already known, so it is not used here as a KEM attack bound. The 128-bit set clears its target for `omega=2.81` and 3.
+
+The pinned package measures the merged ranks on 80 keys generated with the specified random-support distribution and performs complete reduced-scale recovery of `X`, with controls for the separate-block model. It does not execute the full-parameter attacks.
+
+### Reproducing
+
+```sh
+./kem-03/reproduce_spec_level.sh
+```
+
+The wrapper pins the public package, runs real-key measurements, reduced-scale recoveries, and a closed-form certificate. It checks the quoted estimator values only when the optional CryptographicEstimators dependency is installed; the full package can take about 20 minutes.
+
+## kem-03-5: The decoder rejects supports permitted by the specification
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: All four BAG-Loong reference parameter sets when sampling follows Algorithm 1
+Discovery: Non-trivial
+Exploitation: The submitted decoder rejected 40/40 honest KEM round trips with a specification-conforming sampler
+Credit: Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance
+Date: 2026-10-05
+Original source: [Xiong and Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/632RW5CKKAJXJ3GBZ7ZL6RE7CLCVYFGQ/) and [pinned verification package](https://github.com/acprk/ngcc-round1-cryptanalysis/tree/e6b324cd411758ab5b18a08de999276bf260c9aa/bag-loong-spec-level)
+
+Algorithm 1 (physical p. 6) requires random support spaces with the listed intersection. Under that distribution, the residual tail has support dimension 38, 57, 72, and 82, above the listed `epsilon=33,51,66,73` (Table 1, physical p. 8). In the specification `epsilon` is a minimum used in the failure analysis, not a maximum decoder input. The reference decoder nevertheless rejects when `tail_rank > epsilon` (`augabidulin.c:145`).
+
+A source-level repair that makes the sampler follow all three specified support conditions exceeded `epsilon` in 400/400 ciphertexts and produced 0/40 correct KEM round trips. In a separate patch check, lifting the decoder's cap restored 40/40; the archived nonconforming sampler also passed 40/40. This is a limited implementation/conformance defect, not a failure of the specified augmented code. The tail-dimension formula follows Liu, ePrint 2026/2223, Equation (10).
+
+### Reproducing
+
+```sh
+./kem-03/reproduce_spec_level.sh
+```

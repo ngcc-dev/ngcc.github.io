@@ -42,9 +42,11 @@ level.
 
 The [ZEN team's response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/7XCR7SE5QOJMFTS5WCNTKX7FA7M7P3TC/) agrees that the generic FO reduction's worst-case correctness notion and the concrete averaged failure behavior differ. It argues that locating a key-dependent bad message from the public key adds substantial work, and reports tighter classical/quantum failure-attack estimates above the three claimed levels even with a `2^80` online-query budget. Those new estimates were not independently reproduced here and do not repair the displayed theorem/model mismatch in the frozen submission, so the classification is unchanged.
 
+In a [further exchange](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/7AZUGDUDXVOCOZWBZOKZY7VTONGO7KNH/), Leo Luo notes that the secret-key/message product in an NTRU construction makes the worst-case message quantifier especially relevant. The [ZEN team's detailed reply](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/5NWIBJAG6GXLFAXULECPIB2XQVKMXOKQ/) explicitly accepts the frozen reduction/model gap and reports revised first-failure lower bounds above its targets, together with separate average-message, independent-key worst-case, and worst-case DFR estimates. We have not reproduced those revised estimates. They do not change the Medium proof-gap classification of the submitted analysis.
+
 ### Proposed fixes
 
-The team states that it will clarify the distinction, provide tighter DFR estimates, and investigate proofs using average- or independent-key correctness. This records the proposal without evaluating it.
+The team states that it will clarify the quantifiers and assumptions, revise the concrete DFR and failure-attack analysis, and investigate both worst-case and independent-key proof approaches. This records the proposal without evaluating it.
 
 ### Reproducing
 

@@ -44,6 +44,26 @@
 <pre><code class="language-sh">python3 sign-13/reproduce_shake_capacity.py
 </code></pre>
 <p>The witness checks the archived SHAKE256 selection and message-hash path, then executes the exact two-block construction in a scaled permutation model. It certifies the structural attack and full-size generic bound; it does not perform the infeasible <code>2^256</code> search.</p>
+<h2 class="issue-heading" id="sign-13-2-malformed-public-key-padding-aborts-verification">sign-13-2: Malformed public-key padding aborts verification</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All eight profiles in both reference and optimized GreatWall source trees under the submitted build flags</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Unauthenticated process termination; no forgery or memory corruption</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
+<tr><th>Date</th><td>2026-10-05</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/UQJ3OVIKPMTVMMWCZ2NDHRUH2HYSHVS7/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p><code>sig_verify</code> unpacks attacker-supplied public-key field elements through <code>faest_unpack_public_key</code> (<code>faest.c:117–130,609</code>). The <code>block*_load_to_block</code> routines use live <code>assert</code> statements to validate their high padding bits; the submitted Makefiles do not define <code>NDEBUG</code>. A noncanonical public key therefore terminates the verifier with <code>SIGABRT</code> instead of returning invalid.</p>
+<p>The local witness generates an honest GreatWall128f signature, checks the valid-key control, and forks a fresh verifier for each of the two field-padding bytes. Both mutations reach the assertion and abort. The forum post additionally reproduced reference 128s/128f/192f/256f and optimized 128f; the remaining source trees contain the analogous assertion.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C sign-13
+python3 sign-13/reproduce_malformed_pk_abort.py
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
