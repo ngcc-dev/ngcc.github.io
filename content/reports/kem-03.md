@@ -80,7 +80,7 @@ Credit: Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance
 Date: 2026-10-05
 Original source: [Xiong and Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/632RW5CKKAJXJ3GBZ7ZL6RE7CLCVYFGQ/) and [pinned verification package](https://github.com/acprk/ngcc-round1-cryptanalysis/tree/e6b324cd411758ab5b18a08de999276bf260c9aa/bag-loong-spec-level)
 
-The key-recovery instance in Equation (1) (physical p. 11) has error rank `t1+t2-g`, because the two secret supports share a `g`-dimensional intersection. The matching analysis in §3.3.2 and Table 5 instead price two separate ranks `t1+t2`. Measured keys have merged ranks 6, 8, 9, and 10. CryptographicEstimators 2.1.1 gives conservative `omega=3` key-recovery costs of `2^243.3`, `2^333.3`, and `2^432.9` for the affected sets, all below their claims. The reported `2^403.5` cost for the 512-bit ciphertext instance assumes its message is already known, so it is not used here as a KEM attack bound. The 128-bit set clears its target for `omega=2.81` and 3.
+The key-recovery instance in Equation (1) (physical p. 11) has error rank `t1+t2-g`, because the two secret supports share a `g`-dimensional intersection. The §3.3.2 PRR analysis (physical p. 18) and Table 5's PRR column (physical p. 22) instead price two separate ranks `t1+t2`; the OJ and MM columns (Theorems 3.2 and 3.4, physical pp. 16 and 22) already use `t1+t2-g`. Measured keys have merged ranks 6, 8, 9, and 10. In bit operations, the wrapper's closed-form `omega=2.807` calculation gives `2^246.9`, `2^330.7`, and `2^430.3` for the affected sets; CryptographicEstimators 2.1.1 gives conservative `omega=3` key-recovery costs of `2^243.3`, `2^333.3`, and `2^432.9`. Both sets of estimates are below their claims. The reported `2^403.5` cost for the 512-bit ciphertext instance assumes its message is already known, so it is not used here as a KEM attack bound. The 128-bit set clears its target for `omega=2.81` and 3.
 
 The pinned package measures the merged ranks on 80 keys generated with the specified random-support distribution and performs complete reduced-scale recovery of `X`, with controls for the separate-block model. It does not execute the full-parameter attacks.
 
@@ -90,7 +90,7 @@ The pinned package measures the merged ranks on 80 keys generated with the speci
 ./kem-03/reproduce_spec_level.sh
 ```
 
-The wrapper pins the public package, runs real-key measurements, reduced-scale recoveries, and a closed-form certificate. It checks the quoted estimator values only when the optional CryptographicEstimators dependency is installed; the full package can take about 20 minutes.
+The wrapper pins the public package, runs real-key measurements, reduced-scale recoveries, and a closed-form certificate. It always checks the closed-form `omega=2.807` values `2^246.9/2^330.7/2^430.3`; it checks the estimator values only when the optional CryptographicEstimators dependency is installed, otherwise printing `NOT CHECKED`. The full package can take about 20 minutes.
 
 ## kem-03-5: The decoder rejects supports permitted by the specification
 
@@ -104,9 +104,9 @@ Credit: Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance
 Date: 2026-10-05
 Original source: [Xiong and Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/632RW5CKKAJXJ3GBZ7ZL6RE7CLCVYFGQ/) and [pinned verification package](https://github.com/acprk/ngcc-round1-cryptanalysis/tree/e6b324cd411758ab5b18a08de999276bf260c9aa/bag-loong-spec-level)
 
-Algorithm 1 (physical p. 6) requires random support spaces with the listed intersection. Under that distribution, the residual tail has support dimension 38, 57, 72, and 82, above the listed `epsilon=33,51,66,73` (Table 1, physical p. 8). In the specification `epsilon` is a minimum used in the failure analysis, not a maximum decoder input. The reference decoder nevertheless rejects when `tail_rank > epsilon` (`augabidulin.c:145`).
+Algorithm 1 (physical p. 6) requires random support spaces with the listed intersection. Under that distribution, the residual tail has support dimension 38, 57, 72, and 82, above the listed `epsilon=33,51,66,73` (Table 1, physical p. 8). In the specification `epsilon` is a minimum used in the failure analysis, not a maximum decoder input. The reference decoder nevertheless rejects when `tail_rank > epsilon` (`augabidulin.c:30,140,145`).
 
-A source-level repair that makes the sampler follow all three specified support conditions exceeded `epsilon` in 400/400 ciphertexts and produced 0/40 correct KEM round trips. In a separate patch check, lifting the decoder's cap restored 40/40; the archived nonconforming sampler also passed 40/40. This is a limited implementation/conformance defect, not a failure of the specified augmented code. The tail-dimension formula follows Liu, ePrint 2026/2223, Equation (10).
+A source-level repair that makes the sampler follow all three specified support conditions exceeded `epsilon` in 400/400 ciphertexts and produced 0/40 correct KEM round trips. In a separate local patch check not exercised by the wrapper, lifting the decoder's cap restored 40/40; the archived nonconforming sampler also passed 40/40. This is a limited implementation/conformance defect, not a failure of the specified augmented code. The tail-dimension formula follows Liu, ePrint 2026/2223, Equation (10).
 
 ### Reproducing
 

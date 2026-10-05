@@ -53,9 +53,9 @@ Date: 2026-10-05
 Original source: [Xiong and Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/UG3RQWO5YK7WWMXM5KRTAE457PKIAI62/) and [pinned verification package](https://github.com/acprk/ngcc-round1-cryptanalysis/tree/fffffb85983e71188430446f526ede3a211aded0/lynxer-bavc-tccr-multitarget)
 Follow-up source: [Lynxer team's response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/LI25TET2FFYRZPAZQLLQAYHDN7V7NGOJ/)
 
-Within one BAVC tree, every expansion uses the same `(s,iv)` tweak; the bit entering `TCCR` selects an output block, not a node position (`tccr.c:13–55`, `bavc.c:50–64`). The non-padding nodes published in `decom_I`, at most `T_open`, are therefore simultaneous targets for one enumeration of a hidden parent. A hit reconstructs the hidden leaf, `u_0`, the witness, and its first `lambda` bits—the OWF signing key. This contradicts the single-target argument in §8.2.2 (physical pp. 68–69); the construction and opening are specified in §§5.4.1 and 5.9.8.
+Within one BAVC tree, every expansion uses the same `(s,iv)` tweak; the bit entering `TCCR` selects an output block, not a node position (reference `tccr.c:13–55`, `bavc.c:50–64`; optimized `prgs.hpp:494–540`). The non-padding nodes published in `decom_I`, at most `T_open`, are therefore simultaneous targets for one enumeration of a hidden parent. A hit reconstructs the hidden leaf, `u_0`, the witness, and its first `lambda` bits—the OWF signing key. This contradicts the single-target argument in §8.2.2 (physical pp. 68–69); the construction and opening are specified in §§5.4.1 (p. 34) and 5.9.8 (p. 51).
 
-For a signature containing `T` actual targets this costs about `2^lambda/(T+1)`. The `T_open` maxima give optimistic thresholds near `2^248.2`, `2^375.6`, and `2^503.2`; a concrete transcript must use its actual target count. The pinned package checks the tree relations and, separately, demonstrates a scaled key recovery and fresh-message forgery through the leaf-commitment route described below. The full-width tree-node enumeration is a theoretical below-target attack, not a practical forgery demonstration.
+For a signature containing `T` actual targets this costs about `2^lambda/(T+1)`. The `T_open` maxima give optimistic thresholds near `2^248.2`, `2^375.6`, and `2^503.2`; a concrete transcript must use its actual target count. Each candidate parent changes the TCCR key `x_R||iv`, so a candidate test costs about one key schedule and one block-cipher call (§5.9.8, physical p. 51). The pinned package checks the tree relations and separately demonstrates a scaled key recovery and fresh-message forgery by targeting the public leaf commitments. The full-width tree-node enumeration is a theoretical below-target attack, not a practical forgery demonstration; its costs miss the 256-, 384-, and 512-bit claims, hence Critical. For the 160-bit profiles the analogous cost is about `2^153`, above the NGCC 128-bit target but below Lynxer's stated 160-bit aim (§6.1, physical p. 53).
 
 ### Proposed fixes
 
@@ -67,7 +67,7 @@ The Lynxer team proposes redefining the tweaks as node-index tweaks. Xiong and W
 ./sign-14/reproduce_tccr_multitarget.sh
 ```
 
-## sign-14-3: Fixed leaf-commitment tweaks give a second multi-target key-recovery route
+## sign-14-3: Fixed leaf-commitment tweaks enable multi-target key recovery
 
 Severity: Critical
 Status: Confirmed
@@ -79,9 +79,9 @@ Credit: Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance; leaf-commitmen
 Date: 2026-10-05
 Original source: [Xiong and Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/UG3RQWO5YK7WWMXM5KRTAE457PKIAI62/), [leaf-index follow-up](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/MMFK7Z4EON66VU7Z3DCJ4QGVFDWMRYCB/), and [pinned verification package](https://github.com/acprk/ngcc-round1-cryptanalysis/tree/fffffb85983e71188430446f526ede3a211aded0/lynxer-bavc-tccr-multitarget)
 
-The independent leaf commitment discards any node identity and calls `prg_2_lambda(seed,iv,0)` for every leaf (`bavc.c:85–91,142–150`). One signature publishes a hidden-leaf commitment for each of `tau` VOLE instances. An enumeration can therefore test each candidate against all `tau` public commitments at once. A hit reconstructs the hidden leaf; the public correction values then give `u_0` and the witness, whose first `lambda` bits are the signing key.
+The independent leaf commitment discards any node identity and calls `prg_2_lambda(seed,iv,0)` for every leaf (`bavc.c:85–91,142–150`; archived optimized `vector_com.inc:1090–1115`). One signature publishes a hidden-leaf commitment for each of `tau` VOLE instances (§5.4.7, physical p. 38; §8.2.3, physical p. 69). An enumeration can therefore test each candidate against all `tau` public commitments at once. A hit reconstructs the hidden leaf; the public correction values then give `u_0` and the witness, whose first `lambda` bits are the signing key.
 
-The resulting cost is about `2^lambda/tau`, below the 256-, 384-, and 512-bit claims by about 4.5–6.2 bits. This route remains if only the internal TCCR nodes are retweaked; the leaf PRG also needs instance or leaf separation. No full-width search was run.
+The resulting cost is about `2^lambda/tau`, below the 256-, 384-, and 512-bit claims by about 4.5–6.2 bits. The leaf commitment is computed by a separate PRG call, not by the TCCR tree expansion, so this route does not depend on the tree's TCCR tweak. For the 160-bit profiles the cost is about `2^156`, above the NGCC 128-bit target but below Lynxer's stated 160-bit aim (§6.1, physical p. 53). No full-width search was run.
 
 ### Proposed fixes
 
@@ -106,7 +106,7 @@ Exploitation: At one signing query the submitted bound gives about 22, 117, 116,
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-10-05
 
-Theorem 9.13 (physical p. 115) includes a quantum TCCR term `O(D/2^(lambda-n))`, independent of the attacker's work. Lemma 9.11 (physical pp. 90–92) uses `D=(2 ceil(log2 L)+5) tau`, doubles the TCCR advantage, and multiplies by the number of commitments. Theorem 9.5 (physical pp. 92–93) sets that number to the signing-query count `Q_sig`.
+Theorem 9.13 (physical p. 115) includes a quantum TCCR term `O(D/2^(lambda-n))`, independent of the attacker's work, where `n` is the block size: 128 for the 160/256-bit profiles and 256 for the 384/512-bit profiles (Table 7, physical p. 57). Lemma 9.11 (physical pp. 91–92) uses `D=(2 ceil(log2 L)+5) tau`, doubles the TCCR advantage, and multiplies by the number of commitments. Theorem 9.5 (physical pp. 92–93) sets that number to the signing-query count `Q_sig`.
 
 Ignoring the hidden constant, this contributes about `2 Q_sig D/2^(lambda-n)` to the quantum EUF-CMA bound. At `Q_sig=1` its negative base-two logarithm is 22.1/21.7, 117.3/116.9, 116.6/116.3, and 244.2/243.8 bits for the s/f profiles. All miss their target, and the term grows with signatures. These are proof-error exponents, not attack costs. The bound is not shown tight, and this finding demonstrates no forgery or key recovery.
 

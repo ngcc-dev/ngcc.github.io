@@ -41,10 +41,13 @@ in-register shuffles, AES instructions, Beneš networks, or a published
 constant-time decoder or solver). The same meaning applies to hash functions.</p>
 <h3 id="proposed-fixes">Proposed fixes</h3>
 <p>When a report records a publicly proposed change, it places that material in a
-<code>Proposed fixes</code> subsection and attributes the source. The subsection records
-the proposal only: it does not assert that the change is correct, sufficient,
-complete, compatible, or secure, and it does not alter the report's evaluation
-of the archived submission. A revised candidate requires separate evaluation.</p>
+<code>Proposed fixes</code> subsection and attributes the source. An attributed attack or
+concern about a proposed change may also be noted there, clearly scoped to the
+proposal. Such material does not assert that a revision is correct, sufficient,
+complete, compatible, or secure, and does not alter the archived submission's
+classification. A revised candidate requires separate evaluation. Reports may
+state that one attack route is independent of another mechanism, but must not
+turn that observation alone into a verdict on a proposed fix.</p>
 <h2 id="discovery-effort">Discovery effort</h2>
 <p>Discovery effort is independent of severity, reproducibility, attribution, and
 whether AI tools assisted the work. Rate the reasoning needed to find and
@@ -66,6 +69,11 @@ finding, reassess Discovery using the extension's reasoning.</p>
 <h2 id="security-targets">Security targets</h2>
 <p>A finding is judged against the NGCC call as well as the specification's own
 claims. The canonical documents are published by ICCS.</p>
+<p>For Round 1, the submitted specification and implementations are the evaluation
+target. An attack that requires a proposed modification does not change the
+submitted candidate's headline severity or status. Discussion of that modified
+variant belongs under <code>Proposed fixes</code>, clearly distinguished from evidence
+about the submission.</p>
 <p>Public-key algorithms (<a href="https://www.niccs.org.cn/niccs/Notice/pc/content/content_1975896137741635584.html">call</a>):</p>
 <ul>
 <li>Classical security of 128, 256 and 512 bits, with quantum security of at least
@@ -431,7 +439,7 @@ with the same external dimensions and parameters. A finding that disappears
 solely on that replacement is not publishable.</p>
 </main>
 <footer class="site-footer">
-<p>Updated 2026-10-05 12:55:28 UTC · Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Updated 2026-10-05 13:24:54 UTC · Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
 <p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
 </footer>
 </body>

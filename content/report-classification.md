@@ -30,10 +30,13 @@ constant-time decoder or solver). The same meaning applies to hash functions.
 ### Proposed fixes
 
 When a report records a publicly proposed change, it places that material in a
-`Proposed fixes` subsection and attributes the source. The subsection records
-the proposal only: it does not assert that the change is correct, sufficient,
-complete, compatible, or secure, and it does not alter the report's evaluation
-of the archived submission. A revised candidate requires separate evaluation.
+`Proposed fixes` subsection and attributes the source. An attributed attack or
+concern about a proposed change may also be noted there, clearly scoped to the
+proposal. Such material does not assert that a revision is correct, sufficient,
+complete, compatible, or secure, and does not alter the archived submission's
+classification. A revised candidate requires separate evaluation. Reports may
+state that one attack route is independent of another mechanism, but must not
+turn that observation alone into a verdict on a proposed fix.
 
 ## Discovery effort
 
@@ -59,6 +62,12 @@ finding, reassess Discovery using the extension's reasoning.
 
 A finding is judged against the NGCC call as well as the specification's own
 claims. The canonical documents are published by ICCS.
+
+For Round 1, the submitted specification and implementations are the evaluation
+target. An attack that requires a proposed modification does not change the
+submitted candidate's headline severity or status. Discussion of that modified
+variant belongs under `Proposed fixes`, clearly distinguished from evidence
+about the submission.
 
 Public-key algorithms ([call](https://www.niccs.org.cn/niccs/Notice/pc/content/content_1975896137741635584.html)):
 
