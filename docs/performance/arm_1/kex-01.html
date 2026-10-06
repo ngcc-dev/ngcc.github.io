@@ -463,14 +463,18 @@
 </tbody>
 </table></div>
 <h2 id="6-transmission-and-storage-overhead">6. Transmission and storage overhead</h2>
+<p>Bandwidth counts all specified protocol messages and each required public key once. Public keys are transmitted bytes too. Certificates and transport framing are excluded. The published raw timing records are unchanged.</p>
+<p>Only the responder's long-term public key is required; this exchange does not authenticate the initiator as a mutually authenticated protocol would.</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
 <th>instance</th>
 <th>passes</th>
-<th>messages (bytes)</th>
-<th>total</th>
-<th>long-term pk / sk</th>
+<th>messages (bytes; raw API)</th>
+<th>protocol-message bytes</th>
+<th>public key A / B</th>
+<th>bandwidth (bytes)</th>
+<th>long-term sk (API cap)</th>
 <th>shared secret</th>
 </tr>
 </thead>
@@ -480,7 +484,9 @@
 <td>2</td>
 <td>1600 / 800</td>
 <td>2400</td>
-<td>800 / 1600</td>
+<td>0 / 800</td>
+<td>3200</td>
+<td>1600</td>
 <td>32</td>
 </tr>
 <tr>
@@ -488,7 +494,9 @@
 <td>2</td>
 <td>3168 / 1600</td>
 <td>4768</td>
-<td>1568 / 3136</td>
+<td>0 / 1568</td>
+<td>6336</td>
+<td>3136</td>
 <td>32</td>
 </tr>
 <tr>
@@ -496,7 +504,9 @@
 <td>2</td>
 <td>6528 / 3136</td>
 <td>9664</td>
-<td>3392 / 6784</td>
+<td>0 / 3392</td>
+<td>13056</td>
+<td>6784</td>
 <td>64</td>
 </tr>
 </tbody>

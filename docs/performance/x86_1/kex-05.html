@@ -555,14 +555,17 @@
 </tbody>
 </table></div>
 <h2 id="6-transmission-and-storage-overhead">6. Transmission and storage overhead</h2>
+<p>Bandwidth counts all specified protocol messages and each required public key once. Public keys are transmitted bytes too. Certificates and transport framing are excluded. The published raw timing records are unchanged.</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
 <th>instance</th>
 <th>passes</th>
-<th>messages (bytes)</th>
-<th>total</th>
-<th>long-term pk / sk</th>
+<th>messages (bytes; raw API)</th>
+<th>protocol-message bytes</th>
+<th>public key A / B</th>
+<th>bandwidth (bytes)</th>
+<th>long-term sk (API cap)</th>
 <th>shared secret</th>
 </tr>
 </thead>
@@ -572,7 +575,9 @@
 <td>4</td>
 <td>792 / 776 / 1235 / 1235</td>
 <td>4038</td>
-<td>1264 / 2288</td>
+<td>1264 / 1264</td>
+<td>6566</td>
+<td>2288</td>
 <td>16</td>
 </tr>
 <tr>
@@ -580,7 +585,9 @@
 <td>4</td>
 <td>1352 / 1384 / 2485 / 2485</td>
 <td>7706</td>
-<td>1952 / 3680</td>
+<td>1952 / 1952</td>
+<td>11610</td>
+<td>3680</td>
 <td>32</td>
 </tr>
 <tr>
@@ -588,7 +595,9 @@
 <td>4</td>
 <td>2952 / 3016 / 5101 / 5101</td>
 <td>16170</td>
-<td>3648 / 7104</td>
+<td>3648 / 3648</td>
+<td>23466</td>
+<td>7104</td>
 <td>64</td>
 </tr>
 </tbody>

@@ -536,6 +536,7 @@
 </tbody>
 </table></div>
 <h2 id="6-transmission-and-storage-overhead">6. Transmission and storage overhead</h2>
+<p>External public-key, ciphertext and signature sizes follow the curated <code>performance/external_sizes.csv</code> catalog; secret-key and shared-secret lengths remain API figures. See <a href="../external-size-audit.html">the size audit</a> for disagreements.</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -550,52 +551,53 @@
 <td><code>Rhyme-SHAKE-128</code></td>
 <td>800</td>
 <td>11072</td>
-<td>5156</td>
+<td>1483 ≈ nominal</td>
 </tr>
 <tr>
 <td><code>Rhyme-SHAKE-256</code></td>
 <td>1824</td>
 <td>22336</td>
-<td>10308</td>
+<td>3258 ≈ nominal</td>
 </tr>
 <tr>
 <td><code>Rhyme-SHAKE-384</code></td>
 <td>2720</td>
 <td>45760</td>
-<td>14436</td>
+<td>4743 ≈ nominal</td>
 </tr>
 <tr>
 <td><code>Rhyme-SHAKE-512</code></td>
 <td>3872</td>
 <td>44864</td>
-<td>20612</td>
+<td>7002 ≈ nominal</td>
 </tr>
 <tr>
 <td><code>Rhyme-SM3-128</code></td>
 <td>800</td>
 <td>11072</td>
-<td>5156</td>
+<td>1483 ≈ nominal</td>
 </tr>
 <tr>
 <td><code>Rhyme-SM3-256</code></td>
 <td>1824</td>
 <td>22336</td>
-<td>10308</td>
+<td>3258 ≈ nominal</td>
 </tr>
 <tr>
 <td><code>Rhyme-SM3-384</code></td>
 <td>2720</td>
 <td>45760</td>
-<td>14436</td>
+<td>4743 ≈ nominal</td>
 </tr>
 <tr>
 <td><code>Rhyme-SM3-512</code></td>
 <td>3872</td>
 <td>44864</td>
-<td>20612</td>
+<td>7002 ≈ nominal</td>
 </tr>
 </tbody>
 </table></div>
+<p>The submitted signature API reports a buffer capacity, not a fixed transmitted length; the nominal figure above is the specification's representative size, and actual signatures vary.</p>
 <h2 id="symmetric-primitives">Symmetric primitives</h2>
 <p><a href="../symmetric-survey.html">Survey</a> verdict: <strong>instance-dependent</strong> — SM3 sets: counter XOF on sm3hash; SHAKE sets: own FIPS 202 (bypass)</p>
 <p>Share of each operation spent in the ICCS placeholder hash functions and in the ICCS DRNG (reference build, measured in the same run with link-time wrappers):</p>

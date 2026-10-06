@@ -1161,14 +1161,17 @@
 </tbody>
 </table></div>
 <h2 id="6-transmission-and-storage-overhead">6. Transmission and storage overhead</h2>
+<p>Bandwidth counts all specified protocol messages and each required public key once. Public keys are transmitted bytes too. Certificates and transport framing are excluded. The published raw timing records are unchanged.</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
 <th>instance</th>
 <th>passes</th>
-<th>messages (bytes)</th>
-<th>total</th>
-<th>long-term pk / sk</th>
+<th>messages (bytes; raw API)</th>
+<th>protocol-message bytes</th>
+<th>public key A / B</th>
+<th>bandwidth (bytes)</th>
+<th>long-term sk (API cap)</th>
 <th>shared secret</th>
 </tr>
 </thead>
@@ -1178,7 +1181,9 @@
 <td>2</td>
 <td>1230 / 1230</td>
 <td>2460</td>
-<td>615 / 1246</td>
+<td>615 / 615</td>
+<td>3690</td>
+<td>1246</td>
 <td>16</td>
 </tr>
 <tr>
@@ -1186,7 +1191,9 @@
 <td>2</td>
 <td>1127 / 1127</td>
 <td>2254</td>
-<td>615 / 1246</td>
+<td>615 / 615</td>
+<td>3484</td>
+<td>1246</td>
 <td>16</td>
 </tr>
 <tr>
@@ -1194,7 +1201,9 @@
 <td>2</td>
 <td>1344 / 1344</td>
 <td>2688</td>
-<td>672 / 1360</td>
+<td>672 / 672</td>
+<td>4032</td>
+<td>1360</td>
 <td>16</td>
 </tr>
 <tr>
@@ -1202,7 +1211,9 @@
 <td>2</td>
 <td>2458 / 2458</td>
 <td>4916</td>
-<td>1229 / 2490</td>
+<td>1229 / 1229</td>
+<td>7374</td>
+<td>2490</td>
 <td>32</td>
 </tr>
 <tr>
@@ -1210,7 +1221,9 @@
 <td>2</td>
 <td>2253 / 2253</td>
 <td>4506</td>
-<td>1229 / 2490</td>
+<td>1229 / 1229</td>
+<td>6964</td>
+<td>2490</td>
 <td>32</td>
 </tr>
 <tr>
@@ -1218,7 +1231,9 @@
 <td>2</td>
 <td>2688 / 2688</td>
 <td>5376</td>
-<td>1344 / 2720</td>
+<td>1344 / 1344</td>
+<td>8064</td>
+<td>2720</td>
 <td>32</td>
 </tr>
 <tr>
@@ -1226,7 +1241,9 @@
 <td>2</td>
 <td>4916 / 4916</td>
 <td>9832</td>
-<td>2458 / 4980</td>
+<td>2458 / 2458</td>
+<td>14748</td>
+<td>4980</td>
 <td>64</td>
 </tr>
 <tr>
@@ -1234,7 +1251,9 @@
 <td>2</td>
 <td>4506 / 4506</td>
 <td>9012</td>
-<td>2458 / 4980</td>
+<td>2458 / 2458</td>
+<td>13928</td>
+<td>4980</td>
 <td>64</td>
 </tr>
 <tr>
@@ -1242,7 +1261,9 @@
 <td>2</td>
 <td>5376 / 5376</td>
 <td>10752</td>
-<td>2688 / 5440</td>
+<td>2688 / 2688</td>
+<td>16128</td>
+<td>5440</td>
 <td>64</td>
 </tr>
 </tbody>

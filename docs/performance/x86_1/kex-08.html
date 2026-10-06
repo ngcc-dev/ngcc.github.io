@@ -278,14 +278,18 @@
 </tbody>
 </table></div>
 <h2 id="6-transmission-and-storage-overhead">6. Transmission and storage overhead</h2>
+<p>Bandwidth counts all specified protocol messages and each required public key once. Public keys are transmitted bytes too. Certificates and transport framing are excluded. The published raw timing records are unchanged.</p>
+<p>NIIKE sends no separate protocol message but requires both public keys. The specification lists 4,030/8,943-byte keys, while the submitted external encodings are 4,160/8,960 bytes; this table uses the latter.</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
 <th>instance</th>
 <th>passes</th>
-<th>messages (bytes)</th>
-<th>total</th>
-<th>long-term pk / sk</th>
+<th>messages (bytes; raw API)</th>
+<th>protocol-message bytes</th>
+<th>public key A / B</th>
+<th>bandwidth (bytes)</th>
+<th>long-term sk (API cap)</th>
 <th>shared secret</th>
 </tr>
 </thead>
@@ -295,7 +299,9 @@
 <td>0</td>
 <td>0 / 0 / 0</td>
 <td>0</td>
-<td>4160 / 196</td>
+<td>4160 / 4160</td>
+<td>8320</td>
+<td>196</td>
 <td>64</td>
 </tr>
 <tr>
@@ -303,7 +309,9 @@
 <td>0</td>
 <td>0 / 0 / 0</td>
 <td>0</td>
-<td>8960 / 336</td>
+<td>8960 / 8960</td>
+<td>17920</td>
+<td>336</td>
 <td>128</td>
 </tr>
 </tbody>

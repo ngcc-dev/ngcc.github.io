@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: External-size accounting for the published performance tables</title>
+<link rel="icon" type="image/png" href="../assets/mag-glass.png">
+<link rel="stylesheet" href="../assets/style.css?v=808fa5e8">
+</head>
+<body>
+<header class="site-header">
+<a class="brand" href="../index.html"><img class="brand-icon" src="../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev</a>
+<nav><a href="../index.html">Home</a><a href="../reports/index.html">Security</a><a href="../performance/index.html">Performance</a><a href="../constant-time/index.html">Side-Channel</a></nav>
+</header>
+<main class="">
+<!-- synchronized from harness: performance/EXTERNAL_SIZE_AUDIT.md -->
+<h1 id="external-size-accounting-for-the-published-performance-tables">External-size accounting for the published performance tables</h1>
+<p>The timing records measure computation, not a network serialization format.
+The tables therefore take KEM public-key/ciphertext and signature public-key/
+signature sizes from the separate <a href="https://github.com/ngcc-dev/ngcc-harness/blob/main/performance/external_sizes.csv"><code>external_sizes.csv</code></a>
+catalog (394 measured KEM/signature instances), and KEX message/public-key
+sizes from <a href="https://github.com/ngcc-dev/ngcc-harness/blob/main/performance/kex_bandwidth.csv"><code>kex_bandwidth.csv</code></a> (57 measured instances).
+These catalogs were reconciled with the frozen submissions' size tables,
+serialization descriptions and the per-candidate <code>pseudocode.md</code> comparisons;
+the benchmark API size fields are comparison checks, not the source of the
+published external-size values.</p>
+<p><code>encoded</code> means the size of the submitted external encoding. For signatures
+whose size varies, <code>maximum-variable</code> means the submitted encoding's maximum, while
+<code>nominal-variable</code> means a representative size stated in the frozen
+specification, not a guarantee for each signature. We use that basis only
+where the specification supplies a concrete nominal length and the submitted
+serializer returns variable lengths (Rhyme and Sigurd). Otherwise the
+submitted encoding's maximum is the conservative available figure (Aigis,
+Phoenix and Tins). These different bases are visible on the candidate pages;
+the ordered pages mark nominal values with <code>≈</code>. Secret-key and shared-secret
+sizes are not ordering metrics.</p>
+<h2 id="specification-versus-submitted-external-encoding">Specification versus submitted external encoding</h2>
+<p>The catalog uses the submitted encoding when a size table describes a
+different format. The per-candidate analyses provide the source details:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>candidate</th>
+<th>externally relevant difference</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/ngcc-dev/ngcc-harness/blob/main/kem-03/pseudocode.md">BAG-Loong</a></td>
+<td>The four ciphertext encodings append 16 bytes beyond the specification's listed ciphertext sizes.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/ngcc-dev/ngcc-harness/blob/main/kem-04/pseudocode.md">BAG-Piglet</a></td>
+<td>Each submitted ciphertext is 16 bytes longer than the specification's table.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/ngcc-dev/ngcc-harness/blob/main/kem-12/pseudocode.md">CTL</a></td>
+<td>The CTL-3329-2048 ciphertext is 2,353 rather than the table's 2,305 bytes.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/ngcc-dev/ngcc-harness/blob/main/kem-19/pseudocode.md">Lore</a></td>
+<td>Submitted public keys and ciphertexts are larger than the four listed specification sizes. The catalog uses the submitted sizes: these are zero-padded worst-case buffers, but decapsulation requires the full fixed-length ciphertext on the wire.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/ngcc-dev/ngcc-harness/blob/main/kem-31/pseudocode.md">QIMEN-PIKE</a></td>
+<td>The three submitted public keys are 16/3/3 bytes shorter than the specification's table.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/ngcc-dev/ngcc-harness/blob/main/kem-32/pseudocode.md">QCTM</a></td>
+<td>§3.2's stated public-key sizes disagree with the §3.3 formula and §8.2 serialization; the formula itself is consistent with the submitted encoding, which the catalog uses.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/ngcc-dev/ngcc-harness/blob/main/sign-19/pseudocode.md">Phoenix</a></td>
+<td>The 192s submitted signature is 13,332 bytes versus 13,356 in the specification's table.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/ngcc-dev/ngcc-harness/blob/main/sign-22/pseudocode.md">Rhyme</a></td>
+<td>The signature API advertises padded caps of 5,156/10,308/14,436/20,612 bytes. Actual signatures are variable and near the specification's nominal 1,483/3,258/4,743/7,002 bytes; those nominal values are used and marked approximate.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/ngcc-dev/ngcc-harness/blob/main/sign-24/pseudocode.md">Sigurd</a></td>
+<td>The API reports worst-case signature buffers of 62,868/137,412/494,532 bytes, but signatures are variable-length. The catalog uses the specification's ≈25,108/74,756/282,692-byte representative sizes, marked approximate.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/ngcc-dev/ngcc-harness/blob/main/sign-30/pseudocode.md">TRINE</a></td>
+<td>Submitted signatures add a salt of 32/64/128 bytes relative to the listed values. The 512-ShortSig public key is also two bytes larger.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/ngcc-dev/ngcc-harness/blob/main/sign-31/pseudocode.md">TSUOV</a></td>
+<td>The submitted 128-bit public key is one byte larger than the specification's table.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/ngcc-dev/ngcc-harness/blob/main/sign-32/pseudocode.md">UVW-Sign</a></td>
+<td>The public-key and signature figures in Table 1 are information-entropy lower bounds, not the submitted encoding. The catalog uses the actual encoded sizes.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Three other cases matter when reading the table, without changing its external
+size: <a href="https://github.com/ngcc-dev/ngcc-harness/blob/main/sign-01/pseudocode.md">Aigis-Sig+</a>,
+<a href="https://github.com/ngcc-dev/ngcc-harness/blob/main/sign-19/pseudocode.md">Phoenix</a> and <a href="https://github.com/ngcc-dev/ngcc-harness/blob/main/sign-29/pseudocode.md">Tins</a> have
+variable-length signatures represented by their submitted encoding's maxima. The
+<a href="https://github.com/ngcc-dev/ngcc-harness/blob/main/sign-15/pseudocode.md">ATLAS</a> signer reports an incorrect output length
+after writing the specified signature bytes; the catalog counts the encoded
+signature, not that erroneous returned length. <a href="https://github.com/ngcc-dev/ngcc-harness/blob/main/sign-33/pseudocode.md">VDOO</a>
+prints rounded public-key sizes in its specification; the catalog uses exact
+encoded byte counts.</p>
+<h2 id="key-exchange">Key exchange</h2>
+<p>Protocol-message bytes omit separately delivered public keys. Bandwidth counts
+both the messages and the required public keys once each. Public keys are
+transmitted bytes in this KEX model. KEM encapsulation instead assumes the
+recipient's public key is available and lists its size separately.
+Certificates, identities supplied out of band and transport framing are
+excluded. ADKEX and MAMBA-NIKE use only the responder's long-term
+public key; CreTAKE's KEM/signature combinations use different key lengths on
+the two sides. These responder-only cases do not authenticate the initiator
+and are not directly comparable to mutually authenticated exchanges. NIIKE
+has no separate protocol message, but requires both public keys. Its
+specification lists 4,030/8,943-byte public keys, whereas the submitted encoding uses
+4,160/8,960 bytes; the catalog counts the latter.</p>
+<p><a href="https://github.com/ngcc-dev/ngcc-harness/blob/main/kex-02/pseudocode.md">AFS-KEX</a> has two accounting differences. Figure 3
+sends fresh composite public keys in the first two passes; its protocol-message
+totals are 3,136/6,080/12,288 bytes. The submitted API instead pre-distributes
+each composite key alongside its long-term base key and sends only
+1,568/2,944/6,016 bytes as protocol messages. Counting the base public keys
+once, bandwidth is identical under either arrangement: 4,704/9,216/18,560 bytes.
+The catalog shows the specification's protocol-message totals. Separately, the
+submitted pass-4 function emits no message but leaves its output-length
+parameter unchanged. The benchmark initialized that parameter to its buffer
+capacity, producing phantom traffic; the submitted KAT initializes it to
+zero. The original raw timing and metadata files remain unchanged.</p>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
+</footer>
+</body>
+</html>

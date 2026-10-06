@@ -20,13 +20,14 @@
 <p>Independent measurements of the NGCC Round 1 implementations on one Qualcomm Oryon core (fixed 2.71 GHz (governor performance, minimum = maximum), boost off, SMT none).</p>
 <ul>
 <li><strong>Cycles</strong> are the mean of all timed calls in five trials, normally with each trial in a fresh process.</li>
-<li><strong>Symmetric %</strong>, in parentheses after each public-key cycle count, is the measured share of an operation spent specifically in the ICCS placeholder functions (<code>pseudohash</code>, <code>pseudoXOF</code>, <code>sm3hash</code>). It excludes the ICCS DRNG and candidates' own hash primitives, so a low value does not necessarily mean little symmetric-cryptography work; see the <a href="../symmetric-survey.html">symmetric cryptography survey</a>. <code>(??%)</code> means that the candidate uses its own symmetric primitives and no ICCS-facing backend was measured.</li>
+<li><strong>Symmetric %</strong> is the cycle share in ICCS placeholder hashes, excluding the DRNG and candidates' own hashes. <code>(??%)</code> means no ICCS-facing backend was measured. See the <a href="../symmetric-survey.html">symmetric survey</a>.</li>
 <li>Each instance links to its <strong>performance report</strong> with KAT status, all measured implementations, sizes, memory proxies, primitive profiles, and raw-evidence references.</li>
 <li>See <a href="method.html">method and limitations</a>. These are independent measurements, not submitter self-assessments or NICCS results.</li>
 <li><strong>Notation:</strong> <code>–</code> means not measured, <code>n=</code> marks fewer than 100 timed calls, and ⚠ marks an instance whose submitted KAT vectors are not reproduced by the submitted code.</li>
-<li><strong>Sizes</strong> in bytes (public key, ciphertext, signature; for key exchange, the total transferred in all protocol messages) are the implementation's own API constants and do not depend on the system.</li>
-<li><strong>Hash rows</strong> give three message sizes; each parenthesized value is the candidate's cycles divided by those of the ICCS <code>pseudoXOF</code> with the same output width and message length, timed the same way (<a href="#iccs-hash-helpers">ICCS helpers</a>). It is a relative speed, not an estimate of a production replacement.</li>
-<li><strong>Scope:</strong> the table keeps reference parameter sets, suppressing a non-ICCS backend only when an ICCS-facing backend of the same candidate was measured. Notes flag important caveats; additional measured variants remain on the linked instance reports.</li>
+<li><strong>Sizes</strong> use a separate catalog, not timing-record buffer sizes. <code>≈</code> marks a nominal variable-length signature; other variable signatures use their maximum.</li>
+<li><strong>KEX bandwidth</strong> counts protocol messages plus required public keys once. KEM public-key size is listed separately from ciphertext size. Certificates and transport framing are excluded; see the <a href="../external-size-audit.html">size audit</a> for discrepancies and AFS-KEX's API mapping.</li>
+<li><strong>Hash rows</strong> show three message sizes. Parentheses give cycles relative to the same-width, same-length ICCS <code>pseudoXOF</code> (<a href="#iccs-hash-helpers">helper timings</a>), not a production replacement estimate.</li>
+<li><strong>Scope:</strong> reference sets are shown. When both ICCS and non-ICCS backends were measured, the non-ICCS one stays on the candidate report; notes flag caveats.</li>
 </ul>
 <h2 id="ordered-measurements">Ordered measurements</h2>
 <p><a href="ranking-128.html">128-bit</a> · <a href="ranking-256.html">256-bit</a> · <a href="ranking-512.html">512-bit</a></p>
@@ -1408,7 +1409,7 @@
 <td>3.80 M (81%)</td>
 <td>274.1 k (64%)</td>
 <td>800</td>
-<td>5156</td>
+<td>≈1483</td>
 <td>hash backend varies by instance</td>
 </tr>
 <tr>
@@ -1419,7 +1420,7 @@
 <td>14.01 M (82%)</td>
 <td>785.3 k (66%)</td>
 <td>1824</td>
-<td>10308</td>
+<td>≈3258</td>
 <td>hash backend varies by instance</td>
 </tr>
 <tr>
@@ -1430,7 +1431,7 @@
 <td>20.72 M (80%)</td>
 <td>1.40 M (65%)</td>
 <td>2720</td>
-<td>14436</td>
+<td>≈4743</td>
 <td>hash backend varies by instance</td>
 </tr>
 <tr>
@@ -1441,7 +1442,7 @@
 <td>29.31 M (81%)</td>
 <td>1.89 M (62%)</td>
 <td>3872</td>
-<td>20612</td>
+<td>≈7002</td>
 <td>hash backend varies by instance</td>
 </tr>
 <tr>
@@ -1485,7 +1486,7 @@
 <td>30.42 M (36%)</td>
 <td>13.81 M (45%)</td>
 <td>112</td>
-<td>62868</td>
+<td>≈25108</td>
 <td>–</td>
 </tr>
 <tr>
@@ -1496,7 +1497,7 @@
 <td>282.20 M (62%)</td>
 <td>100.85 M (51%)</td>
 <td>212</td>
-<td>137412</td>
+<td>≈74756</td>
 <td>–</td>
 </tr>
 <tr>
@@ -1507,7 +1508,7 @@
 <td>2.78 G (63%)</td>
 <td>922.08 M (34%)</td>
 <td>435</td>
-<td>494532</td>
+<td>≈282692</td>
 <td>–</td>
 </tr>
 <tr>
@@ -2096,8 +2097,8 @@
 <td>–</td>
 <td>–</td>
 <td>–</td>
-<td>–</td>
-<td>–</td>
+<td>656</td>
+<td>896</td>
 <td>KAT/output caveat; see candidate page</td>
 </tr>
 <tr>
@@ -2107,8 +2108,8 @@
 <td>–</td>
 <td>–</td>
 <td>–</td>
-<td>–</td>
-<td>–</td>
+<td>1312</td>
+<td>1664</td>
 <td>KAT/output caveat; see candidate page</td>
 </tr>
 <tr>
@@ -2118,8 +2119,8 @@
 <td>–</td>
 <td>–</td>
 <td>–</td>
-<td>–</td>
-<td>–</td>
+<td>2624</td>
+<td>3584</td>
 <td>KAT/output caveat; see candidate page</td>
 </tr>
 <tr>
@@ -2305,8 +2306,8 @@
 <td>–</td>
 <td>–</td>
 <td>–</td>
-<td>–</td>
-<td>–</td>
+<td>1078</td>
+<td>2092</td>
 <td>KAT/output caveat; see candidate page</td>
 </tr>
 <tr>
@@ -2316,8 +2317,8 @@
 <td>–</td>
 <td>–</td>
 <td>–</td>
-<td>–</td>
-<td>–</td>
+<td>1735</td>
+<td>3406</td>
 <td>KAT/output caveat; see candidate page</td>
 </tr>
 <tr>
@@ -2327,8 +2328,8 @@
 <td>–</td>
 <td>–</td>
 <td>–</td>
-<td>–</td>
-<td>–</td>
+<td>3573</td>
+<td>7082</td>
 <td>KAT/output caveat; see candidate page</td>
 </tr>
 <tr>
@@ -2338,8 +2339,8 @@
 <td>–</td>
 <td>–</td>
 <td>–</td>
-<td>–</td>
-<td>–</td>
+<td>1954</td>
+<td>3844</td>
 <td>KAT/output caveat; see candidate page</td>
 </tr>
 <tr>
@@ -2349,8 +2350,8 @@
 <td>–</td>
 <td>–</td>
 <td>–</td>
-<td>–</td>
-<td>–</td>
+<td>3345</td>
+<td>6626</td>
 <td>KAT/output caveat; see candidate page</td>
 </tr>
 <tr>
@@ -2360,8 +2361,8 @@
 <td>–</td>
 <td>–</td>
 <td>–</td>
-<td>–</td>
-<td>–</td>
+<td>6562</td>
+<td>13060</td>
 <td>KAT/output caveat; see candidate page</td>
 </tr>
 <tr>
@@ -2448,8 +2449,8 @@
 <td>–</td>
 <td>–</td>
 <td>–</td>
-<td>–</td>
-<td>–</td>
+<td>3866</td>
+<td>7332</td>
 <td>KAT/output caveat; see candidate page</td>
 </tr>
 <tr>
@@ -2459,8 +2460,8 @@
 <td>–</td>
 <td>–</td>
 <td>–</td>
-<td>–</td>
-<td>–</td>
+<td>10780</td>
+<td>15304</td>
 <td>KAT/output caveat; see candidate page</td>
 </tr>
 <tr>
@@ -2470,8 +2471,8 @@
 <td>–</td>
 <td>–</td>
 <td>–</td>
-<td>–</td>
-<td>–</td>
+<td>28866</td>
+<td>40926</td>
 <td>KAT/output caveat; see candidate page</td>
 </tr>
 <tr>
@@ -4024,7 +4025,7 @@
 <th>algorithm</th>
 <th>instance performance report</th>
 <th>exchange cycles (sym %)</th>
-<th>transferred (B)</th>
+<th>bandwidth (bytes)</th>
 <th>notes</th>
 </tr>
 </thead>
@@ -4034,7 +4035,7 @@
 <td><a href="../../reports/kex-01.html">ADKEX (Authenticated Ding Key Exchange)</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-01/kex-01-spec.pdf" title="Open the kex-01 specification PDF">PDF</a></td>
 <td><a href="kex-01.html"><code>ADKEX-128</code></a></td>
 <td>1.33 M (69%)</td>
-<td>2400</td>
+<td>3200</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4042,7 +4043,7 @@
 <td><a href="../../reports/kex-01.html">ADKEX (Authenticated Ding Key Exchange)</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-01/kex-01-spec.pdf" title="Open the kex-01 specification PDF">PDF</a></td>
 <td><a href="kex-01.html"><code>ADKEX-256</code></a></td>
 <td>3.64 M (73%)</td>
-<td>4768</td>
+<td>6336</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4050,7 +4051,7 @@
 <td><a href="../../reports/kex-01.html">ADKEX (Authenticated Ding Key Exchange)</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-01/kex-01-spec.pdf" title="Open the kex-01 specification PDF">PDF</a></td>
 <td><a href="kex-01.html"><code>ADKEX-512</code></a></td>
 <td>12.84 M (84%)</td>
-<td>9664</td>
+<td>13056</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4058,7 +4059,7 @@
 <td><a href="../../reports/kex-02.html">AFS-KEX</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-02/kex-02-spec.pdf" title="Open the kex-02 specification PDF">PDF</a></td>
 <td><a href="kex-02.html"><code>AFS_KEX_C128</code></a></td>
 <td>2.38 M (69%)</td>
-<td>3136</td>
+<td>4704</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4066,7 +4067,7 @@
 <td><a href="../../reports/kex-02.html">AFS-KEX</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-02/kex-02-spec.pdf" title="Open the kex-02 specification PDF">PDF</a></td>
 <td><a href="kex-02.html"><code>AFS_KEX_C256</code></a></td>
 <td>5.84 M (76%)</td>
-<td>5888</td>
+<td>9216</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4074,7 +4075,7 @@
 <td><a href="../../reports/kex-02.html">AFS-KEX</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-02/kex-02-spec.pdf" title="Open the kex-02 specification PDF">PDF</a></td>
 <td><a href="kex-02.html"><code>AFS_KEX_C512</code></a></td>
 <td>20.05 M (81%)</td>
-<td>12032</td>
+<td>18560</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4082,7 +4083,7 @@
 <td><a href="../../reports/kex-03.html">CreTAKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-03/kex-03-spec.pdf" title="Open the kex-03 specification PDF">PDF</a></td>
 <td><a href="kex-03.html"><code>CreTAKE-K2K-PLAC128</code></a></td>
 <td>1.69 M (74%)</td>
-<td>2450</td>
+<td>3510</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4090,7 +4091,7 @@
 <td><a href="../../reports/kex-03.html">CreTAKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-03/kex-03-spec.pdf" title="Open the kex-03 specification PDF">PDF</a></td>
 <td><a href="kex-03.html"><code>CreTAKE-K2K-PLAC256</code></a></td>
 <td>3.39 M (74%)</td>
-<td>4900</td>
+<td>7020</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4098,7 +4099,7 @@
 <td><a href="../../reports/kex-03.html">CreTAKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-03/kex-03-spec.pdf" title="Open the kex-03 specification PDF">PDF</a></td>
 <td><a href="kex-03.html"><code>CreTAKE-K2K-PLAC512</code></a></td>
 <td>12.12 M (82%)</td>
-<td>9284</td>
+<td>13516</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4106,7 +4107,7 @@
 <td><a href="../../reports/kex-03.html">CreTAKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-03/kex-03-spec.pdf" title="Open the kex-03 specification PDF">PDF</a></td>
 <td><a href="kex-03.html"><code>CreTAKE-K2K-PLAC512Star</code></a></td>
 <td>12.13 M (84%)</td>
-<td>10920</td>
+<td>15964</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4114,7 +4115,7 @@
 <td><a href="../../reports/kex-03.html">CreTAKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-03/kex-03-spec.pdf" title="Open the kex-03 specification PDF">PDF</a></td>
 <td><a href="kex-03.html"><code>CreTAKE-K2K-ZEN128</code></a></td>
 <td>1.43 M (59%)</td>
-<td>2151</td>
+<td>3381</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4122,7 +4123,7 @@
 <td><a href="../../reports/kex-03.html">CreTAKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-03/kex-03-spec.pdf" title="Open the kex-03 specification PDF">PDF</a></td>
 <td><a href="kex-03.html"><code>CreTAKE-K2K-ZEN256</code></a></td>
 <td>2.54 M (60%)</td>
-<td>4301</td>
+<td>6759</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4130,7 +4131,7 @@
 <td><a href="../../reports/kex-03.html">CreTAKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-03/kex-03-spec.pdf" title="Open the kex-03 specification PDF">PDF</a></td>
 <td><a href="kex-03.html"><code>CreTAKE-K2K-ZEN512</code></a></td>
 <td>7.65 M (68%)</td>
-<td>8602</td>
+<td>13518</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4138,7 +4139,7 @@
 <td><a href="../../reports/kex-03.html">CreTAKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-03/kex-03-spec.pdf" title="Open the kex-03 specification PDF">PDF</a></td>
 <td><a href="kex-03.html"><code>CreTAKE-K2S-PLAC128-BiT128</code></a></td>
 <td>3.62 M (72%)</td>
-<td>3314</td>
+<td>4892</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4146,7 +4147,7 @@
 <td><a href="../../reports/kex-03.html">CreTAKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-03/kex-03-spec.pdf" title="Open the kex-03 specification PDF">PDF</a></td>
 <td><a href="kex-03.html"><code>CreTAKE-K2S-PLAC256-BiT256</code></a></td>
 <td>7.19 M (75%)</td>
-<td>7076</td>
+<td>10280</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4154,7 +4155,7 @@
 <td><a href="../../reports/kex-03.html">CreTAKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-03/kex-03-spec.pdf" title="Open the kex-03 specification PDF">PDF</a></td>
 <td><a href="kex-03.html"><code>CreTAKE-K2S-PLAC512-BiT512</code></a></td>
 <td>25.06 M (79%)</td>
-<td>13931</td>
+<td>21103</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4162,7 +4163,7 @@
 <td><a href="../../reports/kex-03.html">CreTAKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-03/kex-03-spec.pdf" title="Open the kex-03 specification PDF">PDF</a></td>
 <td><a href="kex-03.html"><code>CreTAKE-K2S-ZEN128-BiT128</code></a></td>
 <td>3.40 M (69%)</td>
-<td>3143</td>
+<td>4806</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4170,7 +4171,7 @@
 <td><a href="../../reports/kex-03.html">CreTAKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-03/kex-03-spec.pdf" title="Open the kex-03 specification PDF">PDF</a></td>
 <td><a href="kex-03.html"><code>CreTAKE-K2S-ZEN256-BiT256</code></a></td>
 <td>6.80 M (72%)</td>
-<td>6733</td>
+<td>10106</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4178,7 +4179,7 @@
 <td><a href="../../reports/kex-03.html">CreTAKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-03/kex-03-spec.pdf" title="Open the kex-03 specification PDF">PDF</a></td>
 <td><a href="kex-03.html"><code>CreTAKE-K2S-ZEN512-BiT512</code></a></td>
 <td>22.34 M (76%)</td>
-<td>13249</td>
+<td>20763</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4186,7 +4187,7 @@
 <td><a href="../../reports/kex-03.html">CreTAKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-03/kex-03-spec.pdf" title="Open the kex-03 specification PDF">PDF</a></td>
 <td><a href="kex-03.html"><code>CreTAKE-S2K-BiT128-PLAC128</code></a></td>
 <td>3.66 M (72%)</td>
-<td>3314</td>
+<td>4892</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4194,7 +4195,7 @@
 <td><a href="../../reports/kex-03.html">CreTAKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-03/kex-03-spec.pdf" title="Open the kex-03 specification PDF">PDF</a></td>
 <td><a href="kex-03.html"><code>CreTAKE-S2K-BiT128-ZEN128</code></a></td>
 <td>3.56 M (68%)</td>
-<td>3143</td>
+<td>4806</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4202,7 +4203,7 @@
 <td><a href="../../reports/kex-03.html">CreTAKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-03/kex-03-spec.pdf" title="Open the kex-03 specification PDF">PDF</a></td>
 <td><a href="kex-03.html"><code>CreTAKE-S2K-BiT256-PLAC256</code></a></td>
 <td>7.41 M (74%)</td>
-<td>7076</td>
+<td>10280</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4210,7 +4211,7 @@
 <td><a href="../../reports/kex-03.html">CreTAKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-03/kex-03-spec.pdf" title="Open the kex-03 specification PDF">PDF</a></td>
 <td><a href="kex-03.html"><code>CreTAKE-S2K-BiT256-ZEN256</code></a></td>
 <td>6.95 M (71%)</td>
-<td>6733</td>
+<td>10106</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4218,7 +4219,7 @@
 <td><a href="../../reports/kex-03.html">CreTAKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-03/kex-03-spec.pdf" title="Open the kex-03 specification PDF">PDF</a></td>
 <td><a href="kex-03.html"><code>CreTAKE-S2K-BiT512-PLAC512</code></a></td>
 <td>27.37 M (78%)</td>
-<td>13931</td>
+<td>21103</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4226,7 +4227,7 @@
 <td><a href="../../reports/kex-03.html">CreTAKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-03/kex-03-spec.pdf" title="Open the kex-03 specification PDF">PDF</a></td>
 <td><a href="kex-03.html"><code>CreTAKE-S2K-BiT512-ZEN512</code></a></td>
 <td>23.45 M (75%)</td>
-<td>13249</td>
+<td>20763</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4234,7 +4235,7 @@
 <td><a href="../../reports/kex-03.html">CreTAKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-03/kex-03-spec.pdf" title="Open the kex-03 specification PDF">PDF</a></td>
 <td><a href="kex-03.html"><code>CreTAKE-S2S-BiT128-ePLAC128</code></a></td>
 <td>5.73 M (72%)</td>
-<td>4178</td>
+<td>6274</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4242,7 +4243,7 @@
 <td><a href="../../reports/kex-03.html">CreTAKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-03/kex-03-spec.pdf" title="Open the kex-03 specification PDF">PDF</a></td>
 <td><a href="kex-03.html"><code>CreTAKE-S2S-BiT128-eZEN128</code></a></td>
 <td>5.67 M (70%)</td>
-<td>4135</td>
+<td>6231</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4250,7 +4251,7 @@
 <td><a href="../../reports/kex-03.html">CreTAKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-03/kex-03-spec.pdf" title="Open the kex-03 specification PDF">PDF</a></td>
 <td><a href="kex-03.html"><code>CreTAKE-S2S-BiT256-ePLAC256</code></a></td>
 <td>11.34 M (74%)</td>
-<td>9252</td>
+<td>13540</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4258,7 +4259,7 @@
 <td><a href="../../reports/kex-03.html">CreTAKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-03/kex-03-spec.pdf" title="Open the kex-03 specification PDF">PDF</a></td>
 <td><a href="kex-03.html"><code>CreTAKE-S2S-BiT256-eZEN256</code></a></td>
 <td>11.27 M (73%)</td>
-<td>9165</td>
+<td>13453</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4266,7 +4267,7 @@
 <td><a href="../../reports/kex-03.html">CreTAKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-03/kex-03-spec.pdf" title="Open the kex-03 specification PDF">PDF</a></td>
 <td><a href="kex-03.html"><code>CreTAKE-S2S-BiT512-ePLAC512</code></a></td>
 <td>38.72 M (78%)</td>
-<td>18066</td>
+<td>28178</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4274,7 +4275,7 @@
 <td><a href="../../reports/kex-03.html">CreTAKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-03/kex-03-spec.pdf" title="Open the kex-03 specification PDF">PDF</a></td>
 <td><a href="kex-03.html"><code>CreTAKE-S2S-BiT512-eZEN512</code></a></td>
 <td>41.77 M (77%)</td>
-<td>17896</td>
+<td>28008</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4282,7 +4283,7 @@
 <td><a href="../../reports/kex-04.html">DKEX (Ding Key Exchange)</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-04/kex-04-spec.pdf" title="Open the kex-04 specification PDF">PDF</a></td>
 <td><a href="kex-04.html"><code>DKEX-128</code></a></td>
 <td>3.17 M (14%)</td>
-<td>6408</td>
+<td>9032</td>
 <td>mixed own/ICCS primitives</td>
 </tr>
 <tr>
@@ -4290,7 +4291,7 @@
 <td><a href="../../reports/kex-04.html">DKEX (Ding Key Exchange)</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-04/kex-04-spec.pdf" title="Open the kex-04 specification PDF">PDF</a></td>
 <td><a href="kex-04.html"><code>DKEX-256</code></a></td>
 <td>7.27 M (16%)</td>
-<td>12390</td>
+<td>17574</td>
 <td>mixed own/ICCS primitives</td>
 </tr>
 <tr>
@@ -4298,7 +4299,7 @@
 <td><a href="../../reports/kex-04.html">DKEX (Ding Key Exchange)</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-04/kex-04-spec.pdf" title="Open the kex-04 specification PDF">PDF</a></td>
 <td><a href="kex-04.html"><code>DKEX-512</code></a></td>
 <td>10.57 M (40%)</td>
-<td>15718</td>
+<td>20902</td>
 <td>mixed own/ICCS primitives</td>
 </tr>
 <tr>
@@ -4306,7 +4307,7 @@
 <td><a href="../../reports/kex-05.html">Loom</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-05/kex-05-spec.pdf" title="Open the kex-05 specification PDF">PDF</a></td>
 <td><a href="kex-05.html"><code>LoomKEX-128</code></a></td>
 <td>29.95 M (3.2%)</td>
-<td>4038</td>
+<td>6566</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4314,7 +4315,7 @@
 <td><a href="../../reports/kex-05.html">Loom</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-05/kex-05-spec.pdf" title="Open the kex-05 specification PDF">PDF</a></td>
 <td><a href="kex-05.html"><code>LoomKEX-256</code></a></td>
 <td>37.19 M (3.6%)</td>
-<td>7706</td>
+<td>11610</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4322,7 +4323,7 @@
 <td><a href="../../reports/kex-05.html">Loom</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-05/kex-05-spec.pdf" title="Open the kex-05 specification PDF">PDF</a></td>
 <td><a href="kex-05.html"><code>LoomKEX-512</code></a></td>
 <td>79.08 M (6.1%)</td>
-<td>16170</td>
+<td>23466</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4330,7 +4331,7 @@
 <td><a href="../../reports/kex-06.html">MAMBA-NIKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-06/kex-06-spec.pdf" title="Open the kex-06 specification PDF">PDF</a></td>
 <td><a href="kex-06.html"><code>MAMBA-NIKE-128</code></a></td>
 <td>6.83 M (??%)</td>
-<td>1568</td>
+<td>2752</td>
 <td>own symmetric primitives; placeholder share unavailable</td>
 </tr>
 <tr>
@@ -4338,7 +4339,7 @@
 <td><a href="../../reports/kex-06.html">MAMBA-NIKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-06/kex-06-spec.pdf" title="Open the kex-06 specification PDF">PDF</a></td>
 <td><a href="kex-06.html"><code>MAMBA-NIKE-192</code></a></td>
 <td>6.85 M (??%)</td>
-<td>1568</td>
+<td>2880</td>
 <td>own symmetric primitives; placeholder share unavailable</td>
 </tr>
 <tr>
@@ -4346,7 +4347,7 @@
 <td><a href="../../reports/kex-06.html">MAMBA-NIKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-06/kex-06-spec.pdf" title="Open the kex-06 specification PDF">PDF</a></td>
 <td><a href="kex-06.html"><code>MAMBA-NIKE-256</code></a></td>
 <td>6.90 M (??%)</td>
-<td>1568</td>
+<td>2880</td>
 <td>own symmetric primitives; placeholder share unavailable</td>
 </tr>
 <tr>
@@ -4354,7 +4355,7 @@
 <td><a href="../../reports/kex-06.html">MAMBA-NIKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-06/kex-06-spec.pdf" title="Open the kex-06 specification PDF">PDF</a></td>
 <td><a href="kex-06.html"><code>MAMBA-NIKE-384</code></a></td>
 <td>14.48 M (??%)</td>
-<td>3360</td>
+<td>6208</td>
 <td>own symmetric primitives; placeholder share unavailable</td>
 </tr>
 <tr>
@@ -4362,7 +4363,7 @@
 <td><a href="../../reports/kex-06.html">MAMBA-NIKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-06/kex-06-spec.pdf" title="Open the kex-06 specification PDF">PDF</a></td>
 <td><a href="kex-06.html"><code>MAMBA-NIKE-512</code></a></td>
 <td>14.56 M (??%)</td>
-<td>3360</td>
+<td>6208</td>
 <td>own symmetric primitives; placeholder share unavailable</td>
 </tr>
 <tr>
@@ -4370,7 +4371,7 @@
 <td><a href="../../reports/kex-07.html">NEV-AKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-07/kex-07-spec.pdf" title="Open the kex-07 specification PDF">PDF</a></td>
 <td><a href="kex-07.html"><code>NEV_AKE_512_769</code></a></td>
 <td>668.8 k (56%)</td>
-<td>2460</td>
+<td>3690</td>
 <td>alternative parameter set, detailed measurement only</td>
 </tr>
 <tr>
@@ -4378,7 +4379,7 @@
 <td><a href="../../reports/kex-07.html">NEV-AKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-07/kex-07-spec.pdf" title="Open the kex-07 specification PDF">PDF</a></td>
 <td><a href="kex-07.html"><code>NEV_AKE_512_769_C</code></a></td>
 <td>629.5 k (53%)</td>
-<td>2254</td>
+<td>3484</td>
 <td>alternative parameter set, detailed measurement only</td>
 </tr>
 <tr>
@@ -4386,7 +4387,7 @@
 <td><a href="../../reports/kex-07.html">NEV-AKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-07/kex-07-spec.pdf" title="Open the kex-07 specification PDF">PDF</a></td>
 <td><a href="kex-07.html"><code>NEV_AKE_512_1409</code></a></td>
 <td>825.0 k (64%)</td>
-<td>2688</td>
+<td>4032</td>
 <td>recommended R set, used in ordered measurements</td>
 </tr>
 <tr>
@@ -4394,7 +4395,7 @@
 <td><a href="../../reports/kex-07.html">NEV-AKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-07/kex-07-spec.pdf" title="Open the kex-07 specification PDF">PDF</a></td>
 <td><a href="kex-07.html"><code>NEV_AKE_1024_769</code></a></td>
 <td>1.35 M (53%)</td>
-<td>4916</td>
+<td>7374</td>
 <td>alternative parameter set, detailed measurement only</td>
 </tr>
 <tr>
@@ -4402,7 +4403,7 @@
 <td><a href="../../reports/kex-07.html">NEV-AKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-07/kex-07-spec.pdf" title="Open the kex-07 specification PDF">PDF</a></td>
 <td><a href="kex-07.html"><code>NEV_AKE_1024_769_C</code></a></td>
 <td>1.29 M (49%)</td>
-<td>4506</td>
+<td>6964</td>
 <td>alternative parameter set, detailed measurement only</td>
 </tr>
 <tr>
@@ -4410,7 +4411,7 @@
 <td><a href="../../reports/kex-07.html">NEV-AKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-07/kex-07-spec.pdf" title="Open the kex-07 specification PDF">PDF</a></td>
 <td><a href="kex-07.html"><code>NEV_AKE_1024_1409</code></a></td>
 <td>1.55 M (56%)</td>
-<td>5376</td>
+<td>8064</td>
 <td>recommended R set, used in ordered measurements</td>
 </tr>
 <tr>
@@ -4418,7 +4419,7 @@
 <td><a href="../../reports/kex-07.html">NEV-AKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-07/kex-07-spec.pdf" title="Open the kex-07 specification PDF">PDF</a></td>
 <td><a href="kex-07.html"><code>NEV_AKE_2048_769</code></a></td>
 <td>4.18 M (63%)</td>
-<td>9832</td>
+<td>14748</td>
 <td>alternative parameter set, detailed measurement only</td>
 </tr>
 <tr>
@@ -4426,7 +4427,7 @@
 <td><a href="../../reports/kex-07.html">NEV-AKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-07/kex-07-spec.pdf" title="Open the kex-07 specification PDF">PDF</a></td>
 <td><a href="kex-07.html"><code>NEV_AKE_2048_769_C</code></a></td>
 <td>3.91 M (60%)</td>
-<td>9012</td>
+<td>13928</td>
 <td>alternative parameter set, detailed measurement only</td>
 </tr>
 <tr>
@@ -4434,7 +4435,7 @@
 <td><a href="../../reports/kex-07.html">NEV-AKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-07/kex-07-spec.pdf" title="Open the kex-07 specification PDF">PDF</a></td>
 <td><a href="kex-07.html"><code>NEV_AKE_2048_1409</code></a></td>
 <td>4.69 M (61%)</td>
-<td>10752</td>
+<td>16128</td>
 <td>recommended R set, used in ordered measurements</td>
 </tr>
 <tr>
@@ -4442,7 +4443,7 @@
 <td><a href="../../reports/kex-08.html">NIIKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-08/kex-08-spec.pdf" title="Open the kex-08 specification PDF">PDF</a></td>
 <td><a href="kex-08.html"><code>NIIKE-lv128</code></a></td>
 <td>53.18 G (??%, n=15)</td>
-<td>0</td>
+<td>8320</td>
 <td>own symmetric primitives; placeholder share unavailable</td>
 </tr>
 <tr>
@@ -4450,7 +4451,7 @@
 <td><a href="../../reports/kex-08.html">NIIKE</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-08/kex-08-spec.pdf" title="Open the kex-08 specification PDF">PDF</a></td>
 <td><a href="kex-08.html"><code>NIIKE-lv256</code></a></td>
 <td>848.72 G (??%, n=1)</td>
-<td>0</td>
+<td>17920</td>
 <td>own symmetric primitives; placeholder share unavailable</td>
 </tr>
 <tr>
@@ -4458,7 +4459,7 @@
 <td><a href="../../reports/kex-09.html">TriQ-KEX</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-09/kex-09-spec.pdf" title="Open the kex-09 specification PDF">PDF</a></td>
 <td><a href="kex-09.html"><code>TriQ-KEX-128</code></a></td>
 <td>37.66 M (11%)</td>
-<td>14328</td>
+<td>18436</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4466,7 +4467,7 @@
 <td><a href="../../reports/kex-09.html">TriQ-KEX</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-09/kex-09-spec.pdf" title="Open the kex-09 specification PDF">PDF</a></td>
 <td><a href="kex-09.html"><code>TriQ-KEX-256</code></a></td>
 <td>217.58 M (5.3%)</td>
-<td>43760</td>
+<td>56416</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4474,7 +4475,7 @@
 <td><a href="../../reports/kex-09.html">TriQ-KEX</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-09/kex-09-spec.pdf" title="Open the kex-09 specification PDF">PDF</a></td>
 <td><a href="kex-09.html"><code>TriQ-KEX-384</code></a></td>
 <td>602.41 M (6.3%)</td>
-<td>85276</td>
+<td>109786</td>
 <td>–</td>
 </tr>
 <tr>
@@ -4482,7 +4483,7 @@
 <td><a href="../../reports/kex-09.html">TriQ-KEX</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kex-09/kex-09-spec.pdf" title="Open the kex-09 specification PDF">PDF</a></td>
 <td><a href="kex-09.html"><code>TriQ-KEX-512</code></a></td>
 <td>1.28 G (5.6%)</td>
-<td>137744</td>
+<td>177280</td>
 <td>–</td>
 </tr>
 </tbody>

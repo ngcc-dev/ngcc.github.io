@@ -271,6 +271,7 @@
 </tbody>
 </table></div>
 <h2 id="6-transmission-and-storage-overhead">6. Transmission and storage overhead</h2>
+<p>External public-key, ciphertext and signature sizes follow the curated <code>performance/external_sizes.csv</code> catalog; secret-key and shared-secret lengths remain API figures. See <a href="../external-size-audit.html">the size audit</a> for disagreements.</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -285,22 +286,23 @@
 <td><code>Sigurd-128</code></td>
 <td>112</td>
 <td>80</td>
-<td>62868</td>
+<td>25108 ≈ nominal</td>
 </tr>
 <tr>
 <td><code>Sigurd-256</code></td>
 <td>212</td>
 <td>128</td>
-<td>137412</td>
+<td>74756 ≈ nominal</td>
 </tr>
 <tr>
 <td><code>Sigurd-512</code></td>
 <td>435</td>
 <td>256</td>
-<td>494532</td>
+<td>282692 ≈ nominal</td>
 </tr>
 </tbody>
 </table></div>
+<p>The submitted signature API reports a buffer capacity, not a fixed transmitted length; the nominal figure above is the specification's representative size, and actual signatures vary.</p>
 <h2 id="symmetric-primitives">Symmetric primitives</h2>
 <p><a href="../symmetric-survey.html">Survey</a> verdict: <strong>ICCS-only</strong></p>
 <p>Share of each operation spent in the ICCS placeholder hash functions and in the ICCS DRNG (reference build, measured in the same run with link-time wrappers):</p>

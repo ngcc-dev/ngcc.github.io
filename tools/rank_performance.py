@@ -58,7 +58,7 @@ METRICS = {
     ),
     "kex": (
         ("exchange_cycles", "exchange cycles", "cycles"),
-        ("total_msg_bytes", "transferred", "bytes"),
+        ("bandwidth_bytes", "bandwidth", "bytes"),
     ),
     "hash": (
         ("hash_32_cycles", "32 B cycles", "cycles"),
@@ -111,6 +111,7 @@ class Entry:
     values: dict[str, float] = field(default_factory=dict)
     hash_shares: dict[str, float] = field(default_factory=dict)
     xof_ratios: dict[str, float] = field(default_factory=dict)
+    size_basis: str = "encoded"
     ranks: dict[str, float] = field(default_factory=dict)
     mean_rank: float = 0.0
 
@@ -152,6 +153,37 @@ def load_targets(path: Path) -> dict[tuple[str, str], int | None]:
     return targets
 
 
+def load_kex_bandwidth(path: Path) -> dict[tuple[str, str], int]:
+    rows = read_csv(path)
+    if not rows or tuple(rows[0]) != ("ID", "Instance", "PkABytes", "PkBBytes", "ProtocolMessageBytes"):
+        raise ValueError(f"{path}: invalid KEX bandwidth header")
+    bandwidth = {}
+    for row in rows:
+        key = row["ID"], row["Instance"]
+        if key in bandwidth:
+            raise ValueError(f"{path}: duplicate {key[0]}/{key[1]}")
+        messages, pk_a, pk_b = (int(row[name]) for name in
+                               ("ProtocolMessageBytes", "PkABytes", "PkBBytes"))
+        if min(messages, pk_a, pk_b) < 0:
+            raise ValueError(f"{path}: negative size for {key[0]}/{key[1]}")
+        bandwidth[key] = messages + pk_a + pk_b
+    return bandwidth
+
+
+def load_external_sizes(path: Path) -> dict[tuple[str, str], dict[str, str]]:
+    rows = read_csv(path)
+    if not rows or tuple(rows[0]) != (
+            "ID", "Instance", "PublicKeyBytes", "CiphertextBytes", "SignatureBytes", "Basis"):
+        raise ValueError(f"{path}: invalid external-size header")
+    sizes = {}
+    for row in rows:
+        key = row["ID"], row["Instance"]
+        if key in sizes:
+            raise ValueError(f"{path}: duplicate {key[0]}/{key[1]}")
+        sizes[key] = row
+    return sizes
+
+
 def load_entries(harness: Path, system: str) -> list[Entry]:
     run_dir = harness / "performance" / "data" / system
     records_dir = run_dir / "records"
@@ -164,6 +196,8 @@ def load_entries(harness: Path, system: str) -> list[Entry]:
               read_csv(harness / "performance" / "symmetric_survey.csv")}
     profiles = load_profiles(run_dir)
     targets = load_targets(harness / "performance" / "security_targets.csv")
+    kex_bandwidth = load_kex_bandwidth(harness / "performance" / "kex_bandwidth.csv")
+    external_sizes = load_external_sizes(harness / "performance" / "external_sizes.csv")
     xof_baseline = {}
     for path in sorted((records_dir / "iccs").glob("*.json")):
         record = json.loads(path.read_text(encoding="utf-8"))
@@ -210,12 +244,23 @@ def load_entries(harness: Path, system: str) -> list[Entry]:
             if profile is not None and profile.get("hash_share") is not None:
                 entry.hash_shares[metric] = float(profile["hash_share"])
         for name, value in (record.get("sizes") or {}).items():
-            # Zero transferred bytes is meaningful for a non-interactive key
-            # exchange such as NIIKE; the other zero API fields mean N/A.
-            if (category == "kex" and name == "total_msg_bytes" and value in (0, "0")):
-                entry.values[name] = 0.0
-            elif value not in (None, 0, "0", ""):
+            if value not in (None, 0, "0", ""):
                 entry.values[name] = float(value)
+
+    for entry in entries.values():
+        if entry.category == "kex":
+            if entry.key not in kex_bandwidth:
+                raise ValueError(f"performance/kex_bandwidth.csv: missing {entry.display}")
+            entry.values["bandwidth_bytes"] = float(kex_bandwidth[entry.key])
+        elif entry.category in ("kem", "sign"):
+            if entry.key not in external_sizes:
+                raise ValueError(f"performance/external_sizes.csv: missing {entry.display}")
+            sizes = external_sizes[entry.key]
+            entry.values["pk_bytes"] = float(sizes["PublicKeyBytes"])
+            name = "ct_bytes" if entry.category == "kem" else "signature_bytes"
+            column = "CiphertextBytes" if entry.category == "kem" else "SignatureBytes"
+            entry.values[name] = float(sizes[column])
+            entry.size_basis = sizes["Basis"]
 
     # Match the aggregate performance page: omit a zero-placeholder backend
     # only when the same candidate has an ICCS-facing measured backend.  If no
@@ -410,6 +455,9 @@ def render_table(category: str, title: str, entries: list[Entry],
                     rendered += " (ratio –)" if ratio is None else f" ({ratio:.2f}×)"
                 else:
                     rendered += f" ({fmt_percent(entry.hash_shares.get(metric))})"
+            elif category == "sign" and metric == "signature_bytes" and \
+                    entry.size_basis == "nominal-variable":
+                rendered = "≈" + rendered
             cells.append(f"{entry_link(entry)} {rendered}")
         lines.append("<tr>" + "".join(f"<td>{cell}</td>" for cell in cells) + "</tr>")
     lines += ["</tbody></table></div>", ""]
@@ -436,23 +484,18 @@ def render(entries: list[Entry], findings: dict[str, Counter],
         links.append(f"[{target}-bit]({name})" if target != target_bits else f"**{target}-bit**")
     sections = [selector, "", f"# Ordered measurements ({system}, {target_bits}-bit)", "",
                 "Target: " + " · ".join(links), "",
-                "This preview orders each metric independently and orders the leftmost column by the "
-                "arithmetic mean of those ordinal ranks. Lower values are better. Ties receive their "
-                "average rank.", "",
-                "Key-generation latency and secret-key size are excluded. Only reference instances "
-                f"marked comparison-eligible for the {target_bits}-bit NGCC target and having every "
-                "metric required by their category are ordered. A submitter-designated primary or "
-                "recommended parameter set represents the candidate; optional and illustrative "
-                "parameter sets remain in the detailed report. If several eligible reference "
-                "instances remain, the one with the lowest mean ordinal position across the cycle "
-                "measurements represents the candidate. "
-                "For public-key schemes, the percentage after each cycle "
-                "count is the measured share spent in the ICCS placeholder hash functions. For hash "
-                "functions, the multiplier is relative to ICCS `pseudoXOF` with the same output width "
-                "and message length. A `(??%)` share means that the candidate uses its own symmetric primitives and no "
-                "ICCS-facing backend was measured. Security badges show the "
-                "number of active findings at the candidate's highest severity; they do not affect "
-                "the performance rank.", ""]
+                "- **Order:** each metric is ranked separately; overall is their mean rank. "
+                "Lower is better, and ties share the average position.",
+                f"- **Scope:** eligible reference instances at the {target_bits}-bit target. "
+                "The recommended set represents a candidate; otherwise the fastest eligible "
+                "set by mean cycle rank does. Key generation and secret-key size are excluded.",
+                "- **Cycles:** `(hash %)` is time in ICCS placeholder hashes; `(??%)` means "
+                "no ICCS-facing backend was measured. Hash `×` values compare with the matching `pseudoXOF`.",
+                "- **Bytes:** KEX bandwidth includes exchanged public keys. KEM public-key size is "
+                "separate from ciphertext size. `≈` marks a nominal variable-length signature. "
+                "See the [size audit](../external-size-audit.md) for accounting details.",
+                "- **Security badge:** number of active findings at the candidate's highest "
+                "severity; it does not affect the order.", ""]
     for category, title in CATEGORIES:
         category_entries = [entry for entry in entries
                             if entry.category == category and entry.target_bits == target_bits]

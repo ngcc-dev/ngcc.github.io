@@ -3037,14 +3037,17 @@
 </tbody>
 </table></div>
 <h2 id="6-transmission-and-storage-overhead">6. Transmission and storage overhead</h2>
+<p>Bandwidth counts all specified protocol messages and each required public key once. Public keys are transmitted bytes too. Certificates and transport framing are excluded. The published raw timing records are unchanged.</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
 <th>instance</th>
 <th>passes</th>
-<th>messages (bytes)</th>
-<th>total</th>
-<th>long-term pk / sk</th>
+<th>messages (bytes; raw API)</th>
+<th>protocol-message bytes</th>
+<th>public key A / B</th>
+<th>bandwidth (bytes)</th>
+<th>long-term sk (API cap)</th>
 <th>shared secret</th>
 </tr>
 </thead>
@@ -3054,7 +3057,9 @@
 <td>2</td>
 <td>1170 / 1280</td>
 <td>2450</td>
-<td>530 / 1570</td>
+<td>530 / 530</td>
+<td>3510</td>
+<td>1570</td>
 <td>32</td>
 </tr>
 <tr>
@@ -3062,7 +3067,9 @@
 <td>2</td>
 <td>2340 / 2560</td>
 <td>4900</td>
-<td>1060 / 3140</td>
+<td>1060 / 1060</td>
+<td>7020</td>
+<td>3140</td>
 <td>64</td>
 </tr>
 <tr>
@@ -3070,7 +3077,9 @@
 <td>2</td>
 <td>4676 / 4608</td>
 <td>9284</td>
-<td>2116 / 6276</td>
+<td>2116 / 2116</td>
+<td>13516</td>
+<td>6276</td>
 <td>128</td>
 </tr>
 <tr>
@@ -3078,7 +3087,9 @@
 <td>2</td>
 <td>5492 / 5428</td>
 <td>10920</td>
-<td>2522 / 6682</td>
+<td>2522 / 2522</td>
+<td>15964</td>
+<td>6682</td>
 <td>128</td>
 </tr>
 <tr>
@@ -3086,7 +3097,9 @@
 <td>2</td>
 <td>1127 / 1024</td>
 <td>2151</td>
-<td>615 / 1303</td>
+<td>615 / 615</td>
+<td>3381</td>
+<td>1303</td>
 <td>32</td>
 </tr>
 <tr>
@@ -3094,7 +3107,9 @@
 <td>2</td>
 <td>2253 / 2048</td>
 <td>4301</td>
-<td>1229 / 2605</td>
+<td>1229 / 1229</td>
+<td>6759</td>
+<td>2605</td>
 <td>64</td>
 </tr>
 <tr>
@@ -3102,7 +3117,9 @@
 <td>2</td>
 <td>4506 / 4096</td>
 <td>8602</td>
-<td>2458 / 5210</td>
+<td>2458 / 2458</td>
+<td>13518</td>
+<td>5210</td>
 <td>128</td>
 </tr>
 <tr>
@@ -3110,7 +3127,9 @@
 <td>2</td>
 <td>530 / 2784</td>
 <td>3314</td>
-<td>1048 / 1864</td>
+<td>530 / 1048</td>
+<td>4892</td>
+<td>1864</td>
 <td>32</td>
 </tr>
 <tr>
@@ -3118,7 +3137,9 @@
 <td>2</td>
 <td>1060 / 6016</td>
 <td>7076</td>
-<td>2144 / 4160</td>
+<td>1060 / 2144</td>
+<td>10280</td>
+<td>4160</td>
 <td>64</td>
 </tr>
 <tr>
@@ -3126,7 +3147,9 @@
 <td>2</td>
 <td>2116 / 11815</td>
 <td>13931</td>
-<td>5056 / 9024</td>
+<td>2116 / 5056</td>
+<td>21103</td>
+<td>9024</td>
 <td>128</td>
 </tr>
 <tr>
@@ -3134,7 +3157,9 @@
 <td>2</td>
 <td>615 / 2528</td>
 <td>3143</td>
-<td>1048 / 1864</td>
+<td>615 / 1048</td>
+<td>4806</td>
+<td>1864</td>
 <td>32</td>
 </tr>
 <tr>
@@ -3142,7 +3167,9 @@
 <td>2</td>
 <td>1229 / 5504</td>
 <td>6733</td>
-<td>2144 / 4160</td>
+<td>1229 / 2144</td>
+<td>10106</td>
+<td>4160</td>
 <td>64</td>
 </tr>
 <tr>
@@ -3150,7 +3177,9 @@
 <td>2</td>
 <td>2458 / 10791</td>
 <td>13249</td>
-<td>5056 / 9024</td>
+<td>2458 / 5056</td>
+<td>20763</td>
+<td>9024</td>
 <td>128</td>
 </tr>
 <tr>
@@ -3158,7 +3187,9 @@
 <td>2</td>
 <td>2674 / 640</td>
 <td>3314</td>
-<td>1048 / 1864</td>
+<td>1048 / 530</td>
+<td>4892</td>
+<td>1864</td>
 <td>32</td>
 </tr>
 <tr>
@@ -3166,7 +3197,9 @@
 <td>2</td>
 <td>2631 / 512</td>
 <td>3143</td>
-<td>1048 / 1864</td>
+<td>1048 / 615</td>
+<td>4806</td>
+<td>1864</td>
 <td>32</td>
 </tr>
 <tr>
@@ -3174,7 +3207,9 @@
 <td>2</td>
 <td>5796 / 1280</td>
 <td>7076</td>
-<td>2144 / 4160</td>
+<td>2144 / 1060</td>
+<td>10280</td>
+<td>4160</td>
 <td>64</td>
 </tr>
 <tr>
@@ -3182,7 +3217,9 @@
 <td>2</td>
 <td>5709 / 1024</td>
 <td>6733</td>
-<td>2144 / 4160</td>
+<td>2144 / 1229</td>
+<td>10106</td>
+<td>4160</td>
 <td>64</td>
 </tr>
 <tr>
@@ -3190,7 +3227,9 @@
 <td>2</td>
 <td>11371 / 2560</td>
 <td>13931</td>
-<td>5056 / 9024</td>
+<td>5056 / 2116</td>
+<td>21103</td>
+<td>9024</td>
 <td>128</td>
 </tr>
 <tr>
@@ -3198,7 +3237,9 @@
 <td>2</td>
 <td>11201 / 2048</td>
 <td>13249</td>
-<td>5056 / 9024</td>
+<td>5056 / 2458</td>
+<td>20763</td>
+<td>9024</td>
 <td>128</td>
 </tr>
 <tr>
@@ -3206,7 +3247,9 @@
 <td>2</td>
 <td>2034 / 2144</td>
 <td>4178</td>
-<td>1048 / 1864</td>
+<td>1048 / 1048</td>
+<td>6274</td>
+<td>1864</td>
 <td>32</td>
 </tr>
 <tr>
@@ -3214,7 +3257,9 @@
 <td>2</td>
 <td>2119 / 2016</td>
 <td>4135</td>
-<td>1048 / 1864</td>
+<td>1048 / 1048</td>
+<td>6231</td>
+<td>1864</td>
 <td>32</td>
 </tr>
 <tr>
@@ -3222,7 +3267,9 @@
 <td>2</td>
 <td>4516 / 4736</td>
 <td>9252</td>
-<td>2144 / 4160</td>
+<td>2144 / 2144</td>
+<td>13540</td>
+<td>4160</td>
 <td>64</td>
 </tr>
 <tr>
@@ -3230,7 +3277,9 @@
 <td>2</td>
 <td>4685 / 4480</td>
 <td>9165</td>
-<td>2144 / 4160</td>
+<td>2144 / 2144</td>
+<td>13453</td>
+<td>4160</td>
 <td>64</td>
 </tr>
 <tr>
@@ -3238,7 +3287,9 @@
 <td>2</td>
 <td>8811 / 9255</td>
 <td>18066</td>
-<td>5056 / 9024</td>
+<td>5056 / 5056</td>
+<td>28178</td>
+<td>9024</td>
 <td>128</td>
 </tr>
 <tr>
@@ -3246,7 +3297,9 @@
 <td>2</td>
 <td>9153 / 8743</td>
 <td>17896</td>
-<td>5056 / 9024</td>
+<td>5056 / 5056</td>
+<td>28008</td>
+<td>9024</td>
 <td>128</td>
 </tr>
 </tbody>

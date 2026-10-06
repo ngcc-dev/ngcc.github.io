@@ -613,14 +613,18 @@
 </tbody>
 </table></div>
 <h2 id="6-transmission-and-storage-overhead">6. Transmission and storage overhead</h2>
+<p>Bandwidth counts all specified protocol messages and each required public key once. Public keys are transmitted bytes too. Certificates and transport framing are excluded. The published raw timing records are unchanged.</p>
+<p>Only the responder's long-term public key is required; this exchange does not authenticate the initiator as a mutually authenticated protocol would.</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
 <th>instance</th>
 <th>passes</th>
-<th>messages (bytes)</th>
-<th>total</th>
-<th>long-term pk / sk</th>
+<th>messages (bytes; raw API)</th>
+<th>protocol-message bytes</th>
+<th>public key A / B</th>
+<th>bandwidth (bytes)</th>
+<th>long-term sk (API cap)</th>
 <th>shared secret</th>
 </tr>
 </thead>
@@ -630,7 +634,9 @@
 <td>1</td>
 <td>1568</td>
 <td>1568</td>
-<td>1184 / 3232</td>
+<td>0 / 1184</td>
+<td>2752</td>
+<td>3232</td>
 <td>32</td>
 </tr>
 <tr>
@@ -638,7 +644,9 @@
 <td>1</td>
 <td>1568</td>
 <td>1568</td>
-<td>1312 / 3360</td>
+<td>0 / 1312</td>
+<td>2880</td>
+<td>3360</td>
 <td>32</td>
 </tr>
 <tr>
@@ -646,7 +654,9 @@
 <td>1</td>
 <td>1568</td>
 <td>1568</td>
-<td>1312 / 3360</td>
+<td>0 / 1312</td>
+<td>2880</td>
+<td>3360</td>
 <td>32</td>
 </tr>
 <tr>
@@ -654,7 +664,9 @@
 <td>1</td>
 <td>3360</td>
 <td>3360</td>
-<td>2848 / 6944</td>
+<td>0 / 2848</td>
+<td>6208</td>
+<td>6944</td>
 <td>48</td>
 </tr>
 <tr>
@@ -662,7 +674,9 @@
 <td>1</td>
 <td>3360</td>
 <td>3360</td>
-<td>2848 / 6944</td>
+<td>0 / 2848</td>
+<td>6208</td>
+<td>6944</td>
 <td>64</td>
 </tr>
 </tbody>

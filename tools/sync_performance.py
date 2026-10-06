@@ -47,7 +47,10 @@ def main():
     candidate_ids = {row["ID"] for row in rows(downloads)}
 
     # harness path -> site path, both relative to their repository roots
-    site_of = {"performance/symmetric-survey.md": "performance/symmetric-survey.md"}
+    site_of = {
+        "performance/symmetric-survey.md": "performance/symmetric-survey.md",
+        "performance/EXTERNAL_SIZE_AUDIT.md": "performance/external-size-audit.md",
+    }
     for row in systems:
         sid = row["ID"]
         pages = {page.parent.name: page for page in src.glob(f"*-[0-9][0-9]/perf_{sid}.md")}
@@ -68,6 +71,9 @@ def main():
             path, _, fragment = target.partition("#")
             resolved = posixpath.normpath(posixpath.join(posixpath.dirname(src_rel), path))
             if resolved not in site_of:
+                if (resolved in ("performance/external_sizes.csv", "performance/kex_bandwidth.csv")
+                        or re.fullmatch(r"(?:kem|sign|kex)-\d\d/pseudocode\.md", resolved)):
+                    return f"](https://github.com/ngcc-dev/ngcc-harness/blob/main/{resolved})"
                 return match.group(0)
             relative = posixpath.relpath(site_of[resolved], posixpath.dirname(dst_rel))
             return f"]({relative}{'#' + fragment if fragment else ''})"
@@ -178,7 +184,9 @@ def main():
         index.append(f"| [{row['ID']}]({row['ID']}/index.md) | {row['Arch']} | {row['Description']} |")
     index += ["", "The [symmetric cryptography survey](symmetric-survey.md) records how each "
               "public-key submission implements hashing and randomness. Per-candidate pages include "
-              "the measurement method, KAT status, sizes, memory proxies and raw-evidence index.", ""]
+              "the measurement method, KAT status, sizes, memory proxies and raw-evidence index. "
+              "The [external-size audit](external-size-audit.md) explains how public-key, ciphertext, "
+              "signature and key-exchange bandwidth figures are counted.", ""]
     (DEST / "index.md").write_text("\n".join(index), encoding="utf-8")
 
     # The ordered-measurement pages are site views assembled from the benchmark

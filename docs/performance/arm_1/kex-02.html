@@ -559,14 +559,18 @@
 </tbody>
 </table></div>
 <h2 id="6-transmission-and-storage-overhead">6. Transmission and storage overhead</h2>
+<p>Bandwidth counts all specified protocol messages and each required public key once. Public keys are transmitted bytes too. Certificates and transport framing are excluded. The published raw timing records are unchanged.</p>
+<p>AFS-KEX Figure 3 sends fresh composite keys in passes 1 and 2. Its specified protocol-message totals are 3,136/6,080/12,288 bytes; the submitted API instead puts those keys in pre-distributed public-key buffers and sends 1,568/2,944/6,016 bytes as protocol messages. Both arrangements give the same bandwidth totals. Separately, the submitted pass 4 emits nothing but does not assign its output length, so the benchmark's capacity-initialized length creates a phantom raw message. <a href="../external-size-audit.html">The size audit</a> explains the accounting.</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
 <th>instance</th>
 <th>passes</th>
-<th>messages (bytes)</th>
-<th>total</th>
-<th>long-term pk / sk</th>
+<th>messages (bytes; raw API)</th>
+<th>protocol-message bytes</th>
+<th>public key A / B</th>
+<th>bandwidth (bytes)</th>
+<th>long-term sk (API cap)</th>
 <th>shared secret</th>
 </tr>
 </thead>
@@ -576,23 +580,29 @@
 <td>4</td>
 <td>768 / 784 / 16 / 1568</td>
 <td>3136</td>
-<td>1568 / 3170</td>
+<td>784 / 784</td>
+<td>4704</td>
+<td>3170</td>
 <td>16</td>
 </tr>
 <tr>
 <td><code>AFS_KEX_C256</code></td>
 <td>4</td>
 <td>1440 / 1472 / 32 / 2944</td>
-<td>5888</td>
-<td>3136 / 6338</td>
+<td>6080</td>
+<td>1568 / 1568</td>
+<td>9216</td>
+<td>6338</td>
 <td>32</td>
 </tr>
 <tr>
 <td><code>AFS_KEX_C512</code></td>
 <td>4</td>
 <td>2944 / 3008 / 64 / 6016</td>
-<td>12032</td>
-<td>6272 / 12674</td>
+<td>12288</td>
+<td>3136 / 3136</td>
+<td>18560</td>
+<td>12674</td>
 <td>64</td>
 </tr>
 </tbody>
