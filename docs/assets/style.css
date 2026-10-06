@@ -110,6 +110,11 @@ main.performance-index {
 }
 main.performance-index .table-wrap { overflow-x: visible; }
 main.performance-index table.performance-summary { width: 100%; min-width: 72rem; }
+main.performance-ranking { width: calc(100vw - 2rem); max-width: none; }
+main.performance-ranking .ranking-table .table-wrap { overflow-x: visible; }
+main.performance-ranking .ranking-table table { width: max-content; min-width: 100%; }
+main.performance-ranking .ranking-table th,
+main.performance-ranking .ranking-table td { white-space: nowrap; }
 table.performance-summary th:first-child,
 table.performance-summary td:first-child {
   width: 5.5rem;

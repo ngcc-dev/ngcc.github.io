@@ -443,11 +443,16 @@ def render_table(category: str, title: str, entries: list[Entry],
         if compact != official:
             algorithm = (f'<span title="{html.escape(official, quote=True)}">'
                          f'{algorithm}</span>')
-        cells.append(f'<span title="{rank_title}">{entry_link(entry)} {algorithm} '
-                     f'({entry.mean_rank:.1f})</span> ' +
+        cells.append(f'<span title="{rank_title}">({entry.mean_rank:.1f}) '
+                     f'{entry_link(entry)} {algorithm}</span> ' +
                      security_badge(entry.candidate, findings))
         for metric, column, (_, _, unit) in zip(metric_names, columns[1:], metrics):
             entry = column[index]
+            compact, official = names[entry.candidate]
+            algorithm = html.escape(compact)
+            if compact != official:
+                algorithm = (f'<span title="{html.escape(official, quote=True)}">'
+                             f'{algorithm}</span>')
             rendered = fmt_number(entry.values[metric], unit)
             if unit == "cycles":
                 if category == "hash":
@@ -458,7 +463,7 @@ def render_table(category: str, title: str, entries: list[Entry],
             elif category == "sign" and metric == "signature_bytes" and \
                     entry.size_basis == "nominal-variable":
                 rendered = "≈" + rendered
-            cells.append(f"{entry_link(entry)} {rendered}")
+            cells.append(f"{rendered} {entry_link(entry)} {algorithm}")
         lines.append("<tr>" + "".join(f"<td>{cell}</td>" for cell in cells) + "</tr>")
     lines += ["</tbody></table></div>", ""]
     return "\n".join(lines)

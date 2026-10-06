@@ -587,7 +587,9 @@ def render(rel, cands, reports):
                                    else f"{SITE}: {title}")
     is_main_page = len(rel.parts) == 1 or (len(rel.parts) == 2 and rel.name == "index.md")
     main_class = ("performance-index" if len(rel.parts) == 3
-                  and rel.parts[0] == "performance" and rel.name == "index.md" else "")
+                  and rel.parts[0] == "performance" and rel.name == "index.md" else
+                  "performance-ranking" if len(rel.parts) == 3
+                  and rel.parts[0] == "performance" and rel.stem.startswith("ranking-") else "")
     updated_line = f"Updated {UPDATED_UTC} · " if is_main_page else ""
     out.write_text(TEMPLATE.format(head_title=html.escape(head_title), site=SITE, harness=HARNESS,
                                    css_ver=CSS_VER, prefix=prefix, nav=nav, body=body,
