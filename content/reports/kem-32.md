@@ -70,3 +70,26 @@ python3 kem-32/reproduce_multi_instance.py
 ```
 
 The witness downloads the official estimator at commit `39b78dcc077793cfa3ccdce8d032ece76825ca55`, verifies both its archive and `doom.py` hashes, reproduces each crossing and its preceding above-target point, and checks the 512-bit control.
+
+## kem-32-3: The bundled RNG limits QCTM-512 key-generation randomness to 384 bits
+
+Severity: Critical
+Status: Confirmed
+Layer: Implementation
+Affected: QCTM512 reference and optimized builds using the bundled `rng.c`, including the KAT-labelled API adapter; a caller-supplied replacement RNG is not assessed
+Discovery: Trivial
+Exploitation: At most 2^384 bridge-seed trials, about 2^424 cycles using the measured key-generation cost, then decapsulation
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-06
+
+The submitted QCTM512 builds link a bundled AES256-CTR-DRBG (`Reference_Implementation/QCTM512/Makefile:33–42,54–63`). Its entire state is a 32-byte `Key` and 16-byte `V` (`rng.h:19–23`, `rng.c:113–129`). The KAT program seeds it with 48 bytes. The only supplied path that seeds it from the external RBG is an adapter labelled `api-pkc-kat`, which likewise draws 48 bytes before every `kem_keygen` (`KEM_AlgorithmInstance.c:18–27,70–86`, also in the optimized tree). The local generator supplies the 64-byte seed to deterministic key generation (`kem.c:557–592`, `seeded_keygen.c:797–848`).
+
+An attacker can enumerate the 2^384 possible bundled-RNG states, reproduce each candidate public key, and retain its decapsulation key on a match. The published x86_1 benchmark measures QCTM512 key generation at about 793.78 billion cycles (2^39.5); using that as an indicative per-trial cost gives about 2^424 cycles total, below the 512-bit target (§3.1 and §3.2.3, physical pp. 5–6). This does not rely on predicting or resetting the external RBG: replacing it by an ideal source still leaves the 48-byte local state. The bound is theoretical; no exhaustive search was run, and it does not describe a build that replaces the bundled RNG.
+
+### Reproducing
+
+```sh
+python3 kem-32/reproduce_bridge_seed_ceiling.py
+```
+
+The certificate checks the submitted build flags, bundled RNG state, and bridge-to-keygen-seed source path. It is a source-and-counting argument, not a full-size key recovery.

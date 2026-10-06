@@ -9,7 +9,7 @@ This site is not affiliated with NICCS.
 - [Security](reports/index.md) — security findings
   ([classification policy](report-classification.md)), each linking to the full
   report and its reproduction steps.
-- [Performance](performance/x86_1/index.md) — cycle counts for ICCS-facing
+- [Performance](performance/index.md) — cycle counts for ICCS-facing
   parameter sets, placeholder-hash shares, relative hash measurements, and
   detailed pages retaining every measured implementation.
 - [Side-Channel](constant-time/index.md) — scoped constant-time source-level notes

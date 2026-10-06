@@ -135,3 +135,26 @@ All coefficient rewrites cross-verified between reference and optimized implemen
 ```sh
 ./sign-31/reproduce_implementation_findings.sh
 ```
+
+## sign-31-7: The TSUOV-128 EUF-CMA proof loses its bound at 2^64 salt trials
+
+Severity: High
+Status: Proof gap
+Layer: Design
+Affected: TSUOV-128 specification and its reference and optimized parameter sets
+Discovery: Trivial
+Exploitation: Proof gap; no concrete forgery follows from the term alone
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-06
+
+TSUOV-128 uses a 128-bit signature salt (specification §4.4; `tsuov_params.h:19,79`). Lemma 6.10 and Theorem 6.12 of the submitted specification bound the salt-collision game hop by `(Q_h + Q'_s)Q'_s 2^-λ`, where `Q'_s` counts all honest signer salt trials and `λ=128`. At `Q'_s=2^64` this term is already at least one even with `Q_h=0`. The bound becomes vacuous at the candidate's required per-key capacity of `2^64` messages and cannot substantiate security through the NGCC `2^80` chosen-message evaluation budget.
+
+This is a shortfall in the submitted reduction; it does not establish a collision attack or a forgery against TSUOV-128.
+
+### Reproducing
+
+```sh
+python3 sign-31/certify_salt_bound.py
+```
+
+The certificate checks the source salt width, locates the stated proof terms in the submitted PDF and evaluates the bound at `2^64` trials.

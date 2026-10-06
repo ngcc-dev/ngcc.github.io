@@ -109,6 +109,26 @@ rg -n 'debug_last_error|TRACE_DEC' kem-32/Implementations/Reference_Implementati
 <pre><code class="language-sh">python3 kem-32/reproduce_multi_instance.py
 </code></pre>
 <p>The witness downloads the official estimator at commit <code>39b78dcc077793cfa3ccdce8d032ece76825ca55</code>, verifies both its archive and <code>doom.py</code> hashes, reproduces each crossing and its preceding above-target point, and checks the 512-bit control.</p>
+<h2 class="issue-heading" id="kem-32-3-the-bundled-rng-limits-qctm-512-key-generation-randomness-to-384-bits">kem-32-3: The bundled RNG limits QCTM-512 key-generation randomness to 384 bits</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>QCTM512 reference and optimized builds using the bundled <code>rng.c</code>, including the KAT-labelled API adapter; a caller-supplied replacement RNG is not assessed</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>At most 2^384 bridge-seed trials, about 2^424 cycles using the measured key-generation cost, then decapsulation</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-06</td></tr>
+</table></div>
+
+<p>The submitted QCTM512 builds link a bundled AES256-CTR-DRBG (<code>Reference_Implementation/QCTM512/Makefile:33–42,54–63</code>). Its entire state is a 32-byte <code>Key</code> and 16-byte <code>V</code> (<code>rng.h:19–23</code>, <code>rng.c:113–129</code>). The KAT program seeds it with 48 bytes. The only supplied path that seeds it from the external RBG is an adapter labelled <code>api-pkc-kat</code>, which likewise draws 48 bytes before every <code>kem_keygen</code> (<code>KEM_AlgorithmInstance.c:18–27,70–86</code>, also in the optimized tree). The local generator supplies the 64-byte seed to deterministic key generation (<code>kem.c:557–592</code>, <code>seeded_keygen.c:797–848</code>).</p>
+<p>An attacker can enumerate the 2^384 possible bundled-RNG states, reproduce each candidate public key, and retain its decapsulation key on a match. The published x86_1 benchmark measures QCTM512 key generation at about 793.78 billion cycles (2^39.5); using that as an indicative per-trial cost gives about 2^424 cycles total, below the 512-bit target (§3.1 and §3.2.3, physical pp. 5–6). This does not rely on predicting or resetting the external RBG: replacing it by an ideal source still leaves the 48-byte local state. The bound is theoretical; no exhaustive search was run, and it does not describe a build that replaces the bundled RNG.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-32/reproduce_bridge_seed_ceiling.py
+</code></pre>
+<p>The certificate checks the submitted build flags, bundled RNG state, and bridge-to-keygen-seed source path. It is a source-and-counting argument, not a full-size key recovery.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

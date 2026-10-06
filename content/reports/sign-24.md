@@ -32,3 +32,27 @@ tools/reproduce.sh sign-24
 ```
 
 The [independent driver](https://github.com/ngcc-dev/ngcc-harness/blob/dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/security/sigurd_chunk_recovery.c) queries `sig_sign` for ordinary signatures, parses only public transcripts, interpolates witness-only chunks, solves the remaining public-syndrome system, and calls the submitted `Prover` with the recovered witness. The original [forum analysis](https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/2lO14yYyDK4/m/UYKYkWM7BAAJ) reports broader 35-key testing; our witness tests two different keys at each level.
+
+## sign-24-2: Zero 16-bit challenge exposes the signing witness
+
+Severity: Critical
+Status: Confirmed
+Layer: Implementation
+Affected: Sigurd-128, -256, and -512
+Discovery: Moderate
+Exploitation: An unmodified Sigurd-128 signer naturally reached zero after 3,458 same-key signatures in one test stream, exposing the witness; the expected query count is about 2^16
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-06
+
+The submitted implementation takes `zeta` from a 16-bit expansion word without excluding zero (`Sigurd-128/sig_core.c:1711–1728`, `Sigurd-256/sig_core.c:1717–1734`, and `Sigurd-512/sig_core.c:1717–1733`). The specification does not prescribe this scalar width or a `zeta`-scaled mask; its extension-field requirement is `ιτ > λ` precisely so the challenge and masking space is sufficiently large (physical p. 17). The code's final public response is `G = E + zeta * F` (`Sigurd-128/sig_core.c:1408–1452`). When `zeta=0`, masking term `F` disappears. The public response, public transcript, one-hot witness-block constraints, and public syndrome then form a linear system for the signing witness. Under the intended random-oracle interpretation of the XOF word, each signature has probability 2^-16 of this event. The signing and verification paths do not resample or reject zero. A recovered witness suffices for signing independently of the secret seed.
+
+In a natural run, the unmodified Sigurd-128 signer reached `zeta=0` on the 3,458th signature of one same-key worker stream. Its submitted verifier accepted that signature, and a solver using only the public key, message, signature and derived transcript recovered the exact witness, checked against the secret kept separately. The run used parallel worker streams sharing that key; 3,458 is the count in the successful stream, not the aggregate across workers. No fresh-message forgery was executed. Independently, forced-zero test builds at all three levels yielded full-rank systems and exact witness recovery (ranks 1302/1302, 2748/2748 and 5676/5676). Same-seed nonzero controls were inconsistent and yielded no witness. The natural run confirms the trigger at 128; the higher levels are supported by source identity and forced-zero tests, not a natural long run.
+
+### Reproducing
+
+```sh
+bash sign-24/reproduce_zero_zeta.sh
+python3 sign-24/reproduce_natural_zero.py
+```
+
+Both wrappers build only in fresh temporary directories, with no changes to the submitted source tree. The first runs forced-zero and unforced controls at every level; the second uses up to 14 native workers to find a natural zero at 128. `solve_zero_zeta.py` receives only the public-equation file, and a separate file is used solely to check its recovered answer.

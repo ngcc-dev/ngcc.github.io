@@ -3,7 +3,7 @@ Candidate: Pavelor
 Family: Symmetric (AES-derived sponge hash)
 Archive: [Pavelor.zip](https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/Pavelor.zip) (SHA-256: `0414e5f0039c2d352eb00c125554114931363dcea6b382052fdd20fbf25e0c31`)
 
-## hash-22-1: Secret state indexes AES S-box; tail bits branch
+## hash-22-1: Secret state indexes the AES S-box and tail bits control a branch
 
 Severity: Low
 Status: Confirmed

@@ -24,6 +24,7 @@
 <tr><th>Performance</th><td><a href="../performance/x86_1/sign-29.html">x86_1</a> · <a href="../performance/arm_1/sign-29.html">arm_1</a></td></tr>
 </table></div>
 
+<p>Tins was withdrawn on 2026-09-25. These findings evaluate the frozen submitted artifact and remain in the historical record.</p>
 <h2 class="issue-heading issue-heading-first" id="sign-29-1-one-signature-reveals-the-complete-signing-witness">sign-29-1: One signature reveals the complete signing witness</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
@@ -66,6 +67,101 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 security/rbg_protocol_dependency.py --report-id sign-29-2
 </code></pre>
+<h2 class="issue-heading" id="sign-29-3-unchecked-signature-length-overflows-the-verifiers-path-buffer">sign-29-3: Unchecked signature length overflows the verifier&#x27;s path buffer</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Tins128, Tins256 and Tins512 reference, optimized and additional verifiers</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>An oversized untrusted signature causes an attacker-sized stack overwrite before verification; no control-flow exploit was attempted</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
+<tr><th>Date</th><td>2026-10-06</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/BZPZIT2TNBMEG7CPGNOUELVXPYUAQTDZ/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p><code>sig_verify</code> derives <code>path_size = (sn_len_bytes - NTemp) / NODE_SIZE</code> without checking either bound, then copies <code>NODE_SIZE * path_size</code> bytes into fixed <code>node path[T_OPEN]</code> (current reference <code>SIG_TINS128.c:350–365</code>; analogous code in the other tiers). An oversized supplied signature writes beyond that stack array; a short signature can underflow the unsigned subtraction or be read before this point. We independently reproduced a 3,140-byte write into Tins128's 2,500-byte <code>path</code> with AddressSanitizer. This is attacker-controlled memory corruption, not merely a build failure; code execution has not been shown.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-29/reproduce_implementation_findings.py --report-id sign-29-3
+sh sign-29/reproduce_path_overflow.sh
+</code></pre>
+<p>The first command checks the current SHA-256-pinned ZIP's bounds and copy. The second rebuilds that ZIP and checks a normal-length control and the oversized-signature write under AddressSanitizer; it needs a C compiler and archive download unless <code>TINS_ARCHIVE</code> points to a local copy.</p>
+<h2 class="issue-heading" id="sign-29-4-tins128-compares-its-challenge-with-an-uninitialized-buffer">sign-29-4: Tins128 compares its challenge with an uninitialized buffer</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Tins128 reference, optimized and additional verifiers in the current submitted ZIP</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Challenge consistency depends on uninitialized stack contents; honest-verification failure is reproduced, but a fresh-message forgery is not independently established</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
+<tr><th>Date</th><td>2026-10-06</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/BZPZIT2TNBMEG7CPGNOUELVXPYUAQTDZ/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p>The current ZIP sets <code>LAMBDA=160</code>, making <code>hash_t</code> 40 bytes, but Tins128 signing hashes only 256 bits (<code>SIG_TINS128.c:288</code>). Verification declares <code>test_h_piop</code>, recomputes into <code>h_piop</code> instead, and compares all 40 bytes against the uninitialized <code>test_h_piop</code> (<code>:414,430–436</code>). A separate-process gcc build rejected an honest signature in our check. The post reports changed-message acceptance on its clang build; our clang build did not reproduce that result, so no forgery is claimed here. The local extracted Tins128 tree predates the ZIP version cited in this report.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-29/reproduce_implementation_findings.py --report-id sign-29-4
+</code></pre>
+<h2 class="issue-heading" id="sign-29-5-tins512-verification-overwrites-the-supplied-signature">sign-29-5: Tins512 verification overwrites the supplied signature</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Tins512 reference, optimized and additional verifiers</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Verification reads uninitialized auxiliary data and can reject honest signatures; no forgery is shown</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
+<tr><th>Date</th><td>2026-10-06</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/BZPZIT2TNBMEG7CPGNOUELVXPYUAQTDZ/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p>Signing copies compressed auxiliary data from <code>stmp</code> into <code>sn</code>. Verification repeats that copy direction rather than reading from <code>sn</code> into <code>stmp</code> (<code>SIG_TINS512.c:325,328,379–382</code>). It overwrites the caller's signature with mostly uninitialized stack bytes and decodes those bytes. The post's fresh-process tests reject all 20 honest signatures under both tested compilers; our certificate establishes the source defect, not that rate. This is a correctness and availability failure in the submitted verifier.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-29/reproduce_implementation_findings.py --report-id sign-29-5
+</code></pre>
+<h2 class="issue-heading" id="sign-29-6-an-odd-challenge-count-writes-past-tins512s-stack-array">sign-29-6: An odd challenge count writes past Tins512&#x27;s stack array</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Tins512 reference, optimized and additional signing and verification</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Every honest signing attempt writes four bytes past a stack array; AddressSanitizer aborts, but no further impact is demonstrated</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
+<tr><th>Date</th><td>2026-10-06</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/BZPZIT2TNBMEG7CPGNOUELVXPYUAQTDZ/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p>Tins512 has <code>TAU=47</code>. <code>ExpandChallengePoint</code> loops while <code>2*i &lt; TAU</code> but writes both indices <code>2*i</code> and <code>2*i+1</code> (<code>bavc_commit.c:497–521</code>). At <code>i=23</code>, the second write is <code>challenge_points[47]</code>, past the 47-element caller array. We reproduced the honest-signing stack-buffer-overflow under AddressSanitizer; the normal build's effect depends on stack layout. A following odd-tail branch does not undo the write.</p>
+<h3 id="reproducing_5">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-29/reproduce_implementation_findings.py --report-id sign-29-6
+</code></pre>
+<h2 class="issue-heading" id="sign-29-7-public-salt-ggm-expansion-exposes-the-complete-signing-witness">sign-29-7: Public-salt GGM expansion exposes the complete signing witness</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Tins128, Tins256 and Tins512 reference, optimized and additional implementations; end-to-end forgery reproduced on Tins256 reference</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>One signature, public mask reconstruction, and a fresh-message forgery; no exponential search</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-06</td></tr>
+</table></div>
+
+<p>The specification defines <code>ChildrenNodesGen(salt, seed, idx)</code> as expansion from a parent <code>seed</code> (physical p. 11). Every submitted <code>ChildNodeGen</code> implementation accepts that parent parameter but constructs both child seeds solely from the public <code>salt</code> and node index (<code>bavc_commit.c:108–124</code>). The root <code>rseed</code> is therefore irrelevant below the root: anyone knowing the salt can reconstruct every GGM leaf. <code>CommitPoly</code> derives the per-leaf mask streams from <code>salt || leaf</code> and publishes <code>aux[e] = (alpha,beta) XOR mask[e]</code> in the signature (<code>bavc_commit.c:329–406</code>). Recomputing the mask with a zero witness and arbitrary root, then XORing it with the decoded public <code>aux</code>, reveals the actual <code>(alpha,beta)</code> in every repetition.</p>
+<p>Against the submitted Tins256 reference code, the local witness recovered one common <code>(alpha,beta)</code> in all 24 repetitions from one signature and checked it against the true signing witness. It then supplied only that recovered witness and the public key seed to the submitted signer through a linker wrapper around its two witness draws. A signature on a fresh message passed the unmodified Tins256 verifier; the same signature failed on a changed message. The wrapper only substitutes the recovered witness in signing and passes all verifier calls through unchanged. Whole-scheme forgery was tested at Tins256; the all-tier claim is limited to the source-level mask exposure.</p>
+<h3 id="reproducing_6">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-29/certify_public_tree_source.py
+sh sign-29/reproduce_public_tree_witness.sh
+</code></pre>
+<p>The source certificate checks all nine local implementation trees. Pass <code>--archive /path/to/Tins.zip</code> to check the SHA-256-pinned submitted archive as well. The runtime witness compiles the submitted Tins256 reference sources into a temporary directory; no candidate source is patched.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

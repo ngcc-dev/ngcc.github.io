@@ -78,17 +78,17 @@ make -C kem-34 reproduce-length-read
 
 ## kem-34-4: Rudraksh2-II's modulus cannot support its specified NTT
 
-Severity: Low
+Severity: Info
 Status: Confirmed
 Layer: Design
 Affected: Rudraksh2-128-II, -256-II, and -512-II specifications
 Discovery: Trivial
-Exploitation: The specified polynomial-multiplication method does not exist for these parameters
+Exploitation: The specified NTT cannot be realized for these parameters; no security consequence is shown
 Credit: Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance
 Date: 2026-09-30
 Original source: [PKC Forum post and verification package](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/3QHUJGWZDN7ZFSG7R46HHEWG67MKGYYB/)
 
-The specification requires a primitive `2n`-th root of unity in `Z_q` for its negacyclic NTT. Every `-II` set uses `q=4001`, but `q-1 = 4000 = 2^5 * 5^3`; the largest supported negacyclic-NTT degree is therefore 16. The specified degrees are 64, 128, and 256, so none has the required root. The submission supplies no `-II` implementation. The polynomial ring itself remains implementable by a different multiplication method, so this is a specification/realization defect rather than a cryptanalytic break.
+The specification requires a primitive `2n`-th root of unity in `Z_q` for its negacyclic NTT. Every `-II` set uses `q=4001`, but `q-1 = 4000 = 2^5 * 5^3`; the largest supported negacyclic-NTT degree is therefore 16. The specified degrees are 64, 128, and 256, so none has the required root. The submission supplies no `-II` implementation. The polynomial ring itself remains implementable by a different multiplication method. This is a realization note, not a security vulnerability: no submitted `-II` implementation fails, and no attack or availability failure is shown.
 
 ### Reproducing
 

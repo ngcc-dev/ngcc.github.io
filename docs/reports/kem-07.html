@@ -83,6 +83,25 @@
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 security/rbg_protocol_dependency.py --report-id kem-07-3
 </code></pre>
+<h2 class="issue-heading" id="kem-07-4-short-ciphertexts-reach-brqcs-fixed-offset-parser">kem-07-4: Short ciphertexts reach BRQC&#x27;s fixed-offset parser</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>BRQC-128, -256 and -512 reference and optimized decapsulation</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>A caller-supplied short ciphertext buffer causes an out-of-bounds read; no disclosure or key recovery is demonstrated</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
+<tr><th>Date</th><td>2026-10-06</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/BJDASBVXJPRXRQFJCXGSNASJJ32MQ5XI/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p>All six <code>kem_dec</code> wrappers discard <code>ct_len_bytes</code> and pass <code>ct</code> to <code>brqc_decaps</code>. Its parser reads two fixed-length vectors and the salt at fixed offsets (<code>src/parsing.c:166–169</code>), so an actually short buffer is read beyond its allocation. The forum post reports an AddressSanitizer over-read on reference BRQC-128; our certificate checks the same source path in all six trees. Full-length malformed ciphertexts did not crash in the reported tests. No secret disclosure or cryptographic break is demonstrated. The post also points out a negative-degree initialization and an incorrect allocation-result check in the bundled <code>rbc</code> library, but establishes no triggering input or memory harm for either; those source-review notes are not classified as separate vulnerabilities here.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-07/reproduce_short_ciphertext.py
+</code></pre>
+<p>This source certificate checks the missing length guard and fixed-offset reads; it does not rerun the forum's sanitizer test.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

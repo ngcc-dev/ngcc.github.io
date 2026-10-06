@@ -103,7 +103,7 @@ python3 security/design_parameter_audit.py --report-id sign-15-3
 Severity: Critical
 Status: Confirmed
 Layer: Implementation
-Affected: ATLAS-128, ATLAS-192, and ATLAS-256 reference and optimized implementations; ATLAS-512 is unaffected
+Affected: ATLAS-128, ATLAS-192, and ATLAS-256 reference and optimized implementations; ATLAS-512 does not have this paired-coefficient defect
 Discovery: Moderate
 Exploitation: Two valid signatures recover `s1` in polynomial time and enable new-message forgery
 Credit: Xianhui Lu and Yijian Liu, with AI assistance
@@ -111,7 +111,7 @@ Date: 2026-09-23
 Original source: [Yijian Liu's NGCC PKC Forum post on behalf of Xianhui Lu](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/L5UNKA72RZ2TBTCKZYIVJ5KFDU6XTWFB/)
 Follow-up source: [Song-Anxiao's independent assessment and proof-premise check](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/QUKIQWX7B5D2UYVTGSZ3JC6IVELQWA2Q/)
 
-In `rej_gamma1m1()`, the second 20-bit decode overwrites `t` before either accepted coefficient is stored. Every masking polynomial therefore has `y[2i] = y[2i+1]`. Since the signature contains `z = y + c*s1` modulo `q`, subtracting each adjacent response pair cancels the mask and gives a noiseless linear equation in the secret `s1`. Two signatures supply a full-rank system for each secret polynomial in all three affected profiles. ATLAS-512 uses a separate three-byte sampler branch.
+In `rej_gamma1m1()`, the second 20-bit decode overwrites `t` before either accepted coefficient is stored. Every masking polynomial therefore has `y[2i] = y[2i+1]`. Since the signature contains `z = y + c*s1` modulo `q`, subtracting each adjacent response pair cancels the mask and gives a noiseless linear equation in the secret `s1`. Two signatures supply a full-rank system for each secret polynomial in all three affected profiles. ATLAS-512 uses a separate three-byte sampler branch, so this paired-coefficient route does not apply there.
 
 The local witness solves those equations using only two public, officially verified signatures, recovers every `s1` coefficient, and checks zero residuals on two further signatures. It then reconstructs the remaining signing-key fields from `s1` and the public key, chooses a fresh signing-randomness key, and produces a new-message signature accepted by the submitted verifier. It never uses the original secret key in the recovery or forgery stage.
 
@@ -297,3 +297,26 @@ The specified sampler draws positions from `0..i` for `i` up to 511 (Algorithm 1
 ```sh
 ./sign-15/reproduce_512_shortfalls.sh
 ```
+
+## sign-15-13: Overlapping mask streams recover the ATLAS-512 signing key
+
+Severity: Critical
+Status: Confirmed
+Layer: Implementation
+Affected: ATLAS-512 reference and optimized implementations
+Discovery: Non-trivial
+Exploitation: Two signatures recover all 3,584 coefficients of `s1`, enabling a fresh-message forgery
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-06
+
+The signer starts the mask sampler for each polynomial at successive nonces (`SIG_lwrdsa512.c:326–327`), but the sampler itself increments its nonce after every output block (`poly.c:697–735`). A polynomial that needs multiple blocks therefore reuses parts of the next polynomial's stream, shifted by its rejection-sampling length. Since the public response is `z = y + c*s1`, matching stream coefficients between adjacent polynomials cancel `y` and give linear equations in `s1`.
+
+In a fresh reference-build run, two ordinary signatures yielded 5,362 equations of full rank 3,584. Solving them from the public key and signature transcripts alone recovered every coefficient of `s1`; the recovered key produced a signature on a new message accepted by the submitted verifier, while a changed-message control rejected. The optimized build has the same stream-overlap path by source inspection; it was not run here.
+
+### Reproducing
+
+```sh
+bash sign-15/reproduce_512_nonce_overlap.sh
+```
+
+The witness builds the submitted signer and verifier in a temporary directory, solves the public equations with FLINT, and checks the fresh-message forgery and negative control. It requires a C compiler and FLINT.

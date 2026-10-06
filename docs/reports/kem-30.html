@@ -73,6 +73,25 @@
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 kem-30/reproduce_llr_cache_lookup.py
 </code></pre>
+<h2 class="issue-heading" id="kem-30-3-reference-and-optimized-polarlac-fail-cross-decapsulation">kem-30-3: Reference and optimized PolarLAC fail cross-decapsulation</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Reference and optimized x86 implementations of all five PolarLAC parameter sets</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Peers using different submitted implementations can derive different shared keys; no confidentiality attack is shown</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
+<tr><th>Date</th><td>2026-10-06</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/ZHRCGO32OGLDZZMUSU66ZPHTEJDNG3M7/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p>The submitted reference and optimized x86 builds reproduce their own KATs but do not interoperate. The post reports failed cross-decapsulation in both directions on four seeds for each of Light, 128, 256, 512 and 512-Star. We independently built the 128-bit pair: each self-decapsulation agreed, while each cross-tree decapsulation returned a different key despite <code>rc=0</code>. Their public keys already diverge after the common 16-byte public seed. The submitted ARM KAT values match the reference values at all five sets, making x86 optimized the outlier; the underlying primitive or encoding discrepancy is not yet isolated. This is a key-agreement availability defect, not a key-recovery claim.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-30/reproduce_interop.py
+</code></pre>
+<p>The certificate compares the reference, x86 optimized and ARM KAT values in the SHA-256-pinned official archive. It does not rerun the cross-decapsulation experiment.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

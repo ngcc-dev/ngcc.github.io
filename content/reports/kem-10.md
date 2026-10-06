@@ -94,3 +94,47 @@ The bundled implementation works consistently. The Low impact is key-format and 
 ```sh
 python3 security/rbg_protocol_dependency.py --report-id kem-10-4
 ```
+
+## kem-10-5: Short ciphertexts reach the fixed-offset parser
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: CMultiURAG-128, -256 and -512 reference and optimized decapsulation
+Discovery: Trivial
+Exploitation: A caller-supplied short ciphertext buffer causes an out-of-bounds read; no disclosure or key recovery is demonstrated
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
+Date: 2026-10-06
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/GDMB53GE3SVJ3V2R6O53GBWLWIXBAWYE/)
+
+All six `kem_dec` wrappers discard `ct_len_bytes` and pass `ct` to `cmultiurag_decaps`. Its parser reads both matrices and the salt at fixed offsets (`src/parsing.c:145–148`), so a genuinely short allocation is read beyond its end. The forum reports an AddressSanitizer over-read on reference CMultiURAG-128; our certificate checks the six source paths. No memory disclosure or cryptographic break is shown.
+
+### Reproducing
+
+```sh
+python3 kem-10/reproduce_implementation_findings.py --report-id kem-10-5
+```
+
+The certificate checks source, not the forum's sanitizer run.
+
+## kem-10-6: Reference 79-bit field multiplication touches a fourth limb
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: Reference CMultiURAG-128
+Discovery: Trivial
+Exploitation: An out-of-bounds read-modify-write occurs on honest field multiplication; no attacker-controlled nonzero overwrite is demonstrated
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
+Date: 2026-10-06
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/GDMB53GE3SVJ3V2R6O53GBWLWIXBAWYE/)
+
+The reference 79-bit field declares `rbc_elt_ur` with three limbs (`src/rbc-79/rbc_79.h:18,33`). In `rbc_elt_ur_mul`, the inner loop includes `j = RBC_79_ELT_SIZE = 2`; for outer-loop `i ≥ 64`, `offset = 1`, so `o[j+offset]` accesses limb 3 (`rbc_elt.c:428–435`). The forum reports an AddressSanitizer failure during honest key generation. For reduced operands the value XORed at that location is zero, so the evidence shows undefined behavior and sanitizer failure, not useful memory corruption. The 256/512 reference fields and optimized multiplication use different bounds or code.
+
+### Reproducing
+
+```sh
+python3 kem-10/reproduce_implementation_findings.py --report-id kem-10-6
+```
+
+The certificate checks the offending loop and dimensions; it does not rerun the sanitizer test.

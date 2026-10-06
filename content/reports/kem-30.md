@@ -68,3 +68,25 @@ The team's response proposes replacing the lookup with an implementation having 
 ```sh
 python3 kem-30/reproduce_llr_cache_lookup.py
 ```
+
+## kem-30-3: Reference and optimized PolarLAC fail cross-decapsulation
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: Reference and optimized x86 implementations of all five PolarLAC parameter sets
+Discovery: Moderate
+Exploitation: Peers using different submitted implementations can derive different shared keys; no confidentiality attack is shown
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
+Date: 2026-10-06
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/ZHRCGO32OGLDZZMUSU66ZPHTEJDNG3M7/)
+
+The submitted reference and optimized x86 builds reproduce their own KATs but do not interoperate. The post reports failed cross-decapsulation in both directions on four seeds for each of Light, 128, 256, 512 and 512-Star. We independently built the 128-bit pair: each self-decapsulation agreed, while each cross-tree decapsulation returned a different key despite `rc=0`. Their public keys already diverge after the common 16-byte public seed. The submitted ARM KAT values match the reference values at all five sets, making x86 optimized the outlier; the underlying primitive or encoding discrepancy is not yet isolated. This is a key-agreement availability defect, not a key-recovery claim.
+
+### Reproducing
+
+```sh
+python3 kem-30/reproduce_interop.py
+```
+
+The certificate compares the reference, x86 optimized and ARM KAT values in the SHA-256-pinned official archive. It does not rerun the cross-decapsulation experiment.

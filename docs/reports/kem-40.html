@@ -101,6 +101,26 @@
 <pre><code class="language-sh">python3 kem-40/reproduce_bias_correction.py
 </code></pre>
 <p>The local certificate verifies both defective expressions in all six reference and optimized source trees and checks that only the even-parameter 1024/2048 sets are affected. The numerical failure bounds are those reported from the specification's model and are not independently recomputed by this short certificate.</p>
+<h2 class="issue-heading" id="kem-40-5-truncated-encryption-seed-permits-a-2440-challenge-key-distinguisher-at-the-512-bit-level">kem-40-5: Truncated encryption seed permits a 2^440 challenge-key distinguisher at the 512-bit level</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>YuanYang.KEM-2048 reference and optimized implementations; the 512/1024 sets are controls</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Offline IND-CCA real-or-random challenge-key distinction in at most 2^440 encryption-seed-prefix trials; no exhaustive run performed</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-06</td></tr>
+</table></div>
+
+<p>The specification gives Encrypt a 512-bit seed and message (Algorithm 3, physical p. 10) and targets 512-bit classical security (§3 and Table 3). In the submitted <code>yuanyang-2048</code>, encapsulation derives its encryption seed from the message and public-key hash (<code>kem.c:157–165</code>), but <code>yy_encrypt</code> supplies only its first 55 bytes to the local SM3-DRNG (<code>kem.c:105–119</code>, <code>drng.h:15</code>). The DRBG itself accepts a longer seed (<code>drng.c:244–252</code>); the truncation is at this caller. Thus the first 512 DRBG output bits, the blinding message <code>B</code>, depend on at most 440 bits. The ciphertext ends with <code>u = msg XOR H(B || 44)</code> (<code>kem.c:129–145</code>), and the shared key is <code>H(msg || ct || 43)</code> (<code>kem.c:166–170</code>). The relevant optimized files are byte-identical.</p>
+<p>Given one IND-CCA challenge <code>(ct, K*)</code>, enumerate the 2^440 possible 55-byte encryption-seed prefixes. For each, initialize the local DRBG, generate its first 512 output bits <code>B</code>, recover a candidate <code>msg = u XOR H(B || 44)</code>, and compare <code>H(msg || ct || 43)</code> with <code>K*</code>. The real key always matches; for a uniform random 512-bit challenge key, the union-bound false-match probability is at most 2^-72. This is a single-ciphertext attack on the submitted implementation, not a multi-target loss, and it still works with ideal replacement hashes of the same output lengths. The 440-bit work bound is theoretical and below the required 512-bit level even after ordinary per-trial hash costs; no feasible key recovery is claimed.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-40/reproduce_truncated_encryption_seed.py
+</code></pre>
+<p>The source certificate verifies the seed cap, 55-byte DRBG state, first-output dependency, ciphertext tail and final key derivation. It checks the 512/1024 sets as unaffected controls; it does not enumerate 2^440 states.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -71,6 +71,26 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <pre><code class="language-sh">./kem-15/reproduce_fo_bypass.sh
 python3 kem-15/reproduce_random_compare.py
 </code></pre>
+<h2 class="issue-heading" id="kem-15-3-the-fips202-variants-generate-predictable-keys-because-their-rng-is-never-seeded">kem-15-3: The FIPS202 variants generate predictable keys because their RNG is never seeded</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All four submitted additional FIPS202 REF/OPT128 and REF/OPT256 implementations; the primary SM3 variants are not affected by this RNG path</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>A fresh process's first key pair and encapsulation are reproducible from public source, permitting private-key reconstruction and decapsulation</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-06</td></tr>
+</table></div>
+
+<p>All four FIPS202 trees link their own <code>rng.c</code> in their normal Makefile builds (<code>Implementations/README.md:83</code>). It initializes <code>rng_seed</code> to 32 zero bytes and <code>rng_ctr</code> to zero; <code>randombytes</code> draws SHAKE256 from that fixed seed and counter (<code>rng.c:16–40</code>). Their PKE key generation, KEM fallback-key generation and encapsulation call this <code>randombytes</code> (<code>indcpa.c:33</code>, <code>kem.c:32,59</code>). Nothing in the submitted KEM API calls <code>randombytes_init</code>. The KAT driver seeds a <em>different</em> object, <code>drng_algorithm</code> (<code>KAT_KEM.c:103–108</code>), so even its varying test seeds do not seed the RNG that key generation uses.</p>
+<p>Consequently an attacker can start a fresh copy of the submitted FIPS202 implementation, regenerate a victim's first public/secret key pair, and decapsulate ciphertexts addressed to that public key. This violates the 128- and 256-bit KEM security targets, without relying on a weak entropy source or on KAT-only behavior. The finding is limited to these additional implementations: explicitly calling the separate <code>randombytes_init</code> function before use changes their output, but that call is not part of the submitted KEM API.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-15/reproduce_fips202_unseeded_rng.py
+</code></pre>
+<p>The witness builds each of the four frozen trees and runs its KEM API in separate processes after two different external-DRBG seeds. It requires identical key pairs, ciphertexts and shared secrets in those runs. As a negative control, explicit initialization of the internal RNG with different seeds must change the outputs.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

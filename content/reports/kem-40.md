@@ -90,3 +90,26 @@ python3 kem-40/reproduce_bias_correction.py
 ```
 
 The local certificate verifies both defective expressions in all six reference and optimized source trees and checks that only the even-parameter 1024/2048 sets are affected. The numerical failure bounds are those reported from the specification's model and are not independently recomputed by this short certificate.
+
+## kem-40-5: Truncated encryption seed permits a 2^440 challenge-key distinguisher at the 512-bit level
+
+Severity: Critical
+Status: Confirmed
+Layer: Implementation
+Affected: YuanYang.KEM-2048 reference and optimized implementations; the 512/1024 sets are controls
+Discovery: Moderate
+Exploitation: Offline IND-CCA real-or-random challenge-key distinction in at most 2^440 encryption-seed-prefix trials; no exhaustive run performed
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-06
+
+The specification gives Encrypt a 512-bit seed and message (Algorithm 3, physical p. 10) and targets 512-bit classical security (§3 and Table 3). In the submitted `yuanyang-2048`, encapsulation derives its encryption seed from the message and public-key hash (`kem.c:157–165`), but `yy_encrypt` supplies only its first 55 bytes to the local SM3-DRNG (`kem.c:105–119`, `drng.h:15`). The DRBG itself accepts a longer seed (`drng.c:244–252`); the truncation is at this caller. Thus the first 512 DRBG output bits, the blinding message `B`, depend on at most 440 bits. The ciphertext ends with `u = msg XOR H(B || 44)` (`kem.c:129–145`), and the shared key is `H(msg || ct || 43)` (`kem.c:166–170`). The relevant optimized files are byte-identical.
+
+Given one IND-CCA challenge `(ct, K*)`, enumerate the 2^440 possible 55-byte encryption-seed prefixes. For each, initialize the local DRBG, generate its first 512 output bits `B`, recover a candidate `msg = u XOR H(B || 44)`, and compare `H(msg || ct || 43)` with `K*`. The real key always matches; for a uniform random 512-bit challenge key, the union-bound false-match probability is at most 2^-72. This is a single-ciphertext attack on the submitted implementation, not a multi-target loss, and it still works with ideal replacement hashes of the same output lengths. The 440-bit work bound is theoretical and below the required 512-bit level even after ordinary per-trial hash costs; no feasible key recovery is claimed.
+
+### Reproducing
+
+```sh
+python3 kem-40/reproduce_truncated_encryption_seed.py
+```
+
+The source certificate verifies the seed cap, 55-byte DRBG state, first-output dependency, ciphertext tail and final key derivation. It checks the 512/1024 sets as unaffected controls; it does not enumerate 2^440 states.

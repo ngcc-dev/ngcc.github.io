@@ -48,6 +48,27 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 tools/reproduce.sh sign-24
 </code></pre>
 <p>The <a href="https://github.com/ngcc-dev/ngcc-harness/blob/dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/security/sigurd_chunk_recovery.c">independent driver</a> queries <code>sig_sign</code> for ordinary signatures, parses only public transcripts, interpolates witness-only chunks, solves the remaining public-syndrome system, and calls the submitted <code>Prover</code> with the recovered witness. The original <a href="https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/2lO14yYyDK4/m/UYKYkWM7BAAJ">forum analysis</a> reports broader 35-key testing; our witness tests two different keys at each level.</p>
+<h2 class="issue-heading" id="sign-24-2-zero-16-bit-challenge-exposes-the-signing-witness">sign-24-2: Zero 16-bit challenge exposes the signing witness</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Sigurd-128, -256, and -512</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>An unmodified Sigurd-128 signer naturally reached zero after 3,458 same-key signatures in one test stream, exposing the witness; the expected query count is about 2^16</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-06</td></tr>
+</table></div>
+
+<p>The submitted implementation takes <code>zeta</code> from a 16-bit expansion word without excluding zero (<code>Sigurd-128/sig_core.c:1711–1728</code>, <code>Sigurd-256/sig_core.c:1717–1734</code>, and <code>Sigurd-512/sig_core.c:1717–1733</code>). The specification does not prescribe this scalar width or a <code>zeta</code>-scaled mask; its extension-field requirement is <code>ιτ &gt; λ</code> precisely so the challenge and masking space is sufficiently large (physical p. 17). The code's final public response is <code>G = E + zeta * F</code> (<code>Sigurd-128/sig_core.c:1408–1452</code>). When <code>zeta=0</code>, masking term <code>F</code> disappears. The public response, public transcript, one-hot witness-block constraints, and public syndrome then form a linear system for the signing witness. Under the intended random-oracle interpretation of the XOF word, each signature has probability 2^-16 of this event. The signing and verification paths do not resample or reject zero. A recovered witness suffices for signing independently of the secret seed.</p>
+<p>In a natural run, the unmodified Sigurd-128 signer reached <code>zeta=0</code> on the 3,458th signature of one same-key worker stream. Its submitted verifier accepted that signature, and a solver using only the public key, message, signature and derived transcript recovered the exact witness, checked against the secret kept separately. The run used parallel worker streams sharing that key; 3,458 is the count in the successful stream, not the aggregate across workers. No fresh-message forgery was executed. Independently, forced-zero test builds at all three levels yielded full-rank systems and exact witness recovery (ranks 1302/1302, 2748/2748 and 5676/5676). Same-seed nonzero controls were inconsistent and yielded no witness. The natural run confirms the trigger at 128; the higher levels are supported by source identity and forced-zero tests, not a natural long run.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">bash sign-24/reproduce_zero_zeta.sh
+python3 sign-24/reproduce_natural_zero.py
+</code></pre>
+<p>Both wrappers build only in fresh temporary directories, with no changes to the submitted source tree. The first runs forced-zero and unforced controls at every level; the second uses up to 14 native workers to find a natural zero at 128. <code>solve_zero_zeta.py</code> receives only the public-equation file, and a separate file is used solely to check its recovered answer.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -126,6 +126,25 @@ sh kem-06/reproduce_ciphertext_crash.sh
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 security/rbg_protocol_dependency.py --report-id kem-06-5
 </code></pre>
+<h2 class="issue-heading" id="kem-06-6-short-ciphertexts-reach-bras-fixed-offset-parser">kem-06-6: Short ciphertexts reach BRA&#x27;s fixed-offset parser</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>BRA-128, -256 and -512 reference and optimized decapsulation</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>A caller-supplied short ciphertext buffer causes an out-of-bounds read; no disclosure or key recovery is demonstrated</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
+<tr><th>Date</th><td>2026-10-06</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/Y2MQUP3EMML3ZFWM5NWM3SZN65PQAFHN/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p>All six <code>kem_dec</code> wrappers discard <code>ct_len_bytes</code> and pass <code>ct</code> to <code>bra_decaps</code>. Its parser reads two fixed-length vectors and the salt at fixed offsets (<code>src/parsing.c:166–169</code>). If the supplied buffer is actually shorter than the ciphertext size, the parser reads beyond it before rejecting the ciphertext. The forum post reports an AddressSanitizer reproduction on reference BRA-128; our certificate checks the same source path in all six trees. An out-of-bounds read is confirmed, but the available evidence does not show secret disclosure or a cryptographic break.</p>
+<h3 id="reproducing_5">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-06/reproduce_short_ciphertext.py
+</code></pre>
+<p>This source certificate checks the missing length guard and fixed-offset reads. The sanitizer observation is attributed to the forum post, not rerun by this command.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -72,6 +72,26 @@ sign-10/cryptanalysis/build/attack1 7 12 1 12
 <pre><code class="language-sh">make -C sign-10 reproduce-forgery
 </code></pre>
 <p>For the complete public-key recovery and fresh forgery, use the <a href="https://github.com/MingLLuo/facto_dsa_ngcc_round1/tree/bd9d4ce38ed2b78daf57093556ef2e866bbc2264">pinned attack library</a>: run <code>scripts/check_environment.py</code>, then <code>scripts/run_acceptance.py --source kat</code>. It requires NumPy, FLINT, msolve 0.10.1 or later, and a C compiler.</p>
+<h2 class="issue-heading" id="sign-10-3-unsalted-hash-targets-permit-below-level-signature-transfers">sign-10-3: Unsalted hash targets permit below-level signature transfers</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Facto-DSA-128 and Facto-DSA-512</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>About 2^104.23 and 2^496.22 target evaluations at 50% collision success, respectively, followed by one signing query and a fresh-message signature transfer</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-06</td></tr>
+</table></div>
+
+<p>Algorithms 10 and 11 hash <code>pkh || M</code> to the same unsalted vector <code>h</code> in <code>F_q^m</code>. The parameter table sets <code>q=65519</code> and <code>m=13,32,62</code>, giving target spaces of about 208, 512 and 992 bits. At 50% success, a collision between distinct messages under a fixed public key costs about <code>sqrt(2 ln 2)·q^(m/2)</code>: 2^104.23 for Facto-DSA-128 and 2^496.22 for Facto-DSA-512, below their 128- and 512-bit classical claims. Ask the signer for one of the colliding messages; its signature also verifies for the other, since verification has no later message-dependent input. The 256-bit set's corresponding cost is 2^256.23 and does not fall below its target.</p>
+<p>The submitted Facto-DSA reference verifier follows this construction (<code>SIG_AlgorithmInstance.c:2065–2081</code>). The cost is an analytic birthday bound against the specified target space, not a completed full-size collision search. It persists with an ideal replacement for the contest <code>pseudoXOF</code>, because the vector space itself is too small.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-10/reproduce_target_width.py
+</code></pre>
+<p>The certificate checks the source dimensions and the shared unsalted signing/verifying input, then recomputes the three collision bounds.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

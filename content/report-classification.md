@@ -29,11 +29,12 @@ constant-time decoder or solver). The same meaning applies to hash functions.
 
 ### Proposed fixes
 
-When a report records a publicly proposed change, it places that material in a
-`Proposed fixes` subsection and attributes the source. An attributed attack or
-concern about a proposed change may also be noted there, clearly scoped to the
-proposal. Such material does not assert that a revision is correct, sufficient,
-complete, compatible, or secure, and does not alter the archived submission's
+When a report records a proposed change, whether communicated publicly or
+privately, it places that material in a `Proposed fixes` subsection and
+attributes the source. An attributed attack or concern about a proposed change
+may also be noted there, clearly scoped to the proposal. Recording it does not
+establish that a revision is correct, sufficient, complete, compatible, or
+secure, and does not alter the archived submission's
 classification. A revised candidate requires separate evaluation. Reports may
 state that one attack route is independent of another mechanism, but must not
 turn that observation alone into a verdict on a proposed fix.
@@ -67,7 +68,9 @@ For Round 1, the submitted specification and implementations are the evaluation
 target. An attack that requires a proposed modification does not change the
 submitted candidate's headline severity or status. Discussion of that modified
 variant belongs under `Proposed fixes`, clearly distinguished from evidence
-about the submission.
+about the submission. An auditor-devised hypothetical variant may be discussed
+in a separate analysis note, clearly marked as hypothetical; it is not a
+candidate finding or a submitter-proposed fix.
 
 Public-key algorithms ([call](https://www.niccs.org.cn/niccs/Notice/pc/content/content_1975896137741635584.html)):
 
@@ -121,6 +124,13 @@ Hash algorithms ([call](https://www.niccs.org.cn/niccs/Notice/pc/content/content
 Rate the strongest consequence supported by the report, including its stated
 preconditions and controls. Do not rate the feared consequence of an
 uncompleted attack.
+
+A build or packaging problem alone is not a security finding, even at Low:
+record it in an evaluation or harvest note unless it causes a demonstrated
+security, availability, or interoperability failure in a submitted/supported
+build. A crash reachable through the submitted API may be Low when its only
+shown effect is termination; a failure that occurs only in a hand-edited or
+unsupported build does not qualify on that basis.
 
 ### Critical
 

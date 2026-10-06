@@ -45,6 +45,102 @@
 <pre><code class="language-sh">python3 sign-19/reproduce_interop.py
 </code></pre>
 <p>The script builds both submitted Phoenix-SHAKE-128f implementations in a temporary directory, reproduces the first KAT seed and message, checks both self-verification controls, and prints <code>CONFIRMED sign-19-1</code> after the asymmetric cross-verification result.</p>
+<h2 class="issue-heading" id="sign-19-2-shake-384f-avx2-can-exceed-its-declared-signature-buffer">sign-19-2: SHAKE-384f AVX2 can exceed its declared signature buffer</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Phoenix-SHAKE-384f-avx2 signing</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Some honest signatures write two bytes past a buffer allocated using <code>sig_get_sn_len_bytes</code>; no further impact is shown</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
+<tr><th>Date</th><td>2026-10-06</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/HVWF4FETH3YWXDV4F42FLWEDB47XINMU/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p>The AVX2 <code>SPX_BYTES</code> maximum omits the two-byte TFORS-length prefix that the signer writes (<code>params/params-phoenix-shake-384f.h:74</code>; <code>SIG_AlgorithmInstance.c:65,228,454–456</code>). The 384f TFORS maximum is reachable exactly, so those signatures total 88,442 bytes against the declared 88,440. The post observed 9/3,752 and 3/1,756 such signatures and an AddressSanitizer heap overwrite; our certificate checks the submitted size arithmetic, not that frequency. Other SHAKE AVX2 tiers retain a margin because their TFORS maxima are not multiples of <code>SPX_N</code>. This is a bounded memory-safety defect, not a forgery.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-19/reproduce_avx2_findings.py --report-id sign-19-2
+</code></pre>
+<h2 class="issue-heading" id="sign-19-3-avx2-sm3-chain-and-tree-hashes-omit-the-public-seed">sign-19-3: AVX2 SM3 chain and tree hashes omit the public seed</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All ten Phoenix-SM3 AVX2 parameter sets</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Per-key hash separation specified for the tweakable hashes is absent; no complete forgery or security-bit loss has been established</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
+<tr><th>Date</th><td>2026-10-06</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/HVWF4FETH3YWXDV4F42FLWEDB47XINMU/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p>Phoenix's tweakable hashes take <code>PK.seed</code> as an input (specification physical pp. 9–10). The reference SM3 <code>thash</code> and <code>prf_addr</code> continue from a state pre-absorbing that seed (<code>Reference_Implementation/Phoenix-SM3-512s/thash_sm3_simple.c:13–27</code>). AVX2 instead hashes <code>ADRS || input</code> or <code>ADRS || SK.seed</code> directly; its copied seeded state is unused (<code>Optimized_Implementation/avx2/Phoenix-SM3-512s-avx2/thash_sm3_simple.c:13–27</code>, <code>hash_sm3.c:21–32</code>). The certificate checks the scalar path; the x4/x8 paths are source-inspected but not part of its assertions. Thus the chain/tree hashes and address PRF are no longer separated by public key. Other uses of <code>PK.seed</code>, including message hashing, remain. The consequence for full signature security is unresolved, so no numerical attack claim is made.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-19/reproduce_avx2_findings.py --report-id sign-19-3
+</code></pre>
+<h2 class="issue-heading" id="sign-19-4-a-256-bit-sm3-prehash-caps-message-retargeting-security">sign-19-4: A 256-bit SM3 prehash caps message-retargeting security</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Phoenix-SM3-384s/f and -512s/f, reference and AVX2 implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>One signing query and approximately 2^256 SM3 evaluations for a fixed-target second preimage; the full exponential search was not run</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-06</td></tr>
+</table></div>
+
+<p>Phoenix appends a public counter to the message before <code>H_msg</code>. In each affected implementation, <code>hash_message</code> first computes a 32-byte SM3 digest of <code>R || PK || M || counter</code>, then expands that digest with MGF1-SM3 (reference <code>Phoenix-SM3-512s/hash_sm3.c:106–165</code>) or <code>sm3_xof</code> (AVX2 <code>Phoenix-SM3-512s-avx2/hash_sm3.c:100–159</code>). Although the expanded output is longer, every message-dependent challenge bit is determined by this 256-bit intermediate value. The signer writes <code>R</code> and the selected counter into the signature; the verifier reads both and hashes the supplied message with those same values (<code>sign.c:173–195,280–294</code> in the reference tree, with corresponding AVX2 calls).</p>
+<p>Given a signature on <code>M</code>, an attacker fixes its public <code>R</code>, public key, and counter, then searches for a distinct <code>M'</code> with the same inner SM3 digest. A generic fixed-target second-preimage search costs about <code>2^256</code> evaluations. The expanded digest, tree and leaf indices, and all later verification checks are then identical, so the original signature verifies on <code>M'</code>. This is below the 384- and 512-bit classical claims. The cost is a <em>second-preimage</em> bound: the message-dependent <code>R</code> prevents using a pre-signing birthday collision to claim <code>2^128</code> work.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-19/certify_sm3_prehash.py
+</code></pre>
+<p>The certificate checks the four affected parameter sets in both submitted implementation families. It verifies the 32-byte intermediate, its expansion, and the signer/verifier reuse of the serialized <code>R</code> and counter; it does not execute a <code>2^256</code> search.</p>
+<h2 class="issue-heading" id="sign-19-5-every-high-level-sm3-signature-exposes-part-of-skprf">sign-19-5: Every high-level SM3 signature exposes part of `SK.prf`</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Phoenix-SM3-384s/f and -512s/f, reference and AVX2 implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>One ordinary signature discloses 16 of 48 <code>SK.prf</code> bytes at 384 or 32 of 64 at 512; no signing-key recovery or forgery from this disclosure is shown</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-06</td></tr>
+</table></div>
+
+<p><code>gen_message_random</code> computes HMAC-SM3 in a 96-byte local <code>buf</code>. The final <code>sm3(buf, buf, 96)</code> writes only its 32-byte digest at the start of that buffer. Bytes 32 through <code>SPX_N−1</code> still contain the HMAC outer pad, <code>SK.prf[i] XOR 0x5c</code>, because the code immediately copies <code>SPX_N</code> bytes of <code>buf</code> into the public signature randomizer <code>R</code> (reference <code>Phoenix-SM3-512s/hash_sm3.c:82–98</code>; AVX2 <code>Phoenix-SM3-512s-avx2/hash_sm3.c:76–92</code>). Thus a signer using either 48- or 64-byte <code>SPX_N</code> publishes those secret-key bytes in every signature. This read stays inside the allocated buffer and does not depend on stack layout.</p>
+<p>The certificate obtained valid signatures accepted by the submitted reference verifiers at all four affected sets and matched all 16 leaked bytes at each 384-bit set and all 32 at each 512-bit set. The remaining <code>SK.prf</code> bytes, <code>SK.seed</code>, and a full forgery were not recovered. This is a direct partial secret-key disclosure, not a full signing-key recovery.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-19/reproduce_sm3_prf_disclosure.py
+</code></pre>
+<p>The script builds and uses all four submitted reference libraries, then prints only match counts, not secret material.</p>
+<h2 class="issue-heading" id="sign-19-6-reference-high-level-sm3-hashes-copy-past-their-digest-buffers">sign-19-6: Reference high-level SM3 hashes copy past their digest buffers</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Phoenix-SM3-384s/f and -512s/f reference implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>The hash helpers read 16 or 32 bytes beyond a 32-byte stack digest; a reviewed build copied digest-state bytes, with no secret disclosure shown</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-06</td></tr>
+</table></div>
+
+<p>The reference <code>thash</code>, <code>thash_fin</code> and <code>prf_addr</code> helpers allocate a 32-byte SM3 output buffer and then copy <code>SPX_N</code> bytes from it (<code>Phoenix-SM3-512s/thash_sm3_simple.c:16–27,47–76</code>; <code>hash_sm3.c:20–37</code>). <code>SPX_N</code> is 48 bytes at the 384-bit level and 64 at the 512-bit level. The extra bytes are read from adjacent stack storage. Another local in these helpers is the completed SM3 state; in a reviewed build the copied excess duplicated digest-state bytes, not a secret. Stack layout is compiler-dependent, so that observation does not make the over-read safe in every build. The AVX2 helpers use an output-length-aware XOF instead, and the lower reference levels have <code>SPX_N≤32</code>.</p>
+<p>This is a source-confirmed out-of-bounds read on normal hash-helper calls. No secret disclosure, independently reproduced sanitizer trace, forgery or key recovery is demonstrated; Low reflects that evidence boundary.</p>
+<h3 id="reproducing_5">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-19/certify_sm3_digest_overread.py
+</code></pre>
+<p>The certificate checks the digest and copy sizes in all four affected reference trees; it does not execute a signer.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

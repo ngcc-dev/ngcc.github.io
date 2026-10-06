@@ -118,3 +118,48 @@ sh sign-22/reproduce_order_dependent_forgery.sh
 ```
 
 The default replay checks the envelope calculation, the frozen public evidence, the recovered public relation, the accepted forgery, and three negative controls. Set `FULL=1` to generate 50,000 chosen-message signatures and repeat the complete recovery; NumPy is required and the regression uses about 2.5 GiB of memory.
+
+## sign-22-5: A valid-bound response can overrun Rhyme-512's encoder table
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: Reference Rhyme-SHAKE-512 signing
+Discovery: Moderate
+Exploitation: A valid-bound response causes an AddressSanitizer out-of-bounds read; no crash, forgery or secret disclosure was independently demonstrated
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
+Date: 2026-10-06
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/J3PZL7SVYFLYJZ75Q5S5Y3ALIC65E5GZ/)
+
+For the escape-less `z1` row, `encode_z` indexes `es1[hi]` without checking `hi` (`src/encoding.c:130–142`). At this level `B0=916`, `RANS_L1=4`, and `RANS_NZ1=113`. Every coefficient from 892 through 916 is within the allowed bound yet gives `hi≥113`, beyond the 113-entry table. Our native AddressSanitizer test with `z1[0]=916` reaches a global-buffer-overflow read; the `z1[0]=0` control encodes normally. The post reports 10 crashes in 100 honest signing attempts, a frequency we have not repeated. This is an availability and memory-safety defect, not a signature forgery.
+
+### Reproducing
+
+```sh
+sh sign-22/reproduce_encoder_bound.sh
+```
+
+The wrapper builds the submitted encoder with AddressSanitizer, tests the boundary coefficient and the control, and leaves build products in a temporary directory.
+
+## sign-22-6: Long messages share an all-zero representative in Rhyme-SM3
+
+Severity: Critical
+Status: Confirmed
+Layer: Implementation
+Affected: Rhyme-SM3-128, -256, -384 and -512 reference and optimized implementations
+Discovery: Trivial
+Exploitation: One signature on a message longer than the XOF input limit verifies for a different long message without further signing queries
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-06
+
+Rhyme hashes `pk || M` to form its message representative (`src/sign.c:311–314,508–511`). Its SM3 XOF instead holds at most 8,192 input bytes; exceeding that limit sets an overflow flag and makes every subsequent squeeze return zero (`sm3_xof.c:42–48,115–119`). Thus every message with `|pk|+|M| > 8192` has the same representative under a fixed key. The same source behavior appears in all four SM3 levels and both submitted implementation families.
+
+An independently rebuilt reference signer at levels 128 and 512 accepted one signature for two different long messages, including a 20,000-byte message. Signatures and messages at the exact non-overflow boundary supplied rejection controls. This is a practical fresh-message EUF-CMA forgery, not a hash-collision cost estimate. The XOF must process the complete input or reject unsupported message lengths before signing and verification.
+
+### Reproducing
+
+```sh
+sh sign-22/reproduce_long_message.sh
+```
+
+The wrapper builds the submitted reference 128- and 512-bit signers in temporary directories and checks accepted long-message transfers and the boundary controls. It does not test the optimized binaries, whose input-limit and zero-output logic was checked in source.

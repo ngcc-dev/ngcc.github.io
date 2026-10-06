@@ -34,3 +34,26 @@ python3 kem-19/reproduce_ring_projection.py
 ```
 
 The preflight checks exact quotient multiplication and CRT reconstruction modulo 1028 using small-secret polynomials. It does not run lattice reduction; inspect `Lore-L4/params.h` and `poly.c` in the official archive's `Lore-SHAKE` or `Lore-SM3` reference backend for the modulus, degree, and negacyclic multiplication. These sources are not needed to run the preflight.
+
+## kem-19-2: Lore-384 and -512 emit 256-bit keys from 256-bit keygen seeds
+
+Severity: Critical
+Status: Confirmed
+Layer: Design
+Affected: Lore-L3 and Lore-L4 SHAKE and SM3 reference, AVX and NEON implementations
+Discovery: Trivial
+Exploitation: The 32-byte shared secret directly misses the 384- and 512-bit NGCC output-length targets; offline public-key seed search costs at most 2^256 trials
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-06
+
+The submitted §3.5 (physical p. 22) openly uses 256-bit SHAKE/SM3 constructions as *temporary references* for the 384- and 512-bit sets. All twelve higher-level source trees fix `LORE_SYMBYTES=32` for hashes, seeds and shared secrets (for example `Implementations and Test_Vectors/Implementations/Reference_Implementation/Lore-SM3/Lore-L4/params.h:18`); encapsulation outputs only that many bytes (the same tree's `kem.c:118–139`, with matching paths in the other trees). The NGCC Submission Requirements §2(2) require the encapsulated key to be at least as long as its security level. Thus both submitted high-level KEM outputs miss a direct call requirement, independent of the lattice estimates.
+
+There is also an offline secret-key ceiling. `crypto_kem_keypair_derand` passes only the first 32 bytes of its 64-byte coins to `indcpa_keypair_derand` (that tree's `kem.c:61–71`); the second half is rejection state. The PKE key generator expands that first half deterministically into the secret and public key (`indcpa.c:363–378`). Enumerating at most `2^256` first-half values and comparing generated public keys recovers a decapsulation secret for a target key. This is a concrete bound, not a completed `2^256` computation. The spec's disclosure of the temporary 256-bit instantiation is noted, but does not change the frozen candidate's targets.
+
+### Reproducing
+
+```sh
+python3 kem-19/reproduce_seed_ceiling.py
+```
+
+The certificate checks the twelve affected source trees and both independent 256-bit ceilings; it does not run the exhaustive search.

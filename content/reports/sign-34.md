@@ -125,3 +125,26 @@ python3 sign-34/reproduce_sampler_constants.py
 ```
 
 `sign-34/reproduce_sampler_mean.sh` also prints the public package's pinned 400,000-signature isolated Delta2 comparison after its fresh sampler run.
+
+## sign-34-5: An unsalted 256-bit prehash permits signature transfer at the higher levels
+
+Severity: Critical
+Status: Confirmed
+Layer: Implementation
+Affected: YuanYang.DSA-1024 and -2048 reference and optimized implementations
+Discovery: Trivial
+Exploitation: About 2^128.24 SM3 evaluations at 50% collision success, one signing query, then a fresh-message forgery
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-06
+
+The specification hashes a fresh salt before the message and public key (§4.2.1). The submitted YuanYang.DSA-1024 and -2048 reference and optimized trees instead compute `seed = SM3(M || h)` *before* choosing the signature salt, and then derive the challenge only from `salt || seed` (for example `Implementations/Reference_Implementation/yuanyang-2048/common.c:33–54`, `sign.c:583–615`, `vrfy.c:116–127`, with matching paths in the other trees). Here `h` is the fixed public key. Two equal-length messages colliding in the 256-bit SM3 output therefore yield the same challenge under **any** salt. Obtain one signature on either message and reuse it on the other; verification has no way to distinguish them.
+
+A birthday search reaches 50% collision probability after about 2^128.24 evaluations, below the 256- and 512-bit claims of the 1024- and 2048-dimensional sets. The 512-dimensional set targets 128 bits and is excluded. This is an analytic attack against the submitted message-binding order, not a full-size collision search carried out here; the source and hash width determine the bound even if the later challenge XOF is ideal.
+
+### Reproducing
+
+```sh
+python3 sign-34/reproduce_prehash_ceiling.py
+```
+
+The certificate checks both implementation families and the salt-after-prehash data flow, then computes the birthday bound.

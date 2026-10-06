@@ -62,3 +62,26 @@ The original post proposes replacing the return expression with a constant-time 
 ./kem-15/reproduce_fo_bypass.sh
 python3 kem-15/reproduce_random_compare.py
 ```
+
+## kem-15-3: The FIPS202 variants generate predictable keys because their RNG is never seeded
+
+Severity: Critical
+Status: Confirmed
+Layer: Implementation
+Affected: All four submitted additional FIPS202 REF/OPT128 and REF/OPT256 implementations; the primary SM3 variants are not affected by this RNG path
+Discovery: Trivial
+Exploitation: A fresh process's first key pair and encapsulation are reproducible from public source, permitting private-key reconstruction and decapsulation
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-06
+
+All four FIPS202 trees link their own `rng.c` in their normal Makefile builds (`Implementations/README.md:83`). It initializes `rng_seed` to 32 zero bytes and `rng_ctr` to zero; `randombytes` draws SHAKE256 from that fixed seed and counter (`rng.c:16–40`). Their PKE key generation, KEM fallback-key generation and encapsulation call this `randombytes` (`indcpa.c:33`, `kem.c:32,59`). Nothing in the submitted KEM API calls `randombytes_init`. The KAT driver seeds a *different* object, `drng_algorithm` (`KAT_KEM.c:103–108`), so even its varying test seeds do not seed the RNG that key generation uses.
+
+Consequently an attacker can start a fresh copy of the submitted FIPS202 implementation, regenerate a victim's first public/secret key pair, and decapsulate ciphertexts addressed to that public key. This violates the 128- and 256-bit KEM security targets, without relying on a weak entropy source or on KAT-only behavior. The finding is limited to these additional implementations: explicitly calling the separate `randombytes_init` function before use changes their output, but that call is not part of the submitted KEM API.
+
+### Reproducing
+
+```sh
+python3 kem-15/reproduce_fips202_unseeded_rng.py
+```
+
+The witness builds each of the four frozen trees and runs its KEM API in separate processes after two different external-DRBG seeds. It requires identical key pairs, ciphertexts and shared secrets in those runs. As a negative control, explicit initialization of the internal RNG with different seeds must change the outputs.

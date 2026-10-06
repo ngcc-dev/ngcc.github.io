@@ -106,6 +106,44 @@ security/ngcc_security kem-10/lib/libCMultiURAG-512.so kem-zero
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 security/rbg_protocol_dependency.py --report-id kem-10-4
 </code></pre>
+<h2 class="issue-heading" id="kem-10-5-short-ciphertexts-reach-the-fixed-offset-parser">kem-10-5: Short ciphertexts reach the fixed-offset parser</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>CMultiURAG-128, -256 and -512 reference and optimized decapsulation</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>A caller-supplied short ciphertext buffer causes an out-of-bounds read; no disclosure or key recovery is demonstrated</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
+<tr><th>Date</th><td>2026-10-06</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/GDMB53GE3SVJ3V2R6O53GBWLWIXBAWYE/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p>All six <code>kem_dec</code> wrappers discard <code>ct_len_bytes</code> and pass <code>ct</code> to <code>cmultiurag_decaps</code>. Its parser reads both matrices and the salt at fixed offsets (<code>src/parsing.c:145–148</code>), so a genuinely short allocation is read beyond its end. The forum reports an AddressSanitizer over-read on reference CMultiURAG-128; our certificate checks the six source paths. No memory disclosure or cryptographic break is shown.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-10/reproduce_implementation_findings.py --report-id kem-10-5
+</code></pre>
+<p>The certificate checks source, not the forum's sanitizer run.</p>
+<h2 class="issue-heading" id="kem-10-6-reference-79-bit-field-multiplication-touches-a-fourth-limb">kem-10-6: Reference 79-bit field multiplication touches a fourth limb</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Reference CMultiURAG-128</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>An out-of-bounds read-modify-write occurs on honest field multiplication; no attacker-controlled nonzero overwrite is demonstrated</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
+<tr><th>Date</th><td>2026-10-06</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/GDMB53GE3SVJ3V2R6O53GBWLWIXBAWYE/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p>The reference 79-bit field declares <code>rbc_elt_ur</code> with three limbs (<code>src/rbc-79/rbc_79.h:18,33</code>). In <code>rbc_elt_ur_mul</code>, the inner loop includes <code>j = RBC_79_ELT_SIZE = 2</code>; for outer-loop <code>i ≥ 64</code>, <code>offset = 1</code>, so <code>o[j+offset]</code> accesses limb 3 (<code>rbc_elt.c:428–435</code>). The forum reports an AddressSanitizer failure during honest key generation. For reduced operands the value XORed at that location is zero, so the evidence shows undefined behavior and sanitizer failure, not useful memory corruption. The 256/512 reference fields and optimized multiplication use different bounds or code.</p>
+<h3 id="reproducing_5">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-10/reproduce_implementation_findings.py --report-id kem-10-6
+</code></pre>
+<p>The certificate checks the offending loop and dimensions; it does not rerun the sanitizer test.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

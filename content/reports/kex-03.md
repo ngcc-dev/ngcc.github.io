@@ -151,3 +151,51 @@ With buffers sized to the bytes received, AddressSanitizer reported invalid read
 ```sh
 ./kex-03/reproduce_naxos_and_lengths.sh
 ```
+
+## kex-03-6: POLARLAC reference and optimized vectors derive different shared secrets
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: All 13 POLARLAC-based CreTAKE reference/optimized instance pairs
+Discovery: Moderate
+Exploitation: Cross-implementation key agreement can fail; no confidentiality attack is demonstrated
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
+Date: 2026-10-06
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/NPW7UHH4G3Y5MTSWGK7H6KHPKFFCUIMD/)
+
+In the frozen official archive, each of the 13 POLARLAC-based reference and optimized KAT pairs starts with the same 64-byte seed but records a different shared secret. All 12 ZEN-based pairs agree under the same check. For example, K2K-PLAC128's first reference and optimized `SS` fields begin `8DA4C53F` and `35C82311`. We independently checked the archive's published SHA-256 and these vector fields. The forum additionally reports that mixed reference/optimized parties complete `derive` but obtain different keys on 4/4 seeds. That protocol experiment was not rerun here; the archived vectors alone establish inconsistent submitted implementations, not which one is correct. This is a Low interoperability defect.
+
+### Reproducing
+
+```sh
+python3 kex-03/reproduce_kat_interop.py
+```
+
+The script downloads the pinned official archive, verifies its SHA-256, and checks first-record seeds and shared secrets for all 25 instance pairs. It exits with SKIP status 77 if the archive is unavailable; `--archive /path/to/CreTAKE.zip` permits offline replay.
+
+## kex-03-7: K2K-PLAC512 encryption coins depend on only 128 message bits
+
+Severity: Critical
+Status: Confirmed
+Layer: Implementation
+Affected: CreTAKE-K2K-PLAC512 and -PLAC512Star, reference and optimized implementations
+Discovery: Moderate
+Exploitation: About 2^128 offline candidate encryptions, given the initiator StateReveal allowed for an honestly matched session
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool; session-key-recovery extension by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-06
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/NPW7UHH4G3Y5MTSWGK7H6KHPKFFCUIMD/)
+
+In the reference trees for `CreTAKE-K2K-PLAC512` (`twokem.c:107,155`) and `CreTAKE-K2K-PLAC512Star` (`twokem.c:108,156`), `sizeof(buf3) = 128` is passed to `pseudoXOF` as a *bit* length. The XOF copies only 16 bytes (`auxfunc.c:482–507`), all from the 64-byte random message `m`; the remaining message bytes and public-key digest do not affect its output. Thus the two encryption seeds and double-key KEM secret have at most 128 bits of input entropy. The 128/256-bit and ZEN512 K2K variants use the correct `* 8` length. The certificate below inspects and executes only the reference tree; the optimized call sites are source-inspected.
+
+The first POLARLAC ciphertext component is generated from an encryption seed and public key, independently of `m` (`POLARLAC-512/pke.c:144–190`). An attacker can enumerate the 2^128 message prefixes, derive candidate seeds, and check that component against the observed ciphertext. This recovers the K2K secret `k_i`; the search is a concrete bound, not a run we performed. The full ciphertext is still compared on decapsulation—this is not a truncated re-encryption check.
+
+CreTAKE claims IND-StAA for K2K (§4.2.2 and Theorem 3). In the [adopted model](https://iacr.org/archive/pkc2020/12110176/12110176.pdf), an initiator StateReveal of an honestly matched test session is permitted without corrupting that party's long-term key (Figure 14, physical pp. 23–24). The revealed initiator state contains the independent `k_j` (`KEX_AlgorithmInstance.c:131–145`). Alternatively, corruption of the responder's static KEM key permits decapsulation of the public `ct_j` to obtain `k_j`. With both `k_i` and `k_j`, the attacker computes the transcript-bound session key. This below-target attack is conditional on one of those preconditions; a passive attack on every session is not claimed.
+
+### Reproducing
+
+```sh
+python3 kex-03/reproduce_k2k_prefix.py
+```
+
+The certificate checks both 512-bit PLAC source variants, the bit-length conversion, and the session-state layout. It also tests that changing bytes after the first 16 does not alter the submitted XOF's effective input. It does not perform the 2^128 search.

@@ -116,6 +116,45 @@ pages 29 and 50–51 and the source root constant.</p>
 <pre><code class="language-sh">sh sign-22/reproduce_order_dependent_forgery.sh
 </code></pre>
 <p>The default replay checks the envelope calculation, the frozen public evidence, the recovered public relation, the accepted forgery, and three negative controls. Set <code>FULL=1</code> to generate 50,000 chosen-message signatures and repeat the complete recovery; NumPy is required and the regression uses about 2.5 GiB of memory.</p>
+<h2 class="issue-heading" id="sign-22-5-a-valid-bound-response-can-overrun-rhyme-512s-encoder-table">sign-22-5: A valid-bound response can overrun Rhyme-512&#x27;s encoder table</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Reference Rhyme-SHAKE-512 signing</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>A valid-bound response causes an AddressSanitizer out-of-bounds read; no crash, forgery or secret disclosure was independently demonstrated</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
+<tr><th>Date</th><td>2026-10-06</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/J3PZL7SVYFLYJZ75Q5S5Y3ALIC65E5GZ/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p>For the escape-less <code>z1</code> row, <code>encode_z</code> indexes <code>es1[hi]</code> without checking <code>hi</code> (<code>src/encoding.c:130–142</code>). At this level <code>B0=916</code>, <code>RANS_L1=4</code>, and <code>RANS_NZ1=113</code>. Every coefficient from 892 through 916 is within the allowed bound yet gives <code>hi≥113</code>, beyond the 113-entry table. Our native AddressSanitizer test with <code>z1[0]=916</code> reaches a global-buffer-overflow read; the <code>z1[0]=0</code> control encodes normally. The post reports 10 crashes in 100 honest signing attempts, a frequency we have not repeated. This is an availability and memory-safety defect, not a signature forgery.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh sign-22/reproduce_encoder_bound.sh
+</code></pre>
+<p>The wrapper builds the submitted encoder with AddressSanitizer, tests the boundary coefficient and the control, and leaves build products in a temporary directory.</p>
+<h2 class="issue-heading" id="sign-22-6-long-messages-share-an-all-zero-representative-in-rhyme-sm3">sign-22-6: Long messages share an all-zero representative in Rhyme-SM3</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Rhyme-SM3-128, -256, -384 and -512 reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>One signature on a message longer than the XOF input limit verifies for a different long message without further signing queries</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-06</td></tr>
+</table></div>
+
+<p>Rhyme hashes <code>pk || M</code> to form its message representative (<code>src/sign.c:311–314,508–511</code>). Its SM3 XOF instead holds at most 8,192 input bytes; exceeding that limit sets an overflow flag and makes every subsequent squeeze return zero (<code>sm3_xof.c:42–48,115–119</code>). Thus every message with <code>|pk|+|M| &gt; 8192</code> has the same representative under a fixed key. The same source behavior appears in all four SM3 levels and both submitted implementation families.</p>
+<p>An independently rebuilt reference signer at levels 128 and 512 accepted one signature for two different long messages, including a 20,000-byte message. Signatures and messages at the exact non-overflow boundary supplied rejection controls. This is a practical fresh-message EUF-CMA forgery, not a hash-collision cost estimate. The XOF must process the complete input or reject unsupported message lengths before signing and verification.</p>
+<h3 id="reproducing_5">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh sign-22/reproduce_long_message.sh
+</code></pre>
+<p>The wrapper builds the submitted reference 128- and 512-bit signers in temporary directories and checks accepted long-message transfers and the boundary controls. It does not test the optimized binaries, whose input-limit and zero-output logic was checked in source.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

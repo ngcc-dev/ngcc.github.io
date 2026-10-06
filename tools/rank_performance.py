@@ -33,9 +33,9 @@ from pathlib import Path
 
 
 CATEGORIES = (
+    ("sign", "Digital Signatures"),
     ("kem", "Key Encapsulation"),
     ("kex", "Key Exchange"),
-    ("sign", "Digital Signatures"),
     ("hash", "Hash Functions"),
 )
 TARGETS = (128, 256, 512)
@@ -277,7 +277,7 @@ def load_security(report_dir: Path) -> dict[str, Counter]:
 
 def load_names(data_dir: Path) -> dict[str, tuple[str, str]]:
     official = {}
-    for category in ("kem", "kex", "sign", "hash"):
+    for category, _ in CATEGORIES:
         for row in read_csv(data_dir / f"{category}.csv"):
             candidate = f"{category}-{int(row['No']):02d}"
             official[candidate] = row["Algorithm"]

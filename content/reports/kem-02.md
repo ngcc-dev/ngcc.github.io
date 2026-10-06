@@ -152,3 +152,50 @@ sh kem-02/reproduce_dfo_key_recovery.sh
 ```
 
 The witness builds against the unmodified Amoeba-576 reference sources, contains crashing oracle calls in child processes, requires exact recovery of all 576 coefficients, and verifies a fresh shared secret with the reconstructed key.
+
+## kem-02-7: Four-way ECC loops overrun a 523-byte plaintext buffer
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: All five reference and optimized Amoeba parameter sets; runtime sanitizer evidence covers reference Amoeba-576 and -1152
+Discovery: Trivial
+Exploitation: Honest encryption reads one byte past a stack buffer and honest decryption writes one byte past it; no useful corruption or disclosure is demonstrated
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
+Date: 2026-10-06
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/U4OYB4YVEA4BTBJKUYMCKIQBOZK7NTET/)
+
+`RLWE_ECC_N` is 523, but `encode_MSB` and `decode_MSB` advance in groups of four while testing only `i < RLWE_ECC_N` (`src/backend/cpapke.c:165–183`). Their last iteration at `i = 520` reads `pt[523]` on encryption and writes `pt[523]` on decryption; `PTXT` has valid indices 0–522. The forum reports AddressSanitizer read and write failures on honest reference Amoeba-576/1152 operations. Our certificate checks the same loop and buffer dimensions across all ten trees. The write is a fixed, one-byte tail access; the available evidence does not establish attacker-directed state corruption or a cryptographic consequence. The tail must be handled without accessing index 523.
+
+### Reproducing
+
+```sh
+python3 kem-02/reproduce_ecc_tail.py
+```
+
+This certificate checks the source bounds; the sanitizer runs are attributed to the forum post.
+
+## kem-02-8: Amoeba's four-call SM3 expansion has only a 256-bit internal state
+
+Severity: Critical
+Status: Confirmed
+Layer: Implementation
+Affected: Frozen SM3 instantiations of Amoeba-1728 and Amoeba-2304 (384- and 512-bit levels)
+Discovery: Moderate
+Exploitation: At most 2^256 SM3 chaining-state trials and key-derivation evaluations; no decapsulation queries
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-06
+
+The specification's §1.4 (physical pp. 7–8) treats `G(ID(pk),m)` as a 1024-bit hash and requires a 512-bit encapsulation message at the higher levels. Its order `ID(pk) || m` avoids the shared first-message-block bottleneck. The submitted `CCAKEM_Encaps` instead implements `G` as four SM3-256 calls on `m || counter || ID(pk)` (`src/backend/ccakem.c:35–45`); each call reads the same first, full 64-byte block `m`. After that block, all four outputs depend on just one 256-bit SM3 chaining state. The remaining counter and public-key ID bytes, as well as SM3 padding, are known.
+
+In the KEM real-or-random game, the attacker receives the challenge ciphertext and a candidate 512-bit shared key. For each of 2^256 possible first-block states, the attacker can finish the four SM3 computations, derive the pre-key, and evaluate the specified KDF on that ciphertext (`ccakem.c:48–51`). The real key is in this set; an independent random 512-bit key matches one of the candidates with probability at most 2^-256. This is a concrete, albeit infeasible, distinguisher below both claimed classical levels. It uses no decapsulation oracle.
+
+The limitation is specific to the frozen SM3-based expansion, not to an ideal 1024-bit `G`. The specification calls its symmetric components replaceable plugins (physical p. 9); replacing them with an appropriate independent 1024-bit hash would require evaluating a different instantiation. The conclusion persists if the contest `pseudoXOF` used as the final KDF is idealized with its present dimensions.
+
+### Reproducing
+
+```sh
+python3 kem-02/reproduce_sm3_cv_ceiling.py
+```
+
+The certificate verifies the first-block alignment, four SM3 calls, and final 512-bit key derivation in both high-level reference builds. The 2^256 enumeration is not run.

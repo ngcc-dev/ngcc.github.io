@@ -62,3 +62,26 @@ make -C sign-10 reproduce-forgery
 ```
 
 For the complete public-key recovery and fresh forgery, use the [pinned attack library](https://github.com/MingLLuo/facto_dsa_ngcc_round1/tree/bd9d4ce38ed2b78daf57093556ef2e866bbc2264): run `scripts/check_environment.py`, then `scripts/run_acceptance.py --source kat`. It requires NumPy, FLINT, msolve 0.10.1 or later, and a C compiler.
+
+## sign-10-3: Unsalted hash targets permit below-level signature transfers
+
+Severity: Critical
+Status: Confirmed
+Layer: Design
+Affected: Facto-DSA-128 and Facto-DSA-512
+Discovery: Trivial
+Exploitation: About 2^104.23 and 2^496.22 target evaluations at 50% collision success, respectively, followed by one signing query and a fresh-message signature transfer
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-06
+
+Algorithms 10 and 11 hash `pkh || M` to the same unsalted vector `h` in `F_q^m`. The parameter table sets `q=65519` and `m=13,32,62`, giving target spaces of about 208, 512 and 992 bits. At 50% success, a collision between distinct messages under a fixed public key costs about `sqrt(2 ln 2)·q^(m/2)`: 2^104.23 for Facto-DSA-128 and 2^496.22 for Facto-DSA-512, below their 128- and 512-bit classical claims. Ask the signer for one of the colliding messages; its signature also verifies for the other, since verification has no later message-dependent input. The 256-bit set's corresponding cost is 2^256.23 and does not fall below its target.
+
+The submitted Facto-DSA reference verifier follows this construction (`SIG_AlgorithmInstance.c:2065–2081`). The cost is an analytic birthday bound against the specified target space, not a completed full-size collision search. It persists with an ideal replacement for the contest `pseudoXOF`, because the vector space itself is too small.
+
+### Reproducing
+
+```sh
+python3 sign-10/reproduce_target_width.py
+```
+
+The certificate checks the source dimensions and the shared unsalted signing/verifying input, then recomputes the three collision bounds.

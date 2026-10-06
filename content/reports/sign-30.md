@@ -50,3 +50,26 @@ At `2^64−1` signing queries, exact ideal-model tables give roughly 50% success
 ```sh
 sh sign-30/reproduce_seed_collision.sh
 ```
+
+## sign-30-3: SHAKE256 capacity limits TRINE-512 transcript collision security
+
+Severity: Critical
+Status: Confirmed
+Layer: Implementation
+Affected: TRINE-512 Balanced and ShortSig normal SHA3 reference builds; ICCS builds use a different hash backend
+Discovery: Moderate
+Exploitation: One signing query and approximately 2^256 SHAKE256 evaluations; the full exponential search was not run
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-06
+
+The normal build selects `USE_SHA3` (`Makefile:34`). Its transcript hash is incremental SHAKE256 (`hashkdf.c:255–313`). Signing absorbs the message into a fresh transcript before any round commitments (`trine.c:358–379`); verification reconstructs and absorbs those same commitments after the supplied message (`trine.c:576–615`). No message length or salt is absorbed before the message in this path.
+
+SHAKE256 has a 512-bit capacity. For two controlled, equal-length messages, a birthday search over one rate block finds post-permutation states with the same capacity in about `2^256` work. A second controlled block cancels the rate-state difference, leaving identical complete states before the common commitment suffix and padding. The attacker obtains one signature on either message; verification recomputes the same transcript digest for the other and accepts the unchanged signature. The two-block messages fit the submitted message interface. This construction is an analytic, below-512-bit EUF-CMA attack that does not require guessing or resetting the signer's randomness.
+
+### Reproducing
+
+```sh
+python3 sign-30/certify_shake_capacity.py
+```
+
+The certificate checks the normal build flag, message-first transcript order, and SHAKE256 backend in both 512-bit variants. It verifies the structural preconditions, not an infeasible `2^256` collision search.

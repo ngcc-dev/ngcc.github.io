@@ -64,6 +64,26 @@
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">sh sign-30/reproduce_seed_collision.sh
 </code></pre>
+<h2 class="issue-heading" id="sign-30-3-shake256-capacity-limits-trine-512-transcript-collision-security">sign-30-3: SHAKE256 capacity limits TRINE-512 transcript collision security</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>TRINE-512 Balanced and ShortSig normal SHA3 reference builds; ICCS builds use a different hash backend</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>One signing query and approximately 2^256 SHAKE256 evaluations; the full exponential search was not run</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-06</td></tr>
+</table></div>
+
+<p>The normal build selects <code>USE_SHA3</code> (<code>Makefile:34</code>). Its transcript hash is incremental SHAKE256 (<code>hashkdf.c:255–313</code>). Signing absorbs the message into a fresh transcript before any round commitments (<code>trine.c:358–379</code>); verification reconstructs and absorbs those same commitments after the supplied message (<code>trine.c:576–615</code>). No message length or salt is absorbed before the message in this path.</p>
+<p>SHAKE256 has a 512-bit capacity. For two controlled, equal-length messages, a birthday search over one rate block finds post-permutation states with the same capacity in about <code>2^256</code> work. A second controlled block cancels the rate-state difference, leaving identical complete states before the common commitment suffix and padding. The attacker obtains one signature on either message; verification recomputes the same transcript digest for the other and accepts the unchanged signature. The two-block messages fit the submitted message interface. This construction is an analytic, below-512-bit EUF-CMA attack that does not require guessing or resetting the signer's randomness.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-30/certify_shake_capacity.py
+</code></pre>
+<p>The certificate checks the normal build flag, message-first transcript order, and SHAKE256 backend in both 512-bit variants. It verifies the structural preconditions, not an infeasible <code>2^256</code> collision search.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -52,6 +52,25 @@ done
 </code></pre>
 <p>The <code>u</code> shift is at lines 69, 67, and 69 respectively; only scabbard512 adds
 <code>h1</code> first. Compare Algorithm 10 in <code>kem-24/kem-24-spec.pdf</code>.</p>
+<h2 class="issue-heading" id="kem-24-2-unvalidated-ciphertext-length-bypasses-or-overruns-comparison">kem-24-2: Unvalidated ciphertext length bypasses or overruns comparison</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>scabbard128, scabbard256 and scabbard512 reference and optimized decapsulation</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>An oversized supplied length reads past a fixed stack buffer; a zero length skips re-encryption comparison. Both require caller-length mismatch; no disclosure is shown</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
+<tr><th>Date</th><td>2026-10-06</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/3VTQVWNN5WYL2NLZ34HKBH5IGKMPULVA/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p>Each <code>kem_dec</code> allocates <code>cmp[SCABBARD_CIPHERTEXTBYTES]</code> but passes the unvalidated <code>ct_len_bytes</code> to <code>verify(ct, cmp, ct_len_bytes)</code> (<code>KEM_scabbard128.c:111–124</code>; scabbard256 declares <code>cmp</code> at line 112). <code>verify.c:14–15</code> reads both arrays for that many bytes. With an actual ciphertext buffer longer than the fixed ciphertext size, this reads beyond <code>cmp</code>. Conversely, passing a full ciphertext buffer with <code>ct_len_bytes=0</code> compares no bytes, so a changed ciphertext bypasses the re-encryption rejection check. Both cases require a caller-supplied length inconsistent with the actual ciphertext; the latter is not a separate in-model attack. The forum post reports an AddressSanitizer reproduction on reference scabbard512; the source certificate checks the same path in all six reference and optimized trees. No secret disclosure or key recovery is shown.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-24/reproduce_implementation_findings.py --report-id kem-24-2
+</code></pre>
+<p>This is a source certificate; the sanitizer result is the forum's observation.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

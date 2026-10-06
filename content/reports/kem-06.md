@@ -123,3 +123,25 @@ The shipped implementation works with its bundled `drng.c`; the Low impact is ke
 ```sh
 python3 security/rbg_protocol_dependency.py --report-id kem-06-5
 ```
+
+## kem-06-6: Short ciphertexts reach BRA's fixed-offset parser
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: BRA-128, -256 and -512 reference and optimized decapsulation
+Discovery: Trivial
+Exploitation: A caller-supplied short ciphertext buffer causes an out-of-bounds read; no disclosure or key recovery is demonstrated
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
+Date: 2026-10-06
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/Y2MQUP3EMML3ZFWM5NWM3SZN65PQAFHN/)
+
+All six `kem_dec` wrappers discard `ct_len_bytes` and pass `ct` to `bra_decaps`. Its parser reads two fixed-length vectors and the salt at fixed offsets (`src/parsing.c:166–169`). If the supplied buffer is actually shorter than the ciphertext size, the parser reads beyond it before rejecting the ciphertext. The forum post reports an AddressSanitizer reproduction on reference BRA-128; our certificate checks the same source path in all six trees. An out-of-bounds read is confirmed, but the available evidence does not show secret disclosure or a cryptographic break.
+
+### Reproducing
+
+```sh
+python3 kem-06/reproduce_short_ciphertext.py
+```
+
+This source certificate checks the missing length guard and fixed-offset reads. The sanitizer observation is attributed to the forum post, not rerun by this command.

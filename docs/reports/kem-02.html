@@ -148,6 +148,46 @@
 <pre><code class="language-sh">sh kem-02/reproduce_dfo_key_recovery.sh
 </code></pre>
 <p>The witness builds against the unmodified Amoeba-576 reference sources, contains crashing oracle calls in child processes, requires exact recovery of all 576 coefficients, and verifies a fresh shared secret with the reconstructed key.</p>
+<h2 class="issue-heading" id="kem-02-7-four-way-ecc-loops-overrun-a-523-byte-plaintext-buffer">kem-02-7: Four-way ECC loops overrun a 523-byte plaintext buffer</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All five reference and optimized Amoeba parameter sets; runtime sanitizer evidence covers reference Amoeba-576 and -1152</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Honest encryption reads one byte past a stack buffer and honest decryption writes one byte past it; no useful corruption or disclosure is demonstrated</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
+<tr><th>Date</th><td>2026-10-06</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/U4OYB4YVEA4BTBJKUYMCKIQBOZK7NTET/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p><code>RLWE_ECC_N</code> is 523, but <code>encode_MSB</code> and <code>decode_MSB</code> advance in groups of four while testing only <code>i &lt; RLWE_ECC_N</code> (<code>src/backend/cpapke.c:165–183</code>). Their last iteration at <code>i = 520</code> reads <code>pt[523]</code> on encryption and writes <code>pt[523]</code> on decryption; <code>PTXT</code> has valid indices 0–522. The forum reports AddressSanitizer read and write failures on honest reference Amoeba-576/1152 operations. Our certificate checks the same loop and buffer dimensions across all ten trees. The write is a fixed, one-byte tail access; the available evidence does not establish attacker-directed state corruption or a cryptographic consequence. The tail must be handled without accessing index 523.</p>
+<h3 id="reproducing_6">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-02/reproduce_ecc_tail.py
+</code></pre>
+<p>This certificate checks the source bounds; the sanitizer runs are attributed to the forum post.</p>
+<h2 class="issue-heading" id="kem-02-8-amoebas-four-call-sm3-expansion-has-only-a-256-bit-internal-state">kem-02-8: Amoeba&#x27;s four-call SM3 expansion has only a 256-bit internal state</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Frozen SM3 instantiations of Amoeba-1728 and Amoeba-2304 (384- and 512-bit levels)</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>At most 2^256 SM3 chaining-state trials and key-derivation evaluations; no decapsulation queries</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-06</td></tr>
+</table></div>
+
+<p>The specification's §1.4 (physical pp. 7–8) treats <code>G(ID(pk),m)</code> as a 1024-bit hash and requires a 512-bit encapsulation message at the higher levels. Its order <code>ID(pk) || m</code> avoids the shared first-message-block bottleneck. The submitted <code>CCAKEM_Encaps</code> instead implements <code>G</code> as four SM3-256 calls on <code>m || counter || ID(pk)</code> (<code>src/backend/ccakem.c:35–45</code>); each call reads the same first, full 64-byte block <code>m</code>. After that block, all four outputs depend on just one 256-bit SM3 chaining state. The remaining counter and public-key ID bytes, as well as SM3 padding, are known.</p>
+<p>In the KEM real-or-random game, the attacker receives the challenge ciphertext and a candidate 512-bit shared key. For each of 2^256 possible first-block states, the attacker can finish the four SM3 computations, derive the pre-key, and evaluate the specified KDF on that ciphertext (<code>ccakem.c:48–51</code>). The real key is in this set; an independent random 512-bit key matches one of the candidates with probability at most 2^-256. This is a concrete, albeit infeasible, distinguisher below both claimed classical levels. It uses no decapsulation oracle.</p>
+<p>The limitation is specific to the frozen SM3-based expansion, not to an ideal 1024-bit <code>G</code>. The specification calls its symmetric components replaceable plugins (physical p. 9); replacing them with an appropriate independent 1024-bit hash would require evaluating a different instantiation. The conclusion persists if the contest <code>pseudoXOF</code> used as the final KDF is idealized with its present dimensions.</p>
+<h3 id="reproducing_7">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-02/reproduce_sm3_cv_ceiling.py
+</code></pre>
+<p>The certificate verifies the first-block alignment, four SM3 calls, and final 512-bit key derivation in both high-level reference builds. The 2^256 enumeration is not run.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

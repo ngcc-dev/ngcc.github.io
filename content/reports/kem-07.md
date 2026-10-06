@@ -70,3 +70,25 @@ The archived implementation is internally consistent. The Low impact is key-form
 ```sh
 python3 security/rbg_protocol_dependency.py --report-id kem-07-3
 ```
+
+## kem-07-4: Short ciphertexts reach BRQC's fixed-offset parser
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: BRQC-128, -256 and -512 reference and optimized decapsulation
+Discovery: Trivial
+Exploitation: A caller-supplied short ciphertext buffer causes an out-of-bounds read; no disclosure or key recovery is demonstrated
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
+Date: 2026-10-06
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/BJDASBVXJPRXRQFJCXGSNASJJ32MQ5XI/)
+
+All six `kem_dec` wrappers discard `ct_len_bytes` and pass `ct` to `brqc_decaps`. Its parser reads two fixed-length vectors and the salt at fixed offsets (`src/parsing.c:166–169`), so an actually short buffer is read beyond its allocation. The forum post reports an AddressSanitizer over-read on reference BRQC-128; our certificate checks the same source path in all six trees. Full-length malformed ciphertexts did not crash in the reported tests. No secret disclosure or cryptographic break is demonstrated. The post also points out a negative-degree initialization and an incorrect allocation-result check in the bundled `rbc` library, but establishes no triggering input or memory harm for either; those source-review notes are not classified as separate vulnerabilities here.
+
+### Reproducing
+
+```sh
+python3 kem-07/reproduce_short_ciphertext.py
+```
+
+This source certificate checks the missing length guard and fixed-offset reads; it does not rerun the forum's sanitizer test.

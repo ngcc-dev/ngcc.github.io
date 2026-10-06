@@ -66,6 +66,26 @@ bits below its declared classical target.</p>
 <pre><code class="language-sh">python3 sign-26/reproduce_grinding_shortfall.py
 </code></pre>
 <p>The script reads each submitted exponent and the shared challenge function, checks that exactly one XOF call is made with no grinding loop, and recomputes the four challenge-space bounds and required iteration counts.</p>
+<h2 class="issue-heading" id="sign-26-3-a-failed-final-split-can-accept-an-altered-signature-in-a-reused-verifier-process">sign-26-3: A failed final split can accept an altered signature in a reused verifier process</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>SQIsign2D-push Level-1 through Level-4 reference verifiers share the byte-identical path; runtime acceptance tested only at Level-3</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>An altered signature was accepted for the original message after a valid verification in the same process; changed-message verification failed. No fresh-message forgery is shown.</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
+<tr><th>Date</th><td>2026-10-06</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/RXZVBGNRTMJFB2AKGZNCVR3Y3ZMTKC5C/">PKC Forum report</a></p>
+<p><code>splitting_comput</code> writes <code>last_step.B.null_point</code> only when the final split succeeds (<code>src/hd/ref/hdx/theta_isogenies.c:1375–1376</code>). The balanced-chain caller ignores its failure result and uses <code>last_step.B</code> to compute the codomain (<code>:1744–1748</code>). The verifier then hashes that codomain (<code>src/sqisigndim2/ref/sqisigndim2x/sign.c:1070,1124,1132</code>). A failed split can therefore consume uninitialized, process-state-dependent data instead of rejecting the signature.</p>
+<p>In an NGCC local Level-3 reference run, a valid signature verified, and flipping its first byte then also verified for the <em>same</em> message in that process. This runtime acceptance is our observation; the packaged certificate checks only the source path, while the linked forum post is the original report. A changed-message control rejected; an intervening signing call also removed the acceptance. The observed signature alias and process-state dependence merit Medium; they do not establish a fresh-message forgery or a claimed SUF-CMA break. Reject a failed split before using its output.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-26/reproduce_failed_split.py
+</code></pre>
+<p>The certificate checks the unchecked failure path in the submitted source. The process-state-dependent Level-3 acceptance was separately reproduced with a native build; the certificate does not itself replay that run.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

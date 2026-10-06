@@ -142,6 +142,26 @@ control flow, not a measured remote timing exploit.</p>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">./sign-31/reproduce_implementation_findings.sh
 </code></pre>
+<h2 class="issue-heading" id="sign-31-7-the-tsuov-128-euf-cma-proof-loses-its-bound-at-264-salt-trials">sign-31-7: The TSUOV-128 EUF-CMA proof loses its bound at 2^64 salt trials</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr>
+<tr><th>Affected</th><td>TSUOV-128 specification and its reference and optimized parameter sets</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Proof gap; no concrete forgery follows from the term alone</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-06</td></tr>
+</table></div>
+
+<p>TSUOV-128 uses a 128-bit signature salt (specification §4.4; <code>tsuov_params.h:19,79</code>). Lemma 6.10 and Theorem 6.12 of the submitted specification bound the salt-collision game hop by <code>(Q_h + Q'_s)Q'_s 2^-λ</code>, where <code>Q'_s</code> counts all honest signer salt trials and <code>λ=128</code>. At <code>Q'_s=2^64</code> this term is already at least one even with <code>Q_h=0</code>. The bound becomes vacuous at the candidate's required per-key capacity of <code>2^64</code> messages and cannot substantiate security through the NGCC <code>2^80</code> chosen-message evaluation budget.</p>
+<p>This is a shortfall in the submitted reduction; it does not establish a collision attack or a forgery against TSUOV-128.</p>
+<h3 id="reproducing_6">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-31/certify_salt_bound.py
+</code></pre>
+<p>The certificate checks the source salt width, locates the stated proof terms in the submitted PDF and evaluates the bound at <code>2^64</code> trials.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

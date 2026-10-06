@@ -35,3 +35,25 @@ done
 
 The `u` shift is at lines 69, 67, and 69 respectively; only scabbard512 adds
 `h1` first. Compare Algorithm 10 in `kem-24/kem-24-spec.pdf`.
+
+## kem-24-2: Unvalidated ciphertext length bypasses or overruns comparison
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: scabbard128, scabbard256 and scabbard512 reference and optimized decapsulation
+Discovery: Trivial
+Exploitation: An oversized supplied length reads past a fixed stack buffer; a zero length skips re-encryption comparison. Both require caller-length mismatch; no disclosure is shown
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
+Date: 2026-10-06
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/3VTQVWNN5WYL2NLZ34HKBH5IGKMPULVA/)
+
+Each `kem_dec` allocates `cmp[SCABBARD_CIPHERTEXTBYTES]` but passes the unvalidated `ct_len_bytes` to `verify(ct, cmp, ct_len_bytes)` (`KEM_scabbard128.c:111–124`; scabbard256 declares `cmp` at line 112). `verify.c:14–15` reads both arrays for that many bytes. With an actual ciphertext buffer longer than the fixed ciphertext size, this reads beyond `cmp`. Conversely, passing a full ciphertext buffer with `ct_len_bytes=0` compares no bytes, so a changed ciphertext bypasses the re-encryption rejection check. Both cases require a caller-supplied length inconsistent with the actual ciphertext; the latter is not a separate in-model attack. The forum post reports an AddressSanitizer reproduction on reference scabbard512; the source certificate checks the same path in all six reference and optimized trees. No secret disclosure or key recovery is shown.
+
+### Reproducing
+
+```sh
+python3 kem-24/reproduce_implementation_findings.py --report-id kem-24-2
+```
+
+This is a source certificate; the sanitizer result is the forum's observation.

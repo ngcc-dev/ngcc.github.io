@@ -52,3 +52,27 @@ python3 sign-26/reproduce_grinding_shortfall.py
 ```
 
 The script reads each submitted exponent and the shared challenge function, checks that exactly one XOF call is made with no grinding loop, and recomputes the four challenge-space bounds and required iteration counts.
+
+## sign-26-3: A failed final split can accept an altered signature in a reused verifier process
+
+Severity: Medium
+Status: Confirmed
+Layer: Implementation
+Affected: SQIsign2D-push Level-1 through Level-4 reference verifiers share the byte-identical path; runtime acceptance tested only at Level-3
+Discovery: Moderate
+Exploitation: An altered signature was accepted for the original message after a valid verification in the same process; changed-message verification failed. No fresh-message forgery is shown.
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
+Date: 2026-10-06
+Original source: [PKC Forum report](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/RXZVBGNRTMJFB2AKGZNCVR3Y3ZMTKC5C/)
+
+`splitting_comput` writes `last_step.B.null_point` only when the final split succeeds (`src/hd/ref/hdx/theta_isogenies.c:1375–1376`). The balanced-chain caller ignores its failure result and uses `last_step.B` to compute the codomain (`:1744–1748`). The verifier then hashes that codomain (`src/sqisigndim2/ref/sqisigndim2x/sign.c:1070,1124,1132`). A failed split can therefore consume uninitialized, process-state-dependent data instead of rejecting the signature.
+
+In an NGCC local Level-3 reference run, a valid signature verified, and flipping its first byte then also verified for the *same* message in that process. This runtime acceptance is our observation; the packaged certificate checks only the source path, while the linked forum post is the original report. A changed-message control rejected; an intervening signing call also removed the acceptance. The observed signature alias and process-state dependence merit Medium; they do not establish a fresh-message forgery or a claimed SUF-CMA break. Reject a failed split before using its output.
+
+### Reproducing
+
+```sh
+python3 sign-26/reproduce_failed_split.py
+```
+
+The certificate checks the unchecked failure path in the submitted source. The process-state-dependent Level-3 acceptance was separately reproduced with a native build; the certificate does not itself replay that run.

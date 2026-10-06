@@ -56,3 +56,51 @@ make -C sign-08 exploit-key-recovery
 ```
 
 The wrapper clones and verifies the pinned attack commit, builds its public-relation checker against this repository's archived DARTS-128 source, replays the published accumulators, and tests a fresh signature with the recovered key. It requires Git, a C compiler, and a Python interpreter with NumPy; set `NGCC_SAGE_PYTHON` when NumPy is available only in a Sage environment. The original 20-million-signature collection is not repeated.
+
+## sign-08-3: Reference and AVX2 DARTS expand different public matrices
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: DARTS128, DARTS256 and DARTS512 reference versus AVX2 implementations
+Discovery: Moderate
+Exploitation: Honest signatures from either implementation fail verification in the other; no forgery or key recovery follows
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
+Date: 2026-10-06
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/PHSEM2FMDUS6IKY4N3GQCIZLFJEWMIVK/)
+
+The reference `poly_uniform` initially squeezes nine blocks and retains leftovers using `% 16` (`poly.c:917–945`). AVX2 initially squeezes seven blocks, then uses `% Q_BITS` in its scalar path and a separate four-way refill path (`poly.c:1266–1355`). These differences are consistent with divergent `ExpandA` matrices: the first-record public keys in the submitted reference and AVX2 KATs share their seedA prefix and diverge immediately afterward at all three tiers. The forum reports mutual rejection of honest cross-implementation signatures at all three tiers, 4/4 seeds, while each build verifies its own signatures. Our certificate confirms the divergent source paths, not that runtime experiment. The specification does not fix the `PolyUniform` squeeze schedule, so this is an implementation interoperability finding, not a design or forgery claim.
+
+### Proposed fixes
+
+The forum reports that changing AVX2's expansion read pattern restores reference-KAT verification. This proposal is recorded without evaluating it.
+
+### Reproducing
+
+```sh
+python3 sign-08/reproduce_expanda_mismatch.py
+```
+
+## sign-08-4: AVX2 DARTS-512 samples its signing secret from 256 seed bits
+
+Severity: Critical
+Status: Confirmed
+Layer: Implementation
+Affected: DARTS-512 AVX2 implementation
+Discovery: Moderate
+Exploitation: At most 2^256 candidate secret samplings and public-key checks, far below the 512-bit claim; the full search was not run
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool; key-search extension by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-06
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/PHSEM2FMDUS6IKY4N3GQCIZLFJEWMIVK/)
+
+DARTS-512 specifies a 64-byte master seed (Table 2, physical p. 13; Algorithm 6, physical p. 8). Its AVX2 key generator creates a 64-byte `seed_s` and calls `polyveckl_ternary_p` for all secret polynomials (`sign.c:50–65`). That sampler calls `poly_ternary_p`, which invokes `stream256_init` (`poly.c:1368,1388`). Source inspection shows that the AVX2 wrapper absorbs only 32 seed bytes (`symmetric.h:63–65`), whereas the reference sampler absorbs all 64. The packaged certificate does not execute either stream.
+
+Consequently, the AVX2 signing polynomials have at most 2^256 possible seed-prefix sources. An attacker can enumerate them, apply the key-generation rejection test, and check the resulting public relation against `A0` in the public key (`sign.c:65–98`). A match supplies an equivalent signing secret; the independent signing-randomness key `K` can be chosen afresh. This is a concrete below-target search bound, not a practical completed search.
+
+### Reproducing
+
+```sh
+python3 sign-08/reproduce_secret_seed_width.py
+```
+
+The certificate checks local submitted source files when present. With `--archive DARTS.zip`, or when local files are absent, it verifies the official archive's SHA-256 before checking the same source call chain. It does not run a native stream test or enumerate the 2^256 prefixes.
