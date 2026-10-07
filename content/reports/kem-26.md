@@ -27,21 +27,24 @@ python3 kem-26/reproduce_parity.py
 
 The witness produces 64 NSS-HQC-256 ciphertexts with the submitted library: every `u` has even parity, while a deterministic uniform-string control contains both parities. The other levels follow exactly from their fixed weights 66, 106, 159, and 213 and the identity above.
 
-## kem-26-2: NSS-HQC-256 fails honest decapsulation near 10^-4
+## kem-26-2: NSS-HQC-256 failures enable reported equivalent-key recovery
 
-Severity: Medium
-Status: Confirmed
+Severity: Critical
+Status: Probable
 Layer: Design
-Affected: NSS-HQC-256 parameters, DFR analysis, and submitted reference implementation
-Discovery: Moderate
-Exploitation: Honest-session mismatch; potential failure-oracle implications are not developed into key recovery
-Credit: Information Security Center, Academy of Mathematics and Systems Science, Chinese Academy of Sciences
+Affected: NSS-HQC-256 parameters, DFR analysis, and submitted reference implementation; higher-set recovery not executed
+Discovery: Non-trivial
+Exploitation: Sun reports equivalent-key recovery after about 2^27 adaptive decapsulations; the full recovery has not been independently replayed
+Credit: Information Security Center, Academy of Mathematics and Systems Science, Chinese Academy of Sciences; failure-oracle key-recovery extension by Sun Shuzhou, with GLM-5.3 assistance
 Date: 2026-09-30
 Original source: [AMSS PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/DGP2J3ZUZJYNC4COYWQQ77L42OOFNCP7/)
+Follow-up source: [Sun's NSS-HQC failure-oracle recovery post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/PA6JZ4YGBB3GE6FEL6BSXLAGMUGIPBJ2/)
 
 The specification selects every parameter set under `DFR_NSS < 2^-128` (§3.6) and uses that bound in its IND-CCA2 loss. Its calculation replaces the five-bit compressor's correlated errors with a binary-symmetric-channel proxy. Equation (68) is also labelled an upper bound although it counts only error patterns matching nonzero RM codewords; the forum gives `7.53·10^-45` at crossover probability `1/4`, while one omitted failure event alone has probability at least `4.59·10^-6`.
 
-The mismatch is observable in the complete scheme. AMSS reports 7 failed decapsulations in 50,000 honest NSS-HQC-256 sessions (`1.4·10^-4`). An independent deterministic search found a failing submitted-library transcript at seed index 4201; `kem_dec` returns `-1` and its key differs from the encapsulated key, while adjacent seeds agree. This confirms that the advertised DFR analysis is not conservative for the shipped parameters. No reaction attack or secret recovery is demonstrated.
+The mismatch is observable in the complete scheme. AMSS reports 7 failed decapsulations in 50,000 honest NSS-HQC-256 sessions (`1.4·10^-4`). An independent deterministic search found a failing submitted-library transcript at seed index 4201; `kem_dec` returns `-1` and its key differs from the encapsulated key, while adjacent seeds agree. The submitted `nss_hqc_dec` also returns `NSS_ERR_DECAP` when the re-encryption check fails (`nss_hqc_core.c:1020–1060`). These checks confirm the failure-rate discrepancy and an observable failure bit, but not key recovery.
+
+Sun's follow-up reports a completed adaptive attack on the unmodified 256-bit reference implementation. Honest-form ciphertexts with chosen message, salt, and position-tagged error offset expose a weak secret-dependent failure signal. Accumulating about `1.3·10^8` decapsulations reportedly recovered both 117-position secret supports exactly; the reconstructed equivalent key then decrypted a fresh honest ciphertext. This would violate the claimed IND-CCA2 security within the call's `2^80` chosen-ciphertext budget, hence Critical. The per-position statistics and full key recovery are the reporter's results, not independently reproduced here, hence Probable. The 384/512 query estimates are extrapolations, and no analogous 128-bit recovery is claimed.
 
 ### Reproducing
 
@@ -49,7 +52,7 @@ The mismatch is observable in the complete scheme. AMSS reports 7 failed decapsu
 python3 kem-26/reproduce_failure.py
 ```
 
-The compact witness replays the pinned failing seed and two adjacent controls. The earlier bounded search examined 30,000 deterministically derived seeds on the archived NSS-HQC-256 library.
+The compact witness replays the pinned failing seed and two adjacent controls. The earlier bounded search examined 30,000 deterministically derived seeds on the archived NSS-HQC-256 library. This checks the failure oracle, not Sun's adaptive recovery; the forum post supplies the only full-run evidence presently available.
 
 ## kem-26-3: Ephemeral syndrome decoding misses the 256-, 384-, and 512-bit targets
 
@@ -135,3 +138,27 @@ An attacker enumerates `seed_y`, expands `y`, recognizes it through the public r
 ```sh
 ./kem-26/reproduce_seed_y_width.sh
 ```
+
+## kem-26-5: RS-decoder timing reportedly recovers an NSS-HQC-128 key
+
+Severity: Critical
+Status: Probable
+Layer: Side-channel
+Affected: NSS-HQC-128 reference decapsulation; the other three sets share the decoder loop but have not been attacked end to end
+Discovery: Non-trivial
+Exploitation: Sun reports recovery of all 73 secret-support positions with 912,733 chosen-ciphertext decapsulations; not independently replayed
+Credit: Sun Shuzhou, with GLM-5.3 assistance
+Date: 2026-10-06
+Original source: [Sun's NSS-HQC decoder-timing post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XAJUOVQVF2JXLF2UOD4COZAIEVWJZYJB/)
+
+The submitted `pke_decrypt` combines the received ciphertext with the secret vector `y` before decoding (`nss_hqc_core.c:793–898`). The Reed–Solomon decoder then tries decreasing error counts and returns on its first successful trial (`code_layer.c:490–529,864–931`). Thus the number of trials can depend on the secret and an attacker-chosen ciphertext. The specification nevertheless says that the implementation is designed for constant-time execution (§4.5.5, physical p. 41). Its examples omit the RS decoder, but the general claim covers the implementation.
+
+Sun reports a measured 1.1% decapsulation-time separation on chosen degenerate ciphertexts and exact recovery of the 73-position secret support at the 128-bit tier after 912,733 decapsulations. The reconstructed equivalent key reportedly decrypted a fresh honest ciphertext. This is a reported end-to-end key recovery contradicting the submitted constant-time claim, hence Critical under the side-channel rule. The source path and variable trial count are independently checked below, but neither the secret-dependent timing distribution nor the full recovery has been replayed; the status is therefore Probable. Higher-tier query counts in the post are extrapolations, not demonstrated attacks. This finding concerns NSS-HQC's submitted decoder, not the separate NIST HQC implementation.
+
+### Reproducing
+
+```sh
+sh kem-26/reproduce_rs_decoder_iterations.sh
+```
+
+The native component witness includes the frozen NSS-HQC-128 decoder, checks that clean and random received words take different numbers of trials, and verifies its trial-loop result against the submitted `rs_decode`. It does **not** reproduce a secret-key timing oracle or key recovery; those remain the reporter's observations.
