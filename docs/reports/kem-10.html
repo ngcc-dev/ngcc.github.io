@@ -118,8 +118,12 @@ security/ngcc_security kem-10/lib/libCMultiURAG-512.so kem-zero
 <tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
 <tr><th>Date</th><td>2026-10-06</td></tr>
 </table></div>
-<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/GDMB53GE3SVJ3V2R6O53GBWLWIXBAWYE/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/GDMB53GE3SVJ3V2R6O53GBWLWIXBAWYE/">LK-PQC-Hunter's PKC Forum post</a>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/USDY6YVIGB3YM3F4T2KRLUU4KTMCHAZR/">C-Multi-UR-AG team's 2026-10-07 UTC response</a></p>
 <p>All six <code>kem_dec</code> wrappers discard <code>ct_len_bytes</code> and pass <code>ct</code> to <code>cmultiurag_decaps</code>. Its parser reads both matrices and the salt at fixed offsets (<code>src/parsing.c:145–148</code>), so a genuinely short allocation is read beyond its end. The forum reports an AddressSanitizer over-read on reference CMultiURAG-128; our certificate checks the six source paths. No memory disclosure or cryptographic break is shown.</p>
+<p>The C-Multi-UR-AG team acknowledges the reported implementation issues in its <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/USDY6YVIGB3YM3F4T2KRLUU4KTMCHAZR/">response</a>.</p>
+<h3 id="proposed-fixes">Proposed fixes</h3>
+<p>The team plans to strengthen input-length validation and the decoder's handling of malformed inputs in a future reference-implementation update. This records its proposal without evaluating it.</p>
 <h3 id="reproducing_4">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 kem-10/reproduce_implementation_findings.py --report-id kem-10-5
@@ -137,8 +141,11 @@ security/ngcc_security kem-10/lib/libCMultiURAG-512.so kem-zero
 <tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
 <tr><th>Date</th><td>2026-10-06</td></tr>
 </table></div>
-<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/GDMB53GE3SVJ3V2R6O53GBWLWIXBAWYE/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/GDMB53GE3SVJ3V2R6O53GBWLWIXBAWYE/">LK-PQC-Hunter's PKC Forum post</a>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/USDY6YVIGB3YM3F4T2KRLUU4KTMCHAZR/">C-Multi-UR-AG team's 2026-10-07 UTC response</a></p>
 <p>The reference 79-bit field declares <code>rbc_elt_ur</code> with three limbs (<code>src/rbc-79/rbc_79.h:18,33</code>). In <code>rbc_elt_ur_mul</code>, the inner loop includes <code>j = RBC_79_ELT_SIZE = 2</code>; for outer-loop <code>i ≥ 64</code>, <code>offset = 1</code>, so <code>o[j+offset]</code> accesses limb 3 (<code>rbc_elt.c:428–435</code>). The forum reports an AddressSanitizer failure during honest key generation. For reduced operands the value XORed at that location is zero, so the evidence shows undefined behavior and sanitizer failure, not useful memory corruption. The 256/512 reference fields and optimized multiplication use different bounds or code.</p>
+<h3 id="proposed-fixes_1">Proposed fixes</h3>
+<p>The <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/USDY6YVIGB3YM3F4T2KRLUU4KTMCHAZR/">team response</a> proposes correcting the relevant loop bounds in a future reference-implementation update. This records the proposal without evaluating it.</p>
 <h3 id="reproducing_5">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 kem-10/reproduce_implementation_findings.py --report-id kem-10-6

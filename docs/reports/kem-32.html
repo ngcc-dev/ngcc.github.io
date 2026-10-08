@@ -36,10 +36,12 @@
 <tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
 <tr><th>Date</th><td>2026-09-21</td></tr>
 </table></div>
-
+<p>Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/S4LPBREM3EYTVIOGUDFFMHIM2UCD2VXG/">QCTM team's 2026-10-08 response</a></p>
 <p>When the <code>LOCALLY_QUASI_CYCLIC_TWISTED_MCELIECE_TRACE_DEC</code> environment variable is present, encapsulation copies the fixed-weight secret error positions into file-static process-global storage. The same opt-in trace path prints decoder stages, syndrome-difference counts, decoded weight, and failure-location diagnostics to standard error.</p>
 <p>The logic is present in the compiled QCTM128, QCTM256, and QCTM512 reference sources. The retained error positions are secret per-encapsulation material and should be erased after ciphertext construction, not persisted for a later decoder trace.</p>
 <p>The static buffer has no exported accessor, so merely setting the environment variable does not reveal its contents to a remote KEM caller. Exploitation additionally requires stderr visibility, local/in-process memory access, or another disclosure primitive. This is a confirmed implementation-security and secret-lifetime defect, not a demonstrated remote key-recovery attack.</p>
+<h3 id="proposed-fixes">Proposed fixes</h3>
+<p>In its 2026-10-08 response, the QCTM team says it removed the global error-position storage and trace diagnostics and added clearing of temporary error buffers in both implementation trees. This records the team's revision without evaluating it.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>This is a source-level secret-lifetime check, not a remote exploit. Fetch the
@@ -63,7 +65,7 @@ rg -n 'debug_last_error|TRACE_DEC' kem-32/Implementations/Reference_Implementati
 <tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
 <tr><th>Date</th><td>2026-09-30</td></tr>
 </table></div>
-
+<p>Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/S4LPBREM3EYTVIOGUDFFMHIM2UCD2VXG/">QCTM team's 2026-10-08 response</a></p>
 <p>Additional reference: <a href="https://eprint.iacr.org/archive/2026/517/20260612:161211">May and Sá Diogo, <em>Multi-Instance Security Degradation of Code-Based KEMs</em>, ePrint 2026/517, pinned 2026-06-12 version</a></p>
 <p>QCTM encapsulation publishes <code>C=H e^T</code> for a fresh weight-<code>w</code> error under a reusable public key. The order-19 circulant part gives 19 public rotated targets for every observed ciphertext. Omitting the two non-circulant tail checks while searching gives effective dimensions 4,958, 9,784 and 19,892; the fixed-weight parity restores the remaining check. A candidate rotation is unshifted and verified against the complete public syndrome, after which <code>K=H(1,e,C)</code> is public.</p>
 <p>May and Sá Diogo's pinned DS-DOOM estimator gives:</p>
@@ -103,6 +105,8 @@ rg -n 'debug_last_error|TRACE_DEC' kem-32/Implementations/Reference_Implementati
 </table></div>
 <p>The attacks are passive, use fewer than 2^80 observed encapsulations, and need no decapsulation queries. The specification describes cached public-key state for encapsulation and reuse of decoded secret-key state across calls (§7.4), and states no per-key session cap. A hypothetical 2^64-ciphertext limit would avoid the crossings, but neither the NGCC call nor QCTM imposes one. The 128- and 256-bit claims are therefore missed and the finding is Critical.</p>
 <p>The margins are narrow: 0.339 and 0.664 bits under this single heuristic DS-DOOM cost model, with memory estimates of 2^95.592 and 2^96.271 bits. Reducing the allowed observation exponent by one removes both reported crossings. The classification applies the policy's strict below-target rule to the cited model; it should be revisited if a better-supported cost model moves either estimate above its target.</p>
+<h3 id="proposed-fixes_1">Proposed fixes</h3>
+<p>In its 2026-10-08 response, the team reports increasing QCTM128's code length from 10,070 to 10,545 and QCTM256's from 19,000 to 19,551. It gives revised DS-DOOM estimates of 2^136.294 and 2^264.170 bit operations under the stated multi-instance model; QCTM512's length remains 38,000. The revised sets require new keys and test vectors. These proposals are recorded without evaluating them.</p>
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>Install <code>numpy</code> and <code>scipy</code>, then run:</p>
@@ -129,6 +133,70 @@ rg -n 'debug_last_error|TRACE_DEC' kem-32/Implementations/Reference_Implementati
 <pre><code class="language-sh">python3 kem-32/reproduce_bridge_seed_ceiling.py
 </code></pre>
 <p>The certificate checks the submitted build flags, bundled RNG state, and bridge-to-keygen-seed source path. It is a source-and-counting argument, not a full-size key recovery.</p>
+<h2 class="issue-heading" id="kem-32-4-folding-exposes-an-ordinary-goppa-quotient-of-the-public-code">kem-32-4: Folding exposes an ordinary Goppa quotient of the public code</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>QCTM128, QCTM256, and QCTM512 in the submitted specification and reference and optimized public-key constructions</td></tr>
+<tr><th>Discovery</th><td>Non-trivial</td></tr>
+<tr><th>Exploitation</th><td>An order-19 public quotient reduces to an ordinary Goppa code after one puncture; recovery of a full QCTM decapsulation key is not demonstrated</td></tr>
+<tr><th>Credit</th><td>Liping Wang; independent quotient audit by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-08</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XGAGQXXF4DD735AOVZJY67QHJS2M6LBH/">Liping Wang's QCTM structural-analysis post</a></p>
+<p>Additional reference: <a href="https://eprint.iacr.org/2026/1984">Weis, <em>Improving GIJS Key Recovery for Classic McEliece</em>, ePrint 2026/1984</a></p>
+<p>The specification argues that the twisted construction prevents a direct folding attack (§6.3, physical pp. 19–20). In the submitted public-key construction, however, the twist is confined to the omitted final field row: the published matrix uses the first <code>t−1</code> ordinary syndrome rows plus an all-ones parity row (reference QCTM128 <code>goppa.c:1889–1893,2050–2127</code>; <code>decode.c:103–139</code>; the other trees use the same construction). The support consists of 19-element orbits (<code>seeded_keygen.c:610–691</code>). Folding the public matrix across each orbit therefore exposes an ordinary degree-<code>t/19</code> Goppa check space with one parity row. Puncturing one coordinate gives an ordinary binary Goppa code.</p>
+<p>The exact public and secret-oracle row spaces agree on the archived KAT keys for all three sets:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Set</th>
+<th style="text-align: right;">Public quotient</th>
+<th style="text-align: right;">Punctured Goppa code</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>QCTM128</td>
+<td style="text-align: right;"><code>[530,259]</code></td>
+<td style="text-align: right;"><code>[529,259]</code></td>
+</tr>
+<tr>
+<td>QCTM256</td>
+<td style="text-align: right;"><code>[1000,513]</code></td>
+<td style="text-align: right;"><code>[999,513]</code></td>
+</tr>
+<tr>
+<td>QCTM512</td>
+<td style="text-align: right;"><code>[2000,1045]</code></td>
+<td style="text-align: right;"><code>[1999,1045]</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>This defeats the stated rationale for excluding ordinary-Goppa structural analysis, hence Medium. The forum post estimates quotient key recovery using Weis's heuristic GIJS model, but does not show how a recovered quotient key yields a key for the full twisted QCTM decapsulation or cost that lifting step. No full-scheme key recovery is claimed here.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh kem-32/reproduce_folded_quotient.sh
+</code></pre>
+<p>The wrapper downloads the SHA-256-pinned submitted archive and checks the public quotient against the secret Goppa description for KAT record 0 of each set. The private key is used only as an independent oracle for the row-space comparison; the quotient is derived from the public key alone. The witness does not recover a decapsulation key.</p>
+<h2 class="issue-heading" id="kem-32-5-reported-structural-key-recovery-for-qctm256-and-qctm512">kem-32-5: Reported structural key recovery for QCTM256 and QCTM512</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-lead">Lead</span></td></tr>
+<tr><th>Affected</th><td>QCTM256 and QCTM512, conditional on lifting the quotient attack to the full KEM</td></tr>
+<tr><th>Discovery</th><td>Hard</td></tr>
+<tr><th>Exploitation</th><td>The reporter estimates 2^141.3 and 2^142.0 bit operations respectively; full QCTM key recovery has not been demonstrated</td></tr>
+<tr><th>Credit</th><td>Liping Wang</td></tr>
+<tr><th>Date</th><td>2026-10-08</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XGAGQXXF4DD735AOVZJY67QHJS2M6LBH/">Liping Wang's QCTM structural-analysis post</a></p>
+<p>Additional reference: <a href="https://eprint.iacr.org/2026/1984">Weis, <em>Improving GIJS Key Recovery for Classic McEliece</em>, ePrint 2026/1984</a></p>
+<p>The public QCTM code exposes an ordinary Goppa quotient of degree 27 or 53 for these sets. The reporter applies Weis's heuristic GIJS key-recovery model to that quotient, estimating the costs above (or 2^176.7 and 2^177.7 bit operations with square-root memory charging). If this yields full QCTM decapsulation keys at comparable cost, both estimates fall below the claimed 256- and 512-bit levels.</p>
+<p>Three steps remain open: the GIJS/Weis assumptions have not been established at these quotient degrees; quotient-key recovery has not been demonstrated on a QCTM key; and lifting a recovered quotient key through the order-19 alignment and twist gauge to a full decapsulation key has not been implemented or costed. This is a candidate-specific Critical <em>lead</em>, not a confirmed key-recovery attack. The archived-key audit in <code>kem-32/reproduce_folded_quotient.sh</code> confirms only the prerequisite quotient.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

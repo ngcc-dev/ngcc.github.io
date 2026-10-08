@@ -95,8 +95,12 @@
 <tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
 <tr><th>Date</th><td>2026-10-06</td></tr>
 </table></div>
-<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/BJDASBVXJPRXRQFJCXGSNASJJ32MQ5XI/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/BJDASBVXJPRXRQFJCXGSNASJJ32MQ5XI/">LK-PQC-Hunter's PKC Forum post</a>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/5MLFK3CWBXOOL44LXIKN47FTBXK2MORV/">BRQC team's 2026-10-07 UTC response</a></p>
 <p>All six <code>kem_dec</code> wrappers discard <code>ct_len_bytes</code> and pass <code>ct</code> to <code>brqc_decaps</code>. Its parser reads two fixed-length vectors and the salt at fixed offsets (<code>src/parsing.c:166–169</code>), so an actually short buffer is read beyond its allocation. The forum post reports an AddressSanitizer over-read on reference BRQC-128; our certificate checks the same source path in all six trees. Full-length malformed ciphertexts did not crash in the reported tests. No secret disclosure or cryptographic break is demonstrated. The post also points out a negative-degree initialization and an incorrect allocation-result check in the bundled <code>rbc</code> library, but establishes no triggering input or memory harm for either; those source-review notes are not classified as separate vulnerabilities here.</p>
+<p>The BRQC team acknowledges the missing ciphertext-length validation and the two source-level robustness concerns in its <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/5MLFK3CWBXOOL44LXIKN47FTBXK2MORV/">response</a>.</p>
+<h3 id="proposed-fixes">Proposed fixes</h3>
+<p>The team plans to validate ciphertext lengths, handle negative degree differences, correct the allocation-result check, and review loop bounds and error handling in a future reference-implementation update. This records its proposal without evaluating it.</p>
 <h3 id="reproducing_3">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 kem-07/reproduce_short_ciphertext.py

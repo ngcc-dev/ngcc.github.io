@@ -82,8 +82,15 @@ Exploitation: A caller-supplied short ciphertext buffer causes an out-of-bounds 
 Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
 Date: 2026-10-06
 Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/BJDASBVXJPRXRQFJCXGSNASJJ32MQ5XI/)
+Follow-up source: [BRQC team's 2026-10-07 UTC response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/5MLFK3CWBXOOL44LXIKN47FTBXK2MORV/)
 
 All six `kem_dec` wrappers discard `ct_len_bytes` and pass `ct` to `brqc_decaps`. Its parser reads two fixed-length vectors and the salt at fixed offsets (`src/parsing.c:166–169`), so an actually short buffer is read beyond its allocation. The forum post reports an AddressSanitizer over-read on reference BRQC-128; our certificate checks the same source path in all six trees. Full-length malformed ciphertexts did not crash in the reported tests. No secret disclosure or cryptographic break is demonstrated. The post also points out a negative-degree initialization and an incorrect allocation-result check in the bundled `rbc` library, but establishes no triggering input or memory harm for either; those source-review notes are not classified as separate vulnerabilities here.
+
+The BRQC team acknowledges the missing ciphertext-length validation and the two source-level robustness concerns in its [response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/5MLFK3CWBXOOL44LXIKN47FTBXK2MORV/).
+
+### Proposed fixes
+
+The team plans to validate ciphertext lengths, handle negative degree differences, correct the allocation-result check, and review loop bounds and error handling in a future reference-implementation update. This records its proposal without evaluating it.
 
 ### Reproducing
 

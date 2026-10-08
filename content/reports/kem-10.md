@@ -106,8 +106,15 @@ Exploitation: A caller-supplied short ciphertext buffer causes an out-of-bounds 
 Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
 Date: 2026-10-06
 Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/GDMB53GE3SVJ3V2R6O53GBWLWIXBAWYE/)
+Follow-up source: [C-Multi-UR-AG team's 2026-10-07 UTC response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/USDY6YVIGB3YM3F4T2KRLUU4KTMCHAZR/)
 
 All six `kem_dec` wrappers discard `ct_len_bytes` and pass `ct` to `cmultiurag_decaps`. Its parser reads both matrices and the salt at fixed offsets (`src/parsing.c:145–148`), so a genuinely short allocation is read beyond its end. The forum reports an AddressSanitizer over-read on reference CMultiURAG-128; our certificate checks the six source paths. No memory disclosure or cryptographic break is shown.
+
+The C-Multi-UR-AG team acknowledges the reported implementation issues in its [response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/USDY6YVIGB3YM3F4T2KRLUU4KTMCHAZR/).
+
+### Proposed fixes
+
+The team plans to strengthen input-length validation and the decoder's handling of malformed inputs in a future reference-implementation update. This records its proposal without evaluating it.
 
 ### Reproducing
 
@@ -128,8 +135,13 @@ Exploitation: An out-of-bounds read-modify-write occurs on honest field multipli
 Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
 Date: 2026-10-06
 Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/GDMB53GE3SVJ3V2R6O53GBWLWIXBAWYE/)
+Follow-up source: [C-Multi-UR-AG team's 2026-10-07 UTC response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/USDY6YVIGB3YM3F4T2KRLUU4KTMCHAZR/)
 
 The reference 79-bit field declares `rbc_elt_ur` with three limbs (`src/rbc-79/rbc_79.h:18,33`). In `rbc_elt_ur_mul`, the inner loop includes `j = RBC_79_ELT_SIZE = 2`; for outer-loop `i ≥ 64`, `offset = 1`, so `o[j+offset]` accesses limb 3 (`rbc_elt.c:428–435`). The forum reports an AddressSanitizer failure during honest key generation. For reduced operands the value XORed at that location is zero, so the evidence shows undefined behavior and sanitizer failure, not useful memory corruption. The 256/512 reference fields and optimized multiplication use different bounds or code.
+
+### Proposed fixes
+
+The [team response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/USDY6YVIGB3YM3F4T2KRLUU4KTMCHAZR/) proposes correcting the relevant loop bounds in a future reference-implementation update. This records the proposal without evaluating it.
 
 ### Reproducing
 
