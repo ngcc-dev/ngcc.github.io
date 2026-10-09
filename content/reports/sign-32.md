@@ -3,6 +3,8 @@ Candidate: UVW
 Family: Code-based (Wave-type, syndrome decoding over F3)
 Archive: [UVW signature.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/UVW%20signature.zip) (SHA-256: `bbfa8dad5ee57083578b50b9937e773e6158f72646e825da3d3265cc00cb1294`)
 
+Further analysis: [generic decoding and parameter estimates](https://github.com/ngcc-dev/ngcc-harness/blob/main/sign-32/decoding_analysis.md) give context but establish no additional finding.
+
 ## sign-32-1: Every signature is accepted
 
 Severity: Critical

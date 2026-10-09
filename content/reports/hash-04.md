@@ -11,10 +11,12 @@ Layer: Design
 Affected: CHAMP-512 and CHAMP-1024 construction and all conforming implementations
 Discovery: Non-trivial
 Exploitation: At most 2^128 and 2^256 hash evaluations and stored records for greater-than-0.39 collision probability; no full-size collision computed
-Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Credit: Jean-Philippe (JP) Aumasson (earlier fixed-length determinant distinguisher); collision and palindrome bounds by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-09-21
 
 CHAMP hashes a bit string by multiplying two public `2 x 2` matrices. Both generators have determinant 2, so every message of a fixed bit length `n` has determinant `2^n`. All fixed-length outputs therefore lie in one determinant fiber of size exactly `p(p^2-1)`, approximately `p^3`, rather than the full approximately `p^4` matrix space.
+
+Jean-Philippe (JP) Aumasson published a [known-length CHAMP-512 determinant distinguisher](https://gist.github.com/veorq/243ce3ecfd2ce5ab04dc0beadb69ead8) on 2026-09-20. It demonstrates this invariant; the collision bounds here are our extension.
 
 An invertible output encoding cannot enlarge that image. A stronger restriction follows for palindromic messages. Let `Q=[[9,14],[14,22]]`. Both `AQ` and `BQ` are symmetric, so for every palindrome `M`, the product `H(M)Q` is symmetric and has fixed determinant `2^(|M|+1)`. Its image has at most `p²−p` elements for both submitted primes. Sampling `2^128` palindromes of 544 bits or `2^256` palindromes of 1056 bits therefore gives a same-length collision with probability above 0.39, independent of the output distribution; repeated inputs contribute less than `2^-17`. This is below the [NGCC-required](https://www.niccs.org.cn/niccs/Notice/crlRB1ZY.pdf) 256- and 512-bit collision levels. No full-size collision was computed. This palindrome extension was added on 2026-10-09.
 

@@ -3,6 +3,8 @@ Candidate: UVW Key Encapsulation Mechanism
 Family: Code-based
 Archive: [UVW-KEM.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/UVW-KEM.zip) (SHA-256: `f9a1b135ea16aca0c974861732e03cd3164f1288f33ff150ff66c98326b75bcb`)
 
+Further analysis: [generic decoding and structural estimates](https://github.com/ngcc-dev/ngcc-harness/blob/main/kem-38/decoding_analysis.md) give context but establish no additional finding.
+
 ## kem-38-1: UVW-512 derives its encryption pair from only 256 bits
 
 Severity: Critical

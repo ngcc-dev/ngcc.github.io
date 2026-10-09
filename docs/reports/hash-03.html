@@ -18,15 +18,33 @@
 <h1 id="c-hash-hash-03">C Hash (hash-03)</h1>
 <div class="table-wrap"><table class="meta">
 <tr><th>Candidate</th><td>C Hash</td></tr>
-<tr><th>Family</th><td>Symmetric (compression-function-based)</td></tr>
-<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/C%20Hash.zip">Official submission archive</a></td></tr>
+<tr><th>Family</th><td>Symmetric (Rocket-JH / C-Engine)</td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/C%20Hash.zip">C Hash.zip</a> (SHA-256: <code>d6b40f34b4c4af7ab1929816d8613220ed669aace6bfdd8d2e9496d90ddc5438</code>)</td></tr>
 <tr><th>Specification</th><td><a href="https://github.com/ngcc-dev/ngcc-harness/raw/dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/hash-03/hash-03-spec.pdf" title="Download hash-03-spec.pdf from GitHub">hash-03-spec.pdf</a>&nbsp;<a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/hash-03/hash-03-spec.pdf" title="Open the hash-03 specification PDF">PDF</a></td></tr>
 <tr><th>Performance</th><td><a href="../performance/x86_1/hash-03.html">x86_1</a> · <a href="../performance/arm_1/hash-03.html">arm_1</a></td></tr>
 </table></div>
 
-<h3 id="review-status">Review status</h3>
-<p>No vulnerability finding is currently published for this candidate. This is not a security endorsement: it records only the present state of the public finding inventory, and the candidate remains under review.</p>
-<p>See the <a href="../constant-time/hash-03.html">constant-time review</a> and the performance reports (<a href="../performance/x86_1/hash-03.html">x86_1</a> · <a href="../performance/arm_1/hash-03.html">arm_1</a>). See the <a href="https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101540728942972928.html">official submission page</a>.</p>
+<h2 class="issue-heading issue-heading-first" id="hash-03-1-a-backward-tree-reduces-c-hash-1024-second-preimage-work-below-1024-bits">hash-03-1: A backward tree reduces C-Hash-1024 second-preimage work below 1024 bits</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-probable">Probable</span></td></tr>
+<tr><th>Affected</th><td>C-Hash-1024 VIL/FIL mode for messages of at least 2,944 bits; C-Hash-512 and the short-message LDRH path are outside this finding</td></tr>
+<tr><th>Discovery</th><td>Non-trivial</td></tr>
+<tr><th>Exploitation</th><td>About 2^983 C-Engine calls and 2^491 stored states in the two-level model; no full-size second preimage computed</td></tr>
+<tr><th>Credit</th><td>Bishwajit Chakraborty, with AI assistance; padding-aware extension by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-09</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/VWOZYVZ5J67G7EDHBFZG4JIEWBLRS3WP/">CryptHash Forum post</a> and <a href="https://github.com/bishwajitchakrabort/ngcc/tree/main/chash1024-second-preimage">attack package</a></p>
+<p>The submitted <a href="https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101540728942972928.html">specification</a> claims 2^1024 second-preimage work for C-Hash-1024 (Table 6, physical p. 22; Appendix C.7.2, pp. 58–59). Its CTR-Func VIL round has a 1,472-bit state and a 736-bit message block. Writing <code>G_i(x) = LMB_1472(C-Engine(x || ctr_i)) XOR x</code>, the update is <code>h_i = G_i(x_i) XOR (0 || m_i)</code>, where <code>x_i = h_(i-1) XOR (m_i || 0)</code>. Given a target state, each forward probe for <code>x_i</code> therefore yields a predecessor when the left 736 bits of <code>G_i(x_i)</code> match the target; its right half determines <code>m_i</code>. This is a forward-only test and is not stopped by CTR-Func's feed-forward. The submitted reference code performs precisely these operations (<code>CryptHash_AlgorithmInstance.c:288–309,551–575</code> in <code>CHash_1024</code>).</p>
+<p>With <code>N</code> probes at each of two distinct counters, the expected predecessor-tree sizes are <code>N/2^736</code> and <code>N²/2^1472</code>. Stream <code>F</code> reachable prefix states against the second level; a full-state match is expected when <code>F N²/2^2944</code> is about one. Taking <code>F = N ≈ 2^981.33</code> gives roughly <code>2^983.33</code> permutation calls, including the two-block forward prefixes, and about <code>2^490.67</code> stored predecessor states. This is a modeled cost, not a completed search; it assumes the full C-Engine outputs and reachable states behave sufficiently like independent random samples.</p>
+<p>The reporter's toy chooses every final VIL block freely, but real C-Hash pads the final block. Our extension keeps the challenge's final padded block unchanged and targets the state immediately before it. For any message of at least four full 736-bit blocks (368 bytes), two earlier full blocks supply the forward prefixes and two full blocks form the backward tail. The forged message has the same bit length and padding, reaches the same state before the copied final block, and hence has the same digest. This preserves the cost above. No shorter-message or first-preimage break is claimed.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 hash-03/reproduce_backward_tree.py
+</code></pre>
+<p>The offline witness checks the frozen reference source's mode structure, then finds a distinct padded same-length second preimage in a 20-bit-state toy CTR-Func construction with separate round counters. It includes changed-message and changed-padding controls. The toy substitutes a Feistel permutation for C-Engine; it does not execute the exponential full-parameter search.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
