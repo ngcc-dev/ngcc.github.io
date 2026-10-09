@@ -18,15 +18,52 @@
 <h1 id="wchain-hash-function-hash-34">WChain Hash Function (hash-34)</h1>
 <div class="table-wrap"><table class="meta">
 <tr><th>Candidate</th><td>WChain Hash Function</td></tr>
-<tr><th>Family</th><td>Symmetric (wide-pipe iterated hash)</td></tr>
-<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/WChain.zip">Official submission archive</a></td></tr>
+<tr><th>Family</th><td>Symmetric (iterated hash)</td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/WChain.zip">WChain.zip</a> (SHA-256: <code>1ffeb0bd3f3645ea43decaacb0233c7dd23b9b127ac092efc0c12d6661f84023</code>)</td></tr>
 <tr><th>Specification</th><td><a href="https://github.com/ngcc-dev/ngcc-harness/raw/dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/hash-34/hash-34-spec.pdf" title="Download hash-34-spec.pdf from GitHub">hash-34-spec.pdf</a>&nbsp;<a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/hash-34/hash-34-spec.pdf" title="Open the hash-34 specification PDF">PDF</a></td></tr>
 <tr><th>Performance</th><td><a href="../performance/x86_1/hash-34.html">x86_1</a> · <a href="../performance/arm_1/hash-34.html">arm_1</a></td></tr>
 </table></div>
 
-<h3 id="review-status">Review status</h3>
-<p>No vulnerability finding is currently published for this candidate. This is not a security endorsement: it records only the present state of the public finding inventory, and the candidate remains under review.</p>
-<p>See the <a href="../constant-time/hash-34.html">constant-time review</a> and the performance reports (<a href="../performance/x86_1/hash-34.html">x86_1</a> · <a href="../performance/arm_1/hash-34.html">arm_1</a>). See the <a href="https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101533578757754880.html">official submission page</a>.</p>
+<h2 class="issue-heading issue-heading-first" id="hash-34-1-a-four-block-reset-prefix-gives-second-preimages-below-the-required-levels">hash-34-1: A four-block reset prefix gives second preimages below the required levels</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-probable">Probable</span></td></tr>
+<tr><th>Affected</th><td>WChain-V1-512 and WChain-V2-1024</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Reporter estimates about 2^292 and 2^580 work to find one reusable reset prefix; no full-size matching pair has been computed</td></tr>
+<tr><th>Credit</th><td>Bishwajit Chakraborty</td></tr>
+<tr><th>Date</th><td>2026-10-09</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/VGEPD4W2SY3QKSBGYKAGDMLSBXU5UEVR/">Chakraborty's WChain analysis</a></p>
+<p>WChain uses <code>CF(V,B)=P_B(V)⊕V</code>, two-step feedback <code>H_i=CF(H_{i−1},M_i)⊕H_{i−2}</code>, an XOR checksum of padded blocks, and zero initial states (specification §3 and §5.1, physical pp. 6–8, 18–20; reference <code>wchain_c.c:297–330,372–437</code>). Suppose full blocks <code>X,Y</code> satisfy <code>P_X(0)=P_Y^{-1}(0)=A</code>. Then <code>CF(0,X)=CF(A,Y)=A</code>; absorbing <code>X‖Y‖Y‖X</code> visits states <code>A,A,0,0</code> and adds zero to the checksum. Consequently, for every message <code>M</code>, <code>Hash(X‖Y‖Y‖X‖M)=Hash(M)</code> after ordinary padding and finalization.</p>
+<p>A meet-in-the-middle search matches <code>P_X(0)</code> with <code>P_Y^{-1}(0)</code> in roughly <code>2^(b/2)</code> evaluations and comparable memory for a <code>b</code>-bit state (<code>b=576</code> or <code>1152</code>). The reporter's larger round-equivalent estimates, about <code>2^292</code> and <code>2^580</code>, remain far below the <a href="https://www.niccs.org.cn/niccs/Notice/crlRB1ZY.pdf">NGCC-required</a> <code>2^512</code> and <code>2^1024</code> second-preimage levels. The state-reset identity follows exactly from the submitted mode. Its full-size cost assumes birthday-like behavior of the submitted message-keyed permutations; neither a full-size pair nor a full-size second preimage has been computed, hence Probable.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 hash-34/reproduce_reset_prefix.py
+</code></pre>
+<p>The certificate checks the frozen reference source's feedback, checksum and finalization paths, then finds a matching pair and verifies the identity in a reduced-width permutation model. It does not claim to execute the full-size search.</p>
+<h2 class="issue-heading" id="hash-34-2-short-message-checksum-cancellation-defeats-the-stated-length-extension-argument">hash-34-2: Short-message checksum cancellation defeats the stated length-extension argument</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>WChain-V1-512 and WChain-V2-1024</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>A two-hash-query relation can be checked with 2^64 or 2^128 offline compression evaluations; no collision, second preimage, or one-query extension forgery is shown</td></tr>
+<tr><th>Credit</th><td>Liting Zhang</td></tr>
+<tr><th>Date</th><td>2026-10-09</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/K4VVZ3FDHGSZ7O7BGEC3ONLT7TYVJX44/">Zhang's WChain analysis</a></p>
+<p>For a message <code>m</code> shorter than one block, let <code>p</code> be its single padded block. The first two feedback terms vanish, so <code>Hash(m)=Trunc(CF(CF(0,p),p))</code>. For <code>m'=p‖m</code>, padding gives <code>p‖p</code> and the checksum is zero. Thus, if <code>H=CF(CF(0,p),p)</code> is the full final state, <code>Hash(m')=Trunc(CF(H,0))</code>. The digest reveals all but 64 bits of <code>H</code> in V1 or 128 bits in V2 (specification §3 and §5.1.1, physical pp. 6–8, 18–19; reference <code>wchain_c.c:326–330,371–437,445–479</code>). Enumerating those hidden bits therefore gives a candidate set that contains the second digest, contrary to §5.1.1's statement that the attacker would additionally need a pre-finalization state and checksum relation.</p>
+<p>This is a restricted short-message relation, not a demonstrated arbitrary-message length-extension forgery. Without the second hash response or a verification oracle, enumeration alone does not identify which candidate is correct. WChain makes no indifferentiability claim, and this finding establishes no violation of the call's collision or preimage targets.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 hash-34/reproduce_two_query_relation.py
+</code></pre>
+<p>The witness builds the submitted reference compression and hash functions in a temporary directory. At both levels it checks the relation using the full internal state, verifies that the published digest is its prefix, and checks changed-message and changed-hidden-word controls. It does not perform the 2^64 or 2^128 enumeration.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

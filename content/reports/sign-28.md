@@ -23,6 +23,8 @@ Both submitted implementations resolve the mismatch by making `delta_bits = lamb
 
 The original post proposes lengthening `chall3` by `ceil(log2(d))` bits, increasing every `wgrind` by two, or lowering the stated target by two bits and correcting the parameter tables. This section records those alternatives without evaluating them.
 
+The [team's 2026-10-09 response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XT4KSQWTVAZYTA2XG6EUWZATACTHSLAV/) says it revised the grinding table to match the code and counts bit operations per hash evaluation when assessing the security margin. This records its position without evaluating the revision or changing the frozen-submission classification.
+
 ### Reproducing
 
 ```sh
@@ -51,6 +53,8 @@ Across three signatures at every parameter set, 16 signatures had nonempty paddi
 
 The original post proposes checking every remaining byte of the fixed-size opening before the reference verifier returns success. This section records the proposal without evaluating it.
 
+The [team says](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XT4KSQWTVAZYTA2XG6EUWZATACTHSLAV/) it added that check in its development version. The revision has not been evaluated here.
+
 ### Reproducing
 
 ```sh
@@ -74,6 +78,10 @@ Original source: [Xiong and Wang's PKC Forum post](https://list.niccs.org.cn/arc
 Algorithms 2 and 3 derive `iv = Hash4(ivpre)`, carry `ivpre` in the signature, and let the Lemma 19 extractor program `Hash4`. Both implementation trees instead derive `seed || iv` directly with the domain-three hash, serialize `iv`, and feed it directly to reconstruction. There is no candidate `Hash4` call or domain-four hash in either implementation.
 
 The shipped construction is therefore not the construction covered by the stated binding and EUF-KO extraction argument: its `iv` is supplied directly by the signature rather than constrained to be a `Hash4` output. A verifier implemented literally from the specification also disagrees with the shipped KATs. No practical attack from this proof mismatch is claimed.
+
+### Proposed fixes
+
+The [team says](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XT4KSQWTVAZYTA2XG6EUWZATACTHSLAV/) its development versions now compute `iv=Hash4(ivpre)` and include `ivpre` in the signature. This is recorded without evaluating the revision.
 
 ### Reproducing
 
@@ -101,6 +109,8 @@ Original source: [Xiong and Wang's PKC Forum post](https://list.niccs.org.cn/arc
 
 The original post proposes clamping each processed chunk to eight bytes. This section records the proposal without evaluating it.
 
+The [team says](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XT4KSQWTVAZYTA2XG6EUWZATACTHSLAV/) its development version fixes the over-read. That revision has not been evaluated here.
+
 ### Reproducing
 
 ```sh
@@ -126,6 +136,10 @@ The exported helper `sydo_ref_keygen` obtains its seed from `rand_bytes` (`sydo.
 Nothing in the submitted trees calls these helpers, they are documented only by declarations in `sydo.h`, and the package does not build a library exposing them. The submitted NGCC `sig_keygen` adapter instead draws an explicit seed from the framework DRNG and calls `sydo_ref_keygen_from_seed`; the optimized path also uses proper entropy. Because the cryptographic failure is confined to unused, undocumented source helpers rather than the candidate API, the finding is Medium rather than Critical.
 
 The helper must obtain cryptographic entropy from the operating system or require a caller-supplied seed through an explicit deterministic interface.
+
+### Proposed fixes
+
+The [team says](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/FQP7NYC4OIBY4KGMUL5ZZQMNX4RVLPLJ/) it removed the unused helpers and fixed-seed generator from its forthcoming update. This records the proposal without evaluating the revised implementation.
 
 ### Reproducing
 

@@ -173,6 +173,10 @@ The first four duplicated-output constraints form an invertible four-word linear
 
 The surrounding specification contradicts that literal slice: the witness layouts on physical pp. 51, 53, 55, and 57 define the encryption witness as the 896-bit middle portion, and the constraint input on p. 57 has length `32(R-4)` bits. The post also reports that none of 2,048 honest witnesses satisfies the literal relation, so a functioning implementation cannot use it unchanged. The delivered prover and verifier instead skip the already supplied input block (`Implementations/Reference_Implementation/sm4th_em_d2_128s_loose/sm4th_sm4_128.c:216–244, 835–859`); all eight reference and optimized copies agree. This is therefore a confirmed transcription/type inconsistency in the frozen design, but the submitted implementation follows the only interoperable reading and is unaffected. It is Low rather than a break of the working signature scheme.
 
+### Proposed fixes
+
+The [Chinith team's 2026-10-09 response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/GH3SK7LIQDBJMWBOI6AYHPE6GYDQMTDT/) proposes an explicit EM-case witness slice in the revised specification while retaining the delivered implementation's middle-block selection. This is recorded without evaluating the revision.
+
 ### Reproducing
 
 ```sh

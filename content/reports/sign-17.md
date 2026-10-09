@@ -26,6 +26,8 @@ The submitted `poly_challenge` uses the correct ML-DSA-style `c[i] = c[j]; c[j] 
 
 The original post proposes replacing Algorithm 6 with the SampleInBall procedure already used by the submitted implementation. This section records the proposal without evaluating it.
 
+The [team's 2026-10-09 response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/KGQ6LJVGF35SHMFQ5EPJ5AH4UYHAHAG3/) says specification v2.0 now uses `c[i]=c[j]; c[j]=sign` and makes parsing and refill rules explicit. This is recorded without evaluating the revision.
+
 ### Reproducing
 
 ```sh
@@ -54,6 +56,8 @@ In 2,000 honest signatures per set, a verifier using the specified operations re
 ### Proposed fixes
 
 The original post proposes using `m = (q-1)/(2*gamma2)` in Algorithms 30 and 32, matching the submitted implementation. This section records the proposal without evaluating it.
+
+The [team says](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/KGQ6LJVGF35SHMFQ5EPJ5AH4UYHAHAG3/) specification v2.0 also revises tie rounding and encoding widths to match the code. This is recorded without evaluating the revision.
 
 ### Reproducing
 

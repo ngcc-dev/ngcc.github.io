@@ -43,6 +43,7 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <p>The submitted <code>poly_challenge</code> uses the correct ML-DSA-style <code>c[i] = c[j]; c[j] = sign</code> update and reaches all coefficient positions. The finding is therefore confined to an implementation faithful to the written Algorithm 6, not the submitted binaries.</p>
 <h3 id="proposed-fixes">Proposed fixes</h3>
 <p>The original post proposes replacing Algorithm 6 with the SampleInBall procedure already used by the submitted implementation. This section records the proposal without evaluating it.</p>
+<p>The <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/KGQ6LJVGF35SHMFQ5EPJ5AH4UYHAHAG3/">team's 2026-10-09 response</a> says specification v2.0 now uses <code>c[i]=c[j]; c[j]=sign</code> and makes parsing and refill rules explicit. This is recorded without evaluating the revision.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">make -C sign-17 reproduce-spec-findings
@@ -66,6 +67,7 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <p>In 2,000 honest signatures per set, a verifier using the specified operations rejected 149 (7.45%), 630 (31.50%), and 1,339 (66.95%) at the 128-, 256-, and 512-bit sets. The submitted rounding code, which uses <code>(q-1)/alpha</code>, rejected 0 of 2,000 in each control. This is a specification correctness and interoperability defect, not an attack on the submitted code.</p>
 <h3 id="proposed-fixes_1">Proposed fixes</h3>
 <p>The original post proposes using <code>m = (q-1)/(2*gamma2)</code> in Algorithms 30 and 32, matching the submitted implementation. This section records the proposal without evaluating it.</p>
+<p>The <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/KGQ6LJVGF35SHMFQ5EPJ5AH4UYHAHAG3/">team says</a> specification v2.0 also revises tie rounding and encoding widths to match the code. This is recorded without evaluating the revision.</p>
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">make -C sign-17 reproduce-spec-findings
