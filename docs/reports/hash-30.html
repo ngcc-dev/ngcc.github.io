@@ -24,26 +24,27 @@
 <tr><th>Performance</th><td><a href="../performance/x86_1/hash-30.html">x86_1</a> · <a href="../performance/arm_1/hash-30.html">arm_1</a></td></tr>
 </table></div>
 
-<h2 class="issue-heading issue-heading-first" id="hash-30-1-a-conditional-iterative-trail-gives-a-2384-full-round-collision-estimate">hash-30-1: A conditional iterative trail gives a 2^384 full-round collision estimate</h2>
+<h2 class="issue-heading issue-heading-first" id="hash-30-1-message-modification-gives-a-conditional-2288-collision-estimate">hash-30-1: Message modification gives a conditional 2^288 collision estimate</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
 <tr><th>Scope</th><td>design</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-lead">Lead</span></td></tr>
-<tr><th>Affected</th><td>Full-round ZC-DM-1536-1024; reduced-round estimates for the other sets</td></tr>
-<tr><th>Discovery</th><td>Moderate</td></tr>
-<tr><th>Exploitation</th><td>Estimated 2^384 work, conditional on multi-round trail assumptions</td></tr>
-<tr><th>Credit</th><td>Qinghe Crypto Group</td></tr>
+<tr><th>Affected</th><td>ZC-DM-1536-768 and -1024; full-round attacks remain conditional</td></tr>
+<tr><th>Discovery</th><td>Non-trivial</td></tr>
+<tr><th>Exploitation</th><td>Estimated 2^288 work, conditional on full-round trail independence and reachable starting states</td></tr>
+<tr><th>Credit</th><td>Qinghe Crypto Group; three-round message-modification extension by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
 <tr><th>Date</th><td>2026-09-29</td></tr>
 </table></div>
 <p>Original source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/FCGYUVDJV4QBMGG64KAK6X2QZOZ6W4QX/">Qinghe Crypto Group's CryptHash Forum post</a></p>
 <p>For ZC-1536, the input difference <code>Delta A_0[0] = 0x1111111111111111</code> survives the linear layer. At each of its 16 active bit positions, the sequential χ mapping preserves the difference exactly when the two other input bits are <code>0,1</code>, a probability of <code>1/4</code>; the one-round trail therefore has weight 32. If it persists for <code>t</code> rounds, Davies–Meyer feed-forward cancels the identical input/output difference and produces a collision at estimated cost <code>2^(32t)</code>.</p>
-<p>This gives conditional estimates <code>2^224</code>, <code>2^352</code>, and <code>2^384</code> for 7, 11, and all 12 rounds, respectively. The full-round ZC-DM-1536-1024 estimate is below its claimed 512-bit collision security. The local transition, linear invariance, feed-forward cancellation, weights, and arithmetic check out. The post does not prove that the trail is satisfiable on full valid-message trajectories, that round conditions are independent, or that valid message inputs preserve the assumed distribution. Because the submitted IV is zero, the required first-round bit conditions may not all be directly message-controlled; a prefix block may be needed, and the existence of a suitable prefix is part of the unresolved satisfiability question. The full collision therefore remains a High Lead rather than a confirmed Critical break.</p>
+<p>The original post estimates <code>2^224</code>, <code>2^352</code>, and <code>2^384</code> for 7, 11, and all 12 rounds. Further extension to that analysis: rate-only linear message modification can enforce the first three trail rounds. For ZC-DM-1536-768, a prefix satisfying 16 capacity conditions and a collision of the resulting four-round reduced hash were demonstrated using valid padded messages from the zero IV. For -1024, the linear systems are soluble on tested chaining states after imposing 32 capacity conditions, but no prefix reaching such a state was constructed. If each of rounds 4–12 then costs an independent <code>2^32</code>, both sets have an estimated <code>2^288</code> collision route, below their 384- and 512-bit collision targets. Independence and full-round satisfiability are unproved. The conditional cost is below the required collision targets, hence Critical / Lead, not a confirmed full-round collision.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 security/zc_iterative_differential.py
 </code></pre>
 <p>The certificate exhausts the three-bit χ inputs and checks both reported masks against the linear rotations: the 16-active-position mask used above has weight 32 per round, while the all-ones mask used for the reported ZC-1280 reduced-round trail has 64 active positions and weight 128 per round. It then prints the unresolved multi-round limitation.</p>
+<p>Run <code>python3 security/zc_message_modification.py</code> for the extension's rate-only systems and a replay of the reduced-round collision against the submitted permutation. The witness does not rerun the long search. Its four-round function uses the reference code's last-four-round convention, not the first four rounds of the full schedule.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

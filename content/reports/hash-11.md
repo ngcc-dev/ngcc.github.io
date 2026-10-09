@@ -21,3 +21,24 @@ Constant-time fix (easy, hence Low): the round is an AES round, so use the AES i
 ### Reproducing
 
 Inspect the cited `TE0`–`TE3` loads; identical-length inputs with different first blocks produce different state-derived table indices. This is an address-trace witness, not a timing-extraction benchmark.
+
+## hash-11-2: Garnet-1024a omits the specified rate-state feed-forward
+
+Severity: Medium
+Status: Confirmed
+Layer: Implementation
+Affected: Reference `Garnet_1024.c` (Garnet-1024a); the optimized assembly was not checked
+Discovery: Moderate
+Exploitation: The stated Sponge-DM bound does not cover the submitted reference function; no collision or preimage attack is demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-09
+
+The specification defines each Sponge-DM absorption as `X = S xor I_r(M)` and `S' = P^12(X) xor X` (§2.5 and Proposition 2, physical pp. 9–10). Proposition 2 explicitly relies on this *full-state* feed-forward. The reference code instead saves only the old capacity, absorbs the message, permutes, then XORs the message and saved capacity (`Garnet_1024.c:665–682, 820–829, 868–873`). Its update is `S' = P^12(X) xor I_r(M) xor (0_r || S_c)`, omitting the old rate state `S_r`. The formulas differ by `I_r(S_r)`.
+
+The native witness checks the difference against the submitted reference functions, including a zero-rate-state control where the formulas agree. A separate local model/KAT check, not part of this reproducer, found that the code's empty-message digest matches its KAT while the specified feed-forward gives a different digest. This is a conformance and proof-applicability gap, not evidence that the implemented hash misses a collision or preimage target.
+
+### Reproducing
+
+```sh
+python3 hash-11/reproduce_dm_feedforward.py
+```

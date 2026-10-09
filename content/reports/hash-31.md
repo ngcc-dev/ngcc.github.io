@@ -29,21 +29,21 @@ The [ZC-DMC team's response](https://list.niccs.org.cn/archives/list/crypthashfo
 
 From the repository root, run `make -C hash-31 exploit`. The witness uses only the two official archived hash libraries for its verdict and prints `CONFIRMED hash-31-1`.
 
-## hash-31-2: A conditional iterative trail gives a 2^384 full-round collision estimate
+## hash-31-2: Message modification gives a conditional 2^288 collision estimate
 
-Severity: High
+Severity: Critical
 Status: Lead
 Layer: Design
-Affected: Full-round ZC-DMC-1536-1024; reduced-round estimates for the other sets
-Discovery: Moderate
-Exploitation: Estimated 2^384 work, conditional on multi-round trail assumptions
-Credit: Qinghe Crypto Group
+Affected: ZC-DMC-1536-768 and -1024; full-round attacks remain conditional
+Discovery: Non-trivial
+Exploitation: Estimated 2^288 work, conditional on full-round trail independence and reachable starting states
+Credit: Qinghe Crypto Group; three-round message-modification extension by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-09-29
 Original source: [Qinghe Crypto Group's CryptHash Forum post](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/UPLLMJ35VZ5K7U2BZ7RHJMVYG2ZSRN2Z/)
 
 For ZC-1536, the input difference `Delta A_0[0] = 0x1111111111111111` survives the linear layer. At each of its 16 active bit positions, the sequential χ mapping preserves the difference exactly when the two other input bits are `0,1`, a probability of `1/4`; the one-round trail therefore has weight 32. Capacity-only feed-forward leaves this rate difference unchanged, after which a message-block difference can cancel it and merge the states.
 
-Under a `2^-32` independent probability per round, the reported 7-, 11-, and 12-round costs are `2^224`, `2^352`, and `2^384`. The full 12-round ZC-DMC-1536-1024 estimate is below its claimed 512-bit collision security. The local transition, linear invariance, feed-forward algebra, and arithmetic check out, but full-round satisfiability, independence, and the valid-message distribution remain unproved. Because the submitted IV is zero, the required first-round bit conditions may not all be directly message-controlled; a prefix block may be needed, and the existence of a suitable prefix is part of the unresolved satisfiability question. This is therefore a High Lead rather than a confirmed full collision.
+The original post's independent-round model gives `2^224`, `2^352`, and `2^384` for 7, 11, and 12 rounds. Further extension: rate-only linear message modification enforces the first three rounds. For ZC-DMC-1536-768, a prefix satisfying 16 capacity conditions and a valid-message collision of the four-round reduced hash were demonstrated from the zero IV; the next block cancels the remaining rate difference. For -1024, the analogous systems are soluble on tested chaining states with 32 capacity conditions imposed, but a prefix reaching one was not constructed. Assuming independent `2^-32` transitions over rounds 4–12 gives about `2^288` work against 384- and 512-bit collision targets. The independence, reachable-state and full-round steps remain open. The conditional cost is below the required collision targets, hence Critical / Lead, not a confirmed full-round collision.
 
 ### Reproducing
 
@@ -52,3 +52,5 @@ python3 security/zc_iterative_differential.py
 ```
 
 The certificate exhausts the three-bit χ inputs and checks both reported masks against the linear rotations: the 16-active-position mask used above has weight 32 per round, while the all-ones mask used for the reported ZC-1280 reduced-round trail has 64 active positions and weight 128 per round. It then prints the unresolved multi-round limitation.
+
+Run `python3 security/zc_message_modification.py` for the extension's rate-only systems and a replay of the reduced-round collision against the submitted permutation. The witness does not rerun the long search. Its reduced permutation uses the reference code's last-four-round constants, not the first four rounds of the full schedule.

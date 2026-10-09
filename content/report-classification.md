@@ -149,6 +149,11 @@ Examples include:
 - a complete mathematical reduction of the claimed problem to work below the
   claim, even if that work is not currently practical.
 
+A candidate-specific route with a quantified below-target cost may be
+`Critical / Lead` if material steps remain unvalidated. The report must name
+those steps and make clear that the cost is conditional, not a demonstrated
+break. A generic possibility or an unexplained extrapolation does not qualify.
+
 NGCC requires a 512-bit classical level and permits an optional 384-bit level.
 A demonstrated `2^256` attack against a 512-bit claim is therefore Critical:
 practical feasibility is not required when the advertised security bound is

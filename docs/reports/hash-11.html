@@ -42,6 +42,25 @@
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>Inspect the cited <code>TE0</code>–<code>TE3</code> loads; identical-length inputs with different first blocks produce different state-derived table indices. This is an address-trace witness, not a timing-extraction benchmark.</p>
+<h2 class="issue-heading" id="hash-11-2-garnet-1024a-omits-the-specified-rate-state-feed-forward">hash-11-2: Garnet-1024a omits the specified rate-state feed-forward</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Reference <code>Garnet_1024.c</code> (Garnet-1024a); the optimized assembly was not checked</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>The stated Sponge-DM bound does not cover the submitted reference function; no collision or preimage attack is demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-09</td></tr>
+</table></div>
+
+<p>The specification defines each Sponge-DM absorption as <code>X = S xor I_r(M)</code> and <code>S' = P^12(X) xor X</code> (§2.5 and Proposition 2, physical pp. 9–10). Proposition 2 explicitly relies on this <em>full-state</em> feed-forward. The reference code instead saves only the old capacity, absorbs the message, permutes, then XORs the message and saved capacity (<code>Garnet_1024.c:665–682, 820–829, 868–873</code>). Its update is <code>S' = P^12(X) xor I_r(M) xor (0_r || S_c)</code>, omitting the old rate state <code>S_r</code>. The formulas differ by <code>I_r(S_r)</code>.</p>
+<p>The native witness checks the difference against the submitted reference functions, including a zero-rate-state control where the formulas agree. A separate local model/KAT check, not part of this reproducer, found that the code's empty-message digest matches its KAT while the specified feed-forward gives a different digest. This is a conformance and proof-applicability gap, not evidence that the implemented hash misses a collision or preimage target.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 hash-11/reproduce_dm_feedforward.py
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
