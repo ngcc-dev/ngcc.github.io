@@ -24,7 +24,7 @@
 <tr><th>Performance</th><td><a href="../performance/x86_1/hash-26.html">x86_1</a> · <a href="../performance/arm_1/hash-26.html">arm_1</a></td></tr>
 </table></div>
 
-<h2 class="issue-heading issue-heading-first" id="hash-26-1-an-invariant-subspace-reduces-chime-collision-bounds-to-64-and-224-bits">hash-26-1: An invariant subspace reduces CHIME collision bounds to 64 and 224 bits</h2>
+<h2 class="issue-heading issue-heading-first" id="hash-26-1-an-invariant-subspace-reduces-chime-collision-bounds-to-64-and-160-bits">hash-26-1: An invariant subspace reduces CHIME collision bounds to 64 and 160 bits</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
 <tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
@@ -32,21 +32,23 @@
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Submitted CHIME-512 and CHIME-1024 specifications and implementations</td></tr>
 <tr><th>Discovery</th><td>Moderate</td></tr>
-<tr><th>Exploitation</th><td>Approximately 2^64 and 2^224 evaluations; no collision has been computed</td></tr>
-<tr><th>Credit</th><td>Cryptanalysts001 (ISCAS) <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#121;&#117;&#102;&#101;&#105;&#50;&#48;&#50;&#49;&#64;&#105;&#115;&#99;&#97;&#115;&#46;&#97;&#99;&#46;&#99;&#110;">&#121;&#117;&#102;&#101;&#105;&#50;&#48;&#50;&#49;&#64;&#105;&#115;&#99;&#97;&#115;&#46;&#97;&#99;&#46;&#99;&#110;</a></td></tr>
+<tr><th>Exploitation</th><td>Approximately 2^64 and 2^160 evaluations; no full collision has been computed</td></tr>
+<tr><th>Credit</th><td>Cryptanalysts001 (ISCAS) <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#121;&#117;&#102;&#101;&#105;&#50;&#48;&#50;&#49;&#64;&#105;&#115;&#99;&#97;&#115;&#46;&#97;&#99;&#46;&#99;&#110;">&#121;&#117;&#102;&#101;&#105;&#50;&#48;&#50;&#49;&#64;&#105;&#115;&#99;&#97;&#115;&#46;&#97;&#99;&#46;&#99;&#110;</a>; CHIME-1024 extension and CHIME-512 partial-collision witness by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
 <tr><th>Date</th><td>2026-09-22</td></tr>
 </table></div>
 <p>Original source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/5UIMK76TG55NELJD44XE7QVM2OPURHCK/">CryptHashForum report</a></p>
 <p>In the submitted permutation, each 256-bit array remains in the repeated-word form <code>(x,x,x,x)</code>: every layer preserves it and each round constant repeats one 64-bit word four times. This gives a 384-dimensional invariant subspace for the complete nonlinear, full-round permutation.</p>
-<p>For CHIME-512, a <code>2^240</code>-message family remains in the subspace through ordinary padding, while its digest contains only two independent 64-bit words. Sampling this family therefore gives a classical collision upper bound of about <code>2^64</code>, rather than the claimed 256 bits. For CHIME-1024, eight controlled blocks encode <code>2^512</code> distinct messages but reach at most <code>2^448</code> pre-final states; common padding and finalization preserve equality, giving an upper bound of about <code>2^224</code>, rather than 512 bits. These are proof-level squeeze bounds, not computed collisions.</p>
+<p>For CHIME-512, a <code>2^240</code>-message family remains in the subspace through ordinary padding, while its digest contains only two independent 64-bit words. Sampling this family therefore gives a classical collision bound of about <code>2^64</code>, rather than the claimed 256 bits. For CHIME-1024, the 448-bit rate occupies <code>A0</code> and three lanes of <code>A1</code>; the remaining <code>A1[0]</code> and four <code>B/C</code> arrays form the capacity (<code>CryptHash_AlgorithmInstance.c:780–815,829–867</code>). Before each non-final permutation, choosing repeated words in <code>A0</code> and adjusting the three rate lanes of <code>A1</code> restores the invariant subspace, leaving 64 free message bits per block. Six controlled blocks thus give <code>2^384</code> distinct prefixes, but their capacities have only five independent 64-bit words. Sampling about <code>2^160</code> such prefixes yields a capacity match with probability above 0.39 for any output distribution; repeated prefixes contribute less than <code>2^-64</code>. One further chosen block cancels the rate difference, and equal old capacities make the feed-forward outputs and final digests equal. This strengthens the earlier <code>2^224</code> bound. The full-size search has not been run.</p>
+<p>A separate search produced two distinct 63-byte CHIME-512 messages whose first 256 digest bits agree under the submitted 15-round reference hash; the remaining 256 bits differ. It took <code>2^32.95</code> folded-permutation evaluations. This is a partial collision, not a full collision.</p>
 <p>The archived Round 1 submission remains the target of this finding.</p>
 <p>Further analysis: <a href="https://eprint.iacr.org/archive/2026/2152/20260923:103749">Yufei Yuan et al., <em>Structural Analysis of Seven Hash Functions Submitted to the NGCC</em></a>, Section 5 (2026-09-23), gives a greater-than-0.39 collision probability within <code>2^64</code> evaluations for CHIME-512. The paper does not cover this report's CHIME-1024 extension.</p>
 <h3 id="proposed-fixes">Proposed fixes</h3>
 <p>The submission team's <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/HLW3FPCIRT2UIR3YMYJJ5YW7SCGZENUL/">erratum</a> proposes replacing the repeated round constants with word-dependent constants. This section records the proposal without evaluating it.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
-<p>The local check reproduces the reporters' 126-byte CHIME-512 invariant-state witness and digest and recomputes both dimension bounds:</p>
+<p>The local checks reproduce the reporters' 126-byte CHIME-512 invariant-state witness, verify the 256-bit partial collision on the submitted reference hash, and use the submitted CHIME-1024 source to test restricted chaining and chosen-block rate alignment. They do not execute either full collision search:</p>
 <pre><code class="language-sh">make -C hash-26 reproduce
+python3 hash-26/reproduce_capacity_match.py
 </code></pre>
 </main>
 <footer class="site-footer">

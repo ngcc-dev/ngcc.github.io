@@ -3,22 +3,22 @@ Candidate: CHAMP
 Family: Symmetric (Cayley graph / matrix products)
 Archive: [CHAMP.zip](https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/CHAMP.zip) (SHA-256: `8953f95618236d8d86191992b10e3580ae74520c28a36a715c2fc8bea2a9e8c1`)
 
-## hash-04-1: Fixed-length outputs occupy only one determinant fiber
+## hash-04-1: Palindrome messages reduce CHAMP collision bounds to 128 and 256 bits
 
 Severity: Critical
 Status: Confirmed
 Layer: Design
 Affected: CHAMP-512 and CHAMP-1024 construction and all conforming implementations
 Discovery: Non-trivial
-Exploitation: At most 2^192 and 2^384 hash evaluations and stored records for greater-than-0.39 collision probability
+Exploitation: At most 2^128 and 2^256 hash evaluations and stored records for greater-than-0.39 collision probability; no full-size collision computed
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-09-21
 
 CHAMP hashes a bit string by multiplying two public `2 x 2` matrices. Both generators have determinant 2, so every message of a fixed bit length `n` has determinant `2^n`. All fixed-length outputs therefore lie in one determinant fiber of size exactly `p(p^2-1)`, approximately `p^3`, rather than the full approximately `p^4` matrix space.
 
-An invertible output encoding cannot enlarge that image. The nominal 512- and 1024-bit outputs consequently have at most approximately 384 and 768 bits of fixed-length image entropy. For any output distribution on these bounded supports, sampling `2^192` random 512-bit messages for CHAMP-512 or `2^384` random 1024-bit messages for CHAMP-1024 finds a collision with probability greater than 0.39; no mixing assumption is needed. This does not contradict the specification's explicit unequal-length theorem, but the [NGCC hash call](https://www.niccs.org.cn/niccs/Notice/pc/content/content_1975892908773478400.html) requires collision security of at least h/2 bits, 256 and 512 bits here ([Evaluation Criteria](https://www.niccs.org.cn/niccs/Notice/crlRB1ZY.pdf) §1(2)), which these bounds violate. No full-parameter collision has been computed.
+An invertible output encoding cannot enlarge that image. A stronger restriction follows for palindromic messages. Let `Q=[[9,14],[14,22]]`. Both `AQ` and `BQ` are symmetric, so for every palindrome `M`, the product `H(M)Q` is symmetric and has fixed determinant `2^(|M|+1)`. Its image has at most `p²−p` elements for both submitted primes. Sampling `2^128` palindromes of 544 bits or `2^256` palindromes of 1056 bits therefore gives a same-length collision with probability above 0.39, independent of the output distribution; repeated inputs contribute less than `2^-17`. This is below the [NGCC-required](https://www.niccs.org.cn/niccs/Notice/crlRB1ZY.pdf) 256- and 512-bit collision levels. No full-size collision was computed. This palindrome extension was added on 2026-10-09.
 
-Follow-up analysis: [Yufei Yuan, Ruichen Wu, Shanpeng Wei, Junxu Shen, Jinpeng Liu, and Yixin Zhang, *Structural Analysis of Seven Hash Functions Submitted to the NGCC*](https://eprint.iacr.org/archive/2026/2152/20260923:103749), Sections 2.2 and 6 (2026-09-23), prove the stated success probability for both variants, including the correction for repeated sampled inputs.
+Follow-up analysis: [Yufei Yuan, Ruichen Wu, Shanpeng Wei, Junxu Shen, Jinpeng Liu, and Yixin Zhang, *Structural Analysis of Seven Hash Functions Submitted to the NGCC*](https://eprint.iacr.org/archive/2026/2152/20260923:103749), Sections 2.2 and 6 (2026-09-23), establish the earlier determinant-fiber collision bounds of `2^192` and `2^384`. The palindrome bounds above supersede those bounds; they are our further extension, not a result attributed to that paper.
 
 ### Reproducing
 
@@ -26,7 +26,7 @@ Follow-up analysis: [Yufei Yuan, Ruichen Wu, Shanpeng Wei, Junxu Shen, Jinpeng L
 python3 hash-04/reproduce_structure.py
 ```
 
-The exact-arithmetic certificate checks both generator determinants, the two determinant-fiber sizes, and a distribution-independent collision-probability lower bound above 0.39 at the stated sample counts.
+The exact-arithmetic certificate checks the generator and palindrome identities, the restricted image sizes, and a distribution-independent collision-probability bound. A separate internal check against compiles of the submitted reference C at both levels is recorded in `security/keccak_techniques/hash-04/h1_transpose_symmetry.py`; it is not part of the public command above. The full-size birthday search was not run.
 
 ## hash-04-2: Projective positive-word collision lead for CHAMP-512
 

@@ -69,3 +69,26 @@ make -C hash-02 reproduce-inverse
 ```
 
 It prints `ATTACK hash-02-3 CONFIRMED`.
+
+## hash-02-4: Digest alignment gives a below-target AXIS-1024 preimage route
+
+Severity: Critical
+Status: Probable
+Layer: Design
+Affected: AXIS-1024 specification and reference implementation
+Discovery: Non-trivial
+Exploitation: About 2^891–2^892 digest-state trials, each with polynomial overhead, plus a 2^768 meet-in-the-middle; no full preimage computed
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-09
+
+AXIS-1024 claims 1024-bit first-preimage security (Table 2, physical p. 12; §3.3, physical pp. 16–17). At the start of digest generation, each of the first 133 output bits has a fresh state bit that has not affected earlier outputs. Choosing those bits in sequence typically fixes 132–133 target digest bits; nonlinear gating can prevent one choice. The remaining 891–892 bits then cost about `2^891–2^892` trials under the usual random-remainder assumption. The first 66 positions follow directly from shifted register bits; the submitted digest extraction and update paths are in `axis_core.c:613–701,1150–1262`.
+
+The 1024 blank beats can be inverted to obtain a required state after message absorption. With at least 1536 free message bits, a forward/backward meet-in-the-middle over 768 bits per side reaches that state in about `2^768` time and memory, as in the submitted invertible update. The `2^891–2^892` estimate counts digest-state trials, not bit operations; even a polynomial number of beats per trial remains below the 1024-bit target. The witness verifies 132–133 sequentially fixed bits across three trials and the inverse blank phase against a Python model cross-checked with the submitted C; it does not run either exponential search. The remaining-bit distribution and full-state reachability make the complete cost Probable, not a computed preimage.
+
+### Reproducing
+
+```sh
+bash hash-02/reproduce_preimage_alignment.sh
+```
+
+The wrapper compiles the unmodified reference core into a temporary library, checks the independent model against 60 full hashes and 300 state steps, then verifies the digest-bit control and inversion. It leaves no build files behind.
