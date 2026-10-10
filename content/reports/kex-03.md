@@ -13,6 +13,7 @@ Discovery: Trivial
 Exploitation: 2^64 offline
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-09-21
+Follow-up source: [CreTAKE team's 2026-10-10 reply](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/T624LE7EOQZEMDHF5TZI42TYSPMGW3YP/)
 
 The responder requests 64 bytes (512 bits) of fresh randomness:
 
@@ -40,6 +41,10 @@ rg -n -F 'buf, SEED_BYTES, buf2' kex-03/Implementations/Reference_Implementation
 ```
 
 The same defect reduces the claimed weak forward secrecy of K2S and S2K instances to `2^64` after compromise of the complementary long-term KEM key. This is an implementation error, not a cryptanalytic attack on the specified primitives.
+
+### Proposed fixes
+
+The [CreTAKE team's 2026-10-10 reply](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/T624LE7EOQZEMDHF5TZI42TYSPMGW3YP/) says it corrected the affected hash/XOF bit-length arguments in a revision to be released at the next permitted update. This is recorded without evaluating the revision.
 
 ## kex-03-2: Omitting signatures from the KDF breaks transcript matching
 
@@ -124,6 +129,10 @@ The initiator hashes `r || sk_i` with a byte count passed to a bit-length API (f
 
 This contradicts the specification's state-reveal argument (physical pp. 19–20; Theorems 2 and 4 on physical pp. 23–26). All 12 reference instances recovered 20/20 keys. Changing the length to bits gave 0/20, while correcting only the responder's expansion length left recovery intact. Source inspection confirms the same call in all 12 optimized wrappers; four optimized ZEN runs hit an unrelated alignment crash on this host.
 
+### Proposed fixes
+
+The [CreTAKE team](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/T624LE7EOQZEMDHF5TZI42TYSPMGW3YP/) says it corrected the affected hash/XOF input lengths in a revision to be released at the next permitted update. This is recorded without evaluating the revision.
+
 ### Reproducing
 
 ```sh
@@ -146,6 +155,10 @@ The KEX wrappers parse fixed-size fields while discarding the caller's `m1_len_b
 
 With buffers sized to the bytes received, AddressSanitizer reported invalid reads for all 150 tested truncations across the 25 reference instances. No out-of-bounds write, memory disclosure, or control-flow consequence was demonstrated, so this is Low.
 
+### Proposed fixes
+
+The [CreTAKE team](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/T624LE7EOQZEMDHF5TZI42TYSPMGW3YP/) says it will check expected message lengths before parsing or invoking the underlying primitives. This proposal is recorded without evaluation.
+
 ### Reproducing
 
 ```sh
@@ -165,6 +178,10 @@ Date: 2026-10-06
 Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/NPW7UHH4G3Y5MTSWGK7H6KHPKFFCUIMD/)
 
 In the frozen official archive, each of the 13 POLARLAC-based reference and optimized KAT pairs starts with the same 64-byte seed but records a different shared secret. All 12 ZEN-based pairs agree under the same check. For example, K2K-PLAC128's first reference and optimized `SS` fields begin `8DA4C53F` and `35C82311`. We independently checked the archive's published SHA-256 and these vector fields. The forum additionally reports that mixed reference/optimized parties complete `derive` but obtain different keys on 4/4 seeds. That protocol experiment was not rerun here; the archived vectors alone establish inconsistent submitted implementations, not which one is correct. This is a Low interoperability defect.
+
+### Proposed fixes
+
+The [CreTAKE team](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/T624LE7EOQZEMDHF5TZI42TYSPMGW3YP/) says the PolarLAC team will correct the underlying reference/optimized incompatibility. This proposal is recorded without evaluation.
 
 ### Reproducing
 
@@ -191,6 +208,10 @@ In the reference trees for `CreTAKE-K2K-PLAC512` (`twokem.c:107,155`) and `CreTA
 The first POLARLAC ciphertext component is generated from an encryption seed and public key, independently of `m` (`POLARLAC-512/pke.c:144–190`). An attacker can enumerate the 2^128 message prefixes, derive candidate seeds, and check that component against the observed ciphertext. This recovers the K2K secret `k_i`; the search is a concrete bound, not a run we performed. The full ciphertext is still compared on decapsulation—this is not a truncated re-encryption check.
 
 CreTAKE claims IND-StAA for K2K (§4.2.2 and Theorem 3). In the [adopted model](https://iacr.org/archive/pkc2020/12110176/12110176.pdf), an initiator StateReveal of an honestly matched test session is permitted without corrupting that party's long-term key (Figure 14, physical pp. 23–24). The revealed initiator state contains the independent `k_j` (`KEX_AlgorithmInstance.c:131–145`). Alternatively, corruption of the responder's static KEM key permits decapsulation of the public `ct_j` to obtain `k_j`. With both `k_i` and `k_j`, the attacker computes the transcript-bound session key. This below-target attack is conditional on one of those preconditions; a passive attack on every session is not claimed.
+
+### Proposed fixes
+
+The [CreTAKE team](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/T624LE7EOQZEMDHF5TZI42TYSPMGW3YP/) says it corrected the affected XOF length argument in a revision to be released at the next permitted update. This is recorded without evaluating the revision.
 
 ### Reproducing
 

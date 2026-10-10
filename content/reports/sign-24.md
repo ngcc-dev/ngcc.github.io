@@ -43,10 +43,15 @@ Discovery: Moderate
 Exploitation: An unmodified Sigurd-128 signer naturally reached zero after 3,458 same-key signatures in one test stream, exposing the witness; the expected query count is about 2^16
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-10-06
+Follow-up source: [Sigurd team's 2026-10-10 reply](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/KZ6F7H6D7SFO6KUFF2E4UH3YKACH3AE4/)
 
 The submitted implementation takes `zeta` from a 16-bit expansion word without excluding zero (`Sigurd-128/sig_core.c:1711–1728`, `Sigurd-256/sig_core.c:1717–1734`, and `Sigurd-512/sig_core.c:1717–1733`). The specification does not prescribe this scalar width or a `zeta`-scaled mask; its extension-field requirement is `ιτ > λ` precisely so the challenge and masking space is sufficiently large (physical p. 17). The code's final public response is `G = E + zeta * F` (`Sigurd-128/sig_core.c:1408–1452`). When `zeta=0`, masking term `F` disappears. The public response, public transcript, one-hot witness-block constraints, and public syndrome then form a linear system for the signing witness. Under the intended random-oracle interpretation of the XOF word, each signature has probability 2^-16 of this event. The signing and verification paths do not resample or reject zero. A recovered witness suffices for signing independently of the secret seed.
 
 In a natural run, the unmodified Sigurd-128 signer reached `zeta=0` on the 3,458th signature of one same-key worker stream. Its submitted verifier accepted that signature, and a solver using only the public key, message, signature and derived transcript recovered the exact witness, checked against the secret kept separately. The run used parallel worker streams sharing that key; 3,458 is the count in the successful stream, not the aggregate across workers. No fresh-message forgery was executed. Independently, forced-zero test builds at all three levels yielded full-rank systems and exact witness recovery (ranks 1302/1302, 2748/2748 and 5676/5676). Same-seed nonzero controls were inconsistent and yielded no witness. The natural run confirms the trigger at 128; the higher levels are supported by source identity and forced-zero tests, not a natural long run.
+
+### Proposed fixes
+
+The [Sigurd team's 2026-10-10 reply](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/KZ6F7H6D7SFO6KUFF2E4UH3YKACH3AE4/) says its revised implementations take the first nonzero challenge word and make that rule explicit in the revised specification. It reports unchanged test vectors. The revision is recorded without evaluation.
 
 ### Reproducing
 
