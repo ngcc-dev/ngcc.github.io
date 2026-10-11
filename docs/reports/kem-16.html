@@ -36,7 +36,8 @@
 <tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, Institute of Information Engineering, Chinese Academy of Sciences, with Anthropic Claude Opus 5.5 assistance</td></tr>
 <tr><th>Date</th><td>2026-09-29</td></tr>
 </table></div>
-<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/I3GOGQ7HXLFUKK5E3I562VHM3VAGNSJ6/">Xiong and Wang's PKC Forum post</a></p>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/I3GOGQ7HXLFUKK5E3I562VHM3VAGNSJ6/">Xiong and Wang's PKC Forum post</a>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/UKYU4SCJIR64WIH4OLJ25WJDP3IE7MPO/">HARE team's 2026-10-11 response</a></p>
 <p>HARE's Table 2 claims decryption-failure probabilities below <code>2^-130</code> and <code>2^-258</code> for its submitted 128- and 256-bit sets. These two claims use the refined dependent-coordinate Model 2 in §6. The cited <a href="https://gitlab.com/HQCCiphertextCompression/hqc-with-ciphertext-compression">Bitzer et al. artifact</a> implements Model 2 for HQC, but the archived HARE package provides no adaptation that produces HARE's convolution distribution and combined error/erasure failure count.</p>
 <p>An independent implementation of the simpler Model 1 from §§5.1–5.3 gives <code>2^-121.4485</code> and <code>2^-239.2123</code>. These are short of Table 2's advertised bounds by about 8.6 and 18.8 bits, and short of the 128- and 256-bit security levels by about 6.6 and 16.8 bits. As a control, the same calculation reproduces Table 2's Model-1 figures for HARE-384 and HARE-512: <code>2^-384.9304</code> and <code>2^-519.4516</code>.</p>
 <p>The code package's <code>PARAMETER_MANIFEST.tsv</code> also labels HARE-256's <code>&lt;2^-258</code> value as “Model-1,” contradicting both the PDF's Model-2 label and the direct Model-1 recomputation. This appears to be a metadata error rather than evidence for either bound.</p>
@@ -47,6 +48,8 @@
 <pre><code class="language-sh">python3 kem-16/reproduce_model1_dfr.py
 </code></pre>
 <p>It recomputes all four values above and checks the two specification-published Model-1 controls before printing <code>CONFIRMED</code>.</p>
+<h3 id="proposed-fixes">Proposed fixes</h3>
+<p>The team has published a <a href="https://pqc-hare.info/downloads/hare-dfr-python-2026-10-09.zip">revised Model-2 evaluator</a>. Its README lists HARE-1, -3 and -5; it does not list the affected HARE-2. The revised calculation is recorded without evaluating it, and the frozen submission remains the target.</p>
 <h2 class="issue-heading" id="kem-16-2-same-key-multi-instance-decoding-misses-three-hare-targets">kem-16-2: Same-key multi-instance decoding misses three HARE targets</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
@@ -59,12 +62,14 @@
 <tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance</td></tr>
 <tr><th>Date</th><td>2026-10-03</td></tr>
 </table></div>
-<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/5M6UUTE7ZUSDW7XRVMLAMZGNU55A4IYT/">Xiong and Wang's PKC Forum post</a></p>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/5M6UUTE7ZUSDW7XRVMLAMZGNU55A4IYT/">Xiong and Wang's PKC Forum post</a>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/UKYU4SCJIR64WIH4OLJ25WJDP3IE7MPO/">HARE team's 2026-10-11 response</a></p>
 <p>Additional reference: <a href="https://eprint.iacr.org/2026/517">May and Sá Diogo, ePrint 2026/517</a></p>
 <p>Each HARE ciphertext exposes the uncompressed syndrome <code>u = r1 + h*r2</code>, where <code>h</code> is fixed by the public key and both errors have weight <code>wr</code> (Algorithm 4, physical p. 10; <code>_shared/hare_core/ref/hqc.c</code>). From <code>Q</code> ciphertexts and their public cyclic shifts, an attacker obtains <code>nQ</code> targets for one same-code Decoding-One-Out-of-Many search. Recovering one error pair decodes that ciphertext's message and derives its session key.</p>
 <p>The pinned heuristic estimator gives the following first below-target points: HARE-256 at <code>Q=2^72</code>, time <code>2^255.440</code> and memory <code>2^103.356</code>; HARE-384 at <code>Q=2^64</code>, time <code>2^383.175</code> and memory <code>2^97.358</code>; HARE-512 at <code>Q=2^75</code>, time <code>2^511.699</code> and memory <code>2^109.820</code>. HARE-128 remains above its target at the <code>2^80</code> evaluation ceiling.</p>
 <p>Further extension to Xiong and Wang's analysis: using the conservative ordinary code dimension <code>n</code>, rather than <code>n-2</code>, preserves all three crossings. Checking every observation exponent also moves HARE-512's first crossing from the reported grid point <code>2^76</code> to <code>2^75</code>; the preceding costs are <code>2^256.300</code>, <code>2^384.046</code> and <code>2^512.163</code>.</p>
 <p>These passive attacks need no decapsulation oracle and stay within the <code>2^80</code> evaluation ceiling, but their first-crossing margins are only 0.56, 0.82 and 0.30 bits and the estimates require <code>2^97</code>–<code>2^110</code> bits of memory. The crossings use one pinned heuristic DS-DOOM estimator; alternate operation-count or memory-cost conventions could close these sub-bit margins. We reproduced the estimator calculations and the public ciphertext-to-session-key mapping; we did not execute the full decoding searches.</p>
+<p>The team notes that this multi-ciphertext setting differs from the IND-CCA2 analysis in its submission and will examine its practical implications. The classification here concerns the stated NGCC evaluation budget, not an IND-CCA2 proof claim; no revised analysis has been evaluated.</p>
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 kem-16/reproduce_multi_instance.py

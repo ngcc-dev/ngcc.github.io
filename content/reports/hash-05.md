@@ -32,10 +32,13 @@ Discovery: Trivial
 Exploitation: About 2^h / l compression calls for an l-chunk target: approximately 2^457.6, 2^713 and 2^968 at the required 2^64-bit message length
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-09-26
+Follow-up source: [Bishwajit Chakraborty's 2026-10-11 CryptHash Forum post](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/ZMFQ4OFLGKGVI6U7ACKWKDVAZUEPN4YA/)
 
 uHash claims that "the classical security against preimage and second-preimage attacks is no less than h bits" (abstract, physical PDF page 1; Table 9, page 11), which a long-message attack violates.
 
 The chaining value is exactly h bits wide (Algorithm 1, page 4). Padding is `M ∥ 1 ∥ 0*` with no length field (§1.2.1, page 4; `Padding`, `CryptHash_AlgorithmInstance.c:441-474` in the uHash-512 reference source). Intermediate compression calls take no block index; only the final call is tweaked (`:526`, `:578-586` in that source). The uHash-768 and uHash-1024 reference sources follow the same structure. An attacker tries one-chunk prefixes until the chaining value equals any intermediate chaining value of an l-chunk target, then appends the rest of the target. The expected cost is 2^h / l compression calls. The specification requires messages of up to 2^64 − 1 bits (page 3), so the cost falls to about 2^457.6, 2^713 and 2^968 for the three sets. The specification's own proof bounds the second-preimage advantage by (b + l)q / 2^h (§3.2.2, page 14), which is consistent with this loss but not with the flat h-bit claim.
+
+Chakraborty's later forum post identifies the same long-message loss and gives rounded costs of `2^458`, `2^713` and `2^968`; it does not require a separate finding.
 
 ### Reproducing
 

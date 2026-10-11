@@ -14,6 +14,7 @@ Exploitation: Proof gap; no excessive failure rate or practical attack demonstra
 Credit: Zhenyu Xiong and Mingsheng Wang, Institute of Information Engineering, Chinese Academy of Sciences, with Anthropic Claude Opus 5.5 assistance
 Date: 2026-09-29
 Original source: [Xiong and Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/I3GOGQ7HXLFUKK5E3I562VHM3VAGNSJ6/)
+Follow-up source: [HARE team's 2026-10-11 response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/UKYU4SCJIR64WIH4OLJ25WJDP3IE7MPO/)
 
 HARE's Table 2 claims decryption-failure probabilities below `2^-130` and `2^-258` for its submitted 128- and 256-bit sets. These two claims use the refined dependent-coordinate Model 2 in §6. The cited [Bitzer et al. artifact](https://gitlab.com/HQCCiphertextCompression/hqc-with-ciphertext-compression) implements Model 2 for HQC, but the archived HARE package provides no adaptation that produces HARE's convolution distribution and combined error/erasure failure count.
 
@@ -33,6 +34,10 @@ python3 kem-16/reproduce_model1_dfr.py
 
 It recomputes all four values above and checks the two specification-published Model-1 controls before printing `CONFIRMED`.
 
+### Proposed fixes
+
+The team has published a [revised Model-2 evaluator](https://pqc-hare.info/downloads/hare-dfr-python-2026-10-09.zip). Its README lists HARE-1, -3 and -5; it does not list the affected HARE-2. The revised calculation is recorded without evaluating it, and the frozen submission remains the target.
+
 ## kem-16-2: Same-key multi-instance decoding misses three HARE targets
 
 Severity: Critical
@@ -44,6 +49,7 @@ Exploitation: About 2^255.44 work after 2^72 ciphertexts, 2^383.18 after 2^64, o
 Credit: Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance
 Date: 2026-10-03
 Original source: [Xiong and Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/5M6UUTE7ZUSDW7XRVMLAMZGNU55A4IYT/)
+Follow-up source: [HARE team's 2026-10-11 response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/UKYU4SCJIR64WIH4OLJ25WJDP3IE7MPO/)
 
 Additional reference: [May and Sá Diogo, ePrint 2026/517](https://eprint.iacr.org/2026/517)
 
@@ -54,6 +60,8 @@ The pinned heuristic estimator gives the following first below-target points: HA
 Further extension to Xiong and Wang's analysis: using the conservative ordinary code dimension `n`, rather than `n-2`, preserves all three crossings. Checking every observation exponent also moves HARE-512's first crossing from the reported grid point `2^76` to `2^75`; the preceding costs are `2^256.300`, `2^384.046` and `2^512.163`.
 
 These passive attacks need no decapsulation oracle and stay within the `2^80` evaluation ceiling, but their first-crossing margins are only 0.56, 0.82 and 0.30 bits and the estimates require `2^97`–`2^110` bits of memory. The crossings use one pinned heuristic DS-DOOM estimator; alternate operation-count or memory-cost conventions could close these sub-bit margins. We reproduced the estimator calculations and the public ciphertext-to-session-key mapping; we did not execute the full decoding searches.
+
+The team notes that this multi-ciphertext setting differs from the IND-CCA2 analysis in its submission and will examine its practical implications. The classification here concerns the stated NGCC evaluation budget, not an IND-CCA2 proof claim; no revised analysis has been evaluated.
 
 ### Reproducing
 
