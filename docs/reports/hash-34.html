@@ -33,17 +33,19 @@
 <tr><th>Affected</th><td>WChain-V1-512 and WChain-V2-1024</td></tr>
 <tr><th>Discovery</th><td>Moderate</td></tr>
 <tr><th>Exploitation</th><td>Reporter estimates about 2^292 and 2^580 work to find one reusable reset prefix; no full-size matching pair has been computed</td></tr>
-<tr><th>Credit</th><td>Bishwajit Chakraborty</td></tr>
+<tr><th>Credit</th><td>Bishwajit Chakraborty, with AI assistance</td></tr>
 <tr><th>Date</th><td>2026-10-09</td></tr>
 </table></div>
-<p>Original source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/VGEPD4W2SY3QKSBGYKAGDMLSBXU5UEVR/">Chakraborty's WChain analysis</a></p>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/VGEPD4W2SY3QKSBGYKAGDMLSBXU5UEVR/">Chakraborty's WChain analysis</a>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/XTTKQT2PU5TFQKX6CGJZYGLW6UKJVAOT/">Chakraborty's draft announcement</a> and <a href="https://github.com/bishwajitchakrabort/ngcc/blob/85131094d6ed476049582d0490e95df369307021/wchain-second-preimage/wchain_ngcc_note.pdf">pinned draft</a></p>
 <p>WChain uses <code>CF(V,B)=P_B(V)⊕V</code>, two-step feedback <code>H_i=CF(H_{i−1},M_i)⊕H_{i−2}</code>, an XOR checksum of padded blocks, and zero initial states (specification §3 and §5.1, physical pp. 6–8, 18–20; reference <code>wchain_c.c:297–330,372–437</code>). Suppose full blocks <code>X,Y</code> satisfy <code>P_X(0)=P_Y^{-1}(0)=A</code>. Then <code>CF(0,X)=CF(A,Y)=A</code>; absorbing <code>X‖Y‖Y‖X</code> visits states <code>A,A,0,0</code> and adds zero to the checksum. Consequently, for every message <code>M</code>, <code>Hash(X‖Y‖Y‖X‖M)=Hash(M)</code> after ordinary padding and finalization.</p>
 <p>A meet-in-the-middle search matches <code>P_X(0)</code> with <code>P_Y^{-1}(0)</code> in roughly <code>2^(b/2)</code> evaluations and comparable memory for a <code>b</code>-bit state (<code>b=576</code> or <code>1152</code>). The reporter's larger round-equivalent estimates, about <code>2^292</code> and <code>2^580</code>, remain far below the <a href="https://www.niccs.org.cn/niccs/Notice/crlRB1ZY.pdf">NGCC-required</a> <code>2^512</code> and <code>2^1024</code> second-preimage levels. The state-reset identity follows exactly from the submitted mode. Its full-size cost assumes birthday-like behavior of the submitted message-keyed permutations; neither a full-size pair nor a full-size second preimage has been computed, hence Probable.</p>
+<p>The later draft reports full-size compression-identity checks and reduced-width runs of WChain's round function through 45 state bits (V1) and 36 bits (V2), with search costs near <code>2^(b/2)</code>. Its public code demonstrates only a generic-permutation toy model. These results support, but do not establish at full size, the birthday-like cost estimate; the status remains Probable.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 hash-34/reproduce_reset_prefix.py
 </code></pre>
-<p>The certificate checks the frozen reference source's feedback, checksum and finalization paths, then finds a matching pair and verifies the identity in a reduced-width permutation model. It does not claim to execute the full-size search.</p>
+<p>The certificate checks the frozen reference source's feedback, checksum and finalization paths, then finds a matching pair and verifies the identity in a reduced-width permutation model. It also compiles the submitted full-width compression and checks the conditional four-block identity in 256 trials at each level, with reordered-block controls. These full-width trials start from constructed nonzero states; they do not find a zero-start reset pair or execute the full-size search.</p>
 <h2 class="issue-heading" id="hash-34-2-short-message-checksum-cancellation-defeats-the-stated-length-extension-argument">hash-34-2: Short-message checksum cancellation defeats the stated length-extension argument</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">

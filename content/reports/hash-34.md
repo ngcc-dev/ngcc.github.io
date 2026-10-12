@@ -11,13 +11,16 @@ Layer: Design
 Affected: WChain-V1-512 and WChain-V2-1024
 Discovery: Moderate
 Exploitation: Reporter estimates about 2^292 and 2^580 work to find one reusable reset prefix; no full-size matching pair has been computed
-Credit: Bishwajit Chakraborty
+Credit: Bishwajit Chakraborty, with AI assistance
 Date: 2026-10-09
 Original source: [Chakraborty's WChain analysis](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/VGEPD4W2SY3QKSBGYKAGDMLSBXU5UEVR/)
+Follow-up source: [Chakraborty's draft announcement](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/XTTKQT2PU5TFQKX6CGJZYGLW6UKJVAOT/) and [pinned draft](https://github.com/bishwajitchakrabort/ngcc/blob/85131094d6ed476049582d0490e95df369307021/wchain-second-preimage/wchain_ngcc_note.pdf)
 
 WChain uses `CF(V,B)=P_B(V)⊕V`, two-step feedback `H_i=CF(H_{i−1},M_i)⊕H_{i−2}`, an XOR checksum of padded blocks, and zero initial states (specification §3 and §5.1, physical pp. 6–8, 18–20; reference `wchain_c.c:297–330,372–437`). Suppose full blocks `X,Y` satisfy `P_X(0)=P_Y^{-1}(0)=A`. Then `CF(0,X)=CF(A,Y)=A`; absorbing `X‖Y‖Y‖X` visits states `A,A,0,0` and adds zero to the checksum. Consequently, for every message `M`, `Hash(X‖Y‖Y‖X‖M)=Hash(M)` after ordinary padding and finalization.
 
 A meet-in-the-middle search matches `P_X(0)` with `P_Y^{-1}(0)` in roughly `2^(b/2)` evaluations and comparable memory for a `b`-bit state (`b=576` or `1152`). The reporter's larger round-equivalent estimates, about `2^292` and `2^580`, remain far below the [NGCC-required](https://www.niccs.org.cn/niccs/Notice/crlRB1ZY.pdf) `2^512` and `2^1024` second-preimage levels. The state-reset identity follows exactly from the submitted mode. Its full-size cost assumes birthday-like behavior of the submitted message-keyed permutations; neither a full-size pair nor a full-size second preimage has been computed, hence Probable.
+
+The later draft reports full-size compression-identity checks and reduced-width runs of WChain's round function through 45 state bits (V1) and 36 bits (V2), with search costs near `2^(b/2)`. Its public code demonstrates only a generic-permutation toy model. These results support, but do not establish at full size, the birthday-like cost estimate; the status remains Probable.
 
 ### Reproducing
 
@@ -25,7 +28,7 @@ A meet-in-the-middle search matches `P_X(0)` with `P_Y^{-1}(0)` in roughly `2^(b
 python3 hash-34/reproduce_reset_prefix.py
 ```
 
-The certificate checks the frozen reference source's feedback, checksum and finalization paths, then finds a matching pair and verifies the identity in a reduced-width permutation model. It does not claim to execute the full-size search.
+The certificate checks the frozen reference source's feedback, checksum and finalization paths, then finds a matching pair and verifies the identity in a reduced-width permutation model. It also compiles the submitted full-width compression and checks the conditional four-block identity in 256 trials at each level, with reordered-block controls. These full-width trials start from constructed nonzero states; they do not find a zero-start reset pair or execute the full-size search.
 
 ## hash-34-2: Short-message checksum cancellation defeats the stated length-extension argument
 

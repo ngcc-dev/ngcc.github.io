@@ -14,6 +14,7 @@ Exploitation: Physical timing recovers 12,743 of 13,024 secret coefficients (97.
 Credit: Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance
 Date: 2026-10-01
 Original source: [Xiong and Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/4CQU6FWGGX4KK7XBHMBM6535CHEYX7HF/) and [pinned public artifact](https://github.com/acprk/ngcc-round1-cryptanalysis/tree/709d5ec64239206effb2667ca853ddcef3c060b4/scloudplus-reencryption-timing)
+Follow-up source: [Scloud+ team's response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/HB2HHFE5IOTHF43Z5ZBNDKT26KSNT3AD/)
 
 Practical follow-up: [Weng et al.'s PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/PKC56RYJY3CKBY4NLXIWOZMU7LI3FV5V/) and [pinned recovery artifact](https://github.com/Yutianrun/scloudplus-timing-sca/tree/5fa4a879ba95d36b3bd1e4ff5ad553c7c9a64ef3)
 
@@ -29,7 +30,7 @@ Make candidate generation and compaction consume fixed work: process a fixed upp
 
 ### Proposed fixes
 
-The original post proposes processing a fixed upper-bound number of candidates with constant-time compaction, or replacing the rejection sampler with a non-rejection construction based on fixed-point comparison against `1/6` or `1/12`. This section records those proposals without evaluating them.
+The original post proposes processing a fixed upper-bound number of candidates with constant-time compaction, or replacing the rejection sampler with a non-rejection construction based on fixed-point comparison against `1/6` or `1/12`. The team confirms the message-dependent refills, XOF calls and compaction addresses, and proposes fixed candidate work with oblivious, order-preserving compaction and fixed-work handling of insufficient candidates. No revised implementation is reported; these proposals are recorded without evaluation.
 
 ### Reproducing
 
