@@ -73,3 +73,26 @@ python3 sign-30/certify_shake_capacity.py
 ```
 
 The certificate checks the normal build flag, message-first transcript order, and SHAKE256 backend in both 512-bit variants. It verifies the structural preconditions, not an infeasible `2^256` collision search.
+
+## sign-30-4: TRINE-512's invariant-attack estimate falls about 5.5 bits below target
+
+Severity: Critical
+Status: Lead
+Layer: Design
+Affected: TRINE-512 Balanced and ShortSig parameter selection
+Discovery: Moderate
+Exploitation: Conditional estimate of about 2^506.5 bit operations against the 512-bit target; no full-size equivalence recovery demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-12
+
+The specification estimates the corank-one invariant attack as `O(q^((n−2)/2) n^4 (log q)^2)` (§5.3, physical pp. 19–20; §6.2, p. 22), using the faster point-sampling heuristic from [Narayanan, Qiao and Tang](https://eprint.iacr.org/2024/368). It explicitly selects `q` using this estimate. With TRINE-512's `n=81` and `q=4093`, the stated factor is `q^39.5`, not `q^40`. Counting the printed polynomial factors gives about `2^506.5` bit operations, roughly 5.5 bits below the 512-bit target. The 128- and 256-bit table entries agree with the same calculation to rounding precision; replacing `39.5` by `40` nearly reproduces the 512-bit entry.
+
+This is a conditional below-target lead, not a demonstrated attack. The faster corank-one sampling is heuristic, its distribution has not been established, and the `O` notation hides a constant of about 45 or more that could erase the margin. No full-size equivalence recovery or calibrated cost has been demonstrated.
+
+### Reproducing
+
+```sh
+python3 sign-30/reproduce_invariant_estimate.py
+```
+
+The certificate checks both submitted 512-bit parameter headers and recomputes all three rows. It does not execute the exponential search.

@@ -126,6 +126,26 @@ tools/reproduce.sh sign-23
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 security/rbg_protocol_dependency.py --report-id kex-05-4
 </code></pre>
+<h2 class="issue-heading" id="kex-05-5-a-pre-rounding-shift-is-not-losslessly-reducible-to-standard-mlwr">kex-05-5: A pre-rounding shift is not losslessly reducible to standard MLWR</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr>
+<tr><th>Affected</th><td>LoomKEX-128, -256 and -512 security argument</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>No attack on submitted parameters; the stated same-advantage reduction fails in a small exact instance</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-12</td></tr>
+</table></div>
+
+<p>Loom §4.1.1 (physical p. 23) asserts that a public offset added <em>before</em> compression gives a Shifted-MLWR distinguisher for standard MLWR with the same advantage. But the standard MLWR sample exposes <code>Compress(As)</code>, from which <code>Compress(As+Δ)</code> cannot generally be reconstructed: rounding discards the within-bucket position. An exhaustive one-coefficient instance (<code>q=17</code>, <code>k=1</code>, <code>ℓ=2</code>, three-bit compression, <code>s←CBD₃</code>, <code>Δ=(0,8)</code>) has optimal one-sample distinguishing advantages <code>0.883682</code> for ordinary MLWR and <code>0.891222</code> for shifted MLWR. Thus the claimed lossless reduction is false in general.</p>
+<p>Theorem 4.4 (§4.1.2, physical pp. 24–26) explicitly retains Shifted-MLWR as a separate assumption, so this does not refute that conditional theorem or establish a weakness at Loom's submitted parameters. It leaves the asserted equivalence to standard MLWR, and any parameter justification relying on it, unproved.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 security/reproduce_shifted_mlwr_toy.py
+</code></pre>
+<p>The certificate enumerates the two exact distributions and their total-variation distances; it does not run a full-size attack.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

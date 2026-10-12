@@ -130,3 +130,26 @@ The submitted ICCS build works with its bundled `drng.c`, and Loom's SHAKE build
 ```sh
 python3 security/rbg_protocol_dependency.py --report-id kex-05-4
 ```
+
+## kex-05-5: A pre-rounding shift is not losslessly reducible to standard MLWR
+
+Severity: Medium
+Status: Proof gap
+Layer: Design
+Affected: LoomKEX-128, -256 and -512 security argument
+Discovery: Moderate
+Exploitation: No attack on submitted parameters; the stated same-advantage reduction fails in a small exact instance
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-12
+
+Loom §4.1.1 (physical p. 23) asserts that a public offset added *before* compression gives a Shifted-MLWR distinguisher for standard MLWR with the same advantage. But the standard MLWR sample exposes `Compress(As)`, from which `Compress(As+Δ)` cannot generally be reconstructed: rounding discards the within-bucket position. An exhaustive one-coefficient instance (`q=17`, `k=1`, `ℓ=2`, three-bit compression, `s←CBD₃`, `Δ=(0,8)`) has optimal one-sample distinguishing advantages `0.883682` for ordinary MLWR and `0.891222` for shifted MLWR. Thus the claimed lossless reduction is false in general.
+
+Theorem 4.4 (§4.1.2, physical pp. 24–26) explicitly retains Shifted-MLWR as a separate assumption, so this does not refute that conditional theorem or establish a weakness at Loom's submitted parameters. It leaves the asserted equivalence to standard MLWR, and any parameter justification relying on it, unproved.
+
+### Reproducing
+
+```sh
+python3 security/reproduce_shifted_mlwr_toy.py
+```
+
+The certificate enumerates the two exact distributions and their total-variation distances; it does not run a full-size attack.

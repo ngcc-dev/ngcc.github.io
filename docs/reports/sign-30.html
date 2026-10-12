@@ -84,6 +84,26 @@
 <pre><code class="language-sh">python3 sign-30/certify_shake_capacity.py
 </code></pre>
 <p>The certificate checks the normal build flag, message-first transcript order, and SHAKE256 backend in both 512-bit variants. It verifies the structural preconditions, not an infeasible <code>2^256</code> collision search.</p>
+<h2 class="issue-heading" id="sign-30-4-trine-512s-invariant-attack-estimate-falls-about-55-bits-below-target">sign-30-4: TRINE-512&#x27;s invariant-attack estimate falls about 5.5 bits below target</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-lead">Lead</span></td></tr>
+<tr><th>Affected</th><td>TRINE-512 Balanced and ShortSig parameter selection</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Conditional estimate of about 2^506.5 bit operations against the 512-bit target; no full-size equivalence recovery demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-12</td></tr>
+</table></div>
+
+<p>The specification estimates the corank-one invariant attack as <code>O(q^((n−2)/2) n^4 (log q)^2)</code> (§5.3, physical pp. 19–20; §6.2, p. 22), using the faster point-sampling heuristic from <a href="https://eprint.iacr.org/2024/368">Narayanan, Qiao and Tang</a>. It explicitly selects <code>q</code> using this estimate. With TRINE-512's <code>n=81</code> and <code>q=4093</code>, the stated factor is <code>q^39.5</code>, not <code>q^40</code>. Counting the printed polynomial factors gives about <code>2^506.5</code> bit operations, roughly 5.5 bits below the 512-bit target. The 128- and 256-bit table entries agree with the same calculation to rounding precision; replacing <code>39.5</code> by <code>40</code> nearly reproduces the 512-bit entry.</p>
+<p>This is a conditional below-target lead, not a demonstrated attack. The faster corank-one sampling is heuristic, its distribution has not been established, and the <code>O</code> notation hides a constant of about 45 or more that could erase the margin. No full-size equivalence recovery or calibrated cost has been demonstrated.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-30/reproduce_invariant_estimate.py
+</code></pre>
+<p>The certificate checks both submitted 512-bit parameter headers and recomputes all three rows. It does not execute the exponential search.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
