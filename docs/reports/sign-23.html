@@ -36,9 +36,12 @@
 <tr><th>Credit</th><td>Martin Feussner, with OpenAI Codex (Daybreak Blue) assistance</td></tr>
 <tr><th>Date</th><td>2026-09-25</td></tr>
 </table></div>
-<p>Original source: <a href="https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/5ao-Ebsa_Ow/m/zwYJk_Q-BAAJ">Feussner's pqc-forum post and attached analysis</a></p>
+<p>Original source: <a href="https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/5ao-Ebsa_Ow/m/zwYJk_Q-BAAJ">Feussner's pqc-forum post and attached analysis</a>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/6QGKAFIAP7LBTXJKXAQA4S6DTJPXJPUG/">Shuttle team's 2026-10-12 PKC Forum response</a></p>
 <p>Additional reference: <a href="https://eprint.iacr.org/archive/2026/2232/1790653241.pdf">Xiong and Wang, ePrint 2026/2232, 2026-09-29 revision, §7</a></p>
 <p>Figure 1, Eq. (8), and §4.1.1 define <code>p_v(y)</code> as the probability of returning <code>y−v</code>, but Algorithm 22 sets its flag on the corresponding interval event and returns <code>y+flag·v</code>. All three reference <code>irs.c</code> files implement that same sign (<code>irs.c:382–399</code>). Reversing the intended transition leaves a secret-dependent covariance in valid responses. The constant first component of Shuttle's signing secret supplies a public anchor for estimating the other secret components. An independent driver recovered an equivalent key using only ordinary signatures and the public key, then produced an accepted fresh-message forgery at every level. The original analysis also reports a corrected-sign control; that control has not been independently rerun. The authors' separate <a href="https://eprint.iacr.org/2026/1991">ePrint 2026/1991</a> uses the matching <code>y−v</code> branch, so this finding concerns the NGCC submission.</p>
+<h3 id="proposed-fixes">Proposed fixes</h3>
+<p>The team confirms that the submitted Algorithm 22 and reference code reversed the intended transition. It reports changing the final update to <code>y−flag·v</code> in revised materials. This change is recorded without evaluating the revised candidate.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">make -C sign-23 exploit

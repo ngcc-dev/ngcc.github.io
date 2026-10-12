@@ -13,12 +13,17 @@ Discovery: Trivial
 Exploitation: Approximately 2^256 hash evaluations
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-09-21
+Follow-up source: [BiT team's 2026-10-12 PKC Forum update](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/ONSUXJ3MD4PYXHBRPIVGKBXW5CZ7ONIT/)
 
 BiT-512 claims 512-bit classical security and normatively computes the message representative `mu = H(tr || M)` as a 512-bit value. This fixed unsalted representative has only 256 bits of generic collision resistance.
 
 After finding distinct messages with the same `mu`, an attacker requests a signature on one and transfers it unchanged to the other. Later signing randomness cannot distinguish the already-colliding messages. The reference implementation uses the same 64-byte representative.
 
 This is a specification-level design break of the advertised 512-bit classical EUF-CMA level. It is a generic `2^256` security ceiling, not a computation performed by the harness.
+
+### Proposed fixes
+
+The team reports revising BiT-512 to bind the message and its encoded length directly into the Fiat–Shamir challenge, instead of a fixed-length prehash. It points to [revised materials](https://light-lattice.org/bit/). This proposal is recorded without evaluating the revision.
 
 ### Reproducing
 
@@ -39,6 +44,7 @@ Exploitation: Equivalent-key recovery from 200,000 public signatures and a fresh
 Credit: Martin Feussner, with OpenAI Codex (Daybreak Blue) assistance
 Date: 2026-09-25
 Original source: [Feussner's pqc-forum post and attached analysis](https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/84_EKMOtk_M/m/ZNMqLQ07BAAJ)
+Follow-up source: [BiT team's 2026-10-12 PKC Forum update](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/ONSUXJ3MD4PYXHBRPIVGKBXW5CZ7ONIT/)
 
 Additional reference: [Xiong and Wang, ePrint 2026/2232, 2026-09-29 revision, §8](https://eprint.iacr.org/archive/2026/2232/1790653241.pdf)
 
@@ -47,6 +53,10 @@ BiT uses one hidden sign for the entire response, but its rejection rule correct
 The released public-transcript attack streams 200,000 signatures from an ordinary signing oracle, statistically recovers a candidate key, repairs low-confidence coefficients by a public search when the candidate fails the compressed public-key relation (in our run, 1,596 candidates over 24 search bits), completes an equivalent key that satisfies the relation, and produces a fresh-message signature accepted by the unmodified BiT-128 verifier. A changed-message control rejects. We reproduced its fixed key-0 experiment in 164 CPU-seconds on a single-threaded `Intel Core Processor (Broadwell, IBRS)` validation VM; the attack never reads or compares the generated secret key. This upgrades the finding from Probable to Confirmed. The authors report three of four fixed keys succeeding at 200,000 signatures and the fourth at 250,000; no success-rate claim beyond those experiments is made.
 
 Follow-up analysis: the [BiT team's 2026-09-29 response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/74QWBAYF4KZYN5HDHM2ROENQUDVWAUGT/) confirms this shared-sign issue and says that the distinct compressed-public-key leakage reported for CS also applies to the earlier BiT version. No BiT-specific derivation, transcript, or witness for that second route accompanied the response. Since the confirmed shared-sign route already yields equivalent-key recovery and forgery, the additional statement is retained as follow-up evidence rather than assigned a separate vulnerability ID.
+
+### Proposed fixes
+
+The team reports replacing coefficientwise rejection with a parabolic rejection sampler over the full response vector, and transmitting the complete public key instead of compressing it. It presents these as responses to the shared-sign and compression routes, respectively. The revision is recorded without evaluation.
 
 ### Reproducing
 

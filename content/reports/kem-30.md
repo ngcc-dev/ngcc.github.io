@@ -80,8 +80,13 @@ Exploitation: Peers using different submitted implementations can derive differe
 Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
 Date: 2026-10-06
 Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/ZHRCGO32OGLDZZMUSU66ZPHTEJDNG3M7/)
+Follow-up source: [PolarLAC team's 2026-10-11 response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/WNOO6XRQXQX2H3ROIC2TGRGHAYC7SEMY/)
 
 The submitted reference and optimized x86 builds reproduce their own KATs but do not interoperate. The post reports failed cross-decapsulation in both directions on four seeds for each of Light, 128, 256, 512 and 512-Star. We independently built the 128-bit pair: each self-decapsulation agreed, while each cross-tree decapsulation returned a different key despite `rc=0`. Their public keys already diverge after the common 16-byte public seed. The submitted ARM KAT values match the reference values at all five sets, making x86 optimized the outlier; the underlying primitive or encoding discrepancy is not yet isolated. This is a key-agreement availability defect, not a key-recovery claim.
+
+### Proposed fixes
+
+The team reports unifying NTT-domain, sampling and serialization conventions and correcting inverse NTT, with cross-implementation tests on revised code. It says the revised and submitted formats must not be mixed. These changes are recorded without evaluation.
 
 ### Reproducing
 

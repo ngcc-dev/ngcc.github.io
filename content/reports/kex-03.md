@@ -176,12 +176,13 @@ Exploitation: Cross-implementation key agreement can fail; no confidentiality at
 Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
 Date: 2026-10-06
 Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/NPW7UHH4G3Y5MTSWGK7H6KHPKFFCUIMD/)
+Follow-up source: [PolarLAC team's 2026-10-11 response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/WNOO6XRQXQX2H3ROIC2TGRGHAYC7SEMY/)
 
 In the frozen official archive, each of the 13 POLARLAC-based reference and optimized KAT pairs starts with the same 64-byte seed but records a different shared secret. All 12 ZEN-based pairs agree under the same check. For example, K2K-PLAC128's first reference and optimized `SS` fields begin `8DA4C53F` and `35C82311`. We independently checked the archive's published SHA-256 and these vector fields. The forum additionally reports that mixed reference/optimized parties complete `derive` but obtain different keys on 4/4 seeds. That protocol experiment was not rerun here; the archived vectors alone establish inconsistent submitted implementations, not which one is correct. This is a Low interoperability defect.
 
 ### Proposed fixes
 
-The [CreTAKE team](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/T624LE7EOQZEMDHF5TZI42TYSPMGW3YP/) says the PolarLAC team will correct the underlying reference/optimized incompatibility. This proposal is recorded without evaluation.
+The [CreTAKE team](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/T624LE7EOQZEMDHF5TZI42TYSPMGW3YP/) said the PolarLAC team would correct the underlying incompatibility. The PolarLAC team now reports revised NTT, sampling and serialization conventions, with cross-implementation tests. These changes are recorded without evaluating the revised candidate.
 
 ### Reproducing
 

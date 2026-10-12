@@ -161,10 +161,11 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
 <tr><th>Date</th><td>2026-10-06</td></tr>
 </table></div>
-<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/NPW7UHH4G3Y5MTSWGK7H6KHPKFFCUIMD/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/NPW7UHH4G3Y5MTSWGK7H6KHPKFFCUIMD/">LK-PQC-Hunter's PKC Forum post</a>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/WNOO6XRQXQX2H3ROIC2TGRGHAYC7SEMY/">PolarLAC team's 2026-10-11 response</a></p>
 <p>In the frozen official archive, each of the 13 POLARLAC-based reference and optimized KAT pairs starts with the same 64-byte seed but records a different shared secret. All 12 ZEN-based pairs agree under the same check. For example, K2K-PLAC128's first reference and optimized <code>SS</code> fields begin <code>8DA4C53F</code> and <code>35C82311</code>. We independently checked the archive's published SHA-256 and these vector fields. The forum additionally reports that mixed reference/optimized parties complete <code>derive</code> but obtain different keys on 4/4 seeds. That protocol experiment was not rerun here; the archived vectors alone establish inconsistent submitted implementations, not which one is correct. This is a Low interoperability defect.</p>
 <h3 id="proposed-fixes_5">Proposed fixes</h3>
-<p>The <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/T624LE7EOQZEMDHF5TZI42TYSPMGW3YP/">CreTAKE team</a> says the PolarLAC team will correct the underlying reference/optimized incompatibility. This proposal is recorded without evaluation.</p>
+<p>The <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/T624LE7EOQZEMDHF5TZI42TYSPMGW3YP/">CreTAKE team</a> said the PolarLAC team would correct the underlying incompatibility. The PolarLAC team now reports revised NTT, sampling and serialization conventions, with cross-implementation tests. These changes are recorded without evaluating the revised candidate.</p>
 <h3 id="reproducing_5">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 kex-03/reproduce_kat_interop.py
