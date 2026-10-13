@@ -30,22 +30,24 @@ constructions rather than ICCS placeholder functions. These symmetric
 constructions are therefore part of the submitted design and require evaluation
 alongside the public-key protocol; replacing them would evaluate a revised
 instantiation.</p>
-<h2 class="issue-heading issue-heading-first" id="sign-20-1-qingluan-128s-own-quantum-accounting-falls-below-the-80-bit-target">sign-20-1: Qingluan-128&#x27;s own quantum accounting falls below the 80-bit target</h2>
+<h2 class="issue-heading issue-heading-first" id="sign-20-1-qingluan-128s-quantum-accounting-omits-complete-attack-costs">sign-20-1: Qingluan-128&#x27;s quantum accounting omits complete attack costs</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-info">Info</span></td></tr>
 <tr><th>Scope</th><td>design</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr>
 <tr><th>Affected</th><td>Qingluan-128 specification and parameter set</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
-<tr><th>Exploitation</th><td>The specification's halved-exponent rule gives 64.4 and 71.5 quantum-cost bits; no end-to-end quantum gate cost is established</td></tr>
+<tr><th>Exploitation</th><td>None demonstrated; halved classical exponents omit quantum oracle costs</td></tr>
 <tr><th>Credit</th><td>Sun Shuzhou, with GLM-5.3 assistance</td></tr>
 <tr><th>Date</th><td>2026-10-01</td></tr>
 </table></div>
 <p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/QMVN4EMKVLFXOLVNGTSR7KAR4J4OKDFE/">Sun's PKC Forum post</a></p>
 <p>The NGCC <a href="https://www.niccs.org.cn/niccs/Notice/lDop1mav.pdf">Submission Requirements</a> set an 80-bit quantum-security floor for the 128-bit classical tier. Qingluan §3.2.4 instead applies its rule <code>quantum = classical/2</code> to a 128.8-bit Fiat–Shamir forgery estimate and a 143-bit key-recovery estimate. This gives cost exponents 64.4 and 71.5 respectively; the latter is a halved ISD exponent, not a count of identical Grover iterations. The specification's own table consequently prints 64-bit binding security next to an <code>&gt;= 80 bit</code> target, while describing the shortfall as “NIST category 1” under bounded-depth Grover rather than literal <code>2^80</code> work.</p>
-<p>This is a contradiction in the claimed parameter accounting, not a demonstrated quantum forgery. The call's 80-bit target cannot be interpreted as a bare Grover-iteration threshold: that convention would assign AES-128 only <code>2^64</code> iterations. Reversible SM3, syndrome decoding, memory, depth, and parallelization costs could readily close the reported 8.5–15.6-bit gaps, and no circuit-level estimate is supplied. Under the classification policy this is therefore a Medium proof gap. Changing only the Fiat–Shamir round parameters does not resolve the inconsistency in the specification's own model because the fixed <code>(n,k)=(127,76)</code> key-recovery exponent remains 71.5.</p>
+<p>This is an inconsistency in the submitted cost accounting, not a demonstrated quantum forgery. The call's 80-bit target cannot be interpreted as a bare Grover-iteration threshold: that convention would assign AES-128 only <code>2^64</code> iterations. Reversible SM3, syndrome decoding, memory, depth, and parallelization costs could close the reported 8.5–15.6-bit gaps, and no circuit-level estimate is supplied. It is recorded as Info, not a vulnerability. Changing only the Fiat–Shamir round parameters does not resolve the inconsistency in the specification's own model because the fixed <code>(n,k)=(127,76)</code> key-recovery exponent remains 71.5.</p>
 <p>The other three parameter sets are not affected by this numerical inconsistency: under the same convention their stated quantum estimates remain slightly above their 128-, 192-, and 256-bit targets.</p>
+<h3 id="reclassification">Reclassification</h3>
+<p>Reclassified from Medium to Info on 2026-10-13: the arithmetic is unchanged, but no complete below-target quantum attack cost is established.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 sign-20/reproduce_quantum_accounting.py

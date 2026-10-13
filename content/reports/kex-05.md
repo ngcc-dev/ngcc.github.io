@@ -153,3 +153,27 @@ python3 security/reproduce_shifted_mlwr_toy.py
 ```
 
 The certificate enumerates the two exact distributions and their total-variation distances; it does not run a full-size attack.
+
+## kex-05-6: A corrupted peer can impersonate into a fresh no-match session
+
+Severity: Medium
+Status: Confirmed
+Layer: Design
+Affected: Loom-AKE-128, -256 and -512 security model and Theorem 4.13
+Discovery: Moderate
+Exploitation: A trivial distinguishing attack wins the literal Test game after corrupting the claimed peer; no attack on an uncorrupted-peer session is shown
+Credit: 923930258@qq.com (NGCC PKC Forum sender), with Xuanzhi Cryptography Large Model assistance; no-match reduction by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-13
+Original source: [PKC Forum Loom evaluation, PROOF-001](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/7GVGL2Z2NBJHFZNFP6MNHFWC35GPHMOP/attachment/14/Loom-Security-Evaluation-Report.md)
+
+Definition 4.12 (physical p. 32) excludes `Corrupt(Q)` only **if a matching session exists**. The attacker can instead corrupt Q, use Q's signing key to impersonate Q to honest P, and let P complete without any honest session at Q. No Reveal query is needed, so P's session remains fresh under the literal definition. The attacker knows the KEM secret it encapsulated and the public KDF inputs, computes P's key, and distinguishes the Test result from random. Theorem 4.13 claims SK-security for fresh sessions, while its proof treats peer corruption as excluded (physical pp. 38–39).
+
+The specification gives incompatible descriptions of what `Corrupt` returns (physical pp. 30, 31 and 36), but this counterexample needs only Q's long-term signing key, which all descriptions supply. It is a model-scope failure, not a break of the intended uncorrupted-peer exchange.
+
+### Reproducing
+
+```sh
+python3 kex-05/reproduce_freshness_corruption.py
+```
+
+The certificate checks the frozen freshness wording and the no-match case; the Test-game argument is analytic, not an executed protocol attack.

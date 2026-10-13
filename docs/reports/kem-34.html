@@ -24,21 +24,23 @@
 <tr><th>Performance</th><td><a href="../performance/x86_1/kem-34.html">x86_1</a> · <a href="../performance/arm_1/kem-34.html">arm_1</a></td></tr>
 </table></div>
 
-<h2 class="issue-heading issue-heading-first" id="kem-34-1-rudraksh2-128-leaves-only-a-264-query-grover-margin">kem-34-1: Rudraksh2-128 leaves only a 2^64-query Grover margin</h2>
+<h2 class="issue-heading issue-heading-first" id="kem-34-1-rudraksh2-128-has-a-264-iteration-generic-search-before-oracle-costs">kem-34-1: Rudraksh2-128 has a 2^64-iteration generic search before oracle costs</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-info">Info</span></td></tr>
 <tr><th>Scope</th><td>design</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr>
 <tr><th>Affected</th><td>Rudraksh2-128-I; the same 128-bit message dimension is specified for Rudraksh2-128-II</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
-<tr><th>Exploitation</th><td>About 2^64 Grover oracle iterations; total quantum circuit cost is not established below 2^80</td></tr>
+<tr><th>Exploitation</th><td>None demonstrated below the 80-bit target; oracle and other quantum costs are unbounded here</td></tr>
 <tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance</td></tr>
 <tr><th>Date</th><td>2026-09-30</td></tr>
 </table></div>
 <p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/3QHUJGWZDN7ZFSG7R46HHEWG67MKGYYB/">PKC Forum post and verification package</a></p>
-<p>Rudraksh2-128 samples a 16-byte encapsulation message <code>m</code>, then derives both the session key and the public encryption randomness as <code>G(m || H(pk))</code> (<code>params.h:41–50</code>, <code>KEM_lwekem128.c:73–97</code>). Given a ciphertext and public key, a candidate message is publicly testable by recomputing the encryption. Generic Grover search therefore needs about <code>2^64</code> such oracle iterations. This is below the set's nominal 80-bit quantum exponent if one counts oracle calls alone, but each oracle must implement and uncompute the full public encryption test. The NGCC call does not specify the quantum cost metric precisely, and no gate-level estimate establishes total work below <code>2^80</code>; this is therefore a parameter-analysis gap rather than a confirmed claim break. The observation remains after replacing the contest placeholder XOF with an ideal primitive of the same dimensions.</p>
+<p>Rudraksh2-128 samples a 16-byte encapsulation message <code>m</code>, then derives both the session key and the public encryption randomness as <code>G(m || H(pk))</code> (<code>params.h:41–50</code>, <code>KEM_lwekem128.c:73–97</code>). Given a ciphertext and public key, a candidate message is publicly testable by recomputing the encryption. Generic Grover search therefore needs about <code>2^64</code> such oracle iterations. This is below the set's nominal 80-bit quantum exponent if one counts oracle calls alone, but each oracle must implement and uncompute the full public encryption test. The NGCC call does not specify the quantum cost metric precisely, and no gate-level estimate establishes total work below <code>2^80</code>; this is an informational cost-model observation, not a vulnerability. The observation remains after replacing the contest placeholder XOF with an ideal primitive of the same dimensions.</p>
 <p>The witness resets the deterministic test generator to recover the encapsulator's <code>m</code>, then reconstructs all 32 session keys as <code>G(m || H(pk))</code> without using the secret key or ciphertext. It demonstrates the public reduction but does not run the generic <code>2^64</code> search.</p>
+<h3 id="reclassification">Reclassification</h3>
+<p>Reclassified from Medium to Info on 2026-10-13: the 2^64 iteration count is unchanged, but no complete below-target quantum attack cost is established.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">make -C kem-34 reproduce-message-space

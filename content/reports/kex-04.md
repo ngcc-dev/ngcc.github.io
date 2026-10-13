@@ -56,3 +56,27 @@ The team's [fix commit](https://github.com/dkemdkex/dkem-dkex/commit/c6c2faa) pr
 ```sh
 make -C kex-04 reproduce-truncated
 ```
+
+## kex-04-3: DKEX-512 authentication has only a 256-bit key-generation space
+
+Severity: Critical
+Status: Confirmed
+Layer: Design
+Affected: DKEX-512 authenticated key exchange, reference and optimized ML-DSA-87 instantiations
+Discovery: Moderate
+Exploitation: At most 2^256 signing-seed trials and polynomial work per trial permit responder impersonation; the full search was not run
+Credit: 923930258@qq.com (NGCC PKC Forum sender), with Xuanzhi Cryptography Large Model assistance; seed-space witness by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-13
+Original source: [PKC Forum evaluation attachment, PROOF-004](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/7GVGL2Z2NBJHFZNFP6MNHFWC35GPHMOP/attachment/12/DKEX-Security-Evaluation-Report.md)
+
+DKEX-512 claims a 512-bit classical level, but uses ML-DSA-87 for both parties' authentication (specification §2.1.3, physical p. 10; Table 1, p. 21). The submission itself says that this signature gives about 256 classical bits and that DKEX-512's authentication does not reach 512 bits (§3.2, p. 22; §6, p. 37). The submitted adapter takes exactly 32 bytes of signing-key-generation coins (`adkex_sig.h:53`, `adkex_sig_mldsa.c:58–65`); the vendored ML-DSA keygen reads precisely that seed and deterministically expands it (`dilithium/params.h:6`, `dilithium/sign.c:23–35`). Thus an attacker can enumerate at most `2^256` seeds, regenerate public keys until one equals the victim's, and sign a new transcript as that party. This is a concrete upper bound below the required 512-bit authenticated-KEX level, not an executed exhaustive search. It does not challenge the independent confidentiality of DKE-512.
+
+The local witness regenerates the same public key from the same 32-byte seed, obtains a different key from a changed-seed control, and signs a fresh transcript accepted by the unmodified verifier but rejected after a transcript change. The protocol verifies the responder signature before deriving the initiator's secret (`adkex_derand.c:108`); a forged responder signature lets an attacker choose the response and complete an impersonated exchange.
+
+### Reproducing
+
+```sh
+python3 kex-04/reproduce_signature_seed_cap.py
+```
+
+The script builds the submitted ML-DSA-87 implementation into a temporary directory and checks the seed-space and signature controls. It does not execute `2^256` trials.

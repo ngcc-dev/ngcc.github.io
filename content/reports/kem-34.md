@@ -3,21 +3,25 @@ Candidate: Rudraksh2
 Family: Lattice-based KEM
 Archive: [Rudraksh2.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/Rudraksh2.zip) (SHA-256: `569d526cf7abe38393f69a4513686fa86a0c3b3033cc225b84cc107b20b17b98`)
 
-## kem-34-1: Rudraksh2-128 leaves only a 2^64-query Grover margin
+## kem-34-1: Rudraksh2-128 has a 2^64-iteration generic search before oracle costs
 
-Severity: Medium
+Severity: Info
 Status: Proof gap
 Layer: Design
 Affected: Rudraksh2-128-I; the same 128-bit message dimension is specified for Rudraksh2-128-II
 Discovery: Trivial
-Exploitation: About 2^64 Grover oracle iterations; total quantum circuit cost is not established below 2^80
+Exploitation: None demonstrated below the 80-bit target; oracle and other quantum costs are unbounded here
 Credit: Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance
 Date: 2026-09-30
 Original source: [PKC Forum post and verification package](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/3QHUJGWZDN7ZFSG7R46HHEWG67MKGYYB/)
 
-Rudraksh2-128 samples a 16-byte encapsulation message `m`, then derives both the session key and the public encryption randomness as `G(m || H(pk))` (`params.h:41–50`, `KEM_lwekem128.c:73–97`). Given a ciphertext and public key, a candidate message is publicly testable by recomputing the encryption. Generic Grover search therefore needs about `2^64` such oracle iterations. This is below the set's nominal 80-bit quantum exponent if one counts oracle calls alone, but each oracle must implement and uncompute the full public encryption test. The NGCC call does not specify the quantum cost metric precisely, and no gate-level estimate establishes total work below `2^80`; this is therefore a parameter-analysis gap rather than a confirmed claim break. The observation remains after replacing the contest placeholder XOF with an ideal primitive of the same dimensions.
+Rudraksh2-128 samples a 16-byte encapsulation message `m`, then derives both the session key and the public encryption randomness as `G(m || H(pk))` (`params.h:41–50`, `KEM_lwekem128.c:73–97`). Given a ciphertext and public key, a candidate message is publicly testable by recomputing the encryption. Generic Grover search therefore needs about `2^64` such oracle iterations. This is below the set's nominal 80-bit quantum exponent if one counts oracle calls alone, but each oracle must implement and uncompute the full public encryption test. The NGCC call does not specify the quantum cost metric precisely, and no gate-level estimate establishes total work below `2^80`; this is an informational cost-model observation, not a vulnerability. The observation remains after replacing the contest placeholder XOF with an ideal primitive of the same dimensions.
 
 The witness resets the deterministic test generator to recover the encapsulator's `m`, then reconstructs all 32 session keys as `G(m || H(pk))` without using the secret key or ciphertext. It demonstrates the public reduction but does not run the generic `2^64` search.
+
+### Reclassification
+
+Reclassified from Medium to Info on 2026-10-13: the 2^64 iteration count is unchanged, but no complete below-target quantum attack cost is established.
 
 ### Reproducing
 

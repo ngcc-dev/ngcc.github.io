@@ -161,3 +161,27 @@ make -C kex-02 reproduce-protocol-findings
 ```
 
 The pinned wrapper checks the honest and injected-failure seed-recovery controls at C128, C256, and C512. It prints `ATTACK kex-02-5 ... CONFIRMED`.
+
+## kex-02-6: Failure terms make the stated QROM bounds non-tight
+
+Severity: Info
+Status: Proof gap
+Layer: Design
+Affected: pMAKE-BW and pUAKE-BW with C128, C256, C384, C512, C128-s, or C512-s; the failure term alone does not establish this result for C256-s or C384-s
+Discovery: Moderate
+Exploitation: None demonstrated; the submitted QROM bounds exceed target advantages at one session
+Credit: 923930258@qq.com (NGCC PKC Forum sender), with Xuanzhi Cryptography Large Model assistance; minimal-budget calculation by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-13
+Original source: [PKC Forum AFS-KEX evaluation, PROOF-002](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/7GVGL2Z2NBJHFZNFP6MNHFWC35GPHMOP/attachment/6/AFS-KEX-Security-Evaluation-Report.md)
+
+Theorem 9.3 (physical p. 61) includes `16 N S² δ` in the pMAKE key-secrecy bound. Theorem 10.6 (physical p. 65) includes `5 N S² δ` for pUAKE in the QROM. Both require the underlying AFS-KEM to be `δ`-correct; Table 1 (physical p. 17) supplies its `δ_AFS` estimates. Even with `N=S=1`, C128's stated `δ_AFS=2^-67.98` leaves at most 63.98 and 65.66 bits of proof-bound margin against the 80-bit quantum target. The corresponding pMAKE/pUAKE margins are 118.24/119.92 at C256, 162.17/163.85 at C384, and 120.13/121.81 at C512, below their 128-, 192-, and 256-bit quantum targets. C128-s and C512-s also miss; C256-s and C384-s do not miss through this term alone. More parties or sessions enlarge the stated terms.
+
+This is an insufficient reduction, not evidence of an efficient attack or a measurement of the true failure rate. The failure-term loss is a generic property of this proof form; no candidate-specific recovery route follows. It is recorded as Info, separately from any observed per-ciphertext failure reaction. The candidate's deliberately high stated DFR merits further analysis, but the bound alone does not establish a vulnerability.
+
+### Reproducing
+
+```sh
+python3 kex-02/reproduce_failure_bound.py
+```
+
+The arithmetic certificate recomputes all eight BW-set bounds from transcribed Table 1 values at `N=S=1`; check the theorem text and values in the frozen PDF separately. It does not measure failures or execute a protocol attack.

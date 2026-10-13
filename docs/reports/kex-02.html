@@ -149,6 +149,26 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <pre><code class="language-sh">make -C kex-02 reproduce-protocol-findings
 </code></pre>
 <p>The pinned wrapper checks the honest and injected-failure seed-recovery controls at C128, C256, and C512. It prints <code>ATTACK kex-02-5 ... CONFIRMED</code>.</p>
+<h2 class="issue-heading" id="kex-02-6-failure-terms-make-the-stated-qrom-bounds-non-tight">kex-02-6: Failure terms make the stated QROM bounds non-tight</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-info">Info</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr>
+<tr><th>Affected</th><td>pMAKE-BW and pUAKE-BW with C128, C256, C384, C512, C128-s, or C512-s; the failure term alone does not establish this result for C256-s or C384-s</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>None demonstrated; the submitted QROM bounds exceed target advantages at one session</td></tr>
+<tr><th>Credit</th><td>923930258@qq.com (NGCC PKC Forum sender), with Xuanzhi Cryptography Large Model assistance; minimal-budget calculation by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-13</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/7GVGL2Z2NBJHFZNFP6MNHFWC35GPHMOP/attachment/6/AFS-KEX-Security-Evaluation-Report.md">PKC Forum AFS-KEX evaluation, PROOF-002</a></p>
+<p>Theorem 9.3 (physical p. 61) includes <code>16 N S² δ</code> in the pMAKE key-secrecy bound. Theorem 10.6 (physical p. 65) includes <code>5 N S² δ</code> for pUAKE in the QROM. Both require the underlying AFS-KEM to be <code>δ</code>-correct; Table 1 (physical p. 17) supplies its <code>δ_AFS</code> estimates. Even with <code>N=S=1</code>, C128's stated <code>δ_AFS=2^-67.98</code> leaves at most 63.98 and 65.66 bits of proof-bound margin against the 80-bit quantum target. The corresponding pMAKE/pUAKE margins are 118.24/119.92 at C256, 162.17/163.85 at C384, and 120.13/121.81 at C512, below their 128-, 192-, and 256-bit quantum targets. C128-s and C512-s also miss; C256-s and C384-s do not miss through this term alone. More parties or sessions enlarge the stated terms.</p>
+<p>This is an insufficient reduction, not evidence of an efficient attack or a measurement of the true failure rate. The failure-term loss is a generic property of this proof form; no candidate-specific recovery route follows. It is recorded as Info, separately from any observed per-ciphertext failure reaction. The candidate's deliberately high stated DFR merits further analysis, but the bound alone does not establish a vulnerability.</p>
+<h3 id="reproducing_5">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kex-02/reproduce_failure_bound.py
+</code></pre>
+<p>The arithmetic certificate recomputes all eight BW-set bounds from transcribed Table 1 values at <code>N=S=1</code>; check the theorem text and values in the frozen PDF separately. It does not measure failures or execute a protocol attack.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

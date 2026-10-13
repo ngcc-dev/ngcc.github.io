@@ -221,3 +221,27 @@ python3 kex-03/reproduce_k2k_prefix.py
 ```
 
 The certificate checks both 512-bit PLAC source variants, the bit-length conversion, and the session-state layout. It also tests that changing bytes after the first 16 does not alter the submitted XOF's effective input. It does not perform the 2^128 search.
+
+## kex-03-8: Generic QROM reduction terms give loose one-query bounds
+
+Severity: Info
+Status: Proof gap
+Layer: Design
+Affected: CreTAKE-K2S, -S2K and -S2S at the 128-, 256-, and 512-bit levels
+Discovery: Moderate
+Exploitation: None demonstrated; generic QROM proof-error terms exceed the target advantages at one query
+Credit: 923930258@qq.com (NGCC PKC Forum sender), with Xuanzhi Cryptography Large Model assistance; one-session and S2S extension by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-13
+Original source: [PKC Forum evaluation attachment, PROOF-001/002](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/7GVGL2Z2NBJHFZNFP6MNHFWC35GPHMOP/attachment/11/CreTAKE-Security-Evaluation-Report.md)
+
+Theorems 1, 2 and 4 of the submitted specification (physical pp. 21, 23 and 25) contain additive QROM terms proportional to `1/sqrt(|K|)`. With `S=N=q=1` (one session, two parties and one oracle query), and setting component advantages and collision terms to zero, their coefficients are respectively 6, 10 and 8. The submitted key widths are 128, 256 and 512 bits. The resulting proof-error exponents are about 61/125/253 bits for K2S and S2S and 60/124/252 bits for S2K, all below the corresponding 80-, 128-, and 256-bit quantum targets even at this minimal positive-query budget. Larger session or query budgets only weaken these stated bounds.
+
+This is a generic reduction loss, not a demonstrated attack or evidence that the underlying KEM and signature components are weak. It gives no candidate-specific recovery route and is recorded as Info rather than a vulnerability. A tighter reduction would be needed to certify the targets from these particular theorems.
+
+### Reproducing
+
+```sh
+python3 kex-03/reproduce_proof_bound.py
+```
+
+The arithmetic certificate checks the minimal positive-query terms; the theorem text and key-width instantiations must be checked in the frozen specification and implementation.

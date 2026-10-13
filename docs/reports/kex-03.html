@@ -194,6 +194,26 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <pre><code class="language-sh">python3 kex-03/reproduce_k2k_prefix.py
 </code></pre>
 <p>The certificate checks both 512-bit PLAC source variants, the bit-length conversion, and the session-state layout. It also tests that changing bytes after the first 16 does not alter the submitted XOF's effective input. It does not perform the 2^128 search.</p>
+<h2 class="issue-heading" id="kex-03-8-generic-qrom-reduction-terms-give-loose-one-query-bounds">kex-03-8: Generic QROM reduction terms give loose one-query bounds</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-info">Info</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr>
+<tr><th>Affected</th><td>CreTAKE-K2S, -S2K and -S2S at the 128-, 256-, and 512-bit levels</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>None demonstrated; generic QROM proof-error terms exceed the target advantages at one query</td></tr>
+<tr><th>Credit</th><td>923930258@qq.com (NGCC PKC Forum sender), with Xuanzhi Cryptography Large Model assistance; one-session and S2S extension by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-13</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/7GVGL2Z2NBJHFZNFP6MNHFWC35GPHMOP/attachment/11/CreTAKE-Security-Evaluation-Report.md">PKC Forum evaluation attachment, PROOF-001/002</a></p>
+<p>Theorems 1, 2 and 4 of the submitted specification (physical pp. 21, 23 and 25) contain additive QROM terms proportional to <code>1/sqrt(|K|)</code>. With <code>S=N=q=1</code> (one session, two parties and one oracle query), and setting component advantages and collision terms to zero, their coefficients are respectively 6, 10 and 8. The submitted key widths are 128, 256 and 512 bits. The resulting proof-error exponents are about 61/125/253 bits for K2S and S2S and 60/124/252 bits for S2K, all below the corresponding 80-, 128-, and 256-bit quantum targets even at this minimal positive-query budget. Larger session or query budgets only weaken these stated bounds.</p>
+<p>This is a generic reduction loss, not a demonstrated attack or evidence that the underlying KEM and signature components are weak. It gives no candidate-specific recovery route and is recorded as Info rather than a vulnerability. A tighter reduction would be needed to certify the targets from these particular theorems.</p>
+<h3 id="reproducing_7">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kex-03/reproduce_proof_bound.py
+</code></pre>
+<p>The arithmetic certificate checks the minimal positive-query terms; the theorem text and key-width instantiations must be checked in the frozen specification and implementation.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

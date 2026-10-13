@@ -24,7 +24,7 @@
 <tr><th>Performance</th><td><a href="../performance/x86_1/kex-01.html">x86_1</a> · <a href="../performance/arm_1/kex-01.html">arm_1</a></td></tr>
 </table></div>
 
-<h2 class="issue-heading issue-heading-first" id="kex-01-1-the-stated-no-matching-session-theorem-is-false-for-responder-sessions">kex-01-1: The stated no-matching-session theorem is false for responder sessions</h2>
+<h2 class="issue-heading issue-heading-first" id="kex-01-1-the-stated-no-matching-session-theorem-admits-trivial-distinguishers">kex-01-1: The stated no-matching-session theorem admits trivial distinguishers</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
 <tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
@@ -33,13 +33,14 @@
 <tr><th>Affected</th><td>ADKEX security definition and Theorem 5.1</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
 <tr><th>Exploitation</th><td>One ordinary adversarially initiated responder session</td></tr>
-<tr><th>Credit</th><td>Sun Shuzhou, with GLM-5.3 assistance</td></tr>
+<tr><th>Credit</th><td>Sun Shuzhou, with GLM-5.3 assistance; additional corruption counterexample by 923930258@qq.com (NGCC PKC Forum sender), with Xuanzhi Cryptography Large Model assistance</td></tr>
 <tr><th>Date</th><td>2026-09-29</td></tr>
 </table></div>
 <p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/AGQTR6256YQJPU76ZTC3RSLY44J7Y6T7/">Sun's PKC Forum post</a>
-Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/USUZ2CPOFPWB3JST6BFM4XLGDHGY7URA/">DKEM / DKEX / ADKEX team's confirmation</a></p>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/USUZ2CPOFPWB3JST6BFM4XLGDHGY7URA/">DKEM / DKEX / ADKEX team's confirmation</a>; <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/7GVGL2Z2NBJHFZNFP6MNHFWC35GPHMOP/attachment/5/ADKEX-Security-Evaluation-Report.md">Xuanzhi-assisted ADKEX evaluation</a></p>
 <p>The specification defines a fresh session with no matching session and claims key indistinguishability for every such session (pages 31–32). The proof following Theorem 5.1 says that this case "can be proven similarly" to its matching-session wPFS case. This is false for the responder role. An active initiator claims an honest initiator's identity, satisfying the stated freshness condition, then chooses its ephemeral key and encapsulation, decapsulates the responder's reply, and knows the public transcript. It therefore computes the responder's real session key and distinguishes it from random with advantage <code>1/2</code> without a Reveal, StateReveal, or Corrupt query.</p>
 <p>This does not attack an honestly matched exchange. It shows that the claimed no-matching-session case fails to account for the deliberately unauthenticated initiator: the theorem needs a role-scoped authentication goal rather than the stated all-session claim.</p>
+<p>A later forum evaluation gives another counterexample under the literal freshness predicate: <code>Corrupt(B)</code> is an allowed query but is never listed among the exclusions on physical p. 31. With B's static key, an attacker can impersonate B to an honest initiator A and compute both KEM contributions to A's no-matching-session key. This reading depends on the undefined phrase “honest peer”: if it means an uncorrupted peer, the corruption would instead make the session ineligible. The ambiguity concerns the same overly broad no-matching-session claim, not a separate break of an honestly matched exchange.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>Apply the experiment on physical PDF pages 31–32 to a completed responder session created by an active initiator. The session has no matching honest initiator session and remains fresh under the listed exclusions, while the initiator possesses all three inputs to the responder's KDF.</p>
@@ -91,6 +92,26 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 make -C kex-01 clean-reproducers
 </code></pre>
 <p>The first command builds the submitted ADKEX-128 source with AddressSanitizer, supplies a one-byte message with length one, checks for the heap-buffer-overflow trace, and prints <code>CONFIRMED kex-01-3</code>.</p>
+<h2 class="issue-heading" id="kex-01-4-a-copied-certified-responder-key-permits-identity-misbinding">kex-01-4: A copied certified responder key permits identity misbinding</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>ADKEX-128, ADKEX-256 and ADKEX-512 when certification permits duplicate public keys</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>One duplicate responder-key registration and one relayed exchange; no break of the distinct-key formal model</td></tr>
+<tr><th>Credit</th><td>923930258@qq.com (NGCC PKC Forum sender), with Xuanzhi Cryptography Large Model assistance; native witness by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-13</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/7GVGL2Z2NBJHFZNFP6MNHFWC35GPHMOP/attachment/5/ADKEX-Security-Evaluation-Report.md">Xuanzhi-assisted ADKEX evaluation</a></p>
+<p>ADKEX says its transcript hash binds identities and prevents unknown-key shares (specification physical pp. 5, 7). But its specified <code>T = H(LABEL || pk_B || m1 || m2)</code> (Algorithm 20, physical p. 23) and all three byte-identical reference binders (<code>adkex_derand.c:10–25</code>) contain no identity. If Eve registers Bob's certified public key under Eve's name, an initiator accepting that registration can complete an exchange with Bob while naming Eve as the peer; both derive the same key. This requires duplicate-key certification, outside the specification's distinct-key formal setup, so it is an identity-binding gap rather than an in-model key-recovery attack.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C kex-01
+python3 kex-01/reproduce_identity_alias.py
+</code></pre>
+<p>The native witness checks all three levels: a duplicated-key alias agrees with the real responder, while an independently generated responder key used as a control does not produce an equal key.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

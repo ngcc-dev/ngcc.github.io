@@ -98,11 +98,12 @@ Public-key algorithms ([call](https://www.niccs.org.cn/niccs/Notice/pc/content/c
     the candidate claims or supports. A collision probability or loose proof
     term alone is insufficient: the report must connect it to a primary break,
     such as forgery, key recovery, or distinguishing.
-  - **High:** despite a broader security claim, the specification's argument or
-    proof bound covers fewer queries (typically 2^64), or becomes too loose at
-    2^80, but no concrete attack below the required level within 2^80 queries
-    has been shown. Use `Status: Proof gap` unless a specific attack path is
-    identified. Missing or insufficient analysis alone is never Critical.
+  - **High:** despite a broader security claim, a candidate-specific parameter
+    or proof bound covers fewer queries (typically 2^64), or becomes too loose
+    at 2^80, but no concrete below-target attack has been shown. Use `Status:
+    Proof gap` unless a specific attack path is identified. A generic loss
+    shared by the underlying proof technique is not, by itself, this finding.
+    Missing or insufficient analysis alone is never Critical.
   - No finding solely from the query limit: the argument covers 2^80 queries;
     the query-dependent terms remain negligible at 2^80; or the candidate
     explicitly limits each key to at least the required 2^64 uses, makes no
@@ -177,9 +178,9 @@ primary-claim break. Typical cases are:
   the claim, but without a complete end-to-end witness;
 - attacker-controlled memory corruption with credible impact beyond process
   termination;
-- a security argument that covers fewer signing or decapsulation queries than
-  the call's 2^80 evaluation budget, without a concrete shortfall (see
-  Security targets);
+- a candidate-specific security argument that covers fewer signing or
+  decapsulation queries than the call's 2^80 evaluation budget, without a
+  concrete shortfall (see Security targets);
 - a measured, repeatable secret-dependent oracle together with a
   candidate-specific recovery method, where only the observation channel or
   full-scale run remains open.
@@ -244,6 +245,16 @@ designs, such as the multi-ciphertext loss of every unsalted deterministic FO
 KEM, when the submission makes no stronger claim and the property has no
 candidate-specific consequence. Keep the cross-candidate discussion in an
 analysis note rather than singling out one submission with a higher severity.
+
+A generic loss of a proof technique, shared across multiple schemes, does
+not by itself identify a candidate vulnerability. Examples are generic QROM/FO
+reduction terms and a Grover-iteration count without the oracle's full cost.
+Record these in a class analysis note, or retain a reported candidate ID as
+`Info` for traceability. The numerical calculation may be correct without
+being an attack. This exception does **not** turn a candidate-specific proof
+shortfall, parameter choice, false premise, or unvalidated claimed safety
+bound into Info. Apply the ordinary Medium/High proof-gap rules to those cases
+while stating clearly that no attack is demonstrated.
 
 Info may record an attack requiring state-control capabilities outside the
 evaluated security model, such as seeding, cloning, resetting or rewinding the

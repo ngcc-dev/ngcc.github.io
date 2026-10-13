@@ -3,7 +3,7 @@ Candidate: ADKEX (Authenticated Ding Key Exchange)
 Family: Lattice (unilaterally authenticated KEM-based key exchange)
 Archive: [ADKEX.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryptographic%20Algorithms/Round%201%20candidates/ADKEX.zip) (SHA-256: `bbadecca0ce9d3f3131129b17c91e0ab89a81e077710e53f7a569a30475a23f2`)
 
-## kex-01-1: The stated no-matching-session theorem is false for responder sessions
+## kex-01-1: The stated no-matching-session theorem admits trivial distinguishers
 
 Severity: Medium
 Status: Confirmed
@@ -11,14 +11,16 @@ Layer: Design
 Affected: ADKEX security definition and Theorem 5.1
 Discovery: Trivial
 Exploitation: One ordinary adversarially initiated responder session
-Credit: Sun Shuzhou, with GLM-5.3 assistance
+Credit: Sun Shuzhou, with GLM-5.3 assistance; additional corruption counterexample by 923930258@qq.com (NGCC PKC Forum sender), with Xuanzhi Cryptography Large Model assistance
 Date: 2026-09-29
 Original source: [Sun's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/AGQTR6256YQJPU76ZTC3RSLY44J7Y6T7/)
-Follow-up source: [DKEM / DKEX / ADKEX team's confirmation](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/USUZ2CPOFPWB3JST6BFM4XLGDHGY7URA/)
+Follow-up source: [DKEM / DKEX / ADKEX team's confirmation](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/USUZ2CPOFPWB3JST6BFM4XLGDHGY7URA/); [Xuanzhi-assisted ADKEX evaluation](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/7GVGL2Z2NBJHFZNFP6MNHFWC35GPHMOP/attachment/5/ADKEX-Security-Evaluation-Report.md)
 
 The specification defines a fresh session with no matching session and claims key indistinguishability for every such session (pages 31–32). The proof following Theorem 5.1 says that this case "can be proven similarly" to its matching-session wPFS case. This is false for the responder role. An active initiator claims an honest initiator's identity, satisfying the stated freshness condition, then chooses its ephemeral key and encapsulation, decapsulates the responder's reply, and knows the public transcript. It therefore computes the responder's real session key and distinguishes it from random with advantage `1/2` without a Reveal, StateReveal, or Corrupt query.
 
 This does not attack an honestly matched exchange. It shows that the claimed no-matching-session case fails to account for the deliberately unauthenticated initiator: the theorem needs a role-scoped authentication goal rather than the stated all-session claim.
+
+A later forum evaluation gives another counterexample under the literal freshness predicate: `Corrupt(B)` is an allowed query but is never listed among the exclusions on physical p. 31. With B's static key, an attacker can impersonate B to an honest initiator A and compute both KEM contributions to A's no-matching-session key. This reading depends on the undefined phrase “honest peer”: if it means an uncorrupted peer, the corruption would instead make the session ineligible. The ambiguity concerns the same overly broad no-matching-session claim, not a separate break of an honestly matched exchange.
 
 ### Reproducing
 
@@ -84,3 +86,26 @@ make -C kex-01 clean-reproducers
 ```
 
 The first command builds the submitted ADKEX-128 source with AddressSanitizer, supplies a one-byte message with length one, checks for the heap-buffer-overflow trace, and prints `CONFIRMED kex-01-3`.
+
+## kex-01-4: A copied certified responder key permits identity misbinding
+
+Severity: Medium
+Status: Confirmed
+Layer: Design
+Affected: ADKEX-128, ADKEX-256 and ADKEX-512 when certification permits duplicate public keys
+Discovery: Trivial
+Exploitation: One duplicate responder-key registration and one relayed exchange; no break of the distinct-key formal model
+Credit: 923930258@qq.com (NGCC PKC Forum sender), with Xuanzhi Cryptography Large Model assistance; native witness by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-13
+Original source: [Xuanzhi-assisted ADKEX evaluation](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/7GVGL2Z2NBJHFZNFP6MNHFWC35GPHMOP/attachment/5/ADKEX-Security-Evaluation-Report.md)
+
+ADKEX says its transcript hash binds identities and prevents unknown-key shares (specification physical pp. 5, 7). But its specified `T = H(LABEL || pk_B || m1 || m2)` (Algorithm 20, physical p. 23) and all three byte-identical reference binders (`adkex_derand.c:10–25`) contain no identity. If Eve registers Bob's certified public key under Eve's name, an initiator accepting that registration can complete an exchange with Bob while naming Eve as the peer; both derive the same key. This requires duplicate-key certification, outside the specification's distinct-key formal setup, so it is an identity-binding gap rather than an in-model key-recovery attack.
+
+### Reproducing
+
+```sh
+make -C kex-01
+python3 kex-01/reproduce_identity_alias.py
+```
+
+The native witness checks all three levels: a duplicated-key alias agrees with the real responder, while an independently generated responder key used as a control does not produce an equal key.

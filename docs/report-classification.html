@@ -103,11 +103,12 @@ candidate finding or a submitter-proposed fix.</p>
     the candidate claims or supports. A collision probability or loose proof
     term alone is insufficient: the report must connect it to a primary break,
     such as forgery, key recovery, or distinguishing.</li>
-<li><strong>High:</strong> despite a broader security claim, the specification's argument or
-    proof bound covers fewer queries (typically 2^64), or becomes too loose at
-    2^80, but no concrete attack below the required level within 2^80 queries
-    has been shown. Use <code>Status: Proof gap</code> unless a specific attack path is
-    identified. Missing or insufficient analysis alone is never Critical.</li>
+<li><strong>High:</strong> despite a broader security claim, a candidate-specific parameter
+    or proof bound covers fewer queries (typically 2^64), or becomes too loose
+    at 2^80, but no concrete below-target attack has been shown. Use <code>Status:
+    Proof gap</code> unless a specific attack path is identified. A generic loss
+    shared by the underlying proof technique is not, by itself, this finding.
+    Missing or insufficient analysis alone is never Critical.</li>
 <li>No finding solely from the query limit: the argument covers 2^80 queries;
     the query-dependent terms remain negligible at 2^80; or the candidate
     explicitly limits each key to at least the required 2^64 uses, makes no
@@ -174,9 +175,9 @@ primary-claim break. Typical cases are:</p>
   the claim, but without a complete end-to-end witness;</li>
 <li>attacker-controlled memory corruption with credible impact beyond process
   termination;</li>
-<li>a security argument that covers fewer signing or decapsulation queries than
-  the call's 2^80 evaluation budget, without a concrete shortfall (see
-  Security targets);</li>
+<li>a candidate-specific security argument that covers fewer signing or
+  decapsulation queries than the call's 2^80 evaluation budget, without a
+  concrete shortfall (see Security targets);</li>
 <li>a measured, repeatable secret-dependent oracle together with a
   candidate-specific recovery method, where only the observation channel or
   full-scale run remains open.</li>
@@ -234,6 +235,15 @@ designs, such as the multi-ciphertext loss of every unsalted deterministic FO
 KEM, when the submission makes no stronger claim and the property has no
 candidate-specific consequence. Keep the cross-candidate discussion in an
 analysis note rather than singling out one submission with a higher severity.</p>
+<p>A generic loss of a proof technique, shared across multiple schemes, does
+not by itself identify a candidate vulnerability. Examples are generic QROM/FO
+reduction terms and a Grover-iteration count without the oracle's full cost.
+Record these in a class analysis note, or retain a reported candidate ID as
+<code>Info</code> for traceability. The numerical calculation may be correct without
+being an attack. This exception does <strong>not</strong> turn a candidate-specific proof
+shortfall, parameter choice, false premise, or unvalidated claimed safety
+bound into Info. Apply the ordinary Medium/High proof-gap rules to those cases
+while stating clearly that no attack is demonstrated.</p>
 <p>Info may record an attack requiring state-control capabilities outside the
 evaluated security model, such as seeding, cloning, resetting or rewinding the
 signer's DRBG, unless the submitted public interface or a formal security
@@ -452,7 +462,7 @@ with the same external dimensions and parameters. A finding that disappears
 solely on that replacement is not publishable.</p>
 </main>
 <footer class="site-footer">
-<p>Updated 2026-10-12 18:42:46 UTC · Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Updated 2026-10-13 12:03:49 UTC · Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
 <p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
 </footer>
 </body>
