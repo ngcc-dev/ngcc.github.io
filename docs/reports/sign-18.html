@@ -58,9 +58,11 @@
 <tr><th>Date</th><td>2026-09-22</td></tr>
 </table></div>
 <p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/7LD2222NOYVSL3KXW4UQCLPHMU7JFKQW/">NGCC PKC Forum report</a></p>
+<p>Additional reference: <a href="https://eprint.iacr.org/2026/2390">Louiso, Guo, Li, Pébereau, Tao, and Ding, ePrint 2026/2390</a></p>
 <p>The specification places every vinegar and oil element in a degree-<code>l_j</code> subalgebra of <code>l_j</code>-by-<code>l_j</code> matrices, but counts and solves all <code>l_j^2</code> matrix coordinates independently. These requirements are incompatible: a subalgebra element has only <code>l_j</code> degrees of freedom. The implementation makes the signer work by sampling only vinegar elements in the hidden subalgebra while treating oil coordinates as unrestricted field elements, contradicting the specified variable space.</p>
 <p>Peigen Li's <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/7LD2222NOYVSL3KXW4UQCLPHMU7JFKQW/">mailing-list analysis</a> identifies this mismatch and observes that repeated signatures reveal the small hidden subalgebras. Further extension to Peigen Li's analysis: the source gives Origami-128 exactly 18 sampled degree-2 vinegar elements; each occupies four matrix coordinates but has dimension two. Every signature therefore lies in a subspace of dimension at most <code>200 - 18*(4-2) = 164</code>. A run of 180 accepted signatures reaches rank 164, saturating that bound, while 180 uniform 200-coordinate vectors reach the sample-count maximum rank 180. The analogous source count predicts 180, 336, and 432 exposed constraints for Origami-256, -384, and -512.</p>
 <p>This is direct, reproducible leakage of the purportedly hidden structure, but no end-to-end key recovery or forgery is yet established. The post's separate estimate of at most 93 bits for Origami-128 has no published derivation and is therefore not adopted here.</p>
+<p>The follow-up paper formalizes the dimensional mismatch and records the same 164-dimensional Origami-128 bound. It distinguishes this signature-derived leakage from its public-key-only forgery: the forgery does not require signatures or recovery of the hidden subalgebras, so it does not strengthen this finding's exploitation claim.</p>
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">make -C sign-18 lib/libOrigami-128.so
@@ -112,15 +114,17 @@ python3 sign-18/reproduce_signature_subspace.py
 <tr><th>Affected</th><td>Origami-128, Origami-256, Origami-384, and Origami-512; independently reproduced here on Origami-128</td></tr>
 <tr><th>Discovery</th><td>Moderate</td></tr>
 <tr><th>Exploitation</th><td>Public-key-only forgery for a chosen message, with no signing queries</td></tr>
-<tr><th>Credit</th><td>Hugo Louiso and Jintai Ding; independently, Pierre Pébereau</td></tr>
+<tr><th>Credit</th><td>Hugo Louiso, Hao Guo, Peigen Li, Pierre Pébereau, Siyong Tao, and Jintai Ding</td></tr>
 <tr><th>Date</th><td>2026-09-24</td></tr>
 </table></div>
 <p>Original source: <a href="https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/N1WfpgvlI2s/m/lym34vPOAwAJ">Ding and Louiso's NIST PQC Forum post</a>, <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/HTZTMJ42AUXCWEDA3AURP4ZOEGSGSV4Z/">Pébereau's NGCC PKC Forum post</a>, and <a href="https://github.com/pi-r2/UnfoldOrigami/tree/defa3405d66e763580729b14d6f81c1300fbb219">UnfoldOrigami code</a></p>
-<p>Additional reference: <a href="https://eprint.iacr.org/archive/2026/2232/1790653241.pdf">Xiong and Wang, ePrint 2026/2232, 2026-09-29 revision, §4</a></p>
+<p>Additional reference: <a href="https://eprint.iacr.org/2026/2390">Louiso, Guo, Li, Pébereau, Tao, and Ding, ePrint 2026/2390</a>, with <a href="https://github.com/hlouiso/origami-forgery">all-level C reproduction code</a>; <a href="https://eprint.iacr.org/archive/2026/2232/1790653241.pdf">Xiong and Wang, ePrint 2026/2232, 2026-09-29 revision, §4</a></p>
 <p>Origami §2.5.6 explicitly derives the change of variables <code>Π_pub</code> from the <em>public</em> expansion seed and defines <code>P_pub = G ∘ Π_pub^-1</code>. Undoing that permutation exposes the zone order. The public-key expansion supplies each zone's affine coefficients, so an attacker can choose its vinegar coordinates and solve the resulting linear system for oil coordinates, proceeding zone by zone. This reproduces the signer's easy inversion without its secret seed or a signing oracle. It is distinct from <code>sign-18-2</code>'s signature-derived subspace observation.</p>
-<p>Louiso and Ding publicly reported public-key-only forgeries on 2026-09-24 and report acceptance by the unmodified reference verifier on the official KATs for all four parameter sets, with runtimes from about 0.01 seconds for Origami-128 to 15 seconds for Origami-512. Their post gives no method, so we cannot establish that it is the same construction as Pébereau's. Pébereau disclosed his analysis privately to the submitters on 2026-09-22 and independently published the public-permutation construction and code on 2026-09-24; this report makes no priority claim between the disclosures.</p>
-<p>Our pinned replay of Pébereau's code forges on Origami-128 against the archived <code>sig_verify</code>, and a changed-message control rejects. We have not executed a forgery on Origami-256, -384, or -512 ourselves. Their inclusion in <code>Affected</code> rests on Louiso and Ding's reported all-level runs and on the identical public-permutation construction in the four submitted sources, not on a local all-level replay.</p>
+<p>The consolidated paper records that the authors disclosed the attack to the Origami designers on 2026-09-22 and announced it publicly on both the NIST PQC Forum and the NGCC PKC Forum on 2026-09-24, together with the Origami-128 SageMath implementation. It identifies the attack in both announcements as the exposed-layer construction analyzed in the paper. We accept that documented timeline and joint attribution.</p>
+<p>The paper also supplies an independent C implementation covering all four sets. Across 384 random-key/message trials, all 384 public-key-only forgeries were accepted by the unmodified reference verifier, while signature, salt, and message mutations all rejected. Fresh builds reproduced the official KATs, and a distinct forgery was accepted for every KAT key and message. Mean forgery times were 0.0107, 0.577, 2.73, and 5.16 seconds from Origami-128 through Origami-512. These are the authors' experiments; our pinned local replay remains the Origami-128 SageMath implementation described below.</p>
+<p>Our pinned replay of Pébereau's code forges on Origami-128 against the archived <code>sig_verify</code>, and a changed-message control rejects. We have not executed a forgery on Origami-256, -384, or -512 ourselves. Their inclusion in <code>Affected</code> rests on the paper's all-level C runs and on the identical public-permutation construction in the four submitted sources, not on a local all-level replay.</p>
 <p>The four submitted sets have byte-identical <code>origami_ref.c</code> evaluators and the same public-permutation construction. The flaw survives ideal replacement of the contest hash/XOF placeholders: whatever public expansion is used, the public <code>seed_pk</code> still determines <code>Π_pub</code>, so anyone can undo it and expose the triangular zone system.</p>
+<p>The paper further shows that the submission's MT-MQ Assumption 7 fails in its independent-coefficient model: a sequential public inversion pass succeeds with probability above 0.93 for every submitted set. This proof analysis supports the same public-map forgery and does not require a separate finding ID.</p>
 <h3 id="reproducing_4">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">make -C sign-18 lib/libOrigami-128.so
@@ -130,6 +134,29 @@ git -C &quot;$T/UnfoldOrigami&quot; checkout defa3405d66e763580729b14d6f81c1300f
 python3 sign-18/reproduce_public_forgery.py &quot;$T/UnfoldOrigami&quot;
 </code></pre>
 <p>The local checker verifies SHA-256 <code>1fe0c4ca114efd217a1e42291f60450dd3a4edd2606b8ef56e411ebc46594917</code> for <code>forge.sage</code> and <code>b287be01bf244ca7cdc749b2bb7c9ca00d756e0eee895bb117d5f722352e9cb2</code> for <code>technical.py</code> before importing the pinned attack code. It loads only the library built from the archived Origami source, not the repository's bundled binary. It seeds key generation afresh, erases the resulting secret before calling <code>forge</code>, verifies the new signature, and rejects the same signature on a changed message. Three local runs passed with roughly 0.6-second inversion each; this is not an all-level benchmark. Python must provide <code>hashlib</code> SM3 support for this submitted evaluation variant.</p>
+<h2 class="issue-heading" id="sign-18-6-the-tail-zone-retry-loop-repeats-an-unchanged-singular-system">sign-18-6: The tail-zone retry loop repeats an unchanged singular system</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All four parameter sets in the specification and both implementation families</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Honest signing aborts measured at 6.45–6.67% for Origami-128; the same mechanism affects all sets; no forgery or key recovery</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool; mechanism and independent measurements by Hugo Louiso, Hao Guo, Peigen Li, Pierre Pébereau, Siyong Tao, and Jintai Ding</td></tr>
+<tr><th>Date</th><td>2026-10-06</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/MP3WUOWQBA4SJ6TFEZYS62D6OE56K3L7/">NGCC PKC Forum report</a></p>
+<p>Additional reference: <a href="https://eprint.iacr.org/2026/2390">Louiso, Guo, Li, Pébereau, Tao, and Ding, ePrint 2026/2390, §7</a></p>
+<p>The final tail zone has eight equations and eight solved coordinates, but no vinegar or sampled coordinates. If its <code>8 × 8</code> matrix over <code>GF(16)</code> is singular, the specification's repeat loop cannot change that matrix. Algorithm 4 nevertheless repeats until the local solve succeeds (physical p. 26), while §4.5 and Table 13 incorrectly treat the 8192 attempts as independent and claim final abort probabilities below <code>2^-33482</code> through <code>2^-45245</code> (physical pp. 54–55).</p>
+<p>The submitted signer resamples nothing in the tail and runs the same solve 8192 times before returning an error (<code>origami_ref.c:769–818</code>). The reference and optimized core files are byte-identical across all four sets. Under the paper's uniform-tail-matrix heuristic, a random <code>8 × 8</code> matrix over <code>GF(16)</code> is singular with probability about 6.6%; uniformity of the generated matrices is not proved. The original post observed 213 aborts in 3300 Origami-128 calls and aborts at all four optimized levels. The follow-up paper observed 20/300 and 9/80 aborts at Origami-128 and -256 and traced every one to the tail.</p>
+<p>Our broader unmodified Origami-128 replay obtained 19 natural aborts in 199 calls, with the other 180 signatures accepted by the submitted verifier. This confirms an honest-signing correctness and availability defect, not a cryptographic attack.</p>
+<h3 id="reproducing_5">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C sign-18 lib/libOrigami-128.so
+python3 sign-18/reproduce_tail_abort.py
+</code></pre>
+<p>The deterministic witness pins one naturally aborting call and one successful verified control, using ordinary messages and fresh per-call salts. It does not force a singular system or patch the signer.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
