@@ -44,6 +44,46 @@
 <pre><code class="language-sh">make -C sign-09 exploit
 </code></pre>
 <p>The static validator checks all four submitted classic/pkc_skc source copies for the absent salt binding. The runtime witness flips a salt bit in a genuine DOVE-128 signature: verification still accepts it, while a changed-message control rejects. No full-size collision search was attempted.</p>
+<h2 class="issue-heading" id="sign-09-2-the-euf-cma-reduction-treats-trapdoor-recovery-as-public-key-indistinguishability">sign-09-2: The EUF-CMA reduction treats trapdoor recovery as public-key indistinguishability</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr>
+<tr><th>Affected</th><td>DOVE-128, -256 and -512 security proof</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>The stated assumption does not justify the Game 0-to-1 transition; no forgery or key recovery is demonstrated</td></tr>
+<tr><th>Credit</th><td>潇湘 (lxx, NGCC PKC Forum sender)</td></tr>
+<tr><th>Date</th><td>2026-10-15</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/PLF54PXYLAT2LQFQLJWN5LMKWSWWSM7O/attachment/7/DOVE_security_assessment.md">DOVE assessment attached to the PKC Forum post</a></p>
+<p>Definition 2 (§4.3.2, physical p. 14) defines DOVE-UOV as finding a trapdoor or equivalent oil subspace from a real public key. Theorem 1's Game 1 (§4.4, physical pp. 14–15) instead replaces the trapdoor-derived public blocks with random symmetric matrices. It bounds the resulting change in the forger's success probability by the ability to <em>distinguish</em> those two public-key distributions, calling that “precisely the definition” of DOVE-UOV.</p>
+<p>Trapdoor recovery is a search problem; public-key indistinguishability is a decision problem. Hardness of the former does not, by itself, bound the latter, so the stated DOVE-UOV assumption does not justify this game hop. A separate decisional assumption or a reduction from a distinguisher to trapdoor recovery would be needed for that step. This is a proof gap, not evidence that such a distinguisher exists at the submitted parameters. No forgery or key recovery follows from the observation.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-09/reproduce_search_decision_gap.py
+</code></pre>
+<p>The source certificate reads the frozen specification and checks the search definition, the public-key replacement, and the claimed equivalence. It does not run a cryptanalytic attack.</p>
+<h2 class="issue-heading" id="sign-09-3-signing-and-verification-read-beyond-declared-input-buffers">sign-09-3: Signing and verification read beyond declared input buffers</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>DOVE-128, -256 and -512 classic and pkc_skc reference variants; the supplied performance-optimal packages contain byte-identical source copies</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Short API inputs cause out-of-bounds reads; pkc_skc signing also over-reads an exact-size secret key, with no disclosure or forgery shown</td></tr>
+<tr><th>Credit</th><td>潇湘 (lxx, NGCC PKC Forum sender) for the ignored lengths; exact-size pkc_skc over-read identified by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-15</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/PLF54PXYLAT2LQFQLJWN5LMKWSWWSM7O/attachment/7/DOVE_security_assessment.md">DOVE assessment attached to the PKC Forum post</a></p>
+<p>The submitted <code>sig_sign</code> routines accept <code>sk_len_bytes</code> but do not check it before reading the fixed secret-key layout. Both <code>sig_verify</code> variants likewise ignore <code>pk_len_bytes</code> and <code>sn_len_bytes</code> while parsing the public key and signature at fixed offsets (<code>DOVE_classic_ref/SIG_AlgorithmInstance.c:234–250,374–395</code>; <code>DOVE_pkc_skc_ref/SIG_AlgorithmInstance.c:160–178,306–325</code>). A caller-supplied short buffer is therefore read past its declared allocation.</p>
+<p>The pkc_skc signing path also over-reads a key of its <em>own advertised size</em>. <code>sig_get_sk_len_bytes()</code> returns only <code>DOVE_SK_SEED_BYTES</code>, and key generation writes only that seed (<code>SIG_AlgorithmInstance.c:44–47,137,154–155</code>). Before deriving the trapdoor from the seed, signing copies a <code>DOVE_V × DOVE_O</code> matrix from <code>sk + DOVE_SK_SEED_BYTES</code> (<code>:165–169</code>, <code>matrix.c:46–48</code>): 2,992, 15,360 or 77,760 bytes beyond the 128-, 256- or 512-level seed. The derived matrix immediately overwrites that copy, so the read has no demonstrated cryptographic consequence, but it is an out-of-bounds read on an ordinary exact-size API call. The submitted KAT driver allocates precisely the reported secret-key length (<code>KAT_SIG.c:96–100</code>).</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh sign-09/reproduce_input_lengths.sh
+</code></pre>
+<p>The witness compiles the frozen DOVE-128 reference code with AddressSanitizer. It confirms short-public-key and short-signature reads in verification, a short-secret-key read in classic signing, and the exact-size pkc_skc secret-key read. It also checks that the source files in the performance-optimal packages are byte-identical. No exploitation beyond the memory reads was attempted.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
