@@ -78,6 +78,8 @@ Further extension to Yintong Luo's analysis: SQIsign2D2 §4.1 also chooses `log2
 
 [Mamah's later time–space analysis](https://eprint.iacr.org/2026/1821), revised 2026-09-23, expects Wesolowski's method to improve on the state of the art at NIST Level I within the practical memory ranges studied. At higher levels, memory offsets that advantage in those ranges, although highly parallelized vOW can recover it. The paper does not cost these archived NGCC primes, so this remains a lead rather than a concrete break.
 
+[Ouyang, Wei and Xu](https://arxiv.org/abs/2610.21488) subsequently proved the smoothness property on which Wesolowski's analysis relied, giving the `p^(1/3+o(1))` attack an unconditional asymptotic justification. This removes that heuristic dependency, but does not supply concrete time-and-memory costs for the archived NGCC parameters; the finding therefore remains a Lead.
+
 ### Reproducing
 
 Compare §4.1 and §4.2 of `sign-25-spec.pdf` with the cited attack paper, including the Level1, Level2, Level3, and Level5 primes.

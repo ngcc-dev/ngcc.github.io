@@ -42,6 +42,8 @@ Section 5.3 selects `p` by requiring `p^1/2 > 2^λ` and states that the One Endo
 
 [Mamah's later time–space analysis](https://eprint.iacr.org/2026/1821), revised 2026-09-23, expects Wesolowski's method to improve on the state of the art at NIST Level I within the practical memory ranges studied. At higher levels, memory offsets that advantage in those ranges, although highly parallelized vOW can recover it. The paper does not cost these archived NGCC primes, so this remains a lead rather than a concrete break.
 
+[Ouyang, Wei and Xu](https://arxiv.org/abs/2610.21488) subsequently proved the smoothness property on which Wesolowski's analysis relied, giving the `p^(1/3+o(1))` attack an unconditional asymptotic justification. This removes that heuristic dependency, but does not supply concrete time-and-memory costs for the archived NGCC parameters; the finding therefore remains a Lead.
+
 ### Reproducing
 
 Compare §5.3 and Table 6 of `sign-27-spec.pdf` with the cited paper and [issue model](https://github.com/user-attachments/files/32554686/w26_estimate.py).

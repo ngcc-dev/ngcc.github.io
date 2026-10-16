@@ -19,6 +19,8 @@ Section 5.1 chooses the prime size from the then-best classical `p^1/2` endomorp
 
 [Mamah's later time–space analysis](https://eprint.iacr.org/2026/1821), revised 2026-09-23, expects Wesolowski's method to improve on the state of the art at NIST Level I within the practical memory ranges studied. At higher levels, memory offsets that advantage in those ranges, although highly parallelized vOW can recover it. The paper does not cost these archived NGCC primes, so this remains a lead rather than a concrete break.
 
+[Ouyang, Wei and Xu](https://arxiv.org/abs/2610.21488) subsequently proved the smoothness property on which Wesolowski's analysis relied, giving the `p^(1/3+o(1))` attack an unconditional asymptotic justification. This removes that heuristic dependency, but does not supply concrete time-and-memory costs for the archived NGCC parameters; the finding therefore remains a Lead.
+
 ### Reproducing
 
 Compare §5.1 and §6.4.1 of `sign-26-spec.pdf`, especially their `p^1/2` premise, with the cited paper and all four prime sizes in the specification.
