@@ -28,25 +28,27 @@ The last command intentionally aborts with `encode_verification.c:216` and exit 
 
 ## sign-27-2: Triangle prime sizing relies on the former square-root attack cost
 
-Severity: Medium
+Severity: Critical
 Status: Lead
 Layer: Design
-Affected: All four SQIsignTriangle parameter sets' prime-sizing rationale
+Affected: Level-1 has a published concrete below-target lead; all four parameter sets use the superseded prime-sizing rationale
 Discovery: Moderate
-Exploitation: Asymptotic result; concrete key-recovery cost unresolved
-Credit: Yintong Luo (GitHub @yintong16); underlying algorithm by Benjamin Wesolowski
+Exploitation: The published fixed-memory estimate for the exact Level-1 prime straddles the consistently counted AES-128 gate target; no full-size key recovery has been run
+Credit: Yintong Luo (GitHub @yintong16); concrete reassessment by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance; underlying algorithm by Benjamin Wesolowski
 Date: 2026-09-23
 Original source: [GitHub issue #10 and its attached cost model](https://github.com/ngcc-dev/ngcc-harness/issues/10)
 
-Section 5.3 selects `p` by requiring `p^1/2 > 2^λ` and states that the One Endomorphism Problem is equivalent to the underlying isogeny problem. [Wesolowski, ePrint 2026/1486](https://eprint.iacr.org/2026/1486) gives a heuristic `p^(1/3+o(1))` time-and-memory algorithm for that problem. The square-root sizing premise is therefore superseded at all four levels, including the 128- and 160-bit sets. For the 160-bit set, `p=9·2^309−1` gives a bare `p^1/3` exponent of about 104.1; this is **not** the paper's concrete attack cost. The issue's attached model lists the Triangle primes, but uncertain superpolynomial overhead and high memory could close smaller margins. No concrete full-size key recovery or forgery is claimed.
+Section 5.3 selects `p` by requiring `p^1/2 > 2^λ` and states that the One Endomorphism Problem is equivalent to the underlying isogeny problem. The submitted Level-1 prime already fails that stated rule: for `p = 5·2^248-1`, `p^1/2 ≈ 2^125.2 < 2^128`. The following concrete-security paragraph lists only `λ ∈ {160,256,512}`, omitting the 128-bit set. [Wesolowski, ePrint 2026/1486](https://eprint.iacr.org/2026/1486) improves the underlying problem to `p^(1/3+o(1))` time and memory. [Ouyang, Wei and Xu](https://arxiv.org/abs/2610.21488) subsequently proved the smoothness property used by the algorithm, making that asymptotic result unconditional.
 
-[Mamah's later time–space analysis](https://eprint.iacr.org/2026/1821), revised 2026-09-23, expects Wesolowski's method to improve on the state of the art at NIST Level I within the practical memory ranges studied. At higher levels, memory offsets that advantage in those ranges, although highly parallelized vOW can recover it. The paper does not cost these archived NGCC primes, so this remains a lead rather than a concrete break.
+[Mamah's concrete analysis](https://eprint.iacr.org/2026/1821) evaluates the **exact** submitted Level-1 prime `p = 5·2^248-1`. With at most `2^80` stored entries it estimates `2^[138.78,143.51]` gates for the full attack. The same table estimates the old square-root HyperSolver attack at `2^143` gates on that prime, equal to the usual AES-128 key-search reference when both sides are counted in elementary gates. Thus the submitted prime already had essentially no margin under the old estimate, while the new estimate gains between zero and about 4.2 bits. Its interval straddles the target, but its midpoint, about `2^141.1`, is below it. This supplies a quantified candidate-specific route and therefore a **Critical Lead**, but not a confirmed break.
 
-[Ouyang, Wei and Xu](https://arxiv.org/abs/2610.21488) subsequently proved the smoothness property on which Wesolowski's analysis relied, giving the `p^(1/3+o(1))` attack an unconditional asymptotic justification. This removes that heuristic dependency, but does not supply concrete time-and-memory costs for the archived NGCC parameters; the finding therefore remains a Lead.
+[SQIsign v3](https://sqisign.org/spec/sqisign-20260901.pdf) now uses approximately 326-, 505- and 669-bit primes for 128-, 192- and 256-bit targets. This is independent parameter-selection evidence, not an attack threshold for SQIsignTriangle. The 160-, 256- and 512-bit profiles use the same superseded sizing rule, but Mamah's practical-memory study does not give candidate-specific below-target costs for them. No full-size key recovery or forgery was run.
+
+Reclassified from Medium to Critical on 2026-10-16. The status remains Lead because the estimate is model-dependent and straddles the target.
 
 ### Reproducing
 
-Compare §5.3 and Table 6 of `sign-27-spec.pdf` with the cited paper and [issue model](https://github.com/user-attachments/files/32554686/w26_estimate.py).
+Compare §5.3 and Table 6 of `sign-27-spec.pdf` with the cited papers and [issue model](https://github.com/user-attachments/files/32554686/w26_estimate.py). The submitted Level-1 prime is exactly the Level-I prime used in Table 4 of the concrete analysis.
 
 ## sign-27-3: A known signature transfers to a new message in about 2^(lambda/2) work
 

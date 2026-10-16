@@ -64,25 +64,27 @@ other supported runtime witnesses and their controls. See `tools/README.md`.
 
 ## sign-25-2: Isogeny prime sizing relies on the former square-root attack cost
 
-Severity: Medium
+Severity: High
 Status: Lead
 Layer: Design
-Affected: All eight SQIsign2D2 parameter sets' prime-sizing rationale
+Affected: Level1-eff has a well-supported path to a below-target attack; all eight parameter sets use the superseded prime-sizing rationale
 Discovery: Moderate
-Exploitation: Asymptotic result; concrete key-recovery cost unresolved
-Credit: Further extension to Yintong Luo's analysis (GitHub @yintong16); underlying algorithm by Benjamin Wesolowski
+Exploitation: Published analysis of a nearby prime and current parameter-selection work indicate a serious Level1-eff shortfall, but no candidate-specific below-target cost or full-size key recovery has been established
+Credit: Yintong Luo (GitHub @yintong16); concrete reassessment by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance; underlying algorithm by Benjamin Wesolowski
 Date: 2026-09-23
 Original source: [Related SQIsign parameter issue #10](https://github.com/ngcc-dev/ngcc-harness/issues/10)
 
-Further extension to Yintong Luo's analysis: SQIsign2D2 §4.1 also chooses `log2 p ≈ 2λ` because it prices generic classical attacks at `p^1/2`. [Wesolowski, ePrint 2026/1486](https://eprint.iacr.org/2026/1486) improves the underlying supersingular-isogeny problem to heuristic `p^(1/3+o(1))` time and memory. The archived Level3-eff prime is even identical to SQIsign2D-push1/2's Level-3 prime. This supersedes the square-root sizing premise for **all** submitted levels, including Level1 and Level2; the bare `p^1/3` exponent for Level1-eff is about 84.9 against a 128-bit claim. The paper cautions that superpolynomial overhead and memory may dominate at concrete sizes, particularly for the smaller levels. No particular set is asserted to have a concrete below-claim attack, and no full-size key recovery or forgery is claimed here.
+SQIsign2D2 §4.1 chooses `log2 p ≈ 2λ` because it prices generic classical attacks at `p^1/2`. [Wesolowski, ePrint 2026/1486](https://eprint.iacr.org/2026/1486) improves the underlying supersingular-isogeny problem to `p^(1/3+o(1))` time and memory. [Ouyang, Wei and Xu](https://arxiv.org/abs/2610.21488) subsequently proved the smoothness property used by the algorithm, making that asymptotic result unconditional.
 
-[Mamah's later time–space analysis](https://eprint.iacr.org/2026/1821), revised 2026-09-23, expects Wesolowski's method to improve on the state of the art at NIST Level I within the practical memory ranges studied. At higher levels, memory offsets that advantage in those ranges, although highly parallelized vOW can recover it. The paper does not cost these archived NGCC primes, so this remains a lead rather than a concrete break.
+[Mamah's concrete analysis](https://eprint.iacr.org/2026/1821) estimates `2^[138.78,143.51]` gates for the old 250.3-bit SQIsign Level-I prime with at most `2^80` stored entries. Level1-eff uses a nearby 254.6-bit prime. Scaling only the attack's dominant fixed-memory square-root term would add about `(254.6-250.3)/2 = 2.2` bits, suggesting `2^[140.9,145.7]` gates. This is context rather than a candidate-specific attack estimate: it does not recompute the smoothness or root-finding factors, its midpoint is above the roughly `2^143`-gate AES-128 reference, and its interval crosses that reference.
 
-[Ouyang, Wei and Xu](https://arxiv.org/abs/2610.21488) subsequently proved the smoothness property on which Wesolowski's analysis relied, giving the `p^(1/3+o(1))` attack an unconditional asymptotic justification. This removes that heuristic dependency, but does not supply concrete time-and-memory costs for the archived NGCC parameters; the finding therefore remains a Lead.
+[SQIsign v3](https://sqisign.org/spec/sqisign-20260901.pdf) now uses approximately 326-, 505- and 669-bit primes for 128-, 192- and 256-bit targets. Its deliberately attacker-favourable model supports the seriousness of the parameter concern, but gives a lower bound used for parameter selection rather than an executable attack cost. For Level1-sec and the higher submitted profiles, the old sizing rationale is superseded but no candidate-specific concrete below-target cost is asserted here. No full-size key recovery or forgery was run.
+
+Reclassified from Medium to High on 2026-10-16. The status remains Lead because a candidate-specific below-target cost has not been established.
 
 ### Reproducing
 
-Compare §4.1 and §4.2 of `sign-25-spec.pdf` with the cited attack paper, including the Level1, Level2, Level3, and Level5 primes.
+Compare §4.1 and §4.2 of `sign-25-spec.pdf` with the cited attack papers and current parameter analyses. Level1-eff has `log2 p = 254.63`; the published concrete row uses `p = 5·2^248-1`, with `log2 p = 250.32`.
 
 ## sign-25-3: Detached compact challenge enables one-query message-retargeting forgeries
 
