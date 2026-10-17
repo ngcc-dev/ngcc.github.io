@@ -10,7 +10,7 @@ Status: Confirmed
 Layer: Implementation
 Affected: MAMBA-NIKE-384 and MAMBA-NIKE-512 reference implementations
 Discovery: Trivial
-Exploitation: Approximately 2^256 secret-seed trials
+Exploitation: Approximately 2^256 secret-seed trials, against a static key or passively against any single session
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-09-21
 
@@ -20,6 +20,8 @@ For the public `rho` stored with a target key, an attacker can enumerate all `2^
 
 This limits both implementations to at most `2^256` secret-seed trials, below their respective 384- and 512-bit classical claims. It is an implementation/specification conformance break, not a limitation of the normative secret distribution.
 
+Extended on 2026-10-17: the initiator's per-session secret has the same width. Algorithm 2 (`MAMBA-NIKE.Pass1`, physical p. 8) samples a fresh ephemeral `r` from the full centered-binomial distribution, but `nike_sharedb` in both trees draws only the public 32-byte `mu` and a 32-byte `noiseseed` (`nike.c:230–242`). It expands both `r` (`poly_getnoise(&sp,noiseseed,0)`, `nike.c:250`) and the HelpRec random bits (`helprec(&c,&v,noiseseed,3)`, `nike.c:261`) from that one `noiseseed`. `mu` is the first 32 bytes of `M1` and fixes the dithers. A passive adversary holding `(pk_B, M1)` can therefore enumerate the `2^256` noise seeds, recompute `M1` as the guess test, and then recompute `ν` and the 48- or 64-byte session key. This attacks the passive real-or-random game of Definition 6.1 (physical p. 15) directly, needs no static-key recovery, and costs the same `2^256` per session. A native test with the unmodified `nike.c` confirms on both levels that exactly 64 random bytes are drawn per session, that the correct `noiseseed` reproduces `M1` and the responder's key, and that a one-bit-wrong guess reproduces neither. The full `2^256` search was not run.
+
 ### Reproducing
 
 ```sh
@@ -27,6 +29,14 @@ python3 security/design_parameter_audit.py --report-id kex-06-1
 ```
 
 The check traces `noiseseed[32]` through `poly_getnoise` and checks the normative KeyGen description on physical PDF pages 7–15.
+
+For the per-session consequence, run:
+
+```sh
+sh kex-06/reproduce_ephemeral_seed.sh
+```
+
+The script checks the `nike_sharedb` source lines, then builds the unmodified MAMBA-NIKE-384 and -512 `nike.c` in a temporary copy with a test `nike_randombytes`. It checks honest agreement, that a session draws only `mu` and the 32-byte `noiseseed`, that the correct seed reproduces `M1` and the session key, and that a one-bit-wrong seed does not. It takes about 2 seconds and exits 77 without gcc.
 
 ## kex-06-2: Static-key reconciliation admits an active reaction-recovery path
 

@@ -95,3 +95,32 @@ python3 kem-09/reproduce_pk_compression_noise.py
 ```
 
 The script exactly enumerates the source's one-coefficient public-key rounding error for each `db` and confirms a nonzero `e_pk·r` variance under the submission's independent-coefficient surrogate. It does not compute a failure tail or validate Liu's four exponents.
+
+## kem-09-4: The rejection key hashes the re-encryption instead of the received ciphertext
+
+Severity: Medium
+Status: Confirmed
+Layer: Implementation
+Affected: All four parameter sets, reference, optimized and additional implementations
+Discovery: Moderate
+Exploitation: Distinct invalid ciphertexts with the same decryption received one identical rejection key on all four sets; no key recovery or challenge-key distinguisher was run
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-17
+
+Algorithm 20 (p. 18), line 4, sets the implicit-rejection key to `K̄ = H(salt‖c)` over the received ciphertext `c`. The code instead re-encrypts the decrypted message into `salt_ct+SEED_BYTES` (`KEM_Cheetah.c:277`) and hashes `salt‖c′` over that re-encryption (`:283`); the received `ct` is never hashed. The line numbers are for Cheetah128 and Cheetah256; Cheetah384 has them at `:276`/`:282` and Cheetah512 at `:280`/`:286`. The `kem_dec` function is identical in the reference, optimized and additional trees of all four sets; the runtime test uses the reference build.
+
+Every invalid ciphertext that decrypts to a given message `m′` therefore receives the same rejection output `H(salt‖Enc(pk, m′, γ′))`. The decapsulation oracle consequently answers whether two submitted ciphertexts decrypt to the same message, which is a plaintext-checking oracle on the static secret key. Plaintext-checking oracles are the standard starting point for key recovery against LWE-based KEMs, and the Fujisaki–Okamoto argument behind the claimed IND-CCA security (pp. 19, 22–23) does not cover this rejection rule.
+
+The test flips bit 0 of one ciphertext byte. The decapsulator ORs the byte differences between `ct` and `c′` and negates the result as its selection mask (`:285–292`). When the flipped ciphertext still decrypts to the challenge message, `c′ = c*`, the OR is exactly `0x01` and its negation is `0xff`. The output is then the whole rejection key, not a bitwise mixture of it with the challenge key. This isolates the rejection-key binding from the mask construction. A fully normalized mask would still return the same `H(salt‖c*)` for every such ciphertext.
+
+On the four prebuilt libraries, 10 to 13 of 16 single bit-0 flips of a challenge ciphertext returned one identical value, which was not the challenge key. Recomputing the hash with the code's SM3 XOF shows that this value is `H(salt‖c*)`, and none of the 16 outputs equals the specified `H(salt‖c_j)`. The remaining flips change the decrypted message and are rejected with other values. The mauled challenge does not return `K*`. The defect therefore gives an oracle, not challenge-key recovery, and no candidate-specific key-recovery attack was run.
+
+The fix is to hash the received ciphertext, `H(salt‖ct)`, as Algorithm 20 specifies.
+
+### Reproducing
+
+```sh
+python3 kem-09/reproduce_rejection_reencryption.py
+```
+
+The script uses the prebuilt `kem-09/lib/*.so` through ctypes. For each set it checks that honest decapsulation returns `K*` and that 16 bit-0 flips of `c*` give at least four identical outputs different from `K*`. As controls, bit-0 flips of a second, independent encapsulation collide on a different value, and a heavy mutation of `c*` does not return the collision value. When `hashlib` provides SM3, it also confirms that the value is `H(salt‖c*)` and never `H(salt‖c_j)`. It runs in under a second.

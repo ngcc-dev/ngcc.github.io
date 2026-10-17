@@ -152,3 +152,53 @@ VDOO_FULL=1 sign-33/reproduce_public_structural_forgery.sh
 ```
 
 The default mode downloads and hash-checks Feussner's [package at commit `91f2ddf`](https://github.com/martinfeussner/NGCC-Signature-Audit/tree/91f2ddf0590a24ad39afc2ce2ee4f2627ec54726/VDOO), replays the saved public-key-only forgery, and requires changed-message and changed-signature controls to reject. `VDOO_FULL=1` repeats the uncached public-map recovery through the public-key-only `--pk` path and forges a different message (about 12 minutes on the reporter's machine; 157 seconds on the validation host). Both modes require Python with NumPy.
+
+## sign-33-7: Moving the message/signature boundary forges new messages
+
+Severity: Critical
+Status: Confirmed
+Layer: Implementation
+Affected: VDOO-128, -256 and -512 reference and optimized implementations (all six wrapper files are byte-identical)
+Discovery: Trivial
+Exploitation: From one honest signature, a shorter prefix message and a longer extended message that were never signed verified at all three levels; no key material or cryptanalysis is needed
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-17
+
+The specification defines verification on a message and a fixed-format signature σ = (s, salt) (§4.6, Algorithm 5, pp. 9–10). The detached NGCC wrapper `sig_verify` never checks `sn_len_bytes`. It copies `m || sn` into one buffer and passes the concatenation to `crypto_sign_open` (`SIG_AlgorithmInstance.c:61–83`). That function always treats the last `CRYPTO_BYTES` as the signature and everything before them as the message (`api.c:39–48`). The boundary that the caller supplied is therefore discarded: any split of the same byte string `m || sn` into a message and a "signature" verifies.
+
+Given a valid signature `sn` on `m`, an attacker chooses any nonempty suffix `x` of `m`, writes `m = m' || x`, and presents the fresh message `m'` with the detached signature `x || sn`. In the other direction, the extended message `m || sn[:k]` verifies with the signature `sn[k:]`. In both cases the wrapper rebuilds exactly the honestly signed `m || sn`. From a signature on "Transfer 1000 CNY to account 42", the unsigned message "Transfer 100" verified at VDOO-128, -256 and -512. This is a one-query existential forgery on a message that was never signed, which breaks the EUF-CMA claim (§5.7, p. 19).
+
+The defect is in the API glue, not in the VDOO equations. The verifier must reject any `sn_len_bytes != CRYPTO_BYTES` and verify the caller's message and signature separately rather than re-splitting their concatenation.
+
+### Reproducing
+
+```sh
+python3 sign-33/reproduce_boundary_forgery.py
+```
+
+At each level the script signs one message, then verifies two prefix forgeries and one extension forgery, each as the first library call in a fresh process. Controls (the honest signature, a changed message, the prefix with the unmodified signature, and each forged signature with one bit flipped) must give the expected verdicts. It takes about 80 seconds, mostly VDOO-512 key generation.
+
+## sign-33-8: Four unused response bits in VDOO-128 are unauthenticated
+
+Severity: Medium
+Status: Confirmed
+Layer: Implementation
+Affected: VDOO-128 reference and optimized implementations; VDOO-256 and -512 store one GF(256) element per byte and have no padding
+Discovery: Trivial
+Exploitation: All 16 values of the high nibble of signature byte 68 verify for the same message; no fresh-message forgery
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-17
+
+VDOO-128 packs its `N = 137` GF(16) response elements two per byte into `VDOO_N_BYTE = 69` bytes, followed by the 16-byte salt (`vdoo_config.h:5–9,51,80–82`). `vdoo_verify` reads only elements 0 through 136 (`vdoo_verif.c:35–36,82–100`). The high nibble of byte 68 would hold a 138th element and is never read or required to be zero. The signer zeroes it (`vdoo_sign.c:248`), but the verifier accepts any value. The specification's signature σ = (s, salt) has no such padding (§4.6, Algorithm 5, pp. 9–10).
+
+A native scan flipped each of the 680 bits of an honest VDOO-128 signature. Exactly four flips verified, bits 4–7 of byte 68. All 15 nonzero high-nibble changes then verified in fresh processes, while changes to element 136 (the low nibble of byte 68), to element 135 and to the salt were rejected. Each honest signature therefore has 16 accepted encodings.
+
+These are signature aliases on an already-signed message, not a forgery on a new message. VDOO claims EUF-CMA (§5.7, p. 19) and not strong unforgeability, so the defect matters to applications that identify signatures by their bytes (replay caches, transaction identifiers or deduplication). The verifier should reject a nonzero high nibble in byte 68.
+
+### Reproducing
+
+```sh
+python3 sign-33/reproduce_padding_nibble.py
+```
+
+The script runs the 680-bit scan in a child process separate from the signer and requires exactly bits 68.4–68.7 to be accepted. It then re-verifies the 15 high-nibble aliases, the honest and changed-message controls and the low-nibble and salt controls, each in its own fresh process. It takes about 2 seconds.

@@ -65,3 +65,31 @@ sign-02/reproduce_bimodal_key_recovery.sh
 ```
 
 The wrapper downloads and hash-checks both Feussner's [attack package at commit `91f2ddf`](https://github.com/martinfeussner/NGCC-Signature-Audit/tree/91f2ddf0590a24ad39afc2ce2ee4f2627ec54726/BiT) and the official BiT submission archive. It runs the fixed 200,000-signature key-0 experiment and requires equivalent-key recovery, fresh-message acceptance and changed-message rejection.
+
+## sign-02-3: Mask-seed collisions recover an equivalent BiT-128 signing key
+
+Severity: Critical
+Status: Probable
+Layer: Design
+Affected: BiT-128 specification, reference and AVX2 implementations; BiT-256 and BiT-512 use 256- and 512-bit mask seeds and are not affected within the query budget
+Discovery: Moderate
+Exploitation: Equivalent-key recovery and an accepted fresh-message forgery from publicly detected seed collisions in a reduced-width (16- and 24-bit) seed build of the submitted code; the full 128-bit birthday search was not run
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-17
+
+Figure 5 (physical p. 19) derives all signing masks from `seed_y ∈ {0,1}^κ := XOF(ρ′ || rnd || µ)`, with κ = 128 for BiT-128. The reference code squeezes `BIT_SEEDBYTES = 16` bytes (`sign.c:99–103`, `params.h:47`), and every mask and rejection coin of a signing call is then expanded from `(seed_y, nonce_y)` (`sample.c:20–25`); the AVX2 tree is the same (`sign.c:101–102`). Two signing calls on different messages that draw the same `seed_y` therefore draw the same sequence of masks `y`, and they return the same `y` whenever their rejection histories coincide. The bimodal sign bit `b` comes separately from the DRBG.
+
+For such a pair, `z_{1,0} = y_0 + (−1)^b c` and `z_{1,1} = y_1 + (−1)^b s_0 c` (`sign.c:148–151`) give `d_0 = z_{1,0} − z′_{1,0} = (−1)^b c − (−1)^{b′} c′` and `z_{1,1} − z′_{1,1} = s_0 · d_0` exactly in `Z_q[X]/(X^n+1)`. A negacyclic linear solve gives `s_0`, and the remaining key material `(e′, b_0′)` follows from the public relation `A_0 s_0 − γ_B b_1 = b_0 − e`. The result is an equivalent signing key. The pairs are found from public data alone: equal `y` gives an equal verifier commitment `w′` (`sign.c:260–262`), so sorting signatures by `w′` finds them.
+
+About 0.22 of seed collisions are usable (112 completed keys from 512 expected collisions, measured in the reduced-width build). Among Q signatures the expected number of usable pairs is therefore about `0.22 · Q²/2^129`. This gives about 10.3% attack success at the mandatory `2^64` signatures per key, 50% success at about `2^65.33` signatures, one expected usable pair at about `2^65.60`, and about `2^28.8` usable pairs at the `2^80` signing-query budget. Sorting the commitments costs about `2^66` time and memory. Theorem 2 (physical p. 24) treats `y` as fresh per signature; its loss term contains no `q_S² · 2^−κ` term for repeated mask seeds. The result is equivalent-key recovery and universal forgery against BiT-128 below its 128-bit EUF-CMA and SUF-CMA target.
+
+The experiment changes only the width of `seed_y`. With 16 bits kept, 8,192 ordinary signatures on distinct messages gave 112 public commitment matches, and all 112 completed equivalent keys. The recovered `s_0` equalled the oracle key, and a fresh-message signature made with the equivalent key was accepted by the unmodified verifier. The shipped 128-bit build produced no match on the same key and DRBG stream, a non-matching pair fails completion, and the changed-message control rejects. The `2^64`-scale collision search itself was not run, so the status is Probable. The equivalent key has a short `e′` consistent with the public key, not the original `e`, but the signatures it produces verify.
+
+### Reproducing
+
+```sh
+sh sign-02/reproduce_seed_collision.sh
+NGCC_LONG=1 sh sign-02/reproduce_seed_collision.sh
+```
+
+The script copies the BiT-128 reference tree to a temporary directory, inserts the seed truncation directly after `seed_y` is squeezed, builds a 16-bit and an unmodified variant, and runs the public collision search, completion and forgery on 8,192 signatures each (about 25 seconds). It requires every match to complete an equivalent key, the forgery to verify, the changed message and a non-matching pair to reject, and the full-width control to find no match. `NGCC_LONG=1` uses 24 bits and 65,536 signatures (about 2.5 minutes).

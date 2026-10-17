@@ -90,7 +90,7 @@ control flow, not a measured remote timing exploit.</p>
 <h2 class="issue-heading" id="sign-31-4-declared-public-key-and-signature-lengths-are-ignored">sign-31-4: Declared public-key and signature lengths are ignored</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
 <tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>All three reference and optimized TSUOV implementations</td></tr>
@@ -100,7 +100,8 @@ control flow, not a measured remote timing exploit.</p>
 <tr><th>Date</th><td>2026-10-05</td></tr>
 </table></div>
 <p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/FQMMQX3BFR473NUCIPK5IIFXKO3X6QKO/">Xiong and Wang's PKC Forum post</a> and <a href="https://github.com/acprk/ngcc-round1-cryptanalysis/tree/6756633dfa096e729aeeb4dfce281ad5f345091f/tsuov-impl-failopen">pinned verification package</a></p>
-<p><code>sig_verify</code> discards <code>pk_len_bytes</code> and <code>sn_len_bytes</code> and parses fixed-size fields (<code>SIG_AlgorithmInstance.c:100–118</code>). Short buffers therefore cause out-of-bounds reads; longer signatures with trailing bytes are accepted. AddressSanitizer reproduced the reads across all parameter sets and both implementation families. No memory disclosure, write, or control-flow effect follows from this length defect alone, so it is Low.</p>
+<p><code>sig_verify</code> discards <code>pk_len_bytes</code> and <code>sn_len_bytes</code> and parses fixed-size fields (<code>SIG_AlgorithmInstance.c:100–118</code>). Short buffers therefore cause out-of-bounds reads; longer signatures with trailing bytes are accepted. AddressSanitizer reproduced the reads across all parameter sets and both implementation families. No memory disclosure, write, or control-flow effect follows from this length defect alone.</p>
+<p>Reclassified on 2026-10-17 from Low to Medium. Appending arbitrary bytes to a valid signature yields distinct accepted signatures on the same message, an encoding alias rated Medium under an EUF-CMA-only claim. The short-buffer reads alone would remain Low.</p>
 <h3 id="reproducing_3">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">./sign-31/reproduce_implementation_findings.sh

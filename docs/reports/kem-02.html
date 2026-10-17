@@ -30,7 +30,7 @@
 <tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
 <tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
-<tr><th>Affected</th><td>All five Amoeba reference parameter sets</td></tr>
+<tr><th>Affected</th><td>All five Amoeba parameter sets, reference and optimized trees (the optimized trees by source)</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
 <tr><th>Exploitation</th><td>Full Amoeba-576 key recovery independently reproduced in 128,161 decapsulation queries; reporter used approximately 30,000</td></tr>
 <tr><th>Credit</th><td>Jinnuo Li</td></tr>
@@ -40,6 +40,7 @@
 <p>Jinnuo Li reported the attack in the <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/JB6IBZZUEVGTMM2SF6WK5PIYW7ESSPYT/">NGCC PKC Forum</a>. Amoeba's Fujisaki--Okamoto decapsulation re-encrypts the decoded message, but <code>cmp()</code> advances its byte index by four. Amoeba-576 consequently checks only 262 of 1,047 ciphertext bytes; changes in the other 785 bytes cannot trigger implicit rejection. The same source defect appears in every submitted parameter set.</p>
 <p>This exposes a plaintext-checking primitive of the type developed by Das in <a href="https://eprint.iacr.org/2026/1682">ePrint 2026/1682</a>: unchecked ciphertext coefficients can be swept across decoding thresholds to obtain linear information about the reused Ring-LWE secret. Li reports recovering all ten official Amoeba-576 KAT secret keys in about <code>3*10^4</code> decapsulation queries per key. Our independent witness uses a blind external-parity coordinate as a controlled first error, then binary-searches 320 other blind coordinates per chosen ciphertext. It recovers all 576 secret coefficients from 80 ciphertexts and 128,161 oracle calls, constructs a new decapsulation key without copying the original secret-key bytes, and recovers ten fresh honest encapsulations' shared secrets. Seeds 1, 2, and 3 reproduced. The measurement and regression are local and finish in about 17 seconds on this 28-vCPU host; they are less query-efficient than Li's method.</p>
 <p>The attack assumes a reused KEM key and an observable valid-plaintext/derived-key signal. The local witness models that signal using the decapsulation output and an attacker-computable candidate key. An application that never exposes a usable downstream accept/reject signal is not shown vulnerable to remote key recovery by this witness.</p>
+<p>Extended on 2026-10-17: the five optimized trees use the same comparison. <code>Implementations/Optimized_Implementation/Amoeba-{576,864,1152,1728,2304}/src/backend/ccakem.c</code> is byte-identical to the corresponding reference file. Line 19 advances the index by four, and line 75 applies <code>cmp</code> to <code>RLWE_CPA_CT_LEN</code> bytes. The optimized builds were checked by source only and were not run.</p>
 <p>The fix is to compare the complete ciphertext in constant time. A full-byte comparison is also required by the scheme's stated FO construction and IND-CCA2 argument.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>

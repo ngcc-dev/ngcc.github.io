@@ -166,6 +166,56 @@ tools/reproduce.sh sign-23
 <pre><code class="language-sh">python3 kex-05/reproduce_freshness_corruption.py
 </code></pre>
 <p>The certificate checks the frozen freshness wording and the no-match case; the Test-game argument is analytic, not an executed protocol attack.</p>
+<h2 class="issue-heading" id="kex-05-7-hard-wired-wrapper-identities-let-a-registered-party-misbind-honest-sessions">kex-05-7: Hard-wired wrapper identities let a registered party misbind honest sessions</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>LoomKEX-128, LoomKEX-256 and LoomKEX-512 ICCS wrappers (<code>KEX_LoomKEX-*.c</code>, byte-identical in the reference and optimized trees)</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>An ordinary registered party replaces one signature with her own and both honest parties accept the same key while naming different peers, at all three levels in both directions. She does not learn the key and no long-term key is compromised</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-17</td></tr>
+</table></div>
+
+<p>Loom is a sign-and-MAC protocol. The signatures cover only the session data, <code>DTBS_I = "0" ‖ (s_I, s_R) ‖ ek ‖ ct_kem</code> and <code>DTBS_R = "1" ‖ (s_I, s_R) ‖ ct_kem ‖ ek</code> (Algorithms 4 and 5, physical p. 8). The identities are bound only by the tags <code>τ = MAC(mk, "0"/"1" ‖ sid ‖ ID)</code>, which the specification says "bind the post-specified identities" (physical pp. 13 and 34). The six ICCS wrappers fix the identities at <code>KEX_LoomKEX-*.c:19–20</code> with <code>#define ID_INITIATOR "initiator"</code> and <code>#define ID_RESPONDER "responder"</code>. They use these constants both as each party's own identity (lines 144 and 177) and as the expected peer identity (lines 347 and 398). Every party therefore MACs the same string. The only per-party input left is the signature verification key that the caller supplies.</p>
+<p>Eve is a registered party with her own honestly generated key. She forwards the first two messages unchanged. In A's message 3 she replaces <code>σ_I</code> with her own signature on the same <code>DTBS_I</code>, which contains no identity, and leaves the ID field and <code>τ_I</code> unchanged. B verifies the signature under Eve's key and the unchanged tag over <code>"0" ‖ sid ‖ "initiator"</code>, and accepts with peer Eve. B's honest message 4 then completes A's session with peer B. A outputs <code>(A, sid, B)</code>, B outputs <code>(B, sid, Eve)</code>, and both hold the same session key. The responder direction is symmetric: Eve re-signs <code>DTBS_R</code>, so A accepts with peer Eve while B names A. Eve never learns the key. The two sessions do not match in the post-specified-peer CK model that Theorem 4.13 claims (physical pp. 30–31 and 34), because their peer identities are not mirrored. A Session-Key Reveal on B's session is therefore allowed, and it distinguishes A's Test session, whose peer B is uncorrupted. In deployment terms this is an identity misbinding: B attributes A's traffic to Eve.</p>
+<p>The defect is in the wrappers, not in the <code>loom.c</code> core. The core takes per-party identities, and with distinct identities the same substitution must also change the ID field, which invalidates <code>τ_I</code> (MAC failure, return code −11). The ICCS KEX interface has no identity parameter. The wrappers could still have derived each identity from the verification key that the interface does pass, for example as a hash of <code>pka</code> or <code>pkb</code>. Applications that use the submitted wrappers get no identity binding at all. The attack needs no Shuttle weakness: Eve's key and signer are honest.</p>
+<h3 id="reproducing_6">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C kex-05
+python3 kex-05/reproduce_constant_identity_misbinding.py
+</code></pre>
+<p>A and B run through the prebuilt <code>lib/libLoomKEX-*.so</code>. Eve's Shuttle signer is built at run time from a temporary copy of the submitted reference sources; the script exits with 77 if gcc is missing. The script checks the wrapper lines in all six trees and runs six misbinding sessions (three levels, two directions). It also runs three controls: an honest A–B exchange agrees, the unmodified message is rejected (−10) when the receiver expects Eve, and with distinct identities the <code>loom.c</code> core rejects the same substitution with a MAC failure (−11) while an honest exchange with distinct identities completes. It takes about 10 seconds.</p>
+<h2 class="issue-heading" id="kex-05-8-kem-encryption-reuses-lifting-prf-substreams-as-the-ephemeral-secret-input">kex-05-8: KEM encryption reuses lifting PRF substreams as the ephemeral secret input</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Loom-KEM encryption in LoomKEX-128, LoomKEX-256 and LoomKEX-512, reference and optimized trees</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Shown at all three levels: inside the responder's encapsulation, the CBD inputs of the ephemeral secret begin with the bytes already used for public-key lifting. The IND-CPA proof premise fails, but no distinguisher or key recovery was built</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-17</td></tr>
+</table></div>
+
+<p>Algorithm 11 (physical p. 10) lifts the compressed public key from a single stream, <code>t_lift = Inv(t′, d_t; PRF(seed_1, 0))</code>. It then samples <code>r[i] ← CBD_η2(PRF(seed_1, ctr))</code> on <code>ctr = 1, …, k</code>. Game 2 of the Theorem 4.4 proof (physical pp. 24–25) relies on this separation explicitly: "the counter values ctr0 = 0 and ctr1, …, ctrk ≥ 1 are distinct. Since the PRF outputs on distinct inputs are computationally independent, the lifting randomness and the randomness used to sample r may be treated as independent."</p>
+<p>The code does not keep these counters apart. <code>indcpa_enc</code> starts with <code>nonce = 0</code> and calls <code>polyvec_invq(&amp;pkpv, coins, nonce++)</code> (<code>kem/indcpa.c:351</code>; <code>:353</code> in the optimized tree). That function receives the nonce by value. It calls <code>prf(buf, GEN_INVQ_RAND_BYTES, seed, nonce++)</code> once for each of the k public-key polynomials, plus once more each time rejection sampling runs short (<code>kem/poly_invq.c:97, 102</code>). The caller's copy advances only once. <code>r[i]</code> is then sampled by <code>poly_getnoise_eta2(sp.vec+i, coins, nonce++)</code> on nonces 1..k (<code>indcpa.c:365</code>; <code>:367</code> optimized), which are the same <code>(seed_1, nonce)</code> inputs the lifting has already used. The ICCS <code>prf</code> is <code>pseudoXOF(seed_1 ‖ nonce)</code> (<code>loom/symmetric-iccs.c:55–62</code>), which is prefix-consistent. Each such <code>r[i]</code> CBD input therefore begins with exactly the bytes that the rejection sampler consumed to lift a public-key polynomial. In the measured encapsulations:</p>
+<ul>
+<li>LoomKEX-128: <code>r[0..3]</code> reuse all 64 of their CBD bytes from lifting streams 1–4.</li>
+<li>LoomKEX-256: <code>r[0..2]</code> begin with the full 136-byte lifting streams.</li>
+<li>LoomKEX-512: lifting used nonces 0–7, so all four <code>r[i]</code> begin with 272 lifting bytes.</li>
+</ul>
+<p>Which <code>r[i]</code> overlap depends on the rejection refills, but the first k−1 always do. <code>indcpa.c</code> is identical across the levels within each tree, and <code>poly_invq.c</code> is identical in all six.</p>
+<p>In the submitted code, the ephemeral secret <code>r</code> and the secret choice of lifted representatives are therefore functions of the same PRF output. Game 2 replaces <code>t_lift</code> with a fresh uniform <code>T</code> that is independent of <code>r</code>, and that step has no justification for this implementation. Theorem 4.4, and through it the IND-CPAF bound of Theorem 4.10 and the SK-security claim of Theorem 4.13, therefore does not cover the submitted KEM. No distinguisher, ciphertext leak or key recovery was found. Separating the counters, for example by sampling <code>r</code> on nonces after the last lifting counter or by domain-separating the two uses, would restore the premise. The rating is Medium: a confirmed deviation that removes an explicit independence premise of the proof, without a demonstrated attack.</p>
+<h3 id="reproducing_7">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C kex-05
+python3 kex-05/reproduce_lifting_prf_reuse.py
+</code></pre>
+<p>The script copies the reference sources to a temporary directory and builds them. It renames the compiled PRF symbol with <code>objcopy</code> and links a wrapper that logs every call to the unchanged PRF. It exits with 77 if gcc, objcopy or nm is missing. As a control, it first checks that for the same DRBG seed the instrumented library produces the same four messages and session key as the prebuilt <code>lib/libLoomKEX-*.so</code>. It then checks byte equality between the <code>r[i]</code> CBD inputs and the lifting streams during pass 2 at every level, with a second control showing that streams for distinct nonces share no prefix. It takes about 10 seconds. It establishes the stream reuse, not exploitability.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -129,3 +129,28 @@ make -C sign-27 exploit-response-rescaling
 ```
 
 The wrapper checks out the pinned public reproducer, which builds the unmodified submitted verifier and runs the four source/target controls for three fresh keys at every level. It requires Git, GNU Make, Python 3, GCC, and GMP development headers.
+
+## sign-27-6: High bits of the auxiliary-basis coefficients are never authenticated
+
+Severity: High
+Status: Confirmed
+Layer: Implementation
+Affected: SQIsignTriangle Levels 1, 2, 5 and 6, reference and optimized implementations (`encode_verification.c` is byte-identical in all eight trees)
+Discovery: Trivial
+Exploitation: Every unused high coefficient bit can be changed independently and the signature still verifies for the same message; no fresh-message forgery
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-17
+
+A SQIsignTriangle signature encodes the auxiliary curve, four coefficients `r1, r2, s1, s2` of `SQISIGNTRIANGLE_BASIS_COEFF_BYTES` bytes each, and `q` in a field of the same width (`encode_verification.c:284–297`). `compressed_aux_basis_from_bytes` reads each coefficient into a full-width integer. It then uses the coefficients only through `ec_biscalar_mul(..., e_rsp, ...)` and `mp_mod_2exp(..., e_rsp, ...)`, where `e_rsp = bitsize(q)` (`encode_verification.c:202–241`). Coefficient bits at positions `>= e_rsp` are never read and never required to be zero. Equivalently, adding any multiple of `2^e_rsp` to a coefficient leaves the decoded auxiliary basis unchanged.
+
+The number of unused bits depends on `q` in each signature. In the native fresh-process run, `e_rsp` was 211, 273, 445 and 894 at Levels 1, 2, 5 and 6. This left 52, 28, 12 and 8 unused bits, and every one of them could be flipped on its own and still verify. Setting all of them at once, and adding random multiples of `2^e_rsp` to all four coefficients, also verified. Flipping bit 0 or bit `e_rsp/2` of any coefficient, and changing the message, was rejected. The earlier run used different signatures and found 8, 28, 28 and 4 unused bits.
+
+The submission states its security as EUF-CMA (§6.4, p. 54), and its feature list (p. 60) states that the scheme "achieves strong EUF-CMA security". These aliases are new valid signatures on already-signed messages, so they violate that explicit strong-unforgeability claim and the finding is rated High. They yield no signature on a new message, so the required EUF-CMA property is not broken. Canonical decoding should reject coefficients `>= 2^e_rsp`.
+
+### Reproducing
+
+```sh
+python3 sign-27/reproduce_coefficient_high_bits.py
+```
+
+The script signs once per level and verifies every single unused-bit flip, the all-bits and random-multiple variants, and the used-bit and message controls. Each verification is the first library call in its own fresh process. It takes about 20 seconds.

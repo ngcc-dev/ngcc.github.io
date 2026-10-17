@@ -75,6 +75,28 @@ cc -std=c99 -O3 -ffunction-sections -fdata-sections -Wl,--gc-sections \
 <pre><code class="language-sh">python3 kex-09/reproduce_reencrypt_sampler.py
 </code></pre>
 <p>The compact witness checks the decrypted-message-to-sampler dataflow and early exit in all four archived trees. It deliberately does not claim to reproduce a stable timing classifier or key recovery on every host.</p>
+<h2 class="issue-heading" id="kex-09-3-role-labels-instead-of-identities-permit-a-copied-key-unknown-key-share">kex-09-3: Role labels instead of identities permit a copied-key unknown-key-share</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>TriQ-KEX-128, TriQ-KEX-256, TriQ-KEX-384 and TriQ-KEX-512 when certification permits duplicate public keys</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>One duplicate-key registration and one relayed honest exchange against the unmodified libraries; no break of the distinct-key formal model</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-17</td></tr>
+</table></div>
+
+<p>TriQ-KEX instantiates the FSXY transformation and targets CK+ security (specification physical pp. 1 and 3). In FSXY, the session transcript begins with the initiator and responder party identities. TriQ instead defines <code>U_A</code> and <code>U_B</code> as "role labels for the initiator and responder" (p. 4), sets <code>ST = (U_A, U_B, ek_A, ek_B, CT_A, ek_T, CT_B, CT_T)</code> (p. 8), and implements the labels as the fixed four-byte strings <code>ID_A</code> and <code>ID_B</code> (p. 13). Every reference and optimized wrapper does the same: <code>KEX_AlgorithmInstance.c:62–63</code> defines the constants, and the <code>APPEND_ST</code> block (lines 271–279 at TriQ-KEX-128) hashes them ahead of the key and ciphertext bytes. A party's identity therefore enters the session key only through its public-key bytes.</p>
+<p>If Eve obtains a certificate for Bob's key under her own name, Alice can initiate to "Eve" and Eve can relay both messages unchanged to Bob, who believes his peer is Alice. Both parties compute the same <code>ST</code> and the same key, while Alice records the peer as Eve and Bob records the peer as Alice. The mirror attack also works: Eve registers Alice's key, and Bob believes he is talking to Eve. Revealing one session's key gives the other session's key, even though the sessions do not match.</p>
+<p>The attack requires a certificate for a duplicated key. A deployment that rejects duplicate registrations, or that binds certified identities into <code>ST</code>, is not affected by this particular attack.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C kex-09
+python3 kex-09/reproduce_copied_key_uks.py
+</code></pre>
+<p>On all four prebuilt libraries and with two seeds each, the script runs both copied-key directions. It requires the role labels to appear on the wire and the two keys to be equal. Its controls require an honest exchange to agree and an independently generated key for Eve to produce different keys. When the sources are present, it also checks the <code>ST</code> layout. It runs in about 8 seconds.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

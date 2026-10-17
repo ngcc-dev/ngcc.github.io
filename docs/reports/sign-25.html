@@ -119,6 +119,27 @@ other supported runtime witnesses and their controls. See <code>tools/README.md<
 <pre><code class="language-sh">sh sign-25/reproduce_compact_retarget.sh
 </code></pre>
 <p>The wrapper downloads and checks out the <a href="https://github.com/martinfeussner/NGCC-Signature-Audit/tree/a30462dce48bd484d7c8c4d5b1f971e7dfebacfd/SQIsign2D2">pinned public artifact</a>, builds the unmodified compact implementations from this candidate directory, and requires eight <code>status=PASS</code> result lines.</p>
+<h2 class="issue-heading" id="sign-25-4-noncanonical-field-encodings-create-signature-and-public-key-aliases">sign-25-4: Noncanonical field encodings create signature and public-key aliases</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All 16 SQIsign2D2 reference libraries (Levels 1, 2, 3 and 5; eff and sec; compressed and uncompressed)</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Byte-distinct signatures and public keys verify for the same message; no fresh-message forgery</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-17</td></tr>
+</table></div>
+
+<p>SQIsign2D2 claims EUF-CMA security (§1, p. 8; §9.1, p. 106), not strong unforgeability. Its decoders accept several byte strings for one value. <code>fp_decode</code> loads <code>FP_ENCODED_BYTES</code> little-endian bytes and converts them to Montgomery form without checking that the integer is below <code>p</code> (<code>fp.c:169–182</code>; Level2-eff <code>fp.c:183–196</code>). Curve coefficients in signatures and public keys are decoded this way (<code>pack.c:190–206,295–359</code>). An encoding of <code>x + p</code> is therefore read as <code>x</code> whenever <code>x + p</code> fits in the field width, which holds for a large fraction of coordinates at every level. <code>sig_verify</code> discards <code>sn_len_bytes</code> (<code>sqisign/SIG_AlgorithmInstance.c:58–67</code>), so bytes appended to a signature are ignored. In the uncompressed format the negated basis-change matrix <code>−M mod 2^e</code> also verifies.</p>
+<p>Native tests on all 16 libraries accepted each of the following for the honest message: a signature whose curve coordinate was replaced by its value plus <code>p</code>; a public key edited the same way; and the signature with 16 bytes appended. The eight uncompressed libraries also accepted <code>−M</code>. A changed message, a signature coordinate plus 1, an independent public key and, in uncompressed form, a matrix entry plus 1 were all rejected. Each verification was the first library call in its own fresh process, so stale verifier state does not explain the acceptances.</p>
+<p>These aliases do not yield a signature on a new message. They do break canonical signature and public-key identity, which matters to applications that deduplicate, cache or index signatures or keys by their bytes. Following the precedent for encoding aliases under an EUF-CMA-only claim, this is Medium. The decoders should reject field encodings <code>&gt;= p</code>, nonzero trailing signature bytes (or any <code>sn_len_bytes != SIGNATURE_BYTES</code>) and matrix entries outside a canonical sign convention.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-25/reproduce_encoding_aliases.py
+</code></pre>
+<p>For each of the 16 libraries the script makes one key pair and signature, builds the aliases above and verifies every alias and control in a fresh child process. It takes about one minute. Public keys whose curve coefficient is edited by <code>+1</code> are not used as controls, because the compressed verifiers do not return on such a key.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

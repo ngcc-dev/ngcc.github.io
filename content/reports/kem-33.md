@@ -92,3 +92,30 @@ The full replay downloads a hash-pinned artifact, builds against the local submi
 ```sh
 JOBS=8 kem-33/reproduce_unseeded_optimized.sh
 ```
+
+## kem-33-4: The optimized FO check compares word counts as byte counts
+
+Severity: Critical
+Status: Confirmed
+Layer: Implementation
+Affected: Optimized QUBE-128, QUBE-256, QUBE-384 and QUBE-512 (`qube-1/3/4/5`); reference implementation unaffected
+Discovery: Trivial
+Exploitation: One decapsulation query on a ciphertext with a bit flipped in the unchecked tail of `u` or `v` returns the challenge shared key on all four optimized sets; no private-key recovery was attempted
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-17
+
+Decapsulation (spec Fig. 6, p. 10) re-encrypts the decrypted message and returns `k′` only if the re-encryption equals the received ciphertext, `c′ = c`; otherwise it returns the rejection key `k∗`. The optimized `crypto_kem_dec` performs this check with `vect_compare(c_kem_t.c_pke.u, c_kem_prime_t.c_pke.u, VEC_N_256_SIZE_64)` and the same for `v` with `VEC_N1N2_256_SIZE_64` (`Implementations/Optimized_Implementation/src/common/kem.c:257–258`). `vect_compare` treats its size argument as a byte count (`src/x86/vector.c:283–290`), but the two macros are counts of 64-bit words for the 256-bit-aligned buffers (`src/x86/qube-*/parameters.h:48–49`). Only the salt comparison (`kem.c:259`) covers its whole field.
+
+The comparison therefore covers only a short prefix of each component: `u` 256 of 1,639 bytes and `v` 204 of 1,632 bytes at QUBE-128; 768/5,207 and 660/5,280 at QUBE-256; 1,536/10,345 and 1,344/10,752 at QUBE-384; and 2,304/16,982 and 2,272/18,176 at QUBE-512. The returned key `k′` is derived from `m′`, `H(pk)` and the salt only (`kem.c:236–241`), and the concatenated Reed–Muller/Reed–Solomon decoder absorbs the error introduced by a change in the unchecked tail, so decryption still returns the encapsulated message. A modified ciphertext is then accepted and yields the honest shared key.
+
+This gives a one-query IND-CCA2 distinguisher: given a challenge `(c∗, K)`, the adversary flips one bit in the unchecked tail of `u` or `v` of `c∗` and asks for its decapsulation, which is a legal query because the ciphertext differs from `c∗`, and compares the answer with `K`. The same acceptance also makes ciphertexts malleable. Because the decapsulation output now shows whether a tail modification changed the decrypted message, it may also serve as a reaction oracle on the private support; that was not attempted.
+
+All four built optimized parameter sets are affected. The unbuilt `qube-6/7/8` directories share `kem.c` and define the macros the same way. The reference implementation compares the full ciphertext and rejects the same modifications.
+
+### Reproducing
+
+```sh
+sh kem-33/reproduce_opt_partial_compare.sh
+```
+
+The script checks the source lines and prints each set's compared prefix sizes. It then builds the submitted optimized tree in a temporary directory and, for each of the four sets, confirms over 10 fresh key pairs (50 with `NGCC_LONG=1`) that a single bit flipped in the `u` tail and in the `v` tail keeps the honest key. Its controls are flips in the compared prefixes and the salt, and the same tail flips against the prebuilt reference libraries; all of these change the key. Because the optimized API never seeds its SHAKE PRNG, the harness seeds it through `prng_init` with fresh randomness, as the submitted `tests/qube-test.c` does. The run takes about 40 seconds, most of it compilation, and is skipped (exit 77) without gcc or AVX2.

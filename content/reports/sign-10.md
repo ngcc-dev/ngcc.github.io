@@ -85,3 +85,30 @@ python3 sign-10/reproduce_target_width.py
 ```
 
 The certificate checks the source dimensions and the shared unsalted signing/verifying input, then recomputes the three collision bounds.
+
+## sign-10-4: Honest signatures fix values of secret linear forms
+
+Severity: Medium
+Status: Confirmed
+Layer: Implementation
+Affected: Facto-DSA-128, -256 and -512 reference implementations (executed); the optimized and resource-constrained implementations contain the same signing path (source)
+Discovery: Moderate
+Exploitation: Secret-dependent signature distribution measured with the signer's secret map; no key recovery or forgery demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-17
+
+Algorithm 10 (physical p. 12) completes a target, factors it into `A0·Y0` and then searches rescalings `lambda` in `F_q^*` (lines 17–19) before triangular inversion of `Q(X) = W`. Section 1.4.4 d) (p. 13) leaves the rescaling order as an "implementation rescaling schedule", and the signing-success analysis (p. 19) assumes the full set `Lambda = F_q^*`. Write `XY = S z` for a signature `z`, where `S` is the secret `2n x 2n` map. The reference signer builds `b` from `poly_one` times monic factors (`SIG_AlgorithmInstance.c:1071`), so `Y0` is monic. It sets `Y = scale^-1 · b` (`:1835`) and tries `scale = 1` first, before any random scale (`:2023–2024`). Whenever that first attempt succeeds, `Y_{n-1} = (S z)_{2n-1} = 1` exactly. A uniform preimage would make this value uniform on `F_q^*`, that is equal to 1 with probability `1/(q-1) = 1.5e-5`.
+
+A second secret form is fixed in every signature. `invert_Q_rec()` takes the root `(f_sqrt(Delta) - beta)/(2a)` first (`:1450–1452`) and the negated root only on backtracking (`:1455–1459`), and `f_sqrt()` returns `Delta^((q+1)/4)` (`:167–172`), which is always a quadratic residue. Every `Q_i` is homogeneous, so at level 0 the negated-root subtree fails exactly when the principal one fails. Hence the quadratic character `chi(2 a_0 X_0) = +1` in every signature, where `a_0` and the first row of `S` are secret.
+
+Through the public signing API, `(S z)_{2n-1} = 1` held in 6.5% of 2,000 Facto-DSA-128 signatures, 4.7% of 300 at -256 and 1 of 60 at -512, and `chi(2 a_0 (S z)_0) = +1` held in every signature at all three levels. The same signatures evaluated under an unrelated key's secret map gave no hits and a character of +1 about half the time, as did a fixed random public form. Every honest signature verified. The signer is therefore not the uniform preimage sampler assumed by the specification's signing analysis, and each signature discloses a fixed value of one secret linear form with a few per cent probability and one bit of another deterministically.
+
+The measurement uses the secret key as a test statistic. No public-only extraction or key-recovery route is known: recovering the fixed row from a few per cent of inliers is a noisy hyperplane problem, and the character leak is a hidden-linear-form problem with no known efficient solver. The specification's Assumption 1 (p. 22) states hardness given a signing-preimage oracle, so this contradicts no stated theorem; it shows that the oracle discloses deterministic secret structure. The same code paths appear in the optimized and resource-constrained implementations, which were not executed.
+
+### Reproducing
+
+```sh
+python3 sign-10/reproduce_signature_leak.py
+```
+
+The script checks the five source patterns in all nine trees, then signs 2,000, 300 and 60 messages through `sign-10/lib/libFacto-DSA-*.so` and evaluates the secret forms (about 15 seconds). Its controls are honest verification, rejection of mutated signatures and changed messages, an unrelated key's secret forms and a random public form; `NGCC_LONG=1` signs 8,000, 1,000 and 300 messages.

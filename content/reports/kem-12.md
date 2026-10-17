@@ -39,7 +39,7 @@ Status: Confirmed
 Layer: Implementation
 Affected: CTL-512 reference adapter; the specification assigns a 64-byte output
 Discovery: Trivial
-Exploitation: The 384-bit output is 128 bits short of the required 512-bit encapsulated key
+Exploitation: The 384-bit output is 128 bits short of the required 512-bit encapsulated key; the key is also recoverable from (pk, ct) by enumerating the 48-byte message m (2^384, not run)
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-09-21
 Follow-up source: [CTL submitters' 2026-09-23 response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/H47RU2HKEEAZQOJNKMUFWNEJEHHSLPQQ/)
@@ -47,6 +47,8 @@ Follow-up source: [CTL submitters' 2026-09-23 response](https://list.niccs.org.c
 The CTL-512 adapter returns a 48-byte shared secret and instantiates the ciphertext hash component `c2` at 48 bytes. The specification assigns 64 bytes to CTL-512 `c2`.
 
 The returned key therefore has at most 384 bits of delivered-key capacity and the ciphertext format contradicts the PDF. The NGCC [Submission Requirements](https://www.niccs.org.cn/niccs/Notice/lDop1mav.pdf) §2(2) require the encapsulated key to be at least as long as the corresponding classical security level. CTL-512 misses that explicit 512-bit target and is therefore Critical, even though this dimensional shortfall is not a separate IND-CCA attack. The CTL submitters acknowledge both findings; these reports remain scoped to the archived submission.
+
+Extended on 2026-10-17: the encapsulation randomness is also only 384 bits, so lengthening the output alone would not reach the target. `kem_enc` draws a 48-byte seed (`KEM_AlgorithmInstance.c:68,84`), and `CTL_MK(3329, 2048, 48, ...)` sets `LVLBYTES = 48` (`ctl.h:249`). In `encapsulate_explicit_seed`, the seed is the message m. The code derives s from m (`api.c:677`), forms c1 from s and pk, and sets c2 = Hash_m(s) ⊕ m. It then derives the key from m alone (`api.c:708`). The rare retry path replaces m with H(m) (`api.c:691`), which is still a function of the seed. Given only (pk, ct), an attacker can enumerate the 2^384 values of m, re-encrypt each one, and match it against ct. This recovers the key without decapsulation queries, below the 512-bit target. The reference and optimized trees have the same lines. This extension was checked by source only. The enumeration was not run.
 
 ### Proposed fixes
 

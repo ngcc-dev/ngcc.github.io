@@ -256,3 +256,28 @@ python3 security/design_parameter_audit.py --report-id sign-01-8
 
 The certificate checks the normative output lengths and security claims and
 the corresponding reference source constants and message-hash data flow.
+
+## sign-01-9: 32-bit message-length arithmetic gives long-message forgeries
+
+Severity: Critical
+Status: Confirmed
+Layer: Implementation
+Affected: Aigis-Sig+ I, II and III reference implementation in the submitted USE_ICCS build (sign-01/lib), and the AVX2 USE_ICCS trees; NEON source-identical but not run; the spec-default USE_SHA3 reference build is not affected
+Discovery: Trivial
+Exploitation: A signature on a 32-byte message verified on fresh 2^29 + 32-byte messages, and one signature on a 256 MiB message verified on other contents and lengths, at all three levels in the reference library and all three AVX2 builds; the AVX2 builds also accepted a 2^32 + 32-byte message
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-17
+
+Aigis-Sig+ signs and verifies the message representative µ = CRH(CRH(pk) ∥ M) (§5.5, Algorithm 30 line 3, p. 33, and Algorithm 31 line 5, p. 34) and claims SUF-CMA security (§7.1, p. 38). In the USE_ICCS build, `kdf128/256/512(uint8_t *out, int outlen, uint8_t *in, int inlen)` call `pseudoXOF(outlen * 8, in, inlen * 8, out)` (`hashkdf.c:8–45`). Signing and verification pass `inlen = CRHBYTES + mlen` (`sign.c:87–98,167–174`). The bit length `inlen * 8` is computed in a 32-bit `int`. When `|M| = 2^29 + j`, `8 · (CRHBYTES + |M|)` wraps to `8 · (CRHBYTES + j)`, so µ depends only on `CRH(pk) ∥ M[:j]`. When `2^28 ≤ CRHBYTES + |M| < 2^29`, the bit length is negative, `pseudoXOF`'s `malloc` fails (`auxfunc.c:486–491`) and `kdf*` ignore the error. The output buffer then still holds `CRH(pk)`, and µ is the same for every message in that range. The AVX2 and NEON trees have the same `kdf*` code and also take `int32_t mlen` (`sign.c:75,145–147`), so a message of `2^32 + j` bytes is truncated to its first `j` bytes as well.
+
+Two one-query forgeries follow. First, a signature on any short message `m` also verifies on every `2^29 + |m|`-byte message that begins with `m`, whatever the remaining bytes. Second, a signature on any message in the negative-length range (about 256 MiB) verifies on every other message in that range. Both lengths are within the call's required message range of up to `2^63` bits ([Submission Requirements](https://www.niccs.org.cn/niccs/Notice/lDop1mav.pdf) §2(2)), so these are fresh-message EUF-CMA forgeries and break the stronger SUF-CMA claim as well.
+
+Natively, `lib/libAigis-sig1/2/3.so` and temporary AVX2 builds of all three sets accepted both forgeries in fresh processes. The AVX2 builds also accepted a `2^32 + 32`-byte message under the 32-byte message's signature. Changing the first byte of each long message, verifying the 256 MiB signature on a short message or on a message just below the range, and changing the short message were all rejected. The spec-default USE_SHA3 reference (`kdf*` call `shake*` with the byte length) rejected the `2^29 + j` case. The reference copy loops use `int i` over the 64-bit `mlen` (`sign.c:95,170`), so every reference build crashes rather than truncating at `|M| ≥ 2^31`. Lengths should be carried as `size_t`/`unsigned long long` throughout, and `pseudoXOF` failures must abort signing and verification.
+
+### Reproducing
+
+```sh
+python3 sign-01/reproduce_kdf_length_overflow.py
+```
+
+The script tests the three prebuilt reference libraries and, when gcc and an AVX2/BMI2 CPU are present, builds the three unmodified AVX2 trees with `-DUSE_ICCS` in a temporary directory and tests them too (otherwise it skips that part). Long messages are anonymous `mmap` buffers, each verification runs in a fresh process, and controls are included. It takes about 80 seconds and needs about 1.5 GiB of memory.

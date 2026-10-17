@@ -69,14 +69,17 @@ Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/arch
 
 `sig_verify` derives `path_size = (sn_len_bytes - NTemp) / NODE_SIZE` without checking either bound, then copies `NODE_SIZE * path_size` bytes into fixed `node path[T_OPEN]` (current reference `SIG_TINS128.c:350–365`; analogous code in the other tiers). An oversized supplied signature writes beyond that stack array; a short signature can underflow the unsigned subtraction or be read before this point. We independently reproduced a 3,140-byte write into Tins128's 2,500-byte `path` with AddressSanitizer. This is attacker-controlled memory corruption, not merely a build failure; code execution has not been shown.
 
+Extended on 2026-10-17 (Markku-Juhani O. Saarinen, with AI assistance): the same missing exact-length check also lets a verifier ignore appended bytes. For an honest signature `sn_len_bytes - NTemp` is a multiple of `NODE_SIZE`, so appending `r < NODE_SIZE` bytes leaves `path_size` and every later parse offset unchanged, and the extra bytes are never read. The verifier therefore sees exactly the inputs of the honest signature (local trees `SIG_TINS128.c:354–371`, `SIG_TINS256.c:352–369`, `SIG_TINS512.c:360–377`, with `NODE_SIZE` = 16, 32 and 64 bytes). Appending `NODE_SIZE` bytes adds one path node and shifts every later field. In a fresh-process test, each signature ended at a `PROT_NONE` guard page while `sn_len_bytes` claimed up to `NODE_SIZE − 1` extra bytes, and all three verifiers returned without touching the guard page. Moving the last real signature byte into the guard page, or appending `NODE_SIZE` bytes, faulted. Tins256 accepted its honest signature and every extension in fresh processes. For Tins128 and Tins512 the verdict is not useful evidence: the Tins128 verifier compares the recomputed challenge with an uninitialized buffer, and the Tins512 verifier decodes overwritten auxiliary data, so both rejected even the honest signature in a fresh process. An earlier in-process run, after signing in the same process, saw Tins128 accept 1, 5 and 15 extra bytes. That run did not exclude stale stack state. A direct ctypes loop over appended lengths aborts at the first `NODE_SIZE` extension when `path_size` is already `T_OPEN`, because the prebuilt libraries' `_FORTIFY_SOURCE` check catches the oversized copy into `path[T_OPEN]`. That abort is the overflow described above. The guard-page reproducer runs each case in its own process for this reason. The extension yields signature aliases, not a fresh-message forgery, so it does not change the rating.
+
 ### Reproducing
 
 ```sh
 python3 sign-29/reproduce_implementation_findings.py --report-id sign-29-3
 sh sign-29/reproduce_path_overflow.sh
+python3 sign-29/reproduce_appended_bytes.py
 ```
 
-The first command checks the current SHA-256-pinned ZIP's bounds and copy. The second rebuilds that ZIP and checks a normal-length control and the oversized-signature write under AddressSanitizer; it needs a C compiler and archive download unless `TINS_ARCHIVE` points to a local copy.
+The first command checks the current SHA-256-pinned ZIP's bounds and copy. The second rebuilds that ZIP and checks a normal-length control and the oversized-signature write under AddressSanitizer; it needs a C compiler and archive download unless `TINS_ARCHIVE` points to a local copy. The third uses the prebuilt `sign-29/lib` libraries (built from the local extracted trees) and runs the guard-page test for appended bytes at all three levels, with the read-detection and `NODE_SIZE` controls. It takes about one minute.
 
 ## sign-29-4: Tins128 compares its challenge with an uninitialized buffer
 

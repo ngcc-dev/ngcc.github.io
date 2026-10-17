@@ -10,7 +10,7 @@ Status: Confirmed
 Layer: Implementation
 Affected: Uniform-API reference wrappers, all nine parameter sets
 Discovery: Trivial
-Exploitation: Integration-dependent; no complete UKS attack demonstrated
+Exploitation: One copied or byte-distinct re-encoded key registration and one relayed exchange give an unknown-key-share on all nine sets; no key recovery
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-09-21
 
@@ -20,18 +20,25 @@ The official `KEX_AlgorithmInstance.h` API exposes no identity argument, so the 
 
 The core `ake.c` code hashes both identities into the session-key computations, and the specification's CK+ model distinguishes the session holder and peer identities `i` and `j`. The wrapper therefore collapses every deployment and every pair of parties onto one fixed identity pair instead of instantiating the protocol's modeled identity binding.
 
-This is a confirmed integration security defect. The transcript still contains cryptographic public keys, and no complete unknown-key-share or impersonation attack was demonstrated through the fixed API, so this report does not claim a proved AKE break beyond the missing identity binding.
+This is a confirmed integration security defect. Extended on 2026-10-17: a complete unknown-key-share now runs through the fixed API on all nine sets. GC-AKE derives `K = H(m_i, m_j, K~, i, j, M, M')` (specification Fig. 5, physical p. 19, and Algorithms 3–4, p. 20; `ake.c:29–48`). Here `M = (c_j, pk~)` and `M' = (c_i, ct~)` carry only ciphertexts and the ephemeral key. The transcript therefore does not contain the static public keys, which corrects the earlier statement that it did, and the zero identities are the only explicit peer binding. Suppose Eve registers a copy of Alice's public key, Alice initiates to Bob, and Eve tells Bob that the initiator is Eve. Bob encrypts `m_i` under the copied key, Alice decrypts it consistently, and both parties hash identical inputs. They hold the same key while Alice's peer is Bob and Bob's peer is Eve, which violates the holder and peer agreement of matching sessions (Definition 9, p. 13). With distinct identities in `i` and `j`, the two keys would differ.
+
+The copied key does not have to be byte-identical, because the public-key decoders do not range-check coefficients. At q = 1409, `decode16` (`pack.c:140–141`) decodes `(x1 + 1409)·1409 + x0 < 2^21` as `x1 + 1409 ≡ x1`. At q = 769, the trailing `n mod 5` coefficients are read raw from 10 bits (`pack.c:329–350`), so `x + 769 < 1024` also decodes to `x`. Every tested key at q = 1409 and about 50–80% of keys at q = 769 have such a byte-distinct alias, and the alias gives the same unknown-key-share. A certification authority that rejects only byte-identical duplicates therefore does not prevent the attack. The attack still needs a certificate on a copied or re-encoded key. It recovers no key, so the Medium rating is unchanged.
 
 ### Reproducing
 
-Fetch the official archive and inspect the zero-initialized `idi` and `idj`
-arrays at lines 105–106 and 165–166 of
-`NEV-AKE-C1/kat_test/KEX_AlgorithmInstance.c`; the other eight reference
-wrappers have the same assignments. Compare the wrapper API header, which has
-no caller-supplied identity parameter, with the identity inputs to `ake.c`.
+The zero-initialized `idi` and `idj` arrays are at lines 105–106 and 165–166
+of `NEV-AKE-C1/kat_test/KEX_AlgorithmInstance.c`; the other eight reference
+wrappers have the same assignments.
 
 ```sh
-IDS=kex-07 ./download.sh
-./extract.sh kex-07
-rg -n 'unsigned char id[ij]\[SEED_BYTES\] = \{0\}' 'kex-07/Implementations and Test_Vectors/Implementations/Reference_Implementation' --glob KEX_AlgorithmInstance.c
+make -C kex-07
+python3 kex-07/reproduce_uks.py
 ```
+
+The script checks those wrapper lines and confirms that `ake_hash_h` has no
+public-key input. It then runs 20 seeded trials per set on all nine prebuilt
+libraries. Each trial runs a copied-key and a byte-distinct alias
+unknown-key-share and requires equal keys. Its controls require an honest
+exchange to agree, and an independently generated key or a non-congruent
+re-encoding of the same coefficient to give different keys. It runs in about
+a second; pass a larger trial count as the first argument.

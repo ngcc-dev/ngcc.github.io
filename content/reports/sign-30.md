@@ -96,3 +96,29 @@ python3 sign-30/reproduce_invariant_estimate.py
 ```
 
 The certificate checks both submitted 512-bit parameter headers and recomputes all three rows. It does not execute the exponential search.
+
+## sign-30-5: Scalar multiples of the response vectors verify
+
+Severity: Medium
+Status: Confirmed
+Layer: Design
+Affected: TRINE specification; all six profiles share the source path (reference and optimized `trine.c` and `canonical.c` are byte-identical); runtime-confirmed on TRINE-128-ShortSig, TRINE-128-Balanced and TRINE-256-ShortSig
+Discovery: Trivial
+Exploitation: Each of the K response vectors can be replaced by any of its q − 1 nonzero multiples and the signature still verifies for the same message; no fresh-message forgery
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-17
+
+A TRINE response `d_i` represents a corank-one *projective* point. The canonical form `CF(ϕ, d_i)` that verification recomputes is constructed to be invariant under replacing `d_i` by a nonzero scalar multiple (§2.4, pp. 6–8; Algorithm 7, p. 13). The signature, however, transmits the vectors `d_i ∈ F_q^n` themselves (the first `TRINE_K · TRINE_n` 12-bit elements), and neither the specification nor `crypto_sign_verify` fixes a canonical representative (`trine.c:493–650`, `canonical.c:340–362`). Replacing any response vector `d_i` by `λ·d_i` for `λ ∈ F_q^*` therefore leaves every recomputed canonical form, the transcript hash and the verdict unchanged.
+
+On TRINE-128-ShortSig, multiplying all 36 response vectors by the distinct scalars 2 to 37 changed 1,181 of 1,652 signature bytes, and the signature still verified. Negating a single vector also verified. Adding 1 to one coordinate, scaling only the first half of one vector, and changing the message were all rejected. The same results held on TRINE-128-Balanced (K = 52) and TRINE-256-ShortSig (K = 76). Every verification was the first library call in its own fresh process.
+
+Each signature thus has `(q − 1)^K` encodings, for example `4092^36 ≈ 2^432` at TRINE-128-ShortSig. TRINE claims EUF-CMA (§5.2, p. 16), and these aliases give no signature on a new message, so the finding is Medium. Because the scale freedom is in the specified response encoding rather than in a parser, it is a design issue. Normalizing each response (for example, scaling so its first nonzero coordinate is 1) before encoding, and rejecting non-normalized responses, would remove it.
+
+### Reproducing
+
+```sh
+python3 sign-30/reproduce_response_scaling.py
+NGCC_LONG=1 python3 sign-30/reproduce_response_scaling.py
+```
+
+The default run checks TRINE-128-ShortSig in about 20 seconds. `NGCC_LONG=1` adds TRINE-128-Balanced and TRINE-256-ShortSig, which takes about 5 minutes. The script does not run the 512-bit profiles.

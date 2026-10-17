@@ -58,7 +58,7 @@ Inspect `src/kem.c:209-213`, `src/cmultiurag.c:248-257`, and `src/augmented_gabi
 Severity: Critical
 Status: Confirmed
 Layer: Implementation
-Affected: CMultiURAG-512 reference implementation; the 128 and 256 encodings have no padding
+Affected: CMultiURAG-512 reference and optimized implementations (the optimized tree by source); the 128 and 256 encodings have no padding
 Discovery: Trivial
 Exploitation: One decapsulation query on a byte-distinct copy of the challenge ciphertext
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
@@ -67,6 +67,8 @@ Date: 2026-09-25
 With `m = 181`, the `U` and `V` encodings each end with 5 unused bits, which `rbc_vec_from_string` ignores (`rbc_vec.c:789-809`). Decapsulation compares the re-serialized decoded `U, V` with the re-encryption (`kem.c:235-246`), and the key hashes the re-serialized values (`kem.c:257-262`). Each honest ciphertext has 1,023 byte-distinct variants with the same key. The submission claims IND-CCA2 security, which is trivially violated.
 
 The specification's Algorithm 9 (§3.4) compares the received `(U, V)` with the re-encryption as algebraic values; it defines no byte parser or rule for accepting alternative wire encodings. The submitted byte parser discards the padding bits before the check, so the implementation never compares the original ciphertext bytes.
+
+Extended on 2026-10-17: the optimized implementation of CMultiURAG-512 uses the same parser and comparison. In `Implementations/Optimized_Implementation/CMultiURAG-512/src/`, `kem.c` and `rbc-181/rbc_vec.c` are byte-identical to the reference files (`cmp`). The only other differences are the carry-less multiplication and squaring code in `rbc_elt.c` and the matching element-size macros in the `rbc_*.h` headers. `rbc_vec_from_string` and the helpers it calls (`rbc_elt_set_coefficient_vartime` and the zeroing routines) are unchanged. The optimized tree stores each field element in four 64-bit words instead of three (`RBC_181_ELT_SIZE`). The parser still copies the same bytes and sets the same coefficient bits, so it ignores the same padding bits. The optimized build was checked by source only and was not run.
 
 ### Reproducing
 

@@ -44,6 +44,27 @@
 <pre><code class="language-sh">python3 kem-21/reproduce_seed_ceiling.py
 </code></pre>
 <p>The static witness checks the 32-byte draw, the deterministic secret expansion, and the public-key construction in both reference source trees. It does not claim a practical full-size key recovery.</p>
+<h2 class="issue-heading" id="kem-21-2-viper-384-and-512-derive-the-encapsulation-secret-from-a-256-bit-seed">kem-21-2: Viper-384 and -512 derive the encapsulation secret from a 256-bit seed</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>MAMBA-Viper-384 and MAMBA-Viper-512, specification and all reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Shared key recomputed from (pk, ct) and the 32-byte σ alone, 20/20 per level, and recovered by a reduced 2^16 σ search; the full 2^256 enumeration was not run</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-17</td></tr>
+</table></div>
+
+<p>Viper.PKE.Enc (Algorithm 4, p. 8) takes coins ω ∈ {0,1}^512 and parses them as ω ↦ (σ, µ) ∈ {0,1}^256 × {0,1}^256 for every profile. The ephemeral secret is r ← GenSecret(σ), and µ, which only fixes the ciphertext dithers, is transmitted in the ciphertext. Viper.KEM.Encaps (Algorithm 7, pp. 9–10) feeds these coins from (K̂, ω) ← G(H(pk), m). Once r is known, m can be decoded from the ciphertext with public values, so every secret of the session hangs on 256 bits, while the 384- and 512-bit profiles target 384 and 512 bits (Table 2, p. 4, with MATZOV estimates of 410.2 and 564.6 bits). The submitted code follows the specification in effect. <code>kem.c:39–42</code> derives a σ of |K| bytes (48 or 64) and copies it into ω, but <code>viper_sample_secret</code> absorbs only <code>seed, 32</code> (<code>viper.c:425,437</code> in the reference trees, <code>viper.c:468,480</code> in the optimized trees), so the remaining 16 or 32 bytes never influence the ciphertext.</p>
+<p>Given a public key and a ciphertext, an attacker enumerates σ ∈ {0,1}^256. For each candidate it computes r = GenSecret(σ), decodes m = Decode(v̂ − b̂ᵀr) using only public values, recomputes (K̂, σ′) = G(m ‖ H(pk)), and accepts when σ′ matches the candidate. The accepted m gives K = H(K̂, H(ct)). Each trial costs one sampler expansion, one module inner product and one hash. No decapsulation query and no secret-key information are needed, and the search is per session and passive. This recovers any Viper-384 or Viper-512 shared key in about 2^256 classical work, below both claimed levels, hence the Critical severity.</p>
+<p>The defect lies in the specified coin width, not in a coding error, so it is independent of how the long-term secret key is generated and survives any change to key generation. All five reference and five optimized trees share <code>kem.c</code>, and their samplers read 32 seed bytes. At Viper-128, -192 and -256 the same search costs 2^256, which is at or above the target, so those profiles are not affected. A full 2^256 search was not run. The reproducer supplies σ by replaying the encapsulator's DRBG, standing in for the guess that the enumeration would find.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh kem-21/reproduce_sigma_ceiling.sh
+</code></pre>
+<p>The script checks that the sampler and <code>kem.c</code> are shared by all ten trees. It then builds an attacker harness from an unmodified copy of each reference tree in a temporary directory and runs key generation, encapsulation and decapsulation in the prebuilt <code>kem-21/lib</code> libraries. At Viper-384 and -512 it recomputes the library's shared key from (pk, ct, σ[0..31]) in 20/20 sessions, checks that inverting ω bytes 32 onward leaves the ciphertext unchanged, and recovers the key by a 2^16 search over the low bits of σ with the rest given as a hint. Controls: honest decapsulation matches, a one-bit-wrong σ prefix is rejected, and Viper-256 is run to show that its σ width equals its target. It takes about 55 seconds; <code>NGCC_LONG=1</code> widens the search to 2^20 (about 15 minutes).</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

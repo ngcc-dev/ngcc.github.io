@@ -170,7 +170,7 @@ Compare `sign-15/Implementation/Reference_Implementation/lwrdsa128/drng.c` with 
 Severity: Critical
 Status: Confirmed
 Layer: Design
-Affected: ATLAS-128 as specified; the other parameter sets were not claimed or tested
+Affected: ATLAS-128 as specified (Confirmed); ATLAS-192 as specified (Probable scope extension, leakage measured but no key recovered); ATLAS-256 and -512 are not claimed
 Discovery: Non-trivial
 Exploitation: 3,000,000 ordinary chosen-message signatures; 996 seconds in our 12-worker rerun, followed by key recovery and forgery
 Credit: Martin Feussner, with OpenAI Codex (Daybreak Blue) assistance
@@ -183,6 +183,8 @@ The published recovery converts those boundary events into exact public half-spa
 
 We reran the hash-pinned public evidence and reconstruction checks, then independently ran the complete 3-million-signature pipeline from raw generation for the prospectively selected deterministic key 4. It retained 1,931,974 support rows, recovered a key satisfying all 1,152 public LWR residual bounds, and produced an accepted fresh-message forgery. The run took 996 seconds with 12 collection workers; the changed-message control rejected.
 
+Extended on 2026-10-17 (Markku-Juhani O. Saarinen, with AI assistance): the same bound fails more severely for ATLAS-192, where Table 2 (physical p. 22) gives `beta1=33` against `kappa*eta=69*8=552`, so about 41% of `c*s1` coefficients exceed `beta1`. We built the frozen ATLAS-192 reference code with only `rej_gamma1m1` changed to decode the two independent 20-bit mask values the specification describes (`lwrdsa192/poly.c:512–526` overwrites the first decoded value and stores the second one twice). We kept the submitted challenge weight `kappa=64` (`params.h:68`). Each boundary response gives an exact public half-space on `c*s1`. A Chebyshev-centre estimate built from those half-spaces alone correlated with the true `s1` at 0.302, 0.347 and 0.372 after 60,000, 120,000 and 240,000 accepted signatures. A control key gave 0.026, -0.005 and 0.012, against a noise level of `1/sqrt(1280)=0.028`. The true key satisfied every derived half-space. The specified `kappa=69` gives a slightly higher modelled exclusion rate, so this run understates the specified leak. We did not complete an end-to-end ATLAS-192 key recovery, so this extension is Probable. ATLAS-256 and -512 have `beta1` closer to `kappa*eta`; for them we have only a rare-event analysis and no measured leak.
+
 ### Reproducing
 
 ```sh
@@ -191,6 +193,13 @@ ATLAS_FULL=1 NGCC_SAGE_PYTHON=/path/to/python make -C sign-15 exploit-spec-key-r
 ```
 
 The first command uses stored recovered `s1` and `t0` values to rebuild an equivalent key and forgery, then verifies the fresh-message signature and changed-message control. It does not rederive that key from signatures. The second regenerates three million signatures and performs the full public recovery; it needs NumPy, SciPy, and fpylll. Our 12-worker run took 996 seconds; a smaller CPU may take substantially longer.
+
+```sh
+sh sign-15/reproduce_atlas192_mask_leak.sh
+NGCC_LONG=1 NGCC_SAGE_PYTHON=/path/to/python sh sign-15/reproduce_atlas192_mask_leak.sh
+```
+
+The ATLAS-192 script builds a temporary copy of the reference code with the specified mask decoder. It signs 40,000 chosen messages and correlates a weighted sum of the public boundary half-spaces with the true `s1` and with a control key. It also checks that honest signatures verify, that changed messages reject and that the true key satisfies every half-space. The default run takes about 30 seconds on 8 cores. `NGCC_LONG=1` adds the 240,000-signature linear-programming estimate. That run needs NumPy and SciPy and took 2 minutes 44 seconds on 28 cores. It does not attempt key recovery.
 
 ## sign-15-8: The specified ATLAS-512 challenge space is only 322.67 bits
 

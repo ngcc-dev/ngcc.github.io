@@ -80,3 +80,55 @@ python3 kex-04/reproduce_signature_seed_cap.py
 ```
 
 The script builds the submitted ML-DSA-87 implementation into a temporary directory and checks the seed-space and signature controls. It does not execute `2^256` trials.
+
+## kex-04-4: A reflected responder signature completes a self-session
+
+Severity: High
+Status: Confirmed
+Layer: Design
+Affected: DKEX-128, DKEX-256 and DKEX-512, all submitted trees (byte-identical `adkex_derand.c`), when a party responds to a session whose claimed initiator key is its own
+Discovery: Moderate
+Exploitation: One reflected message against the unmodified libraries gives a responder session with no matching initiator session whose key the attacker computes; no break is claimed for a model that excludes same-key self-sessions
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-17
+
+Both DKEX roles sign the same digest. Algorithm 16 (physical p. 18) has the responder compute `T ← H(LABEL_A, LABEL_B, pk_A, pk_B, M1, M2)` and send `σ_B ← Sign(sk_B, T)`. Algorithm 17 (p. 19) has the initiator sign that identical `T` as `m3 = σ_A`, and Algorithm 19 (p. 19) has the responder accept when `Verify(pk_A, T, σ_A)` succeeds. The code does the same: `adkex_derand.c:88` signs `T` for `σ_B`, `:117` signs the same `T` for `m3`, and `:146` verifies `m3` on that `T`. The labels are fixed constants concatenated in the same order in both roles (`adkex_derand.c:22–23`), so they do not separate the two roles' signed messages.
+
+When `pk_A = pk_B = pk_P`, the attacker generates its own DKE ephemeral `(M1, sk_e)`, sends `M1` to party P's responder with claimed peer P, receives `m2 = (M2, σ_B)`, and returns `σ_B` unchanged as `m3`. P verifies its own signature under `pk_P` against the same `T` and accepts. P never ran an initiator session, so the session has no matching session. P is uncorrupted, so the session is fresh under Definition 5.1 (p. 26). The attacker knows `sk_e` and `T`, so it computes `ss = DKE.DeriveSecret(M2, sk_e)` and the session key `KDF(ss‖T)`. The attacker uses no signing key of P.
+
+This contradicts §5.3 (p. 36), which states that the labels "ensure that the transcripts associated with the initiator and responder are distinct, even in the case pk_A = pk_B. As a result, the protocol remains resistant to self-reflection attacks." The no-matching argument on p. 29 (case 3) assumes that an honest signature on the same raw input implies a matching session of the opposite role; here the signature was made by the responder role of the session under test. Definition 5.1 does not say whether the owner and peer may coincide. That is why the rating is High rather than Critical. The precondition is a party that accepts a session whose claimed peer is itself, or two identities that share one signing key.
+
+### Reproducing
+
+```sh
+make -C kex-04
+python3 kex-04/reproduce_reflection_and_alias.py
+```
+
+The script runs the reflection against all three prebuilt DKEX libraries and requires the attacker's key to equal the responder's accepted key. Its controls require a bit-flipped reflected signature to be rejected, a reflection with `pk_A ≠ pk_B` to be rejected, and an honest exchange to agree; it also checks `adkex_derand.c:88` and `:117` when the sources are present. It runs in under a second and also prints the separate copied-key verdict for kex-04-5.
+
+## kex-04-5: Copied certified keys enable identity misbinding
+
+Severity: Medium
+Status: Confirmed
+Layer: Design
+Affected: DKEX-128, DKEX-256 and DKEX-512 when certification permits duplicate public keys
+Discovery: Trivial
+Exploitation: One duplicate-key registration and one relayed honest exchange against the unmodified libraries; no break of the distinct-key formal model
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-17
+
+DKEX binds the certified signing-key bytes, not the parties' identities. The transcript is `T = H(LABEL_A, LABEL_B, pk_A, pk_B, M1, M2)` (Algorithms 16 and 17, physical pp. 18–19; `adkex_derand.c:12–32`), both signatures are on `T`, and the key is `KDF(ss‖T)`. The specification says this transcript binding prevents unknown-key-share (p. 4) and that the key is "bound to both identities" (p. 22). However, `LABEL_A` and `LABEL_B` are fixed per-level constants (`ADKEX_parameters.h:27–42`), and no party name enters `T`.
+
+If Eve obtains a certificate for Bob's public key under her own name, Alice can initiate to "Eve" using that certificate. Eve relays `m1`, `m2` and `m3` unchanged between Alice and Bob, and Bob runs the responder with Alice as his peer. `σ_B` verifies under the copied key, `σ_A` verifies under Alice's key, and both parties derive the same key: Alice records the peer as Eve and Bob records the peer as Alice. Revealing Alice's key then gives Bob's key, even though the two sessions do not match.
+
+The formal setup states that each verification key "is certified and uniquely bound to identity P" (p. 28), which excludes this registration. The defect is therefore an identity-binding gap under a certification policy that admits duplicate keys, not a break inside the stated game.
+
+### Reproducing
+
+```sh
+make -C kex-04
+python3 kex-04/reproduce_reflection_and_alias.py
+```
+
+On all three prebuilt DKEX libraries, the script requires the relayed exchange to complete with equal keys while the two parties name different peers. As a control, it requires pass 3 to reject when Eve's certificate carries her own independently generated key. It runs in under a second and also prints the separate reflection verdict for kex-04-4.

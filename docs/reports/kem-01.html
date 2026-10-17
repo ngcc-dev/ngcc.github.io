@@ -30,7 +30,7 @@
 <tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
 <tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
-<tr><th>Affected</th><td>Reference implementation, all three parameter sets</td></tr>
+<tr><th>Affected</th><td>All three parameter sets in the reference, AVX2, NEON and AArch64 trees (the AVX2 trees were run; NEON and AArch64 by source)</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
 <tr><th>Exploitation</th><td>Trivial</td></tr>
 <tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
@@ -41,6 +41,7 @@
 <p>Changing a ciphertext bit frequently leaves the decapsulated shared secret unchanged. An exhaustive sweep of Aigis-enc1 found that 5,632 of 7,168 single-bit ciphertext changes return the original shared secret. The same defect was reproduced in the other two parameter sets.</p>
 <p><code>mkem_dec</code> writes the candidate valid secret to the output before checking the re-encrypted ciphertext. On failure, the intended constant-time replacement writes into the wrong buffer, leaving the already-returned candidate secret untouched. Rejection is therefore ineffective.</p>
 <p>An attacker given a challenge ciphertext and candidate challenge key can modify the ciphertext, decapsulate it through the allowed CCA oracle, and compare the result with the candidate key. Retention identifies the real encapsulated key and provides a direct IND-CCA distinguisher. This violates the claimed IND-CCA security at every submitted level.</p>
+<p>Extended on 2026-10-17: the optimized and additional implementations contain the same <code>mkem_dec</code> sequence. In <code>Optimized_Implementation/avx2/Aigis-Enc+-{I,II,III}/kem.c</code>, line 71 copies the candidate key to <code>ss</code>, and line 80 applies <code>cmov(buf, buf2, SEED_BYTES, fail)</code> to the local <code>buf</code>. The NEON and AArch64 trees under <code>Additional_Implementation/</code> have the same lines 71 and 80. Unmodified AVX2 builds returned the challenge key for 5,632 of 7,168, 11,108 of 13,312 and 24,439 of 28,672 single-bit ciphertext changes at the three levels. The exact counts depend on the key pair. Honest decapsulation matched, and a second encapsulation gave a different key. The NEON and AArch64 trees were checked by source only and were not run.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>Build the candidate and the reproducer, then run:</p>
@@ -49,6 +50,14 @@ tools/ngcc_attack kem-ct-flip kem-01/lib/libAigis-enc1.so
 </code></pre>
 <p><code>tools/reproduce.sh</code> runs this together with the other supported runtime
 witnesses and their controls. See <code>tools/README.md</code>.</p>
+<p>To check the AVX2 trees, run:</p>
+<pre><code class="language-sh">sh kem-01/reproduce_avx2_retention.sh
+</code></pre>
+<p>The script copies the three AVX2 trees into a temporary directory and rebuilds
+them from source, including the Keccak object that ships prebuilt. For each
+level it sweeps every single-bit ciphertext change, with an honest-decapsulation
+control and a second-encapsulation control, in about 30 seconds. It exits 77
+when gcc or AVX2/BMI2 support is missing.</p>
 <h2 class="issue-heading" id="kem-01-2-rejection-reads-a-secret-before-the-secret-key-object">kem-01-2: Rejection reads a secret before the secret-key object</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">

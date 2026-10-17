@@ -32,7 +32,7 @@
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Uniform-API reference wrappers, all nine parameter sets</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
-<tr><th>Exploitation</th><td>Integration-dependent; no complete UKS attack demonstrated</td></tr>
+<tr><th>Exploitation</th><td>One copied or byte-distinct re-encoded key registration and one relayed exchange give an unknown-key-share on all nine sets; no key recovery</td></tr>
 <tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
 <tr><th>Date</th><td>2026-09-21</td></tr>
 </table></div>
@@ -40,18 +40,23 @@
 <p>Every submitted <code>kat_test/KEX_AlgorithmInstance.c</code> allocates the initiator and responder identities as all-zero <code>SEED_BYTES</code> arrays. The wrappers pass those constants into responder processing and initiator key derivation for all nine profiles.</p>
 <p>The official <code>KEX_AlgorithmInstance.h</code> API exposes no identity argument, so the wrapper had no channel through which an application could supply the modeled identities. A sound integration could instead derive stable identities from the parties' public keys; hard-wiring both to zero removes the binding entirely.</p>
 <p>The core <code>ake.c</code> code hashes both identities into the session-key computations, and the specification's CK+ model distinguishes the session holder and peer identities <code>i</code> and <code>j</code>. The wrapper therefore collapses every deployment and every pair of parties onto one fixed identity pair instead of instantiating the protocol's modeled identity binding.</p>
-<p>This is a confirmed integration security defect. The transcript still contains cryptographic public keys, and no complete unknown-key-share or impersonation attack was demonstrated through the fixed API, so this report does not claim a proved AKE break beyond the missing identity binding.</p>
+<p>This is a confirmed integration security defect. Extended on 2026-10-17: a complete unknown-key-share now runs through the fixed API on all nine sets. GC-AKE derives <code>K = H(m_i, m_j, K~, i, j, M, M')</code> (specification Fig. 5, physical p. 19, and Algorithms 3–4, p. 20; <code>ake.c:29–48</code>). Here <code>M = (c_j, pk~)</code> and <code>M' = (c_i, ct~)</code> carry only ciphertexts and the ephemeral key. The transcript therefore does not contain the static public keys, which corrects the earlier statement that it did, and the zero identities are the only explicit peer binding. Suppose Eve registers a copy of Alice's public key, Alice initiates to Bob, and Eve tells Bob that the initiator is Eve. Bob encrypts <code>m_i</code> under the copied key, Alice decrypts it consistently, and both parties hash identical inputs. They hold the same key while Alice's peer is Bob and Bob's peer is Eve, which violates the holder and peer agreement of matching sessions (Definition 9, p. 13). With distinct identities in <code>i</code> and <code>j</code>, the two keys would differ.</p>
+<p>The copied key does not have to be byte-identical, because the public-key decoders do not range-check coefficients. At q = 1409, <code>decode16</code> (<code>pack.c:140–141</code>) decodes <code>(x1 + 1409)·1409 + x0 &lt; 2^21</code> as <code>x1 + 1409 ≡ x1</code>. At q = 769, the trailing <code>n mod 5</code> coefficients are read raw from 10 bits (<code>pack.c:329–350</code>), so <code>x + 769 &lt; 1024</code> also decodes to <code>x</code>. Every tested key at q = 1409 and about 50–80% of keys at q = 769 have such a byte-distinct alias, and the alias gives the same unknown-key-share. A certification authority that rejects only byte-identical duplicates therefore does not prevent the attack. The attack still needs a certificate on a copied or re-encoded key. It recovers no key, so the Medium rating is unchanged.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
-<p>Fetch the official archive and inspect the zero-initialized <code>idi</code> and <code>idj</code>
-arrays at lines 105–106 and 165–166 of
-<code>NEV-AKE-C1/kat_test/KEX_AlgorithmInstance.c</code>; the other eight reference
-wrappers have the same assignments. Compare the wrapper API header, which has
-no caller-supplied identity parameter, with the identity inputs to <code>ake.c</code>.</p>
-<pre><code class="language-sh">IDS=kex-07 ./download.sh
-./extract.sh kex-07
-rg -n 'unsigned char id[ij]\[SEED_BYTES\] = \{0\}' 'kex-07/Implementations and Test_Vectors/Implementations/Reference_Implementation' --glob KEX_AlgorithmInstance.c
+<p>The zero-initialized <code>idi</code> and <code>idj</code> arrays are at lines 105–106 and 165–166
+of <code>NEV-AKE-C1/kat_test/KEX_AlgorithmInstance.c</code>; the other eight reference
+wrappers have the same assignments.</p>
+<pre><code class="language-sh">make -C kex-07
+python3 kex-07/reproduce_uks.py
 </code></pre>
+<p>The script checks those wrapper lines and confirms that <code>ake_hash_h</code> has no
+public-key input. It then runs 20 seeded trials per set on all nine prebuilt
+libraries. Each trial runs a copied-key and a byte-distinct alias
+unknown-key-share and requires equal keys. Its controls require an honest
+exchange to agree, and an independently generated key or a non-congruent
+re-encoding of the same coefficient to give different keys. It runs in about
+a second; pass a larger trial count as the first argument.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

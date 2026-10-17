@@ -35,3 +35,32 @@ The local witness checks the published pair and a nonzero-base second preimage a
 ```sh
 make -C hash-19 reproduce
 ```
+
+## hash-19-2: Short-message outputs of MoFang-768 and MoFang-1024 are public byte permutations
+
+Severity: Medium
+Status: Confirmed
+Layer: Design
+Affected: MoFang-768 and MoFang-1024 specification; reference and optimized implementations
+Discovery: Moderate
+Exploitation: Trivial; for every message of at most 1151 bits, one digest determines 96 bytes of the other; no collision or preimage on a single profile
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-17
+
+MoFang-768 and MoFang-1024 both use the Hirose double-block-length compression function `CF(L, R, M)`, whose second cipher call encrypts `L ⊕ 1` under the same key `R ∥ M` as the first call on `L` (Algorithm 6, lines 1-5, physical PDF page 18). The instances differ only in their domain values in the last four bits of `L`, `1010` and `1011` (§2.6 and Table 7, page 16; Algorithm 6, lines 7 and 9). Both start with `R = 0`. In the submitted code these are `in_g[2][2] = 10` and `11` (reference `MoFang-768/CryptHash_AlgorithmInstance.c:264` and `MoFang-1024/CryptHash_AlgorithmInstance.c:263`; optimized `:279` and `:278`). The two domain values therefore differ in exactly the bit that the Hirose construction flips between its branches.
+
+A message of at most 1151 bits pads to a single 1152-bit block, so only the final call `CF(L ⊕ 2, R, M_1)` is made (Algorithm 6, line 15). The two instances make the same two cipher calls in the opposite order, so their output halves `L'` and `R'` are swapped. The 768-bit digest keeps the first 48 bytes of each half (line 16). Hence
+
+`MoFang-768(M) = MoFang-1024(M)[64:112] ∥ MoFang-1024(M)[0:48]`.
+
+For longer messages the first block leaves the two chaining states swapped, so the second block uses different keys (`R ∥ M_2`) and the relation stops.
+
+The two named functions are therefore not independent on short inputs, although the specification claims that MDPH achieves optimal indifferentiability from a random oracle (§3, page 20). This is a cross-profile relation of the kind a domain separation is meant to rule out. MoFang-768-XOF uses `1111` and is not related in this way. The relation does not by itself give a collision, preimage or second preimage on one profile.
+
+### Reproducing
+
+```sh
+python3 hash-19/reproduce_768_1024_relation.py
+```
+
+The script checks the identity through the submitted libraries for every length from 0 to 1151 bits on random and all-zero messages. It requires zero hits from 1152 to 1399 bits and no relation for the MoFang-768-XOF control, and checks the four cited domain constants in the source. It runs in under one second.

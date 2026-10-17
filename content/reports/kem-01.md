@@ -8,7 +8,7 @@ Archive: [Aigis-Enc+.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20C
 Severity: Critical
 Status: Confirmed
 Layer: Implementation
-Affected: Reference implementation, all three parameter sets
+Affected: All three parameter sets in the reference, AVX2, NEON and AArch64 trees (the AVX2 trees were run; NEON and AArch64 by source)
 Discovery: Trivial
 Exploitation: Trivial
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
@@ -22,6 +22,8 @@ Changing a ciphertext bit frequently leaves the decapsulated shared secret uncha
 
 An attacker given a challenge ciphertext and candidate challenge key can modify the ciphertext, decapsulate it through the allowed CCA oracle, and compare the result with the candidate key. Retention identifies the real encapsulated key and provides a direct IND-CCA distinguisher. This violates the claimed IND-CCA security at every submitted level.
 
+Extended on 2026-10-17: the optimized and additional implementations contain the same `mkem_dec` sequence. In `Optimized_Implementation/avx2/Aigis-Enc+-{I,II,III}/kem.c`, line 71 copies the candidate key to `ss`, and line 80 applies `cmov(buf, buf2, SEED_BYTES, fail)` to the local `buf`. The NEON and AArch64 trees under `Additional_Implementation/` have the same lines 71 and 80. Unmodified AVX2 builds returned the challenge key for 5,632 of 7,168, 11,108 of 13,312 and 24,439 of 28,672 single-bit ciphertext changes at the three levels. The exact counts depend on the key pair. Honest decapsulation matched, and a second encapsulation gave a different key. The NEON and AArch64 trees were checked by source only and were not run.
+
 ### Reproducing
 
 Build the candidate and the reproducer, then run:
@@ -33,6 +35,18 @@ tools/ngcc_attack kem-ct-flip kem-01/lib/libAigis-enc1.so
 
 `tools/reproduce.sh` runs this together with the other supported runtime
 witnesses and their controls. See `tools/README.md`.
+
+To check the AVX2 trees, run:
+
+```sh
+sh kem-01/reproduce_avx2_retention.sh
+```
+
+The script copies the three AVX2 trees into a temporary directory and rebuilds
+them from source, including the Keccak object that ships prebuilt. For each
+level it sweeps every single-bit ciphertext change, with an honest-decapsulation
+control and a second-encapsulation control, in about 30 seconds. It exits 77
+when gcc or AVX2/BMI2 support is missing.
 
 ## kem-01-2: Rejection reads a secret before the secret-key object
 

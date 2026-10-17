@@ -53,19 +53,23 @@
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>COMPASS-SIG-384 and COMPASS-SIG-512 reference and optimized implementations; the specification requires an n-bit seed</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
-<tr><th>Exploitation</th><td>Approximately 2^256 key-generation trials</td></tr>
+<tr><th>Exploitation</th><td>Approximately 2^256 key-generation trials, or 2^256 guesses of the signing key K tested against one signature; the true K was checked to give z - y = c*s1; inversion of c was not tested</td></tr>
 <tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
 <tr><th>Date</th><td>2026-09-21</td></tr>
 </table></div>
 
 <p>The COMPASS-SIG specification requires an <code>n</code>-bit KeyGen seed. The 384- and 512-bit implementations instead draw one 32-byte root and deterministically expand the complete key pair from it.</p>
 <p>The generated public-key support is at most <code>2^256</code>; exhaustive root enumeration and public-key matching recovers a target signing key in at most that many trials. This is below both implementations' classical claims and is an implementation/specification conformance break.</p>
+<p>Extended on 2026-10-17: signing has a second 256-bit bottleneck that does not depend on the key-generation root. Algorithm 2 (physical p. 12) takes a random seed for each signature and updates it as an <code>n</code>-bit value. The implementation instead signs deterministically: <code>COMPASS_SIG_RANDOMIZED_SIGNING</code> is not defined (<code>config.h:5</code>), so <code>rnd</code> is all zero (<code>sign.c:276–282</code>), and the mask seed is <code>rhoprime = H(K || rnd || mu)</code> with the 32-byte secret-key field <code>K</code> (<code>SEEDBYTES = 32</code>, <code>params.h:6</code>; <code>sign.c:122–128</code>). Given one signature and its message, a guess for <code>K</code> determines <code>rhoprime</code> and the masks <code>y</code>; recomputing <code>H(mu || HighBits(A y))</code> tests it against the signature's challenge, and a match gives <code>c * s1 = z - y</code> in about <code>2^256</code> guesses at COMPASS-SIG-384 and -512. Recovering <code>s1</code> itself then requires inverting the challenge <code>c</code> in the ring, which holds for most challenges but was not tested here. The bottleneck would remain after a fix that widens only the key-generation seed.</p>
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 security/design_parameter_audit.py --report-id sign-06-2
 </code></pre>
 <p>The <code>sign-06-2</code> check verifies the KeyGen seed on physical PDF pages 7 and 13
 and the submitted 384- and 512-bit constants.</p>
+<pre><code class="language-sh">sh sign-06/reproduce_signing_key_root.sh
+</code></pre>
+<p>The second script checks the 32-byte <code>K</code> and the deterministic signing configuration in the four 384/512 reference and optimized trees, then builds the archived sources in a temporary directory. At 384 and 512 it checks that a re-signature after reseeding the DRBG is identical, that the true <code>K</code> reproduces the signature's challenge and gives <code>z - y = c * s1</code>, and that a <code>K</code> with one bit flipped matches no mask. It takes about 3 seconds and needs <code>gcc</code>.</p>
 <h2 class="issue-heading" id="sign-06-3-rejected-signatures-leak-heap-memory-without-bound">sign-06-3: Rejected signatures leak heap memory without bound</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
@@ -144,6 +148,27 @@ python3 sign-06/reproduce_xof_replay.py
 python3 sign-06/reproduce_challenge_image.py
 </code></pre>
 <p>The first command builds the delivered sampler of every set against the archived <code>COMPASS-SIG-&lt;N&gt;</code> sources, derives 20,000 challenge hashes per set, and requires zero dead-zone coefficients, at most 64 negative signs and a large chi-square statistic at 384 and 512 with clean 128 and 256 controls; given a KAT file, it repeats the counts on the archived signatures' challenge hashes. The certificate checks the sampler's source in all eight copies and computes the image bounds.</p>
+<h2 class="issue-heading" id="sign-06-6-the-shake-wrapper-compresses-the-message-representative-input-to-256-bits">sign-06-6: The SHAKE wrapper compresses the message-representative input to 256 bits</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>COMPASS-SIG-256, COMPASS-SIG-384 and COMPASS-SIG-512 reference and optimized implementations (byte-identical <code>symmetric-shake.c</code>); COMPASS-SIG-128 has the same mechanism at its own level</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>A collision in a 24-bit-reduced build transferred a signature to a different message; the generic 2^128 full-width collision was not run</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-17</td></tr>
+</table></div>
+
+<p>COMPASS-SIG binds a message through the unsalted value <code>mu = H(pk || m)</code> (§2.3.2–2.3.3 and Algorithm 2, physical pp. 10–13). The implementation computes <code>mu = H(tr || pre || m)</code>, where <code>tr = H(pk)</code> is 64 bytes and the empty context prefix <code>pre</code> is 2 bytes (<code>sign.c:115–120</code>, verify <code>sign.c:367–374</code>). Its <code>shake256_*</code> functions are not SHAKE. They form a wrapper that buffers input in a 512-byte <code>absorb_buf</code> (<code>symmetric.h:9,12</code>). When that buffer is full and more input follows, <code>shake256_absorb</code> replaces its contents with the 32-byte <code>pseudoXOF(256, absorb_buf)</code> and continues absorbing (<code>symmetric-shake.c:151–167</code>, compression at lines 160–165; <code>shake128_absorb</code> at lines 57–74 does the same). The file is byte-identical in all eight per-set reference and optimized trees.</p>
+<p>For any message longer than 446 bytes, <code>mu</code> therefore depends on the message only through <code>D = pseudoXOF_256(tr || pre || m[0..446))</code> and the suffix <code>m[446..]</code>. An attacker can find two 446-byte prefixes with equal <code>D</code> in about <code>2^128</code> evaluations, append any common suffix, obtain a signature on one message, and present it for the other. The 256-bit width was chosen in the wrapper and does not depend on the strength of <code>pseudoXOF</code>. The cost is below the 256-, 384- and 512-bit classical claims (Table 1, physical p. 15) and the corresponding NGCC targets. COMPASS-SIG-128 has the same structure, but <code>2^128</code> is at its level.</p>
+<p>On the unmodified sources, the <code>mu</code> computed by the signer's own code for a 486-byte message equals <code>pseudoXOF(D || m[446..])</code> recomputed from the 256-bit intermediate, at all four levels. In a build that truncates only the absorb-compression output to 24 bits, a birthday search found two distinct 446-byte prefixes with equal <code>D</code> after a few thousand trials. A signature on the first message then verified on the second at COMPASS-SIG-256 and -512, with the signing and verification code otherwise unchanged. Flipping one suffix bit made verification fail, and the full-width build rejected the same message pair.</p>
+<h3 id="reproducing_5">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh sign-06/reproduce_absorb_compression.sh
+</code></pre>
+<p>The script checks that the wrapper is identical in all eight trees, builds the archived per-set sources in a temporary directory, and checks the 256-bit model of <code>mu</code> at all four levels, with a prefix-bit control. It then runs the 24-bit-reduced collision and signature transfer at 256 and 512, with a flipped-suffix control and a full-width control on the same pair. It takes about 8 seconds and needs <code>gcc</code>. The full-width <code>2^128</code> collision is not attempted.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

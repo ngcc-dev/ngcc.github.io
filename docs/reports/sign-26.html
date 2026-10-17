@@ -88,6 +88,28 @@ bits below its declared classical target.</p>
 <pre><code class="language-sh">python3 sign-26/reproduce_failed_split.py
 </code></pre>
 <p>The certificate checks the unchecked failure path in the submitted source. The process-state-dependent Level-3 acceptance was separately reproduced with a native build; the certificate does not itself replay that run.</p>
+<h2 class="issue-heading" id="sign-26-4-noncanonical-field-matrix-and-challenge-encodings-create-aliases">sign-26-4: Noncanonical field, matrix and challenge encodings create aliases</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>SQIsign2D-push Levels 1, 2, 3 and 4 (all four libraries; the decoders are byte-identical across levels)</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Byte-distinct signatures and public keys verify for the same message; no fresh-message forgery</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-17</td></tr>
+</table></div>
+
+<p>SQIsign2D-push claims EUF-CMA (§6.4, p. 39) and states that it cannot provide strong unforgeability (§6.4.3, p. 42). Its decoders nevertheless accept noncanonical encodings that a canonical parser would reject. <code>fp_decode</code> reduces an <code>FP_ENCODED_BYTES</code> integer modulo <code>p</code> without a range check (<code>gf/ref/gfx/fp.c:195–208</code>). It decodes the signature's auxiliary-curve coefficient and the public-key curve coefficient (<code>sqisign.c:307–313,349–378</code>). <code>signature_decode</code> also reduces the four basis-change matrix entries modulo <code>2^e</code> and the challenge modulo <code>3^f</code> instead of rejecting out-of-range values (<code>sqisign.c:358–373</code>). Adding <code>p</code> to a curve coordinate, or <code>3^f</code> to the challenge field, therefore leaves the decoded signature unchanged. The negated matrix <code>−M mod 2^e</code> also verifies.</p>
+<p>Native tests at all four levels accepted these aliases for the honest message: signature curve coordinate plus <code>p</code>, public-key coordinate plus <code>p</code>, challenge plus <code>3^f</code>, and <code>−M</code>. A changed message, a curve coordinate plus 1 in the signature and in the public key, the challenge plus 1 and a matrix entry plus 1 were all rejected. Appending 16 bytes was also rejected, because <code>sqisign_verify</code> checks the signature length (<code>sqisign.c:666</code>). Each verification ran as the first library call in its own fresh process, so stale verifier state does not explain the result.</p>
+<p>The aliases yield no signature on a new message. They do add byte-level malleability of public keys and of the encoding itself, beyond the response-isogeny malleability that the specification acknowledges. Under the EUF-CMA-only claim this is Medium. A canonical decoder should reject field elements <code>&gt;= p</code>, matrix entries <code>&gt;= 2^e</code> and challenges <code>&gt;= 3^f</code>, and should fix the sign convention of <code>M</code>.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-26/reproduce_encoding_aliases.py
+NGCC_LONG=1 python3 sign-26/reproduce_encoding_aliases.py
+</code></pre>
+<p>The default run covers Levels 1–3 in about 20 seconds. <code>NGCC_LONG=1</code> adds Level 4, whose key generation and signing take about a minute; the full run takes a little over 2 minutes. Every alias and control is verified in a fresh child process.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

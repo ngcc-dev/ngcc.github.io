@@ -45,7 +45,7 @@
 <h2 class="issue-heading" id="kem-03-2-the-rejection-key-does-not-bind-the-received-ciphertext">kem-03-2: The rejection key does not bind the received ciphertext</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
 <tr><th>Scope</th><td>design</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>All BAG-Loong parameter sets</td></tr>
@@ -56,6 +56,7 @@
 </table></div>
 
 <p>Algorithm 2 (§1.4) specifies <code>K(ξ, ct')</code> on rejection, where <code>ct'</code> is the re-encryption of the decrypted message rather than the received ciphertext. The code follows it (<code>loong_kem.c:229–246</code>). Distinct invalid ciphertexts with the same decryption therefore share a rejection key, exposing a plaintext-checking and decoding-failure oracle when keys are observable. This departs from standard Fujisaki–Okamoto rejection, so the stated IND-CCA2 proof does not establish the submitted construction's claim. A mauled challenge returns <code>K(ξ, c*)</code>, not the challenge key <code>K*</code>; the witness demonstrates rejection-key collisions, not challenge-key recovery or a full IND-CCA2 attack.</p>
+<p>Reclassified on 2026-10-17 from High to Medium. The current classification policy (<code>security/REPORT_CLASSIFICATION.md</code>, Medium) lists "a stable decryption-failure or reaction oracle without a completed recovery" as a Medium example. This finding demonstrates such an oracle. No BAG-Loong recovery of either the secret key or a challenge key that uses this oracle is documented. If such a recovery is shown, the rating should be raised again. The mechanism, the witness and the reproducer are unchanged.</p>
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 kem-03/reproduce_rejection_key.py kem-03/lib/libBAG-Loong-128.so

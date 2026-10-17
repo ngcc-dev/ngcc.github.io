@@ -30,28 +30,35 @@ python3 hash-04/reproduce_structure.py
 
 The exact-arithmetic certificate checks the generator and palindrome identities, the restricted image sizes, and a distribution-independent collision-probability bound. A separate internal check against compiles of the submitted reference C at both levels is recorded in `security/keccak_techniques/hash-04/h1_transpose_symmetry.py`; it is not part of the public command above. The full-size birthday search was not run.
 
-## hash-04-2: Projective positive-word collision lead for CHAMP-512
+## hash-04-2: Exact reduced-size subgroup collisions support a square-root full-size route
 
-Severity: Low
+Severity: Critical
 Status: Lead
 Layer: Design
-Affected: CHAMP-512 construction
+Affected: CHAMP-512 and CHAMP-1024 construction and all conforming implementations
 Discovery: Non-trivial
-Exploitation: Approximately 2^64 for CHAMP-512 (heuristic, not yet instantiated)
-Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Exploitation: Exact equal-length positive-word collisions over 16-28-bit safe primes; projected O(sqrt(p) log p) work with leading factors about 2^64 and 2^128, against 2^256 and 2^512 collision targets; no full-size collision run
+Credit: Mounir IDRASSI <mounir@amcrypto.jp>, with AI assistance (Moonshot AI kimi-k3 and OpenAI GPT-6 Astra, as disclosed in his package), for the explicit subgroup search and collision certificates; original projective lead by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-09-21
 
-Because `p = 7 mod 8`, 2 is a square. Scaling both generators by the inverse square root of 2 normalizes them into `SL2` without changing equal-length collisions. The exact generators satisfy `det(AB-BA)=2`, so they have no shared projective eigenline.
+Additional reference: [Mounir IDRASSI, *CHAMP: technical assessment of the submitted specification*, release 1.0.1](https://github.com/amcrypto-jp/champ-cryptanalysis/tree/ec52ce8cc917280f10f796f6989918e49d1efb9f) (commit `ec52ce8`), §2 and [collision certificates](https://github.com/amcrypto-jp/champ-cryptanalysis/blob/ec52ce8cc917280f10f796f6989918e49d1efb9f/data/collisions.json)
 
-The Mullan-Tsaban general-generator heuristic then suggests positive-word collisions in approximately `sqrt(p)` work, around `2^64` for CHAMP-512. Its proven special case does not directly apply because `det(A-B)=-5`, so this remains a probable attack lead rather than a demonstrated collision. It should not be described as confirmed until instantiated against the exact generators.
+Because `p = 7 mod 8`, 2 is a square. Scaling both generators by the inverse square root of 2 normalizes them into `SL2` without changing equal-length collisions. The exact generators satisfy `det(AB-BA)=2`, so they have no shared projective eigenline. The Mullan-Tsaban general-generator heuristic then suggests positive-word collisions in approximately `sqrt(p)` work. Its proven special case does not directly apply, because `det(A-B)=-5`.
+
+Strengthened on 2026-10-17: Mounir IDRASSI's public package instantiates this route against CHAMP's exact determinant-2 generators, without the `SL2` conversion. The integer matrix `P=[[1,2],[2,3]]` conjugates `A` to `[[-4,1],[2,-1]]` and `B` to `diag(-1,-2)`. A first birthday search over the `p+1` projective points matches `M(u)^-1 ∞ = M(v) ∞`, which yields a positive word with an upper-triangular product. A second birthday search on the field code `(a-d)/b` of upper-triangular products finds two that commute. Expanding them gives ordinary CHAMP bitstrings `r` and `s` with `rs ≠ sr` and `M(rs) = M(sr)`. These are equal-length collisions between positive words: the messages contain no inverse letters, and the determinant constraint holds automatically.
+
+The package supplies twelve complete certificates over safe primes of 16, 20, 24 and 28 bits, three per size. They use 1.65-3.68 times `sqrt(p)` total samples and messages of 1765-6883 bits. The package also includes an integer-product verifier that is independent of the search code. With `O(log p)`-symbol words at each stage, the projected cost is `O(sqrt(p) log p)` field work, about `sqrt(p)` stored records and messages of `O((log p)^2)` bits. The leading factors are about `2^64` for CHAMP-512 and `2^128` for CHAMP-1024, far below the [NGCC-required](https://www.niccs.org.cn/niccs/Notice/crlRB1ZY.pdf) 256- and 512-bit collision levels. The projection still depends on mixing and word-length assumptions that the reduced-size runs do not establish. No full-size collision was run, so this remains a Critical Lead rather than a Confirmed collision.
+
+The later CHAMP paper by Demin, Ovchinnikov and Shpilrain ([ePrint 2026/2515](https://eprint.iacr.org/2026/2515), also [arXiv 2610.04442](https://arxiv.org/abs/2610.04442)) cites Mullan and Tsaban but does not assess this search. It states that the infeasibility of same-length collisions is unproved (§6.1), and it discusses only the determinant-fiber birthday bound (§6.3).
 
 ### Reproducing
 
 ```sh
 python3 hash-04/reproduce_structure.py
+python3 hash-04/reproduce_subgroup_certificates.py
 ```
 
-The certificate checks `det(A)=det(B)=2`, `det(A-B)=-5`, and `det(AB-BA)=2`. It explicitly does not instantiate the heuristic positive-word collision search.
+The first certificate checks `det(A)=det(B)=2`, `det(A-B)=-5` and `det(AB-BA)=2`. The second script fetches the package at the pinned commit and checks pinned file hashes. It exits 77 when offline, or it uses a local copy named by `NGCC_CHAMP_PACKAGE`. It runs the package's own manifest and certificate verifiers, regenerates one seeded collision at each field size and checks that they replay the saved records. It then re-checks all sixteen pairs independently, using integer products of CHAMP's generators and the CHAMP finalization at the reduced prime; that model is first matched against the submitted CHAMP-512 and CHAMP-1024 libraries. Controls require that a one-bit mutation breaks each collision and that each pair stays distinct in both full-size libraries. The run takes about five seconds and does not attempt a full-size search.
 
 ## hash-04-3: Known-length preimages admit an exact square-root search
 

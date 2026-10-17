@@ -70,3 +70,30 @@ make -C hash-05 exploit
 ```
 
 The witness checks the collision and both controls through every submitted reference-library API and prints three `ATTACK hash-05-3 ... CONFIRMED` lines.
+
+## hash-05-4: Final-block counter cancellation lets 2 to 4 chosen queries predict unqueried continuations
+
+Severity: High
+Status: Confirmed
+Layer: Design
+Affected: uHash-512, uHash-768 and uHash-1024 specification; reference and optimized implementations
+Discovery: Moderate
+Exploitation: 2, 3 or 4 chosen queries under an unknown chunk-aligned prefix recover the full chaining value and predict unqueried continuations on all three submitted libraries; no collision, preimage or second preimage
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-17
+
+uHash separates the final iteration from the ordinary compression function only by XORing a branch counter into the key (Algorithm 1, line 14, physical PDF page 4; §1.2.5, page 6). The key is `u^2 ∥ … ∥ u^b ∥ M_l`, so the counter lands in the last byte of the final message chunk. The submitted code uses the counters `15, …, 14+b` for branches `j = 0, …, b−1`: `0x0f, 0x10` for uHash-512 (`CryptHash_AlgorithmInstance.c:578,586`), `0x0f, 0x10, 0x11` for uHash-768 (`:749-763`) and `0x0f … 0x12` for uHash-1024 (`:962-969`). Read literally, the specification's `j+15` with `j = 1, …, b` is one larger. Every counter is a nonzero byte under either indexing, so the attack below works for both. The optimized trees, which are Windows-only AVX2 code, implement the same final iteration separately in `CF_512_Final`, `CF_768_Final` and `CF_1024_Final` (`:980`, `:2861`, `:5062`).
+
+Padding is `M ∥ 1 ∥ 0*` (§1.2.1, page 4), so a valid final chunk can end in any nonzero byte. Let `Z` be any chunk ending in `00`, and let `Z_j` be `Z` with its last byte replaced by the counter `c_j` of branch `j`. In the final iteration on `Z_j`, branch `j`'s counter cancels the message byte, so digest branch `j` of `X ∥ Z_j` equals branch `j` of the ordinary compression `CF(u, Z)`.
+
+Taking branch `j` from the digest of query `X ∥ Z_j`, for `j = 0, …, b−1`, gives the complete chaining value after `X ∥ Z`. The attacker never needs the prefix `X`, which can be any secret whole number of chunks. Public evaluation of uBlock-1024 then gives `uHash(X ∥ Z ∥ W)` for any continuation `W`. This takes `b = 2, 3, 4` chosen queries and `b` cipher calls per final chunk, plus one query to check the prediction, and it succeeds with probability 1. Against a random oracle the success probability is about `2^-h`. For example, a secret-prefix MAC `uHash(K ∥ m)` with a chunk-aligned key is forgeable after `b` chosen-message queries.
+
+This contradicts the specification's length-extension argument (§3.3.1, page 22), which relies on the digest not being an intermediate chaining value. Here the intermediate chaining value is assembled from `b` related digests. It also contradicts the 256/384/512-bit indistinguishability claims (§3.1 and Table 9, page 11; simulator proof in §3.2.4, page 15). A simulator never sees `X`, so it cannot answer the distinguisher's `b` cipher queries consistently with the random oracle on the unqueried message. The NGCC call does not require length-extension resistance, so this is a High violation of an additional claimed property rather than a Critical break. The relation needs chosen queries that share the prefix. It does not extend a single known digest, and it gives no collision, preimage or second preimage.
+
+### Reproducing
+
+```sh
+python3 hash-05/reproduce_final_counter_extension.py
+```
+
+For each submitted reference library, the script first checks a pure-Python transcription of uBlock-1024 and the uHash mode against the library on six message lengths. It then hides a random one- or two-chunk prefix behind a query interface, recovers the chaining value from `b` queries, and predicts two unqueried continuations, one ending in a short tail and one with an extra full chunk. Controls run the same attack against an ideal random function and with a non-cancelling final byte `80`, and both must mispredict. The run takes under one second. The optimized trees were inspected but not built or run.

@@ -138,3 +138,28 @@ LATTICE_ESTIMATOR_PATH=/path/to/lattice-estimator \
 ```
 
 The first witness generates fresh submitted keys, requires every packed secret/error polynomial to be identical, checks a changed-seed control, and verifies the faulty seed length in all source copies. The Sage witness checks the estimator commit and reproduces the three independent Core-SVP estimates; it does not perform full-size key recovery.
+
+## sign-07-5: 32-bit message lengths give long-message forgeries
+
+Severity: Critical
+Status: Confirmed
+Layer: Implementation
+Affected: CS-128, CS-256 and CS-512 reference implementation (the optimized `cs.c` and `symmetric.h` are identical)
+Discovery: Trivial
+Exploitation: A signature on a 32-byte message verified on fresh messages of 2^29 + 32 and 2^32 + 32 bytes at all three levels; one signing query
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-17
+
+CS computes µ := H(H(pk), M) in signing and verification (§3.3, Algorithm 11 line 3, p. 20, and Algorithm 12 line 4, p. 21) and claims sUF-CMA security (§4.2, Theorem 4.1, p. 28). `CS_Sign` and `CS_Verify` take the message length as `int len` (`cs.c:65–68,151–154`), although the wrapper passes the 64-bit `m_len_bytes` (`SIG_AlgorithmInstance.c:46–61`). The hash is the macro `H(OUT, OUTLEN, IN, INLEN) pseudoXOF((OUTLEN) * 8, IN, (INLEN) * 8, OUT)` (`symmetric.h:10`), which multiplies the length by 8 in 32-bit `int`, and µ is computed as `H(mu, HBYTES, buf, HBYTES + len)` (`cs.c:86–89,173–177`). At `|M| = 2^29 + j` the bit length wraps to `8 · (HBYTES + j)`. At `|M| = 2^32 + j` the conversion to `int len` already truncates the message to `j` bytes. In both cases µ depends only on `H(pk) ∥ M[:j]`.
+
+A signature on any short message `m` therefore also verifies on every message of `2^29 + |m|` or `2^32 + |m|` bytes that begins with `m`. Both lengths are within the call's required message range of up to `2^63` bits ([Submission Requirements](https://www.niccs.org.cn/niccs/Notice/lDop1mav.pdf) §2(2)). This is a one-query fresh-message EUF-CMA forgery and also breaks the sUF-CMA claim.
+
+Natively, `lib/libCS-128/256/512.so` accepted the 32-byte message's signature on `m ∥ 0^(2^29)`, on `m ∥ 0xa5^(2^29)` and on `m ∥ 0^(2^32)`. With the first byte changed, those long messages were rejected, as were `m ∥ 'x'` and the `2^32 + j + 1`-byte message (which hashes `m ∥ 0x00`). For `2^28 ≤ HBYTES + |M| < 2^29` the bit length is negative and `pseudoXOF` fails. The verifier then uses µ = H(pk), but the signer leaves µ uninitialized, so honest signatures in that range fail to verify; no forgery is claimed there. The length must be carried as `size_t` and the bit length computed in 64 bits.
+
+### Reproducing
+
+```sh
+python3 sign-07/reproduce_message_length_overflow.py
+```
+
+The script signs a 32-byte message at each level and verifies the long forgeries, held in anonymous `mmap` buffers, and their controls, each in a fresh process. It takes under 10 seconds and needs about 1 GiB of memory.

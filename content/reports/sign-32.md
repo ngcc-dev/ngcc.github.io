@@ -66,12 +66,12 @@ tools/ngcc_attack sig-accept-all sign-32/lib/libUVW-128.so
 
 Its verdict records `all-zero signature CRASHED the verifier` instead of a normal rejection. UVW-512 did not reproduce this crash and is not included in this finding.
 
-## sign-32-3: Pair-correlated signatures recover an equivalent UVW-128 signing key
+## sign-32-3: Pair-correlated signatures recover an equivalent UVW-128 or UVW-256 signing key
 
 Severity: Critical
 Status: Confirmed
 Layer: Design
-Affected: UVW-128, -256, and -512 specify the forced-pair sampler; practical recovery was demonstrated only for UVW-128
+Affected: UVW-128, -256, and -512 specify the forced-pair sampler; practical recovery was demonstrated for UVW-128 and UVW-256
 Discovery: Non-trivial
 Exploitation: 300 known-message signatures; public recovery and one forgery in about one minute after collection
 Credit: Martin Feussner, with OpenAI Codex (Daybreak Blue) assistance
@@ -82,7 +82,9 @@ The UVW specification samples the support as paired nonzero coordinates in Algor
 
 From 300 known-message UVW-128 signatures, the released attack identifies enough high-confidence pairs to span a 1,600-dimensional public subspace; quotienting the 9,700 public columns by that subspace recovers all 4,850 hidden pairs and their relative scales. The recovered structure supplies an equivalent decoder and a fresh-message signature satisfying the intended weight-8,633 verification equation.
 
-We independently replayed the public evidence: the attack recomputed its candidates from 300 public error vectors, obtained rank 1,600, recovered 4,850/4,850 pairs, constructed the equivalent decoder, and produced the exact 1,244-byte API signature. The intended `uvw_verify` predicate accepted it and rejected the same signature on a changed message. The forged signature therefore passes the intended verification predicate. The released experiment covers one fixed UVW-128 key, so no key-averaged success probability or practical recovery claim for UVW-256 or UVW-512 is made.
+We independently replayed the public evidence: the attack recomputed its candidates from 300 public error vectors, obtained rank 1,600, recovered 4,850/4,850 pairs, constructed the equivalent decoder, and produced the exact 1,244-byte API signature. The intended `uvw_verify` predicate accepted it and rejected the same signature on a changed message. The forged signature therefore passes the intended verification predicate. The released experiment covers one fixed UVW-128 key, so no key-averaged success probability is claimed.
+
+Extended on 2026-10-17 (Markku-Juhani O. Saarinen, with AI assistance): an independent implementation of the attack recovers an equivalent UVW-256 key. Because the ratios `k1/(n/2)` and `k2/(n/2)` are the same in all three sets, every hidden pair has the same per-signature joint distribution. Over 16 UVW-256 signatures we measured both-zero, one-zero, equal and negated fractions of 0.044, 0.133, 0.352 and 0.472. A uniformly random weight-`w` vector gives 0.012, 0.196, 0.396 and 0.396. The weight `t` in DecZ is drawn uniformly from `[0,k2]` (`uvw.c:155`), and the signer rejects only on total weight (`uvw.c:340–343`). We generated a deterministic UVW-256 key and 308 honest signatures with a temporary build of the frozen reference code, in which only the matrix inverse used by key generation was replaced by an output-identical routine. A pair-likelihood score over the public full error vectors spanned the hidden pair subspace. Quotienting the 19,200 public columns then recovered all 9,600 hidden pairs with their relative scales. The resulting equivalent key signed a fresh message, which the intended `uvw_verify` accepted; the same signature on a changed message was rejected. Uniformly random weight-`w` vectors through the same scoring gave no true pair and did not span the subspace. The secret permutation was used only to score the result. This is one key, and signing dominated the 13-minute run on 28 cores. UVW-512 shows the same measured pair distribution in 28 signatures, but we did not attempt recovery for it.
 
 ### Reproducing
 
@@ -91,6 +93,13 @@ sign-32/reproduce_pair_leakage_forgery.sh
 ```
 
 The wrapper downloads and hash-checks Feussner's [package at commit `91f2ddf`](https://github.com/martinfeussner/NGCC-Signature-Audit/tree/91f2ddf0590a24ad39afc2ce2ee4f2627ec54726/UVW), compiles the public recovery against the frozen local UVW source, and recomputes the public candidate list. It checks the recovered rank and pair set, fresh-message acceptance, changed-message rejection and exact API encoding. The likelihood scores are floating-point values, so the wrapper intentionally does not require a byte-identical score table across NumPy and BLAS versions. It needs Python with NumPy; regenerating the 300 signatures is documented in the pinned package but is not part of this approximately one-minute replay.
+
+```sh
+sh sign-32/reproduce_uvw256_pair_recovery.sh
+NGCC_LONG=1 NGCC_SAGE_PYTHON=/path/to/python sh sign-32/reproduce_uvw256_pair_recovery.sh
+```
+
+By default, the UVW-256 script signs 16 messages with a temporary build of the frozen reference signer. It compares the hidden-pair joint distribution with the forced-pair model, and uses random coordinate pairs as the uniform control. This takes about 90 seconds on 8 cores, and the secret permutation is used only to locate the pairs. `NGCC_LONG=1` adds key generation, 308 signatures, public scoring, full pair recovery, equivalent-key construction and a fresh-message forgery checked with `uvw_verify`, together with the changed-message and uniform-vector controls. That run needs NumPy and took 13 minutes 21 seconds on 28 cores.
 
 ## sign-32-4: UVW-Sign resets the external DRBG for deterministic matrix expansion
 

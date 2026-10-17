@@ -119,21 +119,25 @@ instantiation.</p>
 <tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
 <tr><th>Scope</th><td>design</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
-<tr><th>Affected</th><td>Specified/standalone QingLuan-384 and QingLuan-512 key generation; QingLuan-512 counter-XOF in both core paths</td></tr>
+<tr><th>Affected</th><td>Specified/standalone QingLuan-384 and QingLuan-512 key generation; QingLuan-512 counter-XOF in both core paths, including the per-signature round seeds</td></tr>
 <tr><th>Discovery</th><td>Moderate</td></tr>
-<tr><th>Exploitation</th><td>At most 2^256 trials to enumerate a key-generation root or equivalent level-512 witness</td></tr>
+<tr><th>Exploitation</th><td>At most 2^256 trials to enumerate a key-generation root or equivalent level-512 witness; at level 512 the same bound applies to one signature, whose secret exponent vector was recovered from the true post-key state</td></tr>
 <tr><th>Credit</th><td>Martin Feussner, with OpenAI Codex (Daybreak Blue) assistance</td></tr>
 <tr><th>Date</th><td>2026-10-02</td></tr>
 </table></div>
 <p>Additional reference: <a href="https://github.com/martinfeussner/NGCC-Signature-Audit/tree/91f2ddf0590a24ad39afc2ce2ee4f2627ec54726/Qing-Luan">Feussner's pinned Qing Luan artifact</a></p>
 <p>The specification fixes the SM3 Hash-DRBG seed at 32 bytes (§1.5.4). In the standalone implementation, the 32-byte <code>V</code> determines <code>C</code>, the counter starts fixed, and the entire output schedule has at most <code>2^256</code> roots (<code>utils.c:28,45–46,83–88</code>). Enumerating those roots and comparing the public key recovers the corresponding signing seed, below the 384- and 512-bit claims. The API KAT adapter uses a different 55-byte state and is not covered by this first argument.</p>
 <p>Independently, QingLuan-512's counter-XOF evaluates <code>SM3(K || BE32(i))</code> with a 128-byte, block-aligned <code>K</code> (<code>hash.c:348–371</code>). One 256-bit SM3 chaining state after the two key blocks determines every output. The public <code>Seed_pk</code> blocks test a guessed state; a match reconstructs the preceding secret <code>Seed_e</code> blocks and an equivalent signing witness. The 96-byte QingLuan-384 key is not block-aligned, so this second argument does not apply there.</p>
+<p>Extended on 2026-10-17 (Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance): signing goes through the same bottleneck, independently of the key. Each signature derives all 1,018 round seeds as <code>SeedLeaves = XOF(0x03 || master_seed || salt)</code> (<code>src/sign.c:73–82</code>), and the built adapter squeezes them as <code>SM3(K || BE32(i))</code> with a 128-byte <code>K</code> (<code>api_pkc/hash_adapter.c:168–177</code>). The 842 opened round seeds published in the signature test a guessed 256-bit post-key state. A match regenerates the 176 unopened seeds, and adding each unopened round's published <code>v = eta - eta'</code> (<code>src/mpc.c:77</code>) to its expanded <code>eta'</code> gives the secret exponent vector <code>eta</code>. One signature therefore yields the signing secret in at most <code>2^256</code> trials. This route would remain after the key-generation root and DRBG state were widened.</p>
 <h3 id="reproducing_4">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 sign-20/reproduce_state_ceiling.py
 sign-20/reproduce_rollback.sh
 </code></pre>
 <p>The static certificate checks the DRBG and XOF dimensions. The hash-pinned replay independently implements SM3 compression and reconstructs eight level-512 output blocks from one post-key state.</p>
+<pre><code class="language-sh">sh sign-20/reproduce_signing_cv.sh
+</code></pre>
+<p>The signing-path witness builds the archived QingLuan-512 sources in a temporary directory and signs with the unmodified signer; <code>randombytes</code> is wrapped only to record the ground truth. It computes the post-key SM3 state and then discards the key and <code>master_seed</code>. From the state and the signature alone, it regenerates every round seed, matches all 842 opened seeds and recovers <code>eta</code> from an unopened round. A state with one flipped bit matches no opened seed. It takes about 1.5 seconds and needs <code>gcc</code>.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -32,7 +32,7 @@ Inspect `src/kem.c:214`, `src/brqc.c:277-288`, and `src/gabidulin.c:185-201` und
 Severity: Critical
 Status: Confirmed
 Layer: Implementation
-Affected: BRQC-128, BRQC-256, and BRQC-512 reference implementations
+Affected: BRQC-128, BRQC-256, and BRQC-512 reference and optimized implementations (the optimized trees by source)
 Discovery: Trivial
 Exploitation: One decapsulation query on a byte-distinct copy of the challenge ciphertext
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
@@ -43,6 +43,8 @@ Additional reference: [Xiong and Wang, ePrint 2026/2232, 2026-09-28 revision, §
 The `u` and `v` encodings end with 7, 5, or 1 unused bits per vector, which `rbc_vec_from_string` ignores (`rbc_vec.c:789-809`). Decapsulation compares the re-serialized decoded vectors rather than the received bytes (`kem.c:241-252`), and the key hashes those re-serialized vectors (`kem.c:265-266`). Changing any padding bit yields a different ciphertext with the same key. The submission claims IND-CCA2 security, which is trivially violated.
 
 The specification's Algorithm 9 (§3.4) compares the received `(u, v)` with the re-encryption as algebraic values; it defines no byte parser or rule for accepting alternative wire encodings. The submitted byte parser discards the padding bits before the check, so the implementation never compares the original ciphertext bytes.
+
+Extended on 2026-10-17: the optimized implementations of BRQC-128, BRQC-256, and BRQC-512 use the same parser and comparison. In `Implementations/Optimized_Implementation/BRQC-{128,256,512}/src/`, `kem.c` and `rbc-*/rbc_vec.c` are byte-identical to the reference files (`cmp`). The only other differences are the carry-less multiplication and squaring code in `rbc_elt.c` and the matching element-size macros in the `rbc_*.h` headers. `rbc_vec_from_string` and the helpers it calls (`rbc_elt_set_coefficient_vartime` and the zeroing routines) are unchanged. In BRQC-256 the optimized tree stores each field element in four 64-bit words instead of three (`RBC_163_ELT_SIZE`). The parser still copies the same bytes and sets the same coefficient bits, so it ignores the same padding bits. The optimized builds were checked by source only and were not run.
 
 ### Reproducing
 

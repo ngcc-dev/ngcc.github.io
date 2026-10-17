@@ -163,3 +163,28 @@ sh sign-22/reproduce_long_message.sh
 ```
 
 The wrapper builds the submitted reference 128- and 512-bit signers in temporary directories and checks accepted long-message transfers and the boundary controls. It does not test the optimized binaries, whose input-limit and zero-output logic was checked in source.
+
+## sign-22-7: The specified Gaussian width makes the proof vacuous within the required query budgets
+
+Severity: High
+Status: Proof gap
+Layer: Design
+Affected: Rhyme-128, -256, -384 and -512, SHAKE and SM3 profiles, reference and optimized implementations
+Discovery: Moderate
+Exploitation: None; the stated EUF-CMA and sEU-CMA bounds stop covering signing after about 2^32 to 2^34 queries, and no key recovery or forgery follows
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-17
+
+Theorem 4.3 (physical p. 41) proves statistical HVZK with simulation error `eps_zk = 4 eps + O(eps^2)` under the condition `sigma >= eta_eps(Z^{nD})`. Corollary 4 (EUF-CMA, p. 44), Corollary 5 (sEU-CMA, p. 45) and both parts of Theorem 4.6 (p. 46) then multiply the no-message or SIS/GA-MLWE advantage by `(1 + 4 eps)^{Q_S}`. The specification never states `eps`, but it follows from its own definitions. Section 2.7 (p. 11) uses `rho_s(x) = exp(-pi x^2 / s^2)`, and `Z^k` is self-dual, so the smallest `eps` with `eta_eps(Z^k) <= s` is exactly `theta(s)^k - 1`, where `theta(s) = sum_j exp(-pi s^2 j^2)`. Table 3 (p. 53) gives `sigma/sqrt(2 pi)` = 1.295870, 1.316036, 1.326374 and 1.335898, and the submitted `rhyme_cdt_g` tables realise exactly these standard deviations (`include/params_tables.h`, all SHAKE trees).
+
+With `k = nD` = 2,560, 5,120, 7,168 and 10,240, this gives `eps` = `2^-35.50`, `2^-36.00`, `2^-36.29` and `2^-36.50`; Lemma 2.2's upper bound gives the same values. The multiplier therefore exceeds 2 once `Q_S` passes `2^33.0` to `2^34.0`, and its natural logarithm is about `7.6e8` to `1.5e9` at the required `2^64` messages per key and `5e13` to `1e14` at the `2^80` evaluation ceiling. At those budgets the bounds are vacuous: the multiplier alone is far larger than `2^lambda`, so they say nothing about forgery probability. The SM3 trees ship narrower widths that are not in Table 3 (`sigma_base` = 1.277834, 1.298280, 1.310093 and 1.318410). They give `eps` = `2^-34.2` to `2^-35.2`, and coverage ends at `2^31.6` to `2^32.7` queries.
+
+This loss comes from Rhyme's chosen width, not from a generic reduction term. A width with `eps <= 2^-80` (for Rhyme-128, `sigma_base` about 1.80) would keep the multiplier below `1.0001` at `2^64` queries. The deviation the theorem bounds is real: the parity of the `D_{Z,2sigma}` masking noise has an exact per-coefficient bias of about `10^-15`. Its Kullback-Leibler divergence, however, is only about `2^-85` per signature, so even `2^80` signatures carry far less than one bit about the secret. A Rényi or KL argument could therefore plausibly restore a meaningful bound, but the submission contains none. The High rating records that the submitted security theorems cover fewer signing queries than the required per-key lifetime; no attack is claimed.
+
+### Reproducing
+
+```sh
+python3 sign-22/certify_smoothing_budget.py
+```
+
+The certificate checks all 16 `params_tables.h` copies against Table 3, confirms that each `X'` CDT has the stated standard deviation, evaluates `eps` and the `(1+4eps)^{Q_S}` multiplier at `2^34`, `2^64` and `2^80` queries, and checks the theorem wording in the PDF when `pdftotext` is installed. As controls, it requires the exact `eps` not to exceed the Lemma 2.2 bound and requires an `eps <= 2^-80` width to keep the multiplier below 2 at `2^64` queries. It runs in under a second and makes no statistical measurement of signatures.

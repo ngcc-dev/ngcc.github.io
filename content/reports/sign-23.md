@@ -53,3 +53,31 @@ The specification makes this choice itself: under the default NGCC mode its unif
 ```sh
 python3 security/rbg_protocol_dependency.py --report-id sign-23-2
 ```
+
+## sign-23-3: A 128-bit masking seed exposes the Shuttle-128 signing key within the query budget
+
+Severity: Critical
+Status: Probable
+Layer: Design
+Affected: SHUTTLE-128 specification and the Reference, Optimized and Additional implementations; SHUTTLE-256 and SHUTTLE-512 use 256- and 512-bit masking seeds and are not affected within the query budget
+Discovery: Moderate
+Exploitation: Exact `s1` recovery, public key completion and an accepted fresh-message forgery from publicly detected seed collisions and from a multi-target seed enumeration, both in a reduced-width (20- and 24-bit) seed build of the submitted code; the full 128-bit searches were not run
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-17
+
+Algorithm 2 line 10 (physical p. 17) derives the masking seed as `seed_y ← ExpandSigningSeeds(K || rnd || µ || IntegerToBytes(κ, 4), λ/8)`, which is 128 bits for SHUTTLE-128. All three SHUTTLE-128 trees squeeze `SEEDBYTES = LAMBDA/8 = 16` bytes (`params.h:125`, `polyvec.c:116–137`). `seed_y` alone determines the mask `y = SampleY(seed_y)` (`sign.c:461–468`) and the whole rejection-sampling coin stream `0x09 || seed_y` (`sign.c:516–526`). The rejection sampler adds `±s̃ · X^j` for each `j` in the challenge support (`irs.c:301–399`), so every transmitted response component is exactly `z_i = y′_i + s_i · e`, where `y′ = CompressY(y)`, `e` is a ±1 polynomial on the challenge support and `s_0 = 1`. The specification sizes the transcript hashes at 2λ bits for up to `2^{λ/2}` signing queries (p. 13) and allows `q_s < 2^80` signing queries (p. 70), but leaves the masking seed at λ bits.
+
+Two public routes recover the key. In the first, two accepted signatures on different messages share `seed_y`. Then `d_0 = z_0 − z′_0 = e − e′` and `d_i = z_i − z′_i = s_i · d_0` hold exactly in `Z[X]/(X^n+1)`, so `s_1 = d_i · d_0^{-1} mod q` from a single pair. The error term `e′ = b − a_gen − A_gen · s_1` then follows from the public key, which gives an equivalent signing key. Such pairs are found by sorting the verifier's recomputed commitment `EncodeCom(w_h, w_0′)` (`sign.c:764`), because equal `y` gives equal `w`. In the second route, the function `T(pk, seed) = EncodeCom(w_h, w_0)` is computed from the public key and a candidate seed alone. It equals the verifier's commitment for the signature made with that seed, so each guess is tested against all Q signatures with one table lookup. After about `2^128/Q` guesses one seed is found, and `z_1 − y′_1 = (c′, s_1 · c′)` gives `s_1` exactly from that one signature.
+
+Among Q signatures there are about `Q²/2^129` seed collisions, and a conservative 0.91 of them are usable, because `d_0` must be invertible mod q. This gives about 0.37 attack success at the mandatory `2^64` signatures per key, 50% success at about `2^64.30` signatures and about `2^30.9` usable pairs at the `2^80` signing-query budget. The commitment sort costs about `2^64` time and memory. The multi-target route has the same scale: with `2^64` signatures it needs about `2^64` seed guesses. The result is equivalent-key recovery and universal forgery against SHUTTLE-128 below its 128-bit EUF-CMA target. Deterministic signing (`rnd = 0`) is affected in the same way, because both routes act on the seed output.
+
+The experiments change only the width of `seed_y`. With 20 bits kept, 4,096 ordinary signatures gave 9 public commitment matches, and all 9 completed keys whose `s1` equalled the oracle key. A fresh-message signature made with the equivalent key was accepted by the unmodified verifier. Enumerating the 20-bit seed space against 256 signatures hit a signature after 2,623 guesses (about 4,096 expected) and recovered the exact `s1`, which also completed and forged. At the shipped 128-bit width, the true seed of each signature, regenerated with `K`, hits its own table entry, a seed with one bit changed misses every entry, and `s1` is recovered exactly. The shipped-width build gives no commitment match on the same key and DRBG stream, a non-matching pair fails completion, and the changed-message controls reject. The `2^64`-scale searches were not run, so the status is Probable.
+
+### Reproducing
+
+```sh
+sh sign-23/reproduce_seed_collision.sh
+NGCC_LONG=1 sh sign-23/reproduce_seed_collision.sh
+```
+
+The script copies the SHUTTLE-128 reference tree to a temporary directory, inserts the seed truncation directly after `seed_y` is squeezed, and builds a 20-bit and an unmodified variant. It runs the collision route on 4,096 signatures, the multi-target enumeration on 256 signatures and the full-width table identity, with the full-width, non-matching-pair, flipped-seed and changed-message controls (about 30 seconds). `NGCC_LONG=1` uses 24 bits and 16,384 signatures.

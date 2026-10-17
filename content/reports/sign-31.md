@@ -76,7 +76,7 @@ An attacker can choose the message length and exhaust a constrained verifier's a
 
 ## sign-31-4: Declared public-key and signature lengths are ignored
 
-Severity: Low
+Severity: Medium
 Status: Confirmed
 Layer: Implementation
 Affected: All three reference and optimized TSUOV implementations
@@ -86,7 +86,9 @@ Credit: Zhenyu Xiong and Mingsheng Wang, with GLM-5.3 assistance
 Date: 2026-10-05
 Original source: [Xiong and Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/FQMMQX3BFR473NUCIPK5IIFXKO3X6QKO/) and [pinned verification package](https://github.com/acprk/ngcc-round1-cryptanalysis/tree/6756633dfa096e729aeeb4dfce281ad5f345091f/tsuov-impl-failopen)
 
-`sig_verify` discards `pk_len_bytes` and `sn_len_bytes` and parses fixed-size fields (`SIG_AlgorithmInstance.c:100–118`). Short buffers therefore cause out-of-bounds reads; longer signatures with trailing bytes are accepted. AddressSanitizer reproduced the reads across all parameter sets and both implementation families. No memory disclosure, write, or control-flow effect follows from this length defect alone, so it is Low.
+`sig_verify` discards `pk_len_bytes` and `sn_len_bytes` and parses fixed-size fields (`SIG_AlgorithmInstance.c:100–118`). Short buffers therefore cause out-of-bounds reads; longer signatures with trailing bytes are accepted. AddressSanitizer reproduced the reads across all parameter sets and both implementation families. No memory disclosure, write, or control-flow effect follows from this length defect alone.
+
+Reclassified on 2026-10-17 from Low to Medium. Appending arbitrary bytes to a valid signature yields distinct accepted signatures on the same message, an encoding alias rated Medium under an EUF-CMA-only claim. The short-buffer reads alone would remain Low.
 
 ### Reproducing
 

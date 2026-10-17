@@ -80,3 +80,29 @@ python3 sign-26/reproduce_failed_split.py
 ```
 
 The certificate checks the unchecked failure path in the submitted source. The process-state-dependent Level-3 acceptance was separately reproduced with a native build; the certificate does not itself replay that run.
+
+## sign-26-4: Noncanonical field, matrix and challenge encodings create aliases
+
+Severity: Medium
+Status: Confirmed
+Layer: Implementation
+Affected: SQIsign2D-push Levels 1, 2, 3 and 4 (all four libraries; the decoders are byte-identical across levels)
+Discovery: Trivial
+Exploitation: Byte-distinct signatures and public keys verify for the same message; no fresh-message forgery
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-17
+
+SQIsign2D-push claims EUF-CMA (§6.4, p. 39) and states that it cannot provide strong unforgeability (§6.4.3, p. 42). Its decoders nevertheless accept noncanonical encodings that a canonical parser would reject. `fp_decode` reduces an `FP_ENCODED_BYTES` integer modulo `p` without a range check (`gf/ref/gfx/fp.c:195–208`). It decodes the signature's auxiliary-curve coefficient and the public-key curve coefficient (`sqisign.c:307–313,349–378`). `signature_decode` also reduces the four basis-change matrix entries modulo `2^e` and the challenge modulo `3^f` instead of rejecting out-of-range values (`sqisign.c:358–373`). Adding `p` to a curve coordinate, or `3^f` to the challenge field, therefore leaves the decoded signature unchanged. The negated matrix `−M mod 2^e` also verifies.
+
+Native tests at all four levels accepted these aliases for the honest message: signature curve coordinate plus `p`, public-key coordinate plus `p`, challenge plus `3^f`, and `−M`. A changed message, a curve coordinate plus 1 in the signature and in the public key, the challenge plus 1 and a matrix entry plus 1 were all rejected. Appending 16 bytes was also rejected, because `sqisign_verify` checks the signature length (`sqisign.c:666`). Each verification ran as the first library call in its own fresh process, so stale verifier state does not explain the result.
+
+The aliases yield no signature on a new message. They do add byte-level malleability of public keys and of the encoding itself, beyond the response-isogeny malleability that the specification acknowledges. Under the EUF-CMA-only claim this is Medium. A canonical decoder should reject field elements `>= p`, matrix entries `>= 2^e` and challenges `>= 3^f`, and should fix the sign convention of `M`.
+
+### Reproducing
+
+```sh
+python3 sign-26/reproduce_encoding_aliases.py
+NGCC_LONG=1 python3 sign-26/reproduce_encoding_aliases.py
+```
+
+The default run covers Levels 1–3 in about 20 seconds. `NGCC_LONG=1` adds Level 4, whose key generation and signing take about a minute; the full run takes a little over 2 minutes. Every alias and control is verified in a fresh child process.

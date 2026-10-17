@@ -64,3 +64,29 @@ python3 kex-09/reproduce_reencrypt_sampler.py
 ```
 
 The compact witness checks the decrypted-message-to-sampler dataflow and early exit in all four archived trees. It deliberately does not claim to reproduce a stable timing classifier or key recovery on every host.
+
+## kex-09-3: Role labels instead of identities permit a copied-key unknown-key-share
+
+Severity: Medium
+Status: Confirmed
+Layer: Design
+Affected: TriQ-KEX-128, TriQ-KEX-256, TriQ-KEX-384 and TriQ-KEX-512 when certification permits duplicate public keys
+Discovery: Trivial
+Exploitation: One duplicate-key registration and one relayed honest exchange against the unmodified libraries; no break of the distinct-key formal model
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-17
+
+TriQ-KEX instantiates the FSXY transformation and targets CK+ security (specification physical pp. 1 and 3). In FSXY, the session transcript begins with the initiator and responder party identities. TriQ instead defines `U_A` and `U_B` as "role labels for the initiator and responder" (p. 4), sets `ST = (U_A, U_B, ek_A, ek_B, CT_A, ek_T, CT_B, CT_T)` (p. 8), and implements the labels as the fixed four-byte strings `ID_A` and `ID_B` (p. 13). Every reference and optimized wrapper does the same: `KEX_AlgorithmInstance.c:62–63` defines the constants, and the `APPEND_ST` block (lines 271–279 at TriQ-KEX-128) hashes them ahead of the key and ciphertext bytes. A party's identity therefore enters the session key only through its public-key bytes.
+
+If Eve obtains a certificate for Bob's key under her own name, Alice can initiate to "Eve" and Eve can relay both messages unchanged to Bob, who believes his peer is Alice. Both parties compute the same `ST` and the same key, while Alice records the peer as Eve and Bob records the peer as Alice. The mirror attack also works: Eve registers Alice's key, and Bob believes he is talking to Eve. Revealing one session's key gives the other session's key, even though the sessions do not match.
+
+The attack requires a certificate for a duplicated key. A deployment that rejects duplicate registrations, or that binds certified identities into `ST`, is not affected by this particular attack.
+
+### Reproducing
+
+```sh
+make -C kex-09
+python3 kex-09/reproduce_copied_key_uks.py
+```
+
+On all four prebuilt libraries and with two seeds each, the script runs both copied-key directions. It requires the role labels to appear on the wire and the two keys to be equal. Its controls require an honest exchange to agree and an independently generated key for Eve to produce different keys. When the sources are present, it also checks the `ST` layout. It runs in about 8 seconds.

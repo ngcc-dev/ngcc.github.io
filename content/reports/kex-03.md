@@ -8,7 +8,7 @@ Archive: [CreTAKE.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Cryp
 Severity: Critical
 Status: Confirmed
 Layer: Implementation
-Affected: Reference implementation, 23 source files including all six S2S instances
+Affected: Reference implementation, 23 source files: all six S2S, six K2S and six S2K instances and the five generic K2K instances (K2K-PLAC128, K2K-PLAC256, K2K-ZEN128, K2K-ZEN256, K2K-ZEN512)
 Discovery: Trivial
 Exploitation: 2^64 offline
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
@@ -41,6 +41,14 @@ rg -n -F 'buf, SEED_BYTES, buf2' kex-03/Implementations/Reference_Implementation
 ```
 
 The same defect reduces the claimed weak forward secrecy of K2S and S2K instances to `2^64` after compromise of the complementary long-term KEM key. This is an implementation error, not a cryptanalytic attack on the specified primitives.
+
+Extended on 2026-10-17: five of the 23 files are the generic K2K double-key encapsulation `twokem_enc` (`CreTAKE128/CreTAKE-K2K-PLAC128/twokem.c:87–90`, `CreTAKE256/CreTAKE-K2K-PLAC256/twokem.c:84–87`, `CreTAKE128/CreTAKE-K2K-ZEN128/twokem.c:85–88`, `CreTAKE256/CreTAKE-K2K-ZEN256/twokem.c:81–84`, `CreTAKE512/CreTAKE-K2K-ZEN512/twokem.c:81–84`). There, the 64 absorbed bits determine the second-component message `m` and its encryption coins under the initiator's ephemeral `p̃k`, and `m` enters the double-key KEM secret `k_i = H(pk_i‖K1‖m)` (ZEN128 `twokem.c:96–100`). K2K claims weak forward secrecy (Figure 3, Theorem 3 and §4.2; physical pp. 10, 25 and 18). Consider an honestly matched K2K session whose two long-term keys are corrupted afterwards. The attacker decapsulates `c1` with `sk_i` to obtain `K1` and decapsulates `c_j` with `sk_j` to obtain `k_j`. It then enumerates the 2^64 inputs, identifies the correct one by re-encrypting the second component under the public `p̃k`, and computes the session key without the ephemeral secret key. K2K weak forward secrecy is therefore 2^64 at every claimed level. The K2K-PLAC512 and K2K-PLAC512Star encapsulations do not contain this call.
+
+```sh
+sh kex-03/reproduce_k2k_wpfs.sh
+```
+
+The K2K reproducer checks the five `twokem.c` call sites. It then builds unmodified K2K-ZEN128 and K2K-ZEN512 objects in a temporary copy and shows that changing bytes 8–63 of the 64-byte draw leaves the transcript and the key unchanged. After both long-term keys are corrupted, a reduced 2^16 search recovers the session key, with the other 48 of the 64 bits supplied as a hint. Flipping one hinted bit gives no match. It runs in about 25 seconds and does not perform the full 2^64 search.
 
 ### Proposed fixes
 
@@ -245,3 +253,56 @@ python3 kex-03/reproduce_proof_bound.py
 ```
 
 The arithmetic certificate checks the minimal positive-query terms; the theorem text and key-width instantiations must be checked in the frozen specification and implementation.
+
+## kex-03-9: The embedded BiT-128 signing oracle enables credential recovery and impersonation
+
+Severity: Critical
+Status: Confirmed
+Layer: Design
+Affected: CreTAKE-K2S-PLAC128-BiT128 (end to end); K2S-ZEN128-BiT128, S2K-BiT128-PLAC128, S2K-BiT128-ZEN128, S2S-BiT128-ePLAC128 and S2S-BiT128-eZEN128 by source (same signer, signatures exposed by the protocol); no recovery cost established for the BiT-256 and BiT-512 instances
+Discovery: Moderate
+Exploitation: 250,000 signatures harvested through the K2S responder API, an equivalent BiT-128 key recovered from public data, and 5/5 fresh responder impersonations in which the attacker knows the honest initiator's session key; S2K and S2S impersonations were not run
+Credit: Martin Feussner, with OpenAI Codex (Daybreak Blue) assistance (BiT-128 shared-sign recovery method and code); CreTAKE signing-oracle application by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-17
+
+CreTAKE instantiates its signature credentials with BiT (§3.2.2 and Figure 12, physical pp. 14–15), and its K2S, S2K and S2S security theorems assume that BiT is EUF-CMA (Theorems 1, 2 and 4, physical pp. 21, 23 and 26). The embedded BiT-128 signer draws one bit `b` per signature and negates the whole challenge with it. It then adds the same `±c·s` to every response row, while rejection sampling is applied coefficient by coefficient (`Common/primitives/sig/BiT-128/sign.c:132–149`). The `z0` row has the constant secret 1, so it reveals the shared sign statistically. Weighting the other rows by that posterior and regressing on `c` converges to the secret `s`. [Martin Feussner's public attack](https://github.com/martinfeussner/NGCC-Signature-Audit/tree/91f2ddf0590a24ad39afc2ce2ee4f2627ec54726/BiT) applies this to recover an equivalent BiT-128 signing key from about 200,000 to 250,000 signatures.
+
+CreTAKE supplies those signatures. The K2S responder `kex_generate_pass2_msg_b` (`CreTAKE128/CreTAKE-K2S-PLAC128-BiT128/KEX_AlgorithmInstance.c:129–177`) accepts any first message as the ephemeral key `p̃k`, even random bytes, and accepts any claimed initiator key. It encrypts to them and signs `p̃k‖c̃‖c_i` with its long-term BiT key (`:169`; ZEN variant `:161`). No step authenticates the initiator, and the responder keeps no replay state, so every query returns a fresh signature. The other BiT-128 frameworks expose the same signer in different ways. S2S responders re-sign `p̃k‖c̃` each time an observed first message is replayed (`CreTAKE-S2S-BiT128-eZEN128/KEX_AlgorithmInstance.c:163`). S2K initiators sign `p̃k‖c_j` in every session (`CreTAKE-S2K-BiT128-ZEN128/KEX_AlgorithmInstance.c:131`), so their signatures can be collected passively.
+
+With an equivalent key, the attacker impersonates the K2S responder to an honest initiator. It answers with its own `c̃` under the initiator's `p̃k`, an encapsulation `c_i` to the initiator's long-term KEM key, and a valid signature, so it knows `k̃` and `k_i` and hence the session key. This breaks a fresh initiator session in the IND-AA game without a Corrupt query on the responder, contrary to Theorem 1. In the executed run, 250,000 signatures were harvested through the unmodified K2S-PLAC128-BiT128 library. The rounded candidate failed the compressed public-key relation, and Feussner's public low-confidence search over 24 bits completed an equivalent key that differs from the real one. The initiator then accepted all five impersonated sessions with the attacker's key. A fresh, unrelated BiT key in the same position was rejected.
+
+One key was run end to end. Feussner reports that three of four keys succeed at 200,000 signatures and the fourth at 250,000. The other five BiT-128 instances use the same signer, but their impersonations (S2S in either role, S2K initiator) were not executed. The BiT-256 and BiT-512 signers have the same shared-sign structure, but no recovery cost is established for them, so they are not listed as affected.
+
+### Reproducing
+
+```sh
+sh kex-03/reproduce_bit_oracle_recovery.sh
+NGCC_LONG=1 sh kex-03/reproduce_bit_oracle_recovery.sh
+```
+
+Both modes fetch Feussner's `bit_global_sign.c` at commit `91f2ddf` and hash-check it. The file is not redistributed, and the script exits with 77 when it cannot be fetched. Both modes then compile it, with only `main` renamed, against CreTAKE's own BiT-128 source in a temporary directory. All signatures come from `kex_generate_pass2_msg_b` in the prebuilt library. The default run takes about 35 seconds. It checks that 20 random first messages are signed with valid and distinct signatures, while changed messages reject. It then harvests 30,000 signatures and measures the shared-sign leak against the true key, used only for evaluation. As controls, it repeats the measurement with an unrelated key and with each signature's sign posterior replaced by the previous signature's. `NGCC_LONG=1` harvests 250,000 signatures and recovers the key from public data only. It then requires 5/5 impersonated sessions and rejection of the unrelated-key control, in about 4.5 minutes.
+
+## kex-03-10: A copied certified key causes identity misbinding
+
+Severity: Medium
+Status: Confirmed
+Layer: Design
+Affected: All 25 CreTAKE instances (K2K, K2S, S2K and S2S at every level), reference implementation, when certification permits duplicate public keys
+Discovery: Trivial
+Exploitation: One duplicate key registration and one relayed exchange on every instance; no break of the distinct-key formal model
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-17
+
+CreTAKE states that each framework must bind its hidden contribution "to the identities and complete public transcript", and that the session key "is derived from the identities, public transcript, and all KEM-derived secrets" (§4.2, physical p. 18). In the code, the only identity material is the pair of long-term public keys. For example, `derive_session_key` hashes `p̃k‖pk_I‖pk_R‖c̃‖c_i‖k̃‖k_i` (`CreTAKE128/CreTAKE-K2S-PLAC128-BiT128/KEX_AlgorithmInstance.c:27–48`), and the other frameworks follow the same pattern. No signed string and no KDF input contains a party name. Definition 1 (physical p. 5) has `KG` take a party identity, but that identity never reaches `Init` or `Der`.
+
+Suppose a registration authority certifies Bob's public key under the name Eve as well. An initiator that addresses Eve then runs the exchange on Bob's key, Bob answers, and both parties accept with equal session keys. The initiator's session names Eve as the peer, while the key is actually shared with Bob. Eve needs no secret and sends no message. Bob's authenticated traffic can therefore be attributed to Eve, which is an unknown-key-share.
+
+The attack needs duplicate-key certification, which lies outside the distinct-key setting of CreTAKE's IND-AA and IND-StAA proofs. It is an identity-binding gap, not a key-recovery attack inside the model. Binding the certified identity strings into the session-key derivation removes it, and so does a registration authority that enforces key uniqueness.
+
+### Reproducing
+
+```sh
+python3 kex-03/reproduce_copied_key_alias.py
+```
+
+The script uses the prebuilt `kex-03/lib/libCreTAKE-*.so` on all 25 instances. On each one it checks three things: an honest exchange agrees, the exchange addressed to the duplicate "Eve" certificate agrees with Bob, and a control that substitutes an independently generated responder key fails to agree. It runs in under a second.

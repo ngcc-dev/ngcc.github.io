@@ -152,6 +152,48 @@ term in the submitted EUF-CMA bound.</p>
 VDOO_FULL=1 sign-33/reproduce_public_structural_forgery.sh
 </code></pre>
 <p>The default mode downloads and hash-checks Feussner's <a href="https://github.com/martinfeussner/NGCC-Signature-Audit/tree/91f2ddf0590a24ad39afc2ce2ee4f2627ec54726/VDOO">package at commit <code>91f2ddf</code></a>, replays the saved public-key-only forgery, and requires changed-message and changed-signature controls to reject. <code>VDOO_FULL=1</code> repeats the uncached public-map recovery through the public-key-only <code>--pk</code> path and forges a different message (about 12 minutes on the reporter's machine; 157 seconds on the validation host). Both modes require Python with NumPy.</p>
+<h2 class="issue-heading" id="sign-33-7-moving-the-messagesignature-boundary-forges-new-messages">sign-33-7: Moving the message/signature boundary forges new messages</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>VDOO-128, -256 and -512 reference and optimized implementations (all six wrapper files are byte-identical)</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>From one honest signature, a shorter prefix message and a longer extended message that were never signed verified at all three levels; no key material or cryptanalysis is needed</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-17</td></tr>
+</table></div>
+
+<p>The specification defines verification on a message and a fixed-format signature σ = (s, salt) (§4.6, Algorithm 5, pp. 9–10). The detached NGCC wrapper <code>sig_verify</code> never checks <code>sn_len_bytes</code>. It copies <code>m || sn</code> into one buffer and passes the concatenation to <code>crypto_sign_open</code> (<code>SIG_AlgorithmInstance.c:61–83</code>). That function always treats the last <code>CRYPTO_BYTES</code> as the signature and everything before them as the message (<code>api.c:39–48</code>). The boundary that the caller supplied is therefore discarded: any split of the same byte string <code>m || sn</code> into a message and a "signature" verifies.</p>
+<p>Given a valid signature <code>sn</code> on <code>m</code>, an attacker chooses any nonempty suffix <code>x</code> of <code>m</code>, writes <code>m = m' || x</code>, and presents the fresh message <code>m'</code> with the detached signature <code>x || sn</code>. In the other direction, the extended message <code>m || sn[:k]</code> verifies with the signature <code>sn[k:]</code>. In both cases the wrapper rebuilds exactly the honestly signed <code>m || sn</code>. From a signature on "Transfer 1000 CNY to account 42", the unsigned message "Transfer 100" verified at VDOO-128, -256 and -512. This is a one-query existential forgery on a message that was never signed, which breaks the EUF-CMA claim (§5.7, p. 19).</p>
+<p>The defect is in the API glue, not in the VDOO equations. The verifier must reject any <code>sn_len_bytes != CRYPTO_BYTES</code> and verify the caller's message and signature separately rather than re-splitting their concatenation.</p>
+<h3 id="reproducing_6">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-33/reproduce_boundary_forgery.py
+</code></pre>
+<p>At each level the script signs one message, then verifies two prefix forgeries and one extension forgery, each as the first library call in a fresh process. Controls (the honest signature, a changed message, the prefix with the unmodified signature, and each forged signature with one bit flipped) must give the expected verdicts. It takes about 80 seconds, mostly VDOO-512 key generation.</p>
+<h2 class="issue-heading" id="sign-33-8-four-unused-response-bits-in-vdoo-128-are-unauthenticated">sign-33-8: Four unused response bits in VDOO-128 are unauthenticated</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>VDOO-128 reference and optimized implementations; VDOO-256 and -512 store one GF(256) element per byte and have no padding</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>All 16 values of the high nibble of signature byte 68 verify for the same message; no fresh-message forgery</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-17</td></tr>
+</table></div>
+
+<p>VDOO-128 packs its <code>N = 137</code> GF(16) response elements two per byte into <code>VDOO_N_BYTE = 69</code> bytes, followed by the 16-byte salt (<code>vdoo_config.h:5–9,51,80–82</code>). <code>vdoo_verify</code> reads only elements 0 through 136 (<code>vdoo_verif.c:35–36,82–100</code>). The high nibble of byte 68 would hold a 138th element and is never read or required to be zero. The signer zeroes it (<code>vdoo_sign.c:248</code>), but the verifier accepts any value. The specification's signature σ = (s, salt) has no such padding (§4.6, Algorithm 5, pp. 9–10).</p>
+<p>A native scan flipped each of the 680 bits of an honest VDOO-128 signature. Exactly four flips verified, bits 4–7 of byte 68. All 15 nonzero high-nibble changes then verified in fresh processes, while changes to element 136 (the low nibble of byte 68), to element 135 and to the salt were rejected. Each honest signature therefore has 16 accepted encodings.</p>
+<p>These are signature aliases on an already-signed message, not a forgery on a new message. VDOO claims EUF-CMA (§5.7, p. 19) and not strong unforgeability, so the defect matters to applications that identify signatures by their bytes (replay caches, transaction identifiers or deduplication). The verifier should reject a nonzero high nibble in byte 68.</p>
+<h3 id="reproducing_7">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-33/reproduce_padding_nibble.py
+</code></pre>
+<p>The script runs the 680-bit scan in a child process separate from the signer and requires exactly bits 68.4–68.7 to be accepted. It then re-verifies the 15 high-nibble aliases, the honest and changed-message controls and the low-nibble and salt controls, each in its own fresh process. It takes about 2 seconds.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

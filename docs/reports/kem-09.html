@@ -98,6 +98,29 @@ The command uses this host's Sage environment; elsewhere, any Python with <code>
 <pre><code class="language-sh">python3 kem-09/reproduce_pk_compression_noise.py
 </code></pre>
 <p>The script exactly enumerates the source's one-coefficient public-key rounding error for each <code>db</code> and confirms a nonzero <code>e_pk·r</code> variance under the submission's independent-coefficient surrogate. It does not compute a failure tail or validate Liu's four exponents.</p>
+<h2 class="issue-heading" id="kem-09-4-the-rejection-key-hashes-the-re-encryption-instead-of-the-received-ciphertext">kem-09-4: The rejection key hashes the re-encryption instead of the received ciphertext</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All four parameter sets, reference, optimized and additional implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Distinct invalid ciphertexts with the same decryption received one identical rejection key on all four sets; no key recovery or challenge-key distinguisher was run</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-17</td></tr>
+</table></div>
+
+<p>Algorithm 20 (p. 18), line 4, sets the implicit-rejection key to <code>K̄ = H(salt‖c)</code> over the received ciphertext <code>c</code>. The code instead re-encrypts the decrypted message into <code>salt_ct+SEED_BYTES</code> (<code>KEM_Cheetah.c:277</code>) and hashes <code>salt‖c′</code> over that re-encryption (<code>:283</code>); the received <code>ct</code> is never hashed. The line numbers are for Cheetah128 and Cheetah256; Cheetah384 has them at <code>:276</code>/<code>:282</code> and Cheetah512 at <code>:280</code>/<code>:286</code>. The <code>kem_dec</code> function is identical in the reference, optimized and additional trees of all four sets; the runtime test uses the reference build.</p>
+<p>Every invalid ciphertext that decrypts to a given message <code>m′</code> therefore receives the same rejection output <code>H(salt‖Enc(pk, m′, γ′))</code>. The decapsulation oracle consequently answers whether two submitted ciphertexts decrypt to the same message, which is a plaintext-checking oracle on the static secret key. Plaintext-checking oracles are the standard starting point for key recovery against LWE-based KEMs, and the Fujisaki–Okamoto argument behind the claimed IND-CCA security (pp. 19, 22–23) does not cover this rejection rule.</p>
+<p>The test flips bit 0 of one ciphertext byte. The decapsulator ORs the byte differences between <code>ct</code> and <code>c′</code> and negates the result as its selection mask (<code>:285–292</code>). When the flipped ciphertext still decrypts to the challenge message, <code>c′ = c*</code>, the OR is exactly <code>0x01</code> and its negation is <code>0xff</code>. The output is then the whole rejection key, not a bitwise mixture of it with the challenge key. This isolates the rejection-key binding from the mask construction. A fully normalized mask would still return the same <code>H(salt‖c*)</code> for every such ciphertext.</p>
+<p>On the four prebuilt libraries, 10 to 13 of 16 single bit-0 flips of a challenge ciphertext returned one identical value, which was not the challenge key. Recomputing the hash with the code's SM3 XOF shows that this value is <code>H(salt‖c*)</code>, and none of the 16 outputs equals the specified <code>H(salt‖c_j)</code>. The remaining flips change the decrypted message and are rejected with other values. The mauled challenge does not return <code>K*</code>. The defect therefore gives an oracle, not challenge-key recovery, and no candidate-specific key-recovery attack was run.</p>
+<p>The fix is to hash the received ciphertext, <code>H(salt‖ct)</code>, as Algorithm 20 specifies.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-09/reproduce_rejection_reencryption.py
+</code></pre>
+<p>The script uses the prebuilt <code>kem-09/lib/*.so</code> through ctypes. For each set it checks that honest decapsulation returns <code>K*</code> and that 16 bit-0 flips of <code>c*</code> give at least four identical outputs different from <code>K*</code>. As controls, bit-0 flips of a second, independent encapsulation collide on a different value, and a heavy mutation of <code>c*</code> does not return the collision value. When <code>hashlib</code> provides SM3, it also confirms that the value is <code>H(salt‖c*)</code> and never <code>H(salt‖c_j)</code>. It runs in under a second.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -136,6 +136,27 @@ LATTICE_ESTIMATOR_PATH=/path/to/lattice-estimator \
   /path/to/sage/python sign-07/reproduce_expand_s_estimate.py
 </code></pre>
 <p>The first witness generates fresh submitted keys, requires every packed secret/error polynomial to be identical, checks a changed-seed control, and verifies the faulty seed length in all source copies. The Sage witness checks the estimator commit and reproduces the three independent Core-SVP estimates; it does not perform full-size key recovery.</p>
+<h2 class="issue-heading" id="sign-07-5-32-bit-message-lengths-give-long-message-forgeries">sign-07-5: 32-bit message lengths give long-message forgeries</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>CS-128, CS-256 and CS-512 reference implementation (the optimized <code>cs.c</code> and <code>symmetric.h</code> are identical)</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>A signature on a 32-byte message verified on fresh messages of 2^29 + 32 and 2^32 + 32 bytes at all three levels; one signing query</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-17</td></tr>
+</table></div>
+
+<p>CS computes µ := H(H(pk), M) in signing and verification (§3.3, Algorithm 11 line 3, p. 20, and Algorithm 12 line 4, p. 21) and claims sUF-CMA security (§4.2, Theorem 4.1, p. 28). <code>CS_Sign</code> and <code>CS_Verify</code> take the message length as <code>int len</code> (<code>cs.c:65–68,151–154</code>), although the wrapper passes the 64-bit <code>m_len_bytes</code> (<code>SIG_AlgorithmInstance.c:46–61</code>). The hash is the macro <code>H(OUT, OUTLEN, IN, INLEN) pseudoXOF((OUTLEN) * 8, IN, (INLEN) * 8, OUT)</code> (<code>symmetric.h:10</code>), which multiplies the length by 8 in 32-bit <code>int</code>, and µ is computed as <code>H(mu, HBYTES, buf, HBYTES + len)</code> (<code>cs.c:86–89,173–177</code>). At <code>|M| = 2^29 + j</code> the bit length wraps to <code>8 · (HBYTES + j)</code>. At <code>|M| = 2^32 + j</code> the conversion to <code>int len</code> already truncates the message to <code>j</code> bytes. In both cases µ depends only on <code>H(pk) ∥ M[:j]</code>.</p>
+<p>A signature on any short message <code>m</code> therefore also verifies on every message of <code>2^29 + |m|</code> or <code>2^32 + |m|</code> bytes that begins with <code>m</code>. Both lengths are within the call's required message range of up to <code>2^63</code> bits (<a href="https://www.niccs.org.cn/niccs/Notice/lDop1mav.pdf">Submission Requirements</a> §2(2)). This is a one-query fresh-message EUF-CMA forgery and also breaks the sUF-CMA claim.</p>
+<p>Natively, <code>lib/libCS-128/256/512.so</code> accepted the 32-byte message's signature on <code>m ∥ 0^(2^29)</code>, on <code>m ∥ 0xa5^(2^29)</code> and on <code>m ∥ 0^(2^32)</code>. With the first byte changed, those long messages were rejected, as were <code>m ∥ 'x'</code> and the <code>2^32 + j + 1</code>-byte message (which hashes <code>m ∥ 0x00</code>). For <code>2^28 ≤ HBYTES + |M| &lt; 2^29</code> the bit length is negative and <code>pseudoXOF</code> fails. The verifier then uses µ = H(pk), but the signer leaves µ uninitialized, so honest signatures in that range fail to verify; no forgery is claimed there. The length must be carried as <code>size_t</code> and the bit length computed in 64 bits.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-07/reproduce_message_length_overflow.py
+</code></pre>
+<p>The script signs a 32-byte message at each level and verifies the long forgeries, held in anonymous <code>mmap</code> buffers, and their controls, each in a fresh process. It takes under 10 seconds and needs about 1 GiB of memory.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

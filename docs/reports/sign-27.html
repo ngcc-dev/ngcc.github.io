@@ -130,6 +130,27 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <pre><code class="language-sh">make -C sign-27 exploit-response-rescaling
 </code></pre>
 <p>The wrapper checks out the pinned public reproducer, which builds the unmodified submitted verifier and runs the four source/target controls for three fresh keys at every level. It requires Git, GNU Make, Python 3, GCC, and GMP development headers.</p>
+<h2 class="issue-heading" id="sign-27-6-high-bits-of-the-auxiliary-basis-coefficients-are-never-authenticated">sign-27-6: High bits of the auxiliary-basis coefficients are never authenticated</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>SQIsignTriangle Levels 1, 2, 5 and 6, reference and optimized implementations (<code>encode_verification.c</code> is byte-identical in all eight trees)</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Every unused high coefficient bit can be changed independently and the signature still verifies for the same message; no fresh-message forgery</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-17</td></tr>
+</table></div>
+
+<p>A SQIsignTriangle signature encodes the auxiliary curve, four coefficients <code>r1, r2, s1, s2</code> of <code>SQISIGNTRIANGLE_BASIS_COEFF_BYTES</code> bytes each, and <code>q</code> in a field of the same width (<code>encode_verification.c:284–297</code>). <code>compressed_aux_basis_from_bytes</code> reads each coefficient into a full-width integer. It then uses the coefficients only through <code>ec_biscalar_mul(..., e_rsp, ...)</code> and <code>mp_mod_2exp(..., e_rsp, ...)</code>, where <code>e_rsp = bitsize(q)</code> (<code>encode_verification.c:202–241</code>). Coefficient bits at positions <code>&gt;= e_rsp</code> are never read and never required to be zero. Equivalently, adding any multiple of <code>2^e_rsp</code> to a coefficient leaves the decoded auxiliary basis unchanged.</p>
+<p>The number of unused bits depends on <code>q</code> in each signature. In the native fresh-process run, <code>e_rsp</code> was 211, 273, 445 and 894 at Levels 1, 2, 5 and 6. This left 52, 28, 12 and 8 unused bits, and every one of them could be flipped on its own and still verify. Setting all of them at once, and adding random multiples of <code>2^e_rsp</code> to all four coefficients, also verified. Flipping bit 0 or bit <code>e_rsp/2</code> of any coefficient, and changing the message, was rejected. The earlier run used different signatures and found 8, 28, 28 and 4 unused bits.</p>
+<p>The submission states its security as EUF-CMA (§6.4, p. 54), and its feature list (p. 60) states that the scheme "achieves strong EUF-CMA security". These aliases are new valid signatures on already-signed messages, so they violate that explicit strong-unforgeability claim and the finding is rated High. They yield no signature on a new message, so the required EUF-CMA property is not broken. Canonical decoding should reject coefficients <code>&gt;= 2^e_rsp</code>.</p>
+<h3 id="reproducing_5">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-27/reproduce_coefficient_high_bits.py
+</code></pre>
+<p>The script signs once per level and verifies every single unused-bit flip, the all-bits and random-multiple variants, and the used-bit and message controls. Each verification is the first library call in its own fresh process. It takes about 20 seconds.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

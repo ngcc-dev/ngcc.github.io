@@ -117,3 +117,28 @@ sh sign-25/reproduce_compact_retarget.sh
 ```
 
 The wrapper downloads and checks out the [pinned public artifact](https://github.com/martinfeussner/NGCC-Signature-Audit/tree/a30462dce48bd484d7c8c4d5b1f971e7dfebacfd/SQIsign2D2), builds the unmodified compact implementations from this candidate directory, and requires eight `status=PASS` result lines.
+
+## sign-25-4: Noncanonical field encodings create signature and public-key aliases
+
+Severity: Medium
+Status: Confirmed
+Layer: Implementation
+Affected: All 16 SQIsign2D2 reference libraries (Levels 1, 2, 3 and 5; eff and sec; compressed and uncompressed)
+Discovery: Trivial
+Exploitation: Byte-distinct signatures and public keys verify for the same message; no fresh-message forgery
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-17
+
+SQIsign2D2 claims EUF-CMA security (§1, p. 8; §9.1, p. 106), not strong unforgeability. Its decoders accept several byte strings for one value. `fp_decode` loads `FP_ENCODED_BYTES` little-endian bytes and converts them to Montgomery form without checking that the integer is below `p` (`fp.c:169–182`; Level2-eff `fp.c:183–196`). Curve coefficients in signatures and public keys are decoded this way (`pack.c:190–206,295–359`). An encoding of `x + p` is therefore read as `x` whenever `x + p` fits in the field width, which holds for a large fraction of coordinates at every level. `sig_verify` discards `sn_len_bytes` (`sqisign/SIG_AlgorithmInstance.c:58–67`), so bytes appended to a signature are ignored. In the uncompressed format the negated basis-change matrix `−M mod 2^e` also verifies.
+
+Native tests on all 16 libraries accepted each of the following for the honest message: a signature whose curve coordinate was replaced by its value plus `p`; a public key edited the same way; and the signature with 16 bytes appended. The eight uncompressed libraries also accepted `−M`. A changed message, a signature coordinate plus 1, an independent public key and, in uncompressed form, a matrix entry plus 1 were all rejected. Each verification was the first library call in its own fresh process, so stale verifier state does not explain the acceptances.
+
+These aliases do not yield a signature on a new message. They do break canonical signature and public-key identity, which matters to applications that deduplicate, cache or index signatures or keys by their bytes. Following the precedent for encoding aliases under an EUF-CMA-only claim, this is Medium. The decoders should reject field encodings `>= p`, nonzero trailing signature bytes (or any `sn_len_bytes != SIGNATURE_BYTES`) and matrix entries outside a canonical sign convention.
+
+### Reproducing
+
+```sh
+python3 sign-25/reproduce_encoding_aliases.py
+```
+
+For each of the 16 libraries the script makes one key pair and signature, builds the aliases above and verifies every alias and control in a fresh child process. It takes about one minute. Public keys whose curve coefficient is edited by `+1` are not used as controls, because the compressed verifiers do not return on such a key.

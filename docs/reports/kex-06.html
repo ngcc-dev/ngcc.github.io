@@ -32,7 +32,7 @@
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>MAMBA-NIKE-384 and MAMBA-NIKE-512 reference implementations</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
-<tr><th>Exploitation</th><td>Approximately 2^256 secret-seed trials</td></tr>
+<tr><th>Exploitation</th><td>Approximately 2^256 secret-seed trials, against a static key or passively against any single session</td></tr>
 <tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
 <tr><th>Date</th><td>2026-09-21</td></tr>
 </table></div>
@@ -40,11 +40,16 @@
 <p>The MAMBA-NIKE specification samples each static secret polynomial from the full centered-binomial distribution. The MAMBA-NIKE-384 and MAMBA-NIKE-512 implementations instead derive that polynomial deterministically from one 32-byte <code>noiseseed</code>.</p>
 <p>For the public <code>rho</code> stored with a target key, an attacker can enumerate all <code>2^256</code> noise seeds, regenerate the secret polynomial and public value <code>b</code>, and compare <code>b</code> with the target. A match recovers the static secret. The independent <code>rho</code> seed is public and does not increase the secret-search exponent.</p>
 <p>This limits both implementations to at most <code>2^256</code> secret-seed trials, below their respective 384- and 512-bit classical claims. It is an implementation/specification conformance break, not a limitation of the normative secret distribution.</p>
+<p>Extended on 2026-10-17: the initiator's per-session secret has the same width. Algorithm 2 (<code>MAMBA-NIKE.Pass1</code>, physical p. 8) samples a fresh ephemeral <code>r</code> from the full centered-binomial distribution, but <code>nike_sharedb</code> in both trees draws only the public 32-byte <code>mu</code> and a 32-byte <code>noiseseed</code> (<code>nike.c:230–242</code>). It expands both <code>r</code> (<code>poly_getnoise(&amp;sp,noiseseed,0)</code>, <code>nike.c:250</code>) and the HelpRec random bits (<code>helprec(&amp;c,&amp;v,noiseseed,3)</code>, <code>nike.c:261</code>) from that one <code>noiseseed</code>. <code>mu</code> is the first 32 bytes of <code>M1</code> and fixes the dithers. A passive adversary holding <code>(pk_B, M1)</code> can therefore enumerate the <code>2^256</code> noise seeds, recompute <code>M1</code> as the guess test, and then recompute <code>ν</code> and the 48- or 64-byte session key. This attacks the passive real-or-random game of Definition 6.1 (physical p. 15) directly, needs no static-key recovery, and costs the same <code>2^256</code> per session. A native test with the unmodified <code>nike.c</code> confirms on both levels that exactly 64 random bytes are drawn per session, that the correct <code>noiseseed</code> reproduces <code>M1</code> and the responder's key, and that a one-bit-wrong guess reproduces neither. The full <code>2^256</code> search was not run.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 security/design_parameter_audit.py --report-id kex-06-1
 </code></pre>
 <p>The check traces <code>noiseseed[32]</code> through <code>poly_getnoise</code> and checks the normative KeyGen description on physical PDF pages 7–15.</p>
+<p>For the per-session consequence, run:</p>
+<pre><code class="language-sh">sh kex-06/reproduce_ephemeral_seed.sh
+</code></pre>
+<p>The script checks the <code>nike_sharedb</code> source lines, then builds the unmodified MAMBA-NIKE-384 and -512 <code>nike.c</code> in a temporary copy with a test <code>nike_randombytes</code>. It checks honest agreement, that a session draws only <code>mu</code> and the 32-byte <code>noiseseed</code>, that the correct seed reproduces <code>M1</code> and the session key, and that a one-bit-wrong seed does not. It takes about 2 seconds and exits 77 without gcc.</p>
 <h2 class="issue-heading" id="kex-06-2-static-key-reconciliation-admits-an-active-reaction-recovery-path">kex-06-2: Static-key reconciliation admits an active reaction-recovery path</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">

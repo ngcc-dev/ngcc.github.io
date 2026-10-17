@@ -87,6 +87,50 @@
 <pre><code class="language-sh">python3 kex-04/reproduce_signature_seed_cap.py
 </code></pre>
 <p>The script builds the submitted ML-DSA-87 implementation into a temporary directory and checks the seed-space and signature controls. It does not execute <code>2^256</code> trials.</p>
+<h2 class="issue-heading" id="kex-04-4-a-reflected-responder-signature-completes-a-self-session">kex-04-4: A reflected responder signature completes a self-session</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>DKEX-128, DKEX-256 and DKEX-512, all submitted trees (byte-identical <code>adkex_derand.c</code>), when a party responds to a session whose claimed initiator key is its own</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>One reflected message against the unmodified libraries gives a responder session with no matching initiator session whose key the attacker computes; no break is claimed for a model that excludes same-key self-sessions</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-17</td></tr>
+</table></div>
+
+<p>Both DKEX roles sign the same digest. Algorithm 16 (physical p. 18) has the responder compute <code>T ← H(LABEL_A, LABEL_B, pk_A, pk_B, M1, M2)</code> and send <code>σ_B ← Sign(sk_B, T)</code>. Algorithm 17 (p. 19) has the initiator sign that identical <code>T</code> as <code>m3 = σ_A</code>, and Algorithm 19 (p. 19) has the responder accept when <code>Verify(pk_A, T, σ_A)</code> succeeds. The code does the same: <code>adkex_derand.c:88</code> signs <code>T</code> for <code>σ_B</code>, <code>:117</code> signs the same <code>T</code> for <code>m3</code>, and <code>:146</code> verifies <code>m3</code> on that <code>T</code>. The labels are fixed constants concatenated in the same order in both roles (<code>adkex_derand.c:22–23</code>), so they do not separate the two roles' signed messages.</p>
+<p>When <code>pk_A = pk_B = pk_P</code>, the attacker generates its own DKE ephemeral <code>(M1, sk_e)</code>, sends <code>M1</code> to party P's responder with claimed peer P, receives <code>m2 = (M2, σ_B)</code>, and returns <code>σ_B</code> unchanged as <code>m3</code>. P verifies its own signature under <code>pk_P</code> against the same <code>T</code> and accepts. P never ran an initiator session, so the session has no matching session. P is uncorrupted, so the session is fresh under Definition 5.1 (p. 26). The attacker knows <code>sk_e</code> and <code>T</code>, so it computes <code>ss = DKE.DeriveSecret(M2, sk_e)</code> and the session key <code>KDF(ss‖T)</code>. The attacker uses no signing key of P.</p>
+<p>This contradicts §5.3 (p. 36), which states that the labels "ensure that the transcripts associated with the initiator and responder are distinct, even in the case pk_A = pk_B. As a result, the protocol remains resistant to self-reflection attacks." The no-matching argument on p. 29 (case 3) assumes that an honest signature on the same raw input implies a matching session of the opposite role; here the signature was made by the responder role of the session under test. Definition 5.1 does not say whether the owner and peer may coincide. That is why the rating is High rather than Critical. The precondition is a party that accepts a session whose claimed peer is itself, or two identities that share one signing key.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C kex-04
+python3 kex-04/reproduce_reflection_and_alias.py
+</code></pre>
+<p>The script runs the reflection against all three prebuilt DKEX libraries and requires the attacker's key to equal the responder's accepted key. Its controls require a bit-flipped reflected signature to be rejected, a reflection with <code>pk_A ≠ pk_B</code> to be rejected, and an honest exchange to agree; it also checks <code>adkex_derand.c:88</code> and <code>:117</code> when the sources are present. It runs in under a second and also prints the separate copied-key verdict for kex-04-5.</p>
+<h2 class="issue-heading" id="kex-04-5-copied-certified-keys-enable-identity-misbinding">kex-04-5: Copied certified keys enable identity misbinding</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>DKEX-128, DKEX-256 and DKEX-512 when certification permits duplicate public keys</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>One duplicate-key registration and one relayed honest exchange against the unmodified libraries; no break of the distinct-key formal model</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-17</td></tr>
+</table></div>
+
+<p>DKEX binds the certified signing-key bytes, not the parties' identities. The transcript is <code>T = H(LABEL_A, LABEL_B, pk_A, pk_B, M1, M2)</code> (Algorithms 16 and 17, physical pp. 18–19; <code>adkex_derand.c:12–32</code>), both signatures are on <code>T</code>, and the key is <code>KDF(ss‖T)</code>. The specification says this transcript binding prevents unknown-key-share (p. 4) and that the key is "bound to both identities" (p. 22). However, <code>LABEL_A</code> and <code>LABEL_B</code> are fixed per-level constants (<code>ADKEX_parameters.h:27–42</code>), and no party name enters <code>T</code>.</p>
+<p>If Eve obtains a certificate for Bob's public key under her own name, Alice can initiate to "Eve" using that certificate. Eve relays <code>m1</code>, <code>m2</code> and <code>m3</code> unchanged between Alice and Bob, and Bob runs the responder with Alice as his peer. <code>σ_B</code> verifies under the copied key, <code>σ_A</code> verifies under Alice's key, and both parties derive the same key: Alice records the peer as Eve and Bob records the peer as Alice. Revealing Alice's key then gives Bob's key, even though the two sessions do not match.</p>
+<p>The formal setup states that each verification key "is certified and uniquely bound to identity P" (p. 28), which excludes this registration. The defect is therefore an identity-binding gap under a certification policy that admits duplicate keys, not a break inside the stated game.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C kex-04
+python3 kex-04/reproduce_reflection_and_alias.py
+</code></pre>
+<p>On all three prebuilt DKEX libraries, the script requires the relayed exchange to complete with equal keys while the two parties name different peers. As a control, it requires pass 3 to reject when Eve's certificate carries her own independently generated key. It runs in under a second and also prints the separate reflection verdict for kex-04-4.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

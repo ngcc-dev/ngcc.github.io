@@ -8,7 +8,7 @@ Archive: [Amoeba.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20Crypt
 Severity: Critical
 Status: Confirmed
 Layer: Implementation
-Affected: All five Amoeba reference parameter sets
+Affected: All five Amoeba parameter sets, reference and optimized trees (the optimized trees by source)
 Discovery: Trivial
 Exploitation: Full Amoeba-576 key recovery independently reproduced in 128,161 decapsulation queries; reporter used approximately 30,000
 Credit: Jinnuo Li
@@ -20,6 +20,8 @@ Jinnuo Li reported the attack in the [NGCC PKC Forum](https://list.niccs.org.cn/
 This exposes a plaintext-checking primitive of the type developed by Das in [ePrint 2026/1682](https://eprint.iacr.org/2026/1682): unchecked ciphertext coefficients can be swept across decoding thresholds to obtain linear information about the reused Ring-LWE secret. Li reports recovering all ten official Amoeba-576 KAT secret keys in about `3*10^4` decapsulation queries per key. Our independent witness uses a blind external-parity coordinate as a controlled first error, then binary-searches 320 other blind coordinates per chosen ciphertext. It recovers all 576 secret coefficients from 80 ciphertexts and 128,161 oracle calls, constructs a new decapsulation key without copying the original secret-key bytes, and recovers ten fresh honest encapsulations' shared secrets. Seeds 1, 2, and 3 reproduced. The measurement and regression are local and finish in about 17 seconds on this 28-vCPU host; they are less query-efficient than Li's method.
 
 The attack assumes a reused KEM key and an observable valid-plaintext/derived-key signal. The local witness models that signal using the decapsulation output and an attacker-computable candidate key. An application that never exposes a usable downstream accept/reject signal is not shown vulnerable to remote key recovery by this witness.
+
+Extended on 2026-10-17: the five optimized trees use the same comparison. `Implementations/Optimized_Implementation/Amoeba-{576,864,1152,1728,2304}/src/backend/ccakem.c` is byte-identical to the corresponding reference file. Line 19 advances the index by four, and line 75 applies `cmp` to `RLWE_CPA_CT_LEN` bytes. The optimized builds were checked by source only and were not run.
 
 The fix is to compare the complete ciphertext in constant time. A full-byte comparison is also required by the scheme's stated FO construction and IND-CCA2 argument.
 

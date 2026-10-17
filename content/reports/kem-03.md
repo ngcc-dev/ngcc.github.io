@@ -24,7 +24,7 @@ The source-level witness is the decapsulation call in `src/loong_kem.c:217-218`,
 
 ## kem-03-2: The rejection key does not bind the received ciphertext
 
-Severity: High
+Severity: Medium
 Status: Confirmed
 Layer: Design
 Affected: All BAG-Loong parameter sets
@@ -34,6 +34,8 @@ Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assi
 Date: 2026-09-25
 
 Algorithm 2 (§1.4) specifies `K(ξ, ct')` on rejection, where `ct'` is the re-encryption of the decrypted message rather than the received ciphertext. The code follows it (`loong_kem.c:229–246`). Distinct invalid ciphertexts with the same decryption therefore share a rejection key, exposing a plaintext-checking and decoding-failure oracle when keys are observable. This departs from standard Fujisaki–Okamoto rejection, so the stated IND-CCA2 proof does not establish the submitted construction's claim. A mauled challenge returns `K(ξ, c*)`, not the challenge key `K*`; the witness demonstrates rejection-key collisions, not challenge-key recovery or a full IND-CCA2 attack.
+
+Reclassified on 2026-10-17 from High to Medium. The current classification policy (`security/REPORT_CLASSIFICATION.md`, Medium) lists "a stable decryption-failure or reaction oracle without a completed recovery" as a Medium example. This finding demonstrates such an oracle. No BAG-Loong recovery of either the secret key or a challenge key that uses this oracle is documented. If such a recovery is shown, the rating should be raised again. The mechanism, the witness and the reproducer are unchanged.
 
 ### Reproducing
 

@@ -24,23 +24,24 @@
 <tr><th>Performance</th><td><a href="../performance/x86_1/hash-14.html">x86_1</a> · <a href="../performance/arm_1/hash-14.html">arm_1</a></td></tr>
 </table></div>
 
-<h2 class="issue-heading issue-heading-first" id="hash-14-1-laurus-loses-its-function-domain-separation-at-c1024">hash-14-1: Laurus loses its function-domain separation at c=1024</h2>
+<h2 class="issue-heading issue-heading-first" id="hash-14-1-laurus-loses-its-function-domain-separation-at-c1024-and-c512">hash-14-1: Laurus loses its function-domain separation at c=1024 and c=512</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
 <tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
 <tr><th>Scope</th><td>design</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
-<tr><th>Affected</th><td>Specified generic <code>Laurus[c,fid]</code> interface at <code>c=1024</code>; the named XOF fixes <code>c=512</code></td></tr>
+<tr><th>Affected</th><td>Specified generic <code>Laurus[c,fid]</code> interface at <code>c=1024</code>; named Laurus-512 and Laurus-XOF (<code>c=512</code>) for 1537-2560-bit messages; reference implementations</td></tr>
 <tr><th>Discovery</th><td>Moderate</td></tr>
 <tr><th>Exploitation</th><td>Trivial</td></tr>
-<tr><th>Credit</th><td>Tsinghua Hash Lab <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#99;&#117;&#105;&#104;&#114;&#50;&#54;&#64;&#109;&#97;&#105;&#108;&#115;&#46;&#116;&#115;&#105;&#110;&#103;&#104;&#117;&#97;&#46;&#101;&#100;&#117;&#46;&#99;&#110;">&#99;&#117;&#105;&#104;&#114;&#50;&#54;&#64;&#109;&#97;&#105;&#108;&#115;&#46;&#116;&#115;&#105;&#110;&#103;&#104;&#117;&#97;&#46;&#101;&#100;&#117;&#46;&#99;&#110;</a></td></tr>
+<tr><th>Credit</th><td>Tsinghua Hash Lab <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#99;&#117;&#105;&#104;&#114;&#50;&#54;&#64;&#109;&#97;&#105;&#108;&#115;&#46;&#116;&#115;&#105;&#110;&#103;&#104;&#117;&#97;&#46;&#101;&#100;&#117;&#46;&#99;&#110;">&#99;&#117;&#105;&#104;&#114;&#50;&#54;&#64;&#109;&#97;&#105;&#108;&#115;&#46;&#116;&#115;&#105;&#110;&#103;&#104;&#117;&#97;&#46;&#101;&#100;&#117;&#46;&#99;&#110;</a> (generic interface); named-function extension by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
 <tr><th>Date</th><td>2026-09-22</td></tr>
 </table></div>
 <p>Original source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/YGSFWSHQSIOIFIJTX6IBSDQCV25WS7I2/">CryptHashForum report</a>
 Follow-up source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/CC2SBG5TUNBN5ZD2WWEKITUQEVNJD56L/">Laurus team's 2026-09-24 response</a></p>
 <p>The specification uses <code>fid=0</code> for hashing and <code>fid=1</code> for XOF operation, placing the identifier only in the initial state. At <code>c=1024</code>, a message of 513 to 1024 bits causes one 512-bit absorption. That absorption omits the identifier from the permutation input and moves its difference into the first eight state words; finalization then discards exactly those words. The complete output is consequently independent of <code>fid</code>.</p>
-<p>For example, the 768-bit all-zero message has identical 1024-bit outputs under <code>Laurus[1024,0]</code> and <code>Laurus[1024,1]</code>. This is a functional-domain separation failure in the normative generic interface, not a collision between distinct messages in a named fixed-output hash. The submitted <code>Laurus-XOF</code> wrapper fixes <code>c=512</code>, so it does not expose this particular pair through the uniform API.</p>
-<p>The <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/CC2SBG5TUNBN5ZD2WWEKITUQEVNJD56L/">Laurus team confirmed the generic-interface defect</a> while reiterating that the named XOF uses <code>c=512</code>. The archived specification remains the target here.</p>
+<p>For example, the 768-bit all-zero message has identical 1024-bit outputs under <code>Laurus[1024,0]</code> and <code>Laurus[1024,1]</code>. This is a functional-domain separation failure, not a collision between distinct messages.</p>
+<p>Extended on 2026-10-17: the same loss reaches the named functions. Laurus-512 is <code>Laurus[512,0]</code> and Laurus-XOF is <code>Laurus[512,1]</code> (§2.4-2.5, physical PDF page 11). The identifier sits only in the last state word (<code>S_0 = [2^63 fid + c]</code>, §2.2, page 7; <code>laurus_512.c:163</code>). At <code>c=512</code>, <code>g0</code> passes state words 8-23 to the feed-forward half without permuting them (<code>:108-124</code>). Each absorption therefore moves the identifier difference down eight words, from <code>S_0[23]</code> to <code>S_1[15]</code> to <code>S_2[7]</code>, and <code>g1</code> never reads <code>S[7]</code> (<code>:127-141</code>). Every message of 1537 to 2560 bits takes exactly two absorptions before finalization, so <code>Laurus-512(M) = MSB_512(Laurus-XOF(M))</code> for every such <code>M</code>. For example, the 2048-bit all-zero message gives <code>309e429e…aad67432</code> under Laurus-512 and as the first 512 bits of Laurus-XOF. Shorter and longer messages remain separated. Through the uniform API, the two named functions are therefore related outputs rather than independent functions on this length window.</p>
+<p>The <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/CC2SBG5TUNBN5ZD2WWEKITUQEVNJD56L/">Laurus team confirmed the generic-interface defect</a> while reiterating that the named XOF uses <code>c=512</code>. As shown above, <code>c=512</code> does not avoid the loss for 1537-2560-bit messages. The archived specification remains the target here.</p>
 <h3 id="proposed-fixes">Proposed fixes</h3>
 <p>The <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/CC2SBG5TUNBN5ZD2WWEKITUQEVNJD56L/">Laurus team's response</a> proposes repeating the function-ID-bearing initialization value across all three 512-bit state segments. This section records the proposal without evaluating it.</p>
 <h3 id="reproducing">Reproducing</h3>
@@ -48,6 +49,10 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/crypthashforu
 <p>The target exposes the otherwise internal generic interface from the submitted source, checks the 768-bit equality, and checks a 512-bit negative control:</p>
 <pre><code class="language-sh">make -C hash-14 reproduce
 </code></pre>
+<p>The named-function extension uses the submitted Laurus-512 and Laurus-XOF libraries:</p>
+<pre><code class="language-sh">python3 hash-14/reproduce_named_xof_prefix.py
+</code></pre>
+<p>It tests every length from 0 to 3199 bits on three random streams and the all-zero stream. It requires equality for exactly the 1537-2560-bit lengths and none outside that window, and it checks the two named wrappers in the source (<code>laurus_512.c:260</code>, <code>laurus_xof.c:261</code>). It runs in under one second.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -49,6 +49,29 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/crypthashforu
 <p>The local witness checks the published pair and a nonzero-base second preimage against all six submitted libraries:</p>
 <pre><code class="language-sh">make -C hash-19 reproduce
 </code></pre>
+<h2 class="issue-heading" id="hash-19-2-short-message-outputs-of-mofang-768-and-mofang-1024-are-public-byte-permutations">hash-19-2: Short-message outputs of MoFang-768 and MoFang-1024 are public byte permutations</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>MoFang-768 and MoFang-1024 specification; reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Trivial; for every message of at most 1151 bits, one digest determines 96 bytes of the other; no collision or preimage on a single profile</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-17</td></tr>
+</table></div>
+
+<p>MoFang-768 and MoFang-1024 both use the Hirose double-block-length compression function <code>CF(L, R, M)</code>, whose second cipher call encrypts <code>L ⊕ 1</code> under the same key <code>R ∥ M</code> as the first call on <code>L</code> (Algorithm 6, lines 1-5, physical PDF page 18). The instances differ only in their domain values in the last four bits of <code>L</code>, <code>1010</code> and <code>1011</code> (§2.6 and Table 7, page 16; Algorithm 6, lines 7 and 9). Both start with <code>R = 0</code>. In the submitted code these are <code>in_g[2][2] = 10</code> and <code>11</code> (reference <code>MoFang-768/CryptHash_AlgorithmInstance.c:264</code> and <code>MoFang-1024/CryptHash_AlgorithmInstance.c:263</code>; optimized <code>:279</code> and <code>:278</code>). The two domain values therefore differ in exactly the bit that the Hirose construction flips between its branches.</p>
+<p>A message of at most 1151 bits pads to a single 1152-bit block, so only the final call <code>CF(L ⊕ 2, R, M_1)</code> is made (Algorithm 6, line 15). The two instances make the same two cipher calls in the opposite order, so their output halves <code>L'</code> and <code>R'</code> are swapped. The 768-bit digest keeps the first 48 bytes of each half (line 16). Hence</p>
+<p><code>MoFang-768(M) = MoFang-1024(M)[64:112] ∥ MoFang-1024(M)[0:48]</code>.</p>
+<p>For longer messages the first block leaves the two chaining states swapped, so the second block uses different keys (<code>R ∥ M_2</code>) and the relation stops.</p>
+<p>The two named functions are therefore not independent on short inputs, although the specification claims that MDPH achieves optimal indifferentiability from a random oracle (§3, page 20). This is a cross-profile relation of the kind a domain separation is meant to rule out. MoFang-768-XOF uses <code>1111</code> and is not related in this way. The relation does not by itself give a collision, preimage or second preimage on one profile.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 hash-19/reproduce_768_1024_relation.py
+</code></pre>
+<p>The script checks the identity through the submitted libraries for every length from 0 to 1151 bits on random and all-zero messages. It requires zero hits from 1152 to 1399 bits and no relation for the MoFang-768-XOF control, and checks the four cited domain constants in the source. It runs in under one second.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
