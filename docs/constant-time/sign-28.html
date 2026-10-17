@@ -17,15 +17,16 @@
 
 <!-- synchronized report: sign-28/constant_time.md -->
 <h1 id="constant-time-review-28-sydo">Constant-time review — 28 SYDO</h1>
-<p>Scope: all six submitted reference trees, with representative tracing in <code>sydo_160f</code>; the optimized implementation has not been exhaustively certified. This remains a source-level review, not a constant-time certification.</p>
+<p>Scope: all six submitted reference trees and the corresponding optimized signing path, with representative tracing in <code>sydo_160f</code>. This remains a source-level review, not a constant-time certification.</p>
 <p>Secret: the long-term RSD witness and all values arithmetically derived from it during signing; the secret key and per-signature seed material remain secret until the protocol intentionally reveals the corresponding transcript values. Public: verification key, message, final signature and verifier-only intermediates.</p>
 <ul>
 <li>Secret branches: <code>src/quicksilver.c:810–923</code> emits the prover's membership constraints with branches on the witness-derived <code>cache-&gt;a0[]</code> and <code>cache-&gt;a1[]</code> bits. The branch pattern is not made public by the signature interface. Replacing these conditional copies/XORs with masks is a local constant-time repair.</li>
+<li>Witness expansion: reference signing rederives the public key and calls <code>sample_x_positions</code> on the long-term <code>seed_sk</code>; its inlined <code>set_bit_lsb_first</code> branches on each encoded secret-position bit (<code>src/sydo.c:99–114,238–292,580–616,700–709</code>). LK-PQC-Hunter reports per-key callgrind profile differences, although the aggregate profile also includes benign XOF rejection variation and could not hold the public key fixed. Optimized signing directly passes every stored witness bit through the same branching helper (<code>src/sign.cpp:142</code>; <code>src/keys.inc:83–90,686–716</code>), without the rejection-sampling confound. The defect is tracked as <code>sign-28-6</code> for all twelve submitted trees.</li>
 <li>Secret comparisons/cache behavior: <code>src/primitives.c:92–99</code> and <code>126–133</code> use early-exit <code>memcmp</code> on PRG keys derived from secret tree-node seeds and branch on cache hits. Disabling the cache or comparing/selecting every entry with masks is a local repair. The global cache is also not thread-safe.</li>
 <li>Wrapper branch: <code>SIG_AlgorithmInstance.c:76</code> tests an RNG return code, not a secret bit.</li>
 <li>Division/remainder and table lookups: this review does not certify their absence throughout the deeper proof implementation.</li>
 </ul>
-<p>No timing or cache observation channel, witness recovery, or forgery was demonstrated for these source-level branches, so no separate side-channel finding is promoted. The definite stack over-read in <code>universal_hashing_impl.inc</code> is a memory-safety issue rather than a timing finding and is tracked as <code>sign-28-4</code>.</p>
+<p>No timing or cache observation channel, witness recovery, or forgery was demonstrated. The locally repairable witness-expansion branch is tracked as the Low implementation finding <code>sign-28-6</code>; the other source-only branches remain unpromoted. The definite stack over-read in <code>universal_hashing_impl.inc</code> is a memory-safety issue rather than a timing finding and is tracked as <code>sign-28-4</code>.</p>
 <p>Recheck the cited source lines and callers before reusing this result. A timing claim requires controlled same-public-input tests with changed secret state and a public-value control.</p>
 </main>
 <footer class="site-footer">

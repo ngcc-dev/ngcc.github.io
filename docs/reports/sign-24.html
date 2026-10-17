@@ -71,6 +71,26 @@ tools/reproduce.sh sign-24
 python3 sign-24/reproduce_natural_zero.py
 </code></pre>
 <p>Both wrappers build only in fresh temporary directories, with no changes to the submitted source tree. The first runs forced-zero and unforced controls at every level; the second uses up to 14 native workers to find a natural zero at 128. <code>solve_zero_zeta.py</code> receives only the public-equation file, and a separate file is used solely to check its recovered answer.</p>
+<h2 class="issue-heading" id="sign-24-3-signing-rebuilds-the-public-state-with-secret-dependent-control-flow">sign-24-3: Signing rebuilds the public state with secret-dependent control flow</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Sigurd-128, -256, and -512, reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Source inspection and execution profiling establish repeatable control flow depending on the long-term witness; no timing or cache observation, witness recovery, or forgery is demonstrated</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
+<tr><th>Date</th><td>2026-10-17</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/DIUN6YFVFWQRI556USJFCCEELQ5FXGXR/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p>Every signing operation calls <code>sig_build_public_state_direct</code>, which expands the secret <code>e_seed</code> into the long-term error vector <code>e</code> and evaluates the public matrix on it. Inside the public-matrix loop, all six submitted implementations branch on <code>e_bits[col]</code> before conditionally updating <code>y_bits</code> (<code>Reference_Implementation/Sigurd-128/sig_core.c:567,589–592</code>; corresponding reference lines 573,595–598 at 256/512; optimized lines 2271–2274, 2120–2123 and 2324–2327). The branch condition is therefore secret and repeats under every signature made with one key. Replacing the conditional update with a masked or unconditional XOR is a local implementation change.</p>
+<p>The forum post reports callgrind profiles in which the body count changes when only the secret portion of a hybrid key changes and remains stable across messages and signing randomness for one key. Its statement that this count equals the Hamming weight of <code>e</code> is not literal: <code>random_e</code> sets exactly one position in each six-coordinate block, so the weight is fixed. Because the secret branch is nested under the public matrix-bit branch, the count is instead a public-matrix-weighted function of the secret support. This correction does not remove the secret-dependent control flow. No externally observable timing or cache channel, and no route from the aggregate counts to key recovery, was demonstrated; the finding is Low under the side-channel policy.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-24/reproduce_secret_branch.py
+</code></pre>
+<p>The certificate checks all three reference and all three optimized sources for the fixed-weight secret expansion, the signing-time state reconstruction, and the conditional update on <code>e_bits</code>. It does not replay the reporter's callgrind measurements.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

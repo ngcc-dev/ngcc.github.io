@@ -137,6 +137,27 @@
 <pre><code class="language-sh">make -C sign-28 reproduce-fixed-rng
 </code></pre>
 <p>The witness builds the unmodified SYDO-160s reference core, invokes the helper in two fresh processes, and requires byte-identical public and secret keys. It also checks that the optimized randomness source contains an operating-system entropy path as a scope control.</p>
+<h2 class="issue-heading" id="sign-28-6-witness-position-expansion-branches-on-the-long-term-secret">sign-28-6: Witness-position expansion branches on the long-term secret</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All six reference and all six optimized parameter sets</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Source inspection establishes signing-time branches on secret position bits, and reported instruction profiles vary by key; no timing/cache observation, witness recovery, or forgery is demonstrated</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
+<tr><th>Date</th><td>2026-10-17</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/4U6TKMOVLA2QGDAEE63QYQS5B7WTXBGG/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p>The reference signer rederives and checks its public key on every call. <code>sydo_ref_derive_public_key</code> expands the long-term <code>seed_sk</code> with <code>sample_x_positions</code>, which stores each accepted secret position bit by bit. The inlined <code>set_bit_lsb_first</code> selects its set or clear operation with <code>if (bit)</code> (<code>src/sydo.c:99–114,238–292,580–616,700–709</code>). The six reference copies of this source are byte-identical.</p>
+<p>The six optimized copies are also affected. Their signer calls <code>sydo_detail::compute_witness&lt;P&gt;(u_extended, sk.witness.data())</code> on every signature (<code>src/sign.cpp:142</code>). <code>compute_witness</code> reads each raw witness bit and passes it directly to the same branching <code>set_bit_lsb_first</code> (<code>src/keys.inc:83–90,686–716</code>). All six copies of each optimized file are byte-identical. This path has no XOF-rejection confound: its branch operand is the stored witness bit itself. Thus both implementations execute control flow depending on the long-term witness under every signature made with one key. Replacing the set/clear branch with a masked assignment is a local implementation change.</p>
+<p>The forum post reports six distinct callgrind instruction profiles for six keys, stable when changing only the message or signing randomness. That aggregate experiment does not isolate the secret-bit branch: <code>sample_x_positions</code> also has variable XOF rejection, and changing the key necessarily changes the public key because hybrid keys failed the signer's consistency check. The source establishes the secret operand, but no wall-clock or cache observation and no recovery map were demonstrated. The finding therefore records the source-level control-flow defect at Low severity rather than treating the aggregate profile as an attack.</p>
+<h3 id="reproducing_5">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-28/reproduce_secret_branch.py
+</code></pre>
+<p>The certificate checks the six byte-identical reference sources for the secret-seed dataflow, signing-time public-key derivation, bit-by-bit position encoding and conditional set/clear operation. It separately checks the six byte-identical optimized <code>sign.cpp</code> and <code>keys.inc</code> copies for the signing-time <code>compute_witness</code> call and its conditional write of each raw witness bit. It does not replay the reporter's callgrind measurements.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
