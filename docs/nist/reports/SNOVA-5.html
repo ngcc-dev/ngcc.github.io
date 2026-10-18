@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: SNOVA-5</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="../style.css?v=a38b7088">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="../index.html">Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">NIST Round 3</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../index.html">NIST signature reports</a> › <code>SNOVA-5</code></p>
+
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr><tr><th>Layer</th><td>side-channel</td></tr><tr><th>Affected</th><td>All 18 submitted Round3 q16 reference API variants (9 sets times SHAKE/AES)</td></tr><tr><th>Discovery</th><td>Moderate</td></tr><tr><th>Exploitation</th><td>source-level secret-indexed field tables and pivot trace; no measured channel or recovery</td></tr><tr><th>Remediation</th><td>Local</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py SNOVA-5</code><br><small>source: <code>nist/SNOVA/reproduce_snova_5.py</code> · SHA-256 <code class="digest">b4ae9bb8<wbr>befb3002<wbr>04a30d0f<wbr>e0147a34<wbr>5d830889<wbr>7d0e0186<wbr>d33b1795<wbr>b7bf967f</code></small><br><small>source hashes and abstract address/branch controls</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/SNOVA_specifications.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/SNOVA_Round3.zip">submission ZIP</a></td></tr></table>
+
+<h1 id="snova-5-low-secret-dependent-tables-and-elimination-in-the-reference-signer">SNOVA-5 — Low: secret-dependent tables and elimination in the reference signer</h1>
+<p>The submitted reference signer performs finite-field arithmetic through tables
+indexed by secret-derived operands and performs Gaussian elimination with
+secret-dependent branches. This makes its address and branch trace dependent on
+the signing secret and per-signature state.</p>
+<p>In the representative <code>SNOVA_I_K</code> source, <code>gf_mult</code>, <code>gf_inv</code>, <code>gf_add</code>, and
+<code>gf_set_add</code> index <code>gf_multtab</code>, <code>gf_invtab</code>, and <code>gf_addtab</code> with their operands
+at
+<code>snova_ref.c:26</code> (<code>SNOVA/submission/SNOVA_Round3/Reference_Implementation/SNOVA_I_K/snova_ref.c#L26</code>).
+The signer expands the secret <code>T12</code> at
+<code>snova_ref.c:784</code> (<code>SNOVA/submission/SNOVA_Round3/Reference_Implementation/SNOVA_I_K/snova_ref.c#L784</code>),
+uses it in field operations beginning at
+<code>snova_ref.c:799</code> (<code>SNOVA/submission/SNOVA_Round3/Reference_Implementation/SNOVA_I_K/snova_ref.c#L799</code>),
+and constructs the signing system from secret-derived vinegar and central-map
+values at
+<code>snova_ref.c:973</code> (<code>SNOVA/submission/SNOVA_Round3/Reference_Implementation/SNOVA_I_K/snova_ref.c#L973</code>).
+Its elimination then branches on zero pivots and row entries, stops its row
+search at the first usable pivot, and retries singular systems at
+<code>snova_ref.c:1078</code> (<code>SNOVA/submission/SNOVA_Round3/Reference_Implementation/SNOVA_I_K/snova_ref.c#L1078</code>).
+The resulting trace exposes table indices, pivot positions, conditional row
+work, and the retry count.</p>
+<p>The 18 reference copies are byte-identical (SHA-256
+<code>ef5dc33896f799c19631f888dd8c9192565e219df54e7932849188ae2e7e117c</code>),
+apart from their separate parameter headers, so the same source finding applies
+to every reference library catalogued in <code>libraries.json</code>. All are recommended
+q=16 sets. The odd-q builds use the same source; they were not separately
+assessed here.</p>
+<p>The <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/SNOVA_specifications.pdf">SNOVA specification</a>, §5.4 (physical PDF page 53), claims
+that the <strong>optimized implementation</strong> is constant time and identifies rejection
+sampling in its Valgrind discussion. It does not make that claim for the
+reference implementation. The submitted optimized signer uses masked pivot
+selection and fixed row traversal at
+<code>snova_opt_16.c:1185</code> (<code>SNOVA/submission/SNOVA_Round3/Optimized_Implementation/SNOVA_I_K/snova_opt_16.c#L1185</code>).
+The separate AVX2 path likewise declassifies only the aggregate retry flag at
+<code>rct_sign_gfni.h:103</code> (<code>SNOVA/submission/SNOVA_Round3/Additional_Implementations/AVX2/SNOVA_I_K/src/platforms/x86_avx2/rct_sign_gfni.h#L103</code>).
+These submitted alternatives justify the Local rating, but this review does not
+certify either complete optimized implementation as constant time.</p>
+<p>Run the deterministic source certificate with:</p>
+<pre><code class="language-sh">python3 SNOVA/reproduce_snova_5.py --output SNOVA/results/SNOVA-5.json
+</code></pre>
+<p>It hashes and checks every reference copy, verifies the secret-indexed table and
+elimination constructs, demonstrates two different abstract branch traces and
+table offsets, and checks for the masked optimized-path controls. It does not
+perform timing or cache measurements. A practical attack would still need to
+show that observations through a concrete local or remote interface recover
+useful information across signatures.</p>
+<p>Use the submitted constant-time optimized path where its platform and build
+requirements are met, or replace reference table operations and pivoting with
+fixed-address arithmetic and masked row selection/elimination. Keep only the
+overall rejection result public and validate the repaired complete signing path
+with secret-taint tooling and controlled timing tests.</p>
+<h2 id="harness-reproduction">Harness reproduction</h2>
+<p>From the <code>ngcc-harness</code> checkout, run the pinned source script through the harness-side dispatcher:</p>
+<pre><code class="language-sh">python3 nist/reproduce.py SNOVA-5
+</code></pre>
+</main>
+<footer class="site-footer">
+<p>Independent analysis; ratings are not issued or endorsed by NIST. Source and reproduction material: <code>ngcc-harness/nist</code>.</p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: MAYO-2</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="../style.css?v=a38b7088">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="../index.html">Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">NIST Round 3</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../index.html">NIST signature reports</a> › <code>MAYO-2</code></p>
+
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>Round3 MAYO1 MAYO2 MAYO3 MAYO5 security reduction</td></tr><tr><th>Discovery</th><td>Moderate</td></tr><tr><th>Exploitation</th><td>proof/model limitation within the NIST query budget; no forgery or key-recovery attack</td></tr><tr><th>Remediation</th><td>Moderate</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py MAYO-2</code><br><small>source: <code>nist/MAYO/reproduce_mayo_2.py</code> · SHA-256 <code class="digest">135a5607<wbr>c15d7f34<wbr>1c98d5dc<wbr>164ef265<wbr>57a17522<wbr>f5dedf3f<wbr>3dcc71f7<wbr>bd02b56a</code></small><br><small>exact Theorem 1 multiplicative-loss model check</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/mayo_specification.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/MAYO.zip">submission ZIP</a></td></tr></table>
+
+<h1 id="mayo-2-low-theorem-1-covers-only-a-small-signing-query-range">MAYO-2 — Low: Theorem 1 covers only a small signing-query range</h1>
+<h2 id="bound-and-scope">Bound and scope</h2>
+<p>Theorem 1 of the Round-3 specification (§5.2, physical p.28) proves a ROM
+EUF-CMA bound only under <code>Qs*B &lt; 1</code>, where <code>Qs</code> is the number of signing
+queries and</p>
+<pre><code class="language-text">B = (q^(k-(n-o)) + q^(m-k*o)) / (q-1).
+</code></pre>
+<p>The reduction contains the multiplicative loss <code>(1-Qs*B)^-1</code>. Applying the
+submitted parameters gives the following limits:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Set</th>
+<th style="text-align: right;"><code>log2(B)</code></th>
+<th style="text-align: right;"><code>log2(1/(2B))</code></th>
+<th style="text-align: right;"><code>log2(1/B)</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MAYO1</td>
+<td style="text-align: right;">-3.9069</td>
+<td style="text-align: right;">2.9069</td>
+<td style="text-align: right;">3.9069</td>
+</tr>
+<tr>
+<td>MAYO2</td>
+<td style="text-align: right;">-7.9069</td>
+<td style="text-align: right;">6.9069</td>
+<td style="text-align: right;">7.9069</td>
+</tr>
+<tr>
+<td>MAYO3</td>
+<td style="text-align: right;">-11.9069</td>
+<td style="text-align: right;">10.9069</td>
+<td style="text-align: right;">11.9069</td>
+</tr>
+<tr>
+<td>MAYO5</td>
+<td style="text-align: right;">-11.9069</td>
+<td style="text-align: right;">10.9069</td>
+<td style="text-align: right;">11.9069</td>
+</tr>
+</tbody>
+</table></div>
+<p>The middle column is the signing-query exponent below which this factor stays
+under two. The last is where the theorem's premise fails altogether. All are
+far below NIST's evaluation allowance of up to <code>2^64</code> chosen-message signing
+queries.</p>
+<h2 id="classification-and-limits">Classification and limits</h2>
+<p>The specification explicitly discusses this limitation in §5.3, physical
+pp.31–32. It says the proof gives essentially no guarantee at realistic query
+counts for MAYO1 and MAYO2, describes the loss as information-theoretic leakage
+from rejection sampling, and reports no attack that exploits it. It expects
+MAYO to remain secure even with unboundedly many signatures.</p>
+<p>This report therefore records a Low proof gap under the project's uniform
+proof-gap rule: a candidate-specific reproduced calculation makes the
+submitted reduction ineffective within NIST's stated evaluation budget. The
+calculation does not establish a distinguisher,
+key recovery, or forgery, and it does not show that the claimed parameter
+strengths are below target. The gap applies to the submitted theorem for all
+four sets; its practical consequence remains unknown. A proof that controls
+the restart leakage for realistic query counts, or a signing construction that
+avoids the loss, would close it.</p>
+<h2 id="reproduction">Reproduction</h2>
+<pre><code class="language-sh">python3 MAYO/reproduce_mayo_2.py
+</code></pre>
+<p>The deterministic standard-library script pins the specification, evaluates
+<code>B</code> with exact rational arithmetic from every submitted parameter tuple, and
+checks both the constant-factor and theorem-validity boundaries. It is a
+formula/model check, not an attack.</p>
+<h2 id="harness-reproduction">Harness reproduction</h2>
+<p>From the <code>ngcc-harness</code> checkout, run the pinned source script through the harness-side dispatcher:</p>
+<pre><code class="language-sh">python3 nist/reproduce.py MAYO-2
+</code></pre>
+</main>
+<footer class="site-footer">
+<p>Independent analysis; ratings are not issued or endorsed by NIST. Source and reproduction material: <code>ngcc-harness/nist</code>.</p>
+</footer>
+</body>
+</html>

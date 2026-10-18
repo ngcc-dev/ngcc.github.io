@@ -29,7 +29,7 @@ import markdown
 
 ROOT = Path(__file__).resolve().parent.parent
 CONTENT, DOCS, ASSETS = ROOT / "content", ROOT / "docs", ROOT / "assets"
-KEEP = {"CNAME", ".nojekyll"}          # never removed from docs/
+KEEP = {"CNAME", ".nojekyll", "nist"}          # never removed from docs/
 SITE = "ngcc.dev"
 HARNESS = "https://github.com/ngcc-dev/ngcc-harness"
 HARNESS_REV = "dc66c6cb3c06e75bdea0048e21fa4e13c63f00af"

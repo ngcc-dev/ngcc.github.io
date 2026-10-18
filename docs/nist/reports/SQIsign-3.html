@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: SQIsign-3</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="../style.css?v=a38b7088">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="../index.html">Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">NIST Round 3</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../index.html">NIST signature reports</a> › <code>SQIsign-3</code></p>
+
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr><tr><th>Layer</th><td>implementation</td></tr><tr><th>Affected</th><td>Reference and additional implementations for p324_3 p500_27 p664_17</td></tr><tr><th>Discovery</th><td>Moderate</td></tr><tr><th>Exploitation</th><td>reachable malformed-input unset-stack read; no false acceptance</td></tr><tr><th>Remediation</th><td>Local</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py SQIsign-3</code><br><small>source: <code>nist/SQIsign/reproduce_sqisign_3.py</code> · SHA-256 <code class="digest">48c14b0e<wbr>1eec93fa<wbr>f2019e26<wbr>f2d06076<wbr>6f14eb35<wbr>120242cf<wbr>dc48a82d<wbr>076c1a40</code></small><br><small>pinned-source sentinel-instrumented runtime witness</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/sqisign_specification.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/sqisign.zip">submission ZIP</a></td></tr></table>
+
+<h1 id="sqisign-3-low-verification-continues-after-a-gluing-failure">SQIsign-3 — Low: verification continues after a gluing failure</h1>
+<p>The verifier does not propagate failure from the first gluing step of its
+theta-isogeny chain. A malformed signature can make <code>gluing_compute</code> return
+failure before it initializes the output gluing object. <code>gluing_start_chain</code>
+returns <code>0</code>, which its caller treats as a valid chain index and immediately
+reads from the unset <code>first_step.codomain</code> stack object.</p>
+<p>The failure is explicit in the submitted contracts and control flow:</p>
+<ul>
+<li><code>gluing_compute</code> (<code>SQIsign/submission/SQIsign/Reference_Implementation/src/hd/ref/lvlx/gluing.c#L407</code>)
+  documents a zero return for an incorrect or malformed kernel. Its earliest
+  verification check returns zero at line 444 before writing <code>out</code>.</li>
+<li><code>gluing_start_chain</code> (<code>SQIsign/submission/SQIsign/Reference_Implementation/src/hd/ref/lvlx/gluing.c#L608</code>)
+  returns that same zero at lines 673–674.</li>
+<li><code>theta_chain_compute_impl</code> (<code>SQIsign/submission/SQIsign/Reference_Implementation/src/hd/ref/lvlx/theta_isogenies.c#L102</code>)
+  assigns the return value to <code>current</code> at line 140 without checking for
+  failure. Lines 149–151 then consume <code>first_step.codomain</code>.</li>
+<li>Verification reaches this path through
+  <code>theta_chain_compute_and_eval_verify</code> (<code>SQIsign/submission/SQIsign/Reference_Implementation/src/verification/ref/lvlx/verify.c#L157</code>).</li>
+</ul>
+<p>The broadwell and arm64 submissions contain byte-identical <code>gluing.c</code> and
+<code>theta_isogenies.c</code> files, and all three parameter sets compile the shared
+level-independent source. This is an implementation defect rather than a
+property of the SQIsign construction.</p>
+<p>The failure-handling pattern resembles NGCC finding <code>sign-25-1</code>, where stale
+stack contents could decide a verifier result. The exact NGCC defect does not
+transfer: this is a new unchecked gluing return in different code, and every
+NIST SQIsign malformed input tested here still rejected.</p>
+<p>Run:</p>
+<pre><code class="language-sh">python3 SQIsign/reproduce_sqisign_3.py --output SQIsign/results/SQIsign-3.json
+</code></pre>
+<p>The script pins both submitted source files and obtains the public harness's
+reviewed p324_3 compile command with <code>make -n</code>. In a temporary copy, it marks
+the three gluing rejection sites, fills <code>first_step</code> with <code>0xA5</code>, and records
+whether execution reaches the first codomain read. The honest generated
+signature verifies without setting any marker. Of 300 deterministic one-bit
+signature mutations, 167 reach the earliest gluing rejection; every one
+continues past the unchecked return and rejects later. The recorded codomain
+byte remains <code>0xA5</code>, confirming that the failed callee did not initialize the
+object subsequently read. No submitted source file is patched by the witness.</p>
+<p>No false acceptance, crash, or disclosure was observed. The result establishes
+undefined behavior on attacker-controlled verifier input, so the impact is
+limited to a robustness and memory-safety defect at present. Stack layout and
+compiler choices can affect behavior after the invalid read.</p>
+<p>Give <code>gluing_start_chain</code> an unambiguous failure result and return failure from
+<code>theta_chain_compute_impl</code> before using <code>first_step</code>, <code>thetaQ1</code>, or <code>thetaQ2</code>.
+The verifier should keep the existing final rejection behavior while avoiding
+all reads of unset outputs.</p>
+<h2 id="harness-reproduction">Harness reproduction</h2>
+<p>From the <code>ngcc-harness</code> checkout, run the pinned source script through the harness-side dispatcher:</p>
+<pre><code class="language-sh">python3 nist/reproduce.py SQIsign-3
+</code></pre>
+</main>
+<footer class="site-footer">
+<p>Independent analysis; ratings are not issued or endorsed by NIST. Source and reproduction material: <code>ngcc-harness/nist</code>.</p>
+</footer>
+</body>
+</html>

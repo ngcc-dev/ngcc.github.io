@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: UOV-1</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="../style.css?v=a38b7088">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="../index.html">Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">NIST Round 3</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../index.html">NIST signature reports</a> › <code>UOV-1</code></p>
+
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr><tr><th>Layer</th><td>side-channel</td></tr><tr><th>Affected</th><td>Reference Is Ip III V signers in classic PKC and PKC+SKC formats</td></tr><tr><th>Discovery</th><td>Moderate</td></tr><tr><th>Exploitation</th><td>pinned-source ordered-statement witness; no measured channel, recovery, or forgery</td></tr><tr><th>Remediation</th><td>Moderate</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py UOV-1</code><br><small>source: <code>nist/UOV/reproduce_uov_1.py</code> · SHA-256 <code class="digest">ddcd9db8<wbr>562ba315<wbr>da936494<wbr>13abe1fa<wbr>72caf070<wbr>2943c148<wbr>409d03c7<wbr>8d31d20c</code></small><br><small>all-parameter source hashes and ordered-statement witness</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/UOV_Specification_R3.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/UOV-R3.zip">submission ZIP</a></td></tr></table>
+
+<h1 id="uov-1-low-rejected-signing-systems-expose-secret-derived-control-flow">UOV-1 — Low: rejected signing systems expose secret-derived control flow</h1>
+<p>The reference signer reveals how many secret-derived linear systems were
+discarded before one was invertible. Although Gaussian elimination itself uses
+masked pivot selection, its success bit controls the outer signing loop. The
+number of complete attempts is therefore part of the observable control-flow
+and timing trace but is not encoded explicitly in the returned signature.</p>
+<p>The signer marks the secret key as secret for its Valgrind analysis, derives
+vinegar from the secret-key seed, message, salt, and counter, and combines it
+with the secret central map to form the signing system. The salt is sampled at
+<code>ov.c:101</code> (<code>UOV/submission/UOV-R3/Reference_Implementation/Ip/ov.c#L101</code>), the
+vinegar is derived at lines 121--130, and the matrix is constructed at line
+138.
+The portable Gaussian eliminator returns the accumulated pivot-success bit at
+<code>blas_matrix_ref.c:88</code> (<code>UOV/submission/UOV-R3/Reference_Implementation/Ip/blas_matrix_ref.c#L88</code>)
+or
+<code>blas_matrix_ref.c:208</code> (<code>UOV/submission/UOV-R3/Reference_Implementation/Ip/blas_matrix_ref.c#L208</code>).
+Immediately before branching, the caller explicitly marks <code>l1_succ</code> public to
+Valgrind, then continues or exits the attempt loop at
+<code>ov.c:146</code> (<code>UOV/submission/UOV-R3/Reference_Implementation/Ip/ov.c#L146</code>) and
+lines 156--162 for GF(16). It generates counters 0 through 255, but the check
+at line 171 also rejects a success found on the last attempt because
+<code>n_attempt</code> has already reached 256.</p>
+<p>The <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/UOV_Specification_R3.pdf">UOV specification</a>, §5.1.1 (physical PDF page 29), accurately
+describes the fixed-trace row operations and says that revealing matrix
+noninvertibility through timing is acceptable because the matrix is discarded.
+That is a stated leakage rationale, not a proof in this report that the attempt
+distribution is independent of the long-term secret map. A fixed public salt
+does not make the vinegar or hidden signing matrix public because their
+derivation includes the secret seed and secret map.</p>
+<p>The 12 harnessed reference directories have byte-identical <code>ov.c</code> files,
+SHA-256 <code>863e59ecf3838fa8643c3a65e0bfa8cb86eeefaec7a31f1260767b2a7444affc</code>,
+so the trace applies to every key format and parameter set. Run:</p>
+<pre><code class="language-sh">python3 UOV/reproduce_uov_1.py --output UOV/results/UOV-1.json
+</code></pre>
+<p>The deterministic certificate pins the specification and every <code>ov.c</code>, checks
+the ordered secret-key/vinegar/system/rank/retry statements, and records
+illustrative first-attempt and third-attempt branch traces. It does not execute
+the signer, measure timing, or establish any correlation, recovery, or
+forgery.</p>
+<p>The finding is Low because it establishes only source-level dependence, with no
+measured channel or attack, and because the specification explicitly accepts
+revealing whether a discarded matrix is noninvertible. Strict removal would
+require computing a fixed number of complete attempts and mask-selecting a
+successful signature, or another fixed-work construction with a bounded
+residual failure probability. That remains a Moderate remediation if the trace
+is to be removed, but the remediation cost does not establish additional
+security impact. No primary NIST EUF-CMA property is shown to fail.</p>
+<p>A follow-up should instrument attempt counts over many keys under controlled
+messages, salts, and backends, test whether the distribution depends on the
+long-term map, and attempt candidate-specific inference. Documentation can
+clarify the assumed independence, but only fixed-work signing removes the
+execution trace.</p>
+<h2 id="harness-reproduction">Harness reproduction</h2>
+<p>From the <code>ngcc-harness</code> checkout, run the pinned source script through the harness-side dispatcher:</p>
+<pre><code class="language-sh">python3 nist/reproduce.py UOV-1
+</code></pre>
+</main>
+<footer class="site-footer">
+<p>Independent analysis; ratings are not issued or endorsed by NIST. Source and reproduction material: <code>ngcc-harness/nist</code>.</p>
+</footer>
+</body>
+</html>

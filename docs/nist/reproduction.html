@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: Reproducing the NIST report site</title>
+<link rel="icon" type="image/png" href="../assets/mag-glass.png">
+<link rel="stylesheet" href="../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="style.css?v=a38b7088">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="index.html"><img class="brand-icon" src="../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="index.html">Findings</a><a href="classification.html">Classification</a><a href="reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">NIST Round 3</a></nav>
+</header>
+<main>
+<h1 id="reproducing-this-nist-report-site">Reproducing this NIST report site</h1>
+<p>The authoritative publication input is <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-dev/ngcc-harness</a> (<code>nist/</code>). Its
+candidate registry pins official NIST archive and specification hashes without
+checking large ZIP files into Git. Report pages link to compact reproducer
+scripts where a runtime or mathematical witness exists. The harness fetches
+the pinned official NIST submission packages when submitted source is needed;
+its published runners do not depend on a separate research repository.</p>
+<p>Maintainers may refresh the normalized snapshot from a local working checkout.
+That import path is not part of the published data or reproduction interface.</p>
+<p>Build the subsite from a checkout of <code>ngcc.github.io</code>:</p>
+<pre><code class="language-sh">make -C nist build SOURCE=../../ngcc-harness/nist
+make -C nist check SOURCE=../../ngcc-harness/nist
+</code></pre>
+<p>The builder does not read the clock or local Git state. Two clean builds from
+the same input are byte-identical, and <code>make check</code> verifies this property.</p>
+<h2 id="published-input-hashes">Published input hashes</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>input</th>
+<th>SHA-256</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>FAEST/reproduce_faest_1.py</code></td>
+<td><code class="digest">2035125c<wbr>e138667d<wbr>a2b013a9<wbr>46194e78<wbr>aceca82e<wbr>184dd210<wbr>6b97b9a9<wbr>9033e943</code></td>
+</tr>
+<tr>
+<td><code>FAEST/reproduce_faest_2.py</code></td>
+<td><code class="digest">432b627f<wbr>1ea49e6b<wbr>59f4ccc6<wbr>60a00714<wbr>f70b0298<wbr>48a27317<wbr>47ed8668<wbr>8928cb02</code></td>
+</tr>
+<tr>
+<td><code>HAWK/reproduce_hawk_2.py</code></td>
+<td><code class="digest">c7785137<wbr>476320f5<wbr>311af101<wbr>0f0dfbcc<wbr>e742f020<wbr>e26507b9<wbr>7054e7a2<wbr>f7b94323</code></td>
+</tr>
+<tr>
+<td><code>MAYO/reproduce_mayo_1.py</code></td>
+<td><code class="digest">5f572166<wbr>140300cd<wbr>d75d80a0<wbr>0d5cd387<wbr>11ea5e31<wbr>c761b049<wbr>d0842f29<wbr>39ce3e1b</code></td>
+</tr>
+<tr>
+<td><code>MAYO/reproduce_mayo_2.py</code></td>
+<td><code class="digest">135a5607<wbr>c15d7f34<wbr>1c98d5dc<wbr>164ef265<wbr>57a17522<wbr>f5dedf3f<wbr>3dcc71f7<wbr>bd02b56a</code></td>
+</tr>
+<tr>
+<td><code>MAYO/reproduce_mayo_3.py</code></td>
+<td><code class="digest">a5b1bf56<wbr>51fad3ea<wbr>41192613<wbr>15cfe3b8<wbr>0177f7bb<wbr>c4cd3848<wbr>1e7309f8<wbr>d305cc6a</code></td>
+</tr>
+<tr>
+<td><code>MQOM/reproduce_mqom_1.py</code></td>
+<td><code class="digest">ecda3328<wbr>0303c7ad<wbr>38d6f3e4<wbr>c930b90e<wbr>c85526c1<wbr>eaaefcb3<wbr>f1e49073<wbr>8f5d62dd</code></td>
+</tr>
+<tr>
+<td><code>MQOM/reproduce_mqom_2.py</code></td>
+<td><code class="digest">4fc5291b<wbr>d3c78913<wbr>99dac8d7<wbr>30eb4d7f<wbr>40ac6216<wbr>385fab95<wbr>e703f235<wbr>04dfe0b5</code></td>
+</tr>
+<tr>
+<td><code>MQOM/reproduce_mqom_3.py</code></td>
+<td><code class="digest">2e893dfb<wbr>46a4cd79<wbr>92b6b4c8<wbr>f314b107<wbr>cace68b6<wbr>031d0c9b<wbr>874fe80e<wbr>432b9c65</code></td>
+</tr>
+<tr>
+<td><code>QR-UOV/reproduce_qruov_1.py</code></td>
+<td><code class="digest">5c9a8972<wbr>54509731<wbr>f2e18edd<wbr>63c806f9<wbr>87c7138e<wbr>2ed75dc3<wbr>f7be62aa<wbr>aaeeeeff</code></td>
+</tr>
+<tr>
+<td><code>QR-UOV/reproduce_qruov_2.py</code></td>
+<td><code class="digest">916656bf<wbr>973ea632<wbr>4eb617a0<wbr>71dcdcda<wbr>8e2b1bfa<wbr>5d4ed041<wbr>993c9e87<wbr>8c11269d</code></td>
+</tr>
+<tr>
+<td><code>QR-UOV/reproduce_qruov_3.py</code></td>
+<td><code class="digest">0fcdd180<wbr>d432801c<wbr>ea62616d<wbr>45cc2f49<wbr>9742cd68<wbr>b74d2dca<wbr>9ea8541f<wbr>ee9d2024</code></td>
+</tr>
+<tr>
+<td><code>SDitH/reproduce_sdith_1.py</code></td>
+<td><code class="digest">fbd2e8c8<wbr>a67fa8f6<wbr>3840d6ce<wbr>bf03fa10<wbr>2ca36b72<wbr>fb392f3a<wbr>c24afff0<wbr>efc47800</code></td>
+</tr>
+<tr>
+<td><code>SDitH/reproduce_sdith_2.py</code></td>
+<td><code class="digest">2197f48e<wbr>448142f9<wbr>b2978eaa<wbr>69226ea5<wbr>6dfe5701<wbr>5d9ffd6e<wbr>58fd6310<wbr>9321cd66</code></td>
+</tr>
+<tr>
+<td><code>SDitH/reproduce_sdith_3.py</code></td>
+<td><code class="digest">2bcdff61<wbr>b7994774<wbr>2f90c2f1<wbr>4a3fe0d7<wbr>6323b3e5<wbr>943dc537<wbr>47e0fee2<wbr>83884b90</code></td>
+</tr>
+<tr>
+<td><code>SNOVA/reproduce_snova_1.py</code></td>
+<td><code class="digest">1e1fed47<wbr>d71ea354<wbr>211e8414<wbr>f4832f4a<wbr>ea3085f5<wbr>28591b5d<wbr>d4b79aab<wbr>2356070a</code></td>
+</tr>
+<tr>
+<td><code>SNOVA/reproduce_snova_5.py</code></td>
+<td><code class="digest">b4ae9bb8<wbr>befb3002<wbr>04a30d0f<wbr>e0147a34<wbr>5d830889<wbr>7d0e0186<wbr>d33b1795<wbr>b7bf967f</code></td>
+</tr>
+<tr>
+<td><code>SNOVA/reproduce_snova_6.py</code></td>
+<td><code class="digest">192cb13d<wbr>adde811e<wbr>ebfcd560<wbr>57de8bf8<wbr>61b2011c<wbr>c3b83158<wbr>729b3087<wbr>3bbc7ab8</code></td>
+</tr>
+<tr>
+<td><code>SNOVA/reproduce_snova_7.py</code></td>
+<td><code class="digest">8638d17d<wbr>9f5dd5a6<wbr>dbc8e94f<wbr>6e00adb1<wbr>c875597c<wbr>67a3223e<wbr>6b861334<wbr>e3d8ba5d</code></td>
+</tr>
+<tr>
+<td><code>SQIsign/reproduce_sqisign_1.py</code></td>
+<td><code class="digest">2c1ee2fa<wbr>e341f662<wbr>40cc2131<wbr>de8c54a5<wbr>e921c9e0<wbr>f3c5a38e<wbr>0825733b<wbr>a87e29ee</code></td>
+</tr>
+<tr>
+<td><code>SQIsign/reproduce_sqisign_2.py</code></td>
+<td><code class="digest">ff9a1bd1<wbr>d85f94bd<wbr>34f0a57c<wbr>c1185a23<wbr>08d533ed<wbr>f75cd178<wbr>7528bf44<wbr>bbcc1318</code></td>
+</tr>
+<tr>
+<td><code>SQIsign/reproduce_sqisign_3.py</code></td>
+<td><code class="digest">48c14b0e<wbr>1eec93fa<wbr>f2019e26<wbr>f2d06076<wbr>6f14eb35<wbr>120242cf<wbr>dc48a82d<wbr>076c1a40</code></td>
+</tr>
+<tr>
+<td><code>SQIsign/reproduce_sqisign_4.py</code></td>
+<td><code class="digest">a052c353<wbr>25236d0d<wbr>b9710aa2<wbr>fa5d056c<wbr>07df4531<wbr>eb855aaa<wbr>a8277c8d<wbr>59d5853f</code></td>
+</tr>
+<tr>
+<td><code>SQIsign/reproduce_sqisign_5.py</code></td>
+<td><code class="digest">c6f3db73<wbr>aa936b62<wbr>36787799<wbr>db228a1b<wbr>5092f3b4<wbr>3410b201<wbr>45694b73<wbr>27ed7457</code></td>
+</tr>
+<tr>
+<td><code>UOV/reproduce_uov_1.py</code></td>
+<td><code class="digest">ddcd9db8<wbr>562ba315<wbr>da936494<wbr>13abe1fa<wbr>72caf070<wbr>2943c148<wbr>409d03c7<wbr>8d31d20c</code></td>
+</tr>
+<tr>
+<td><code>UOV/reproduce_uov_2.py</code></td>
+<td><code class="digest">7bb7f9e9<wbr>67fcdf13<wbr>46a30b5e<wbr>d4db9c0c<wbr>d61a5c77<wbr>4ab31457<wbr>22ad5791<wbr>c79ca1e8</code></td>
+</tr>
+<tr>
+<td><code>UOV/reproduce_uov_3.py</code></td>
+<td><code class="digest">bc2da347<wbr>c1b54d7a<wbr>0bb35f1f<wbr>279234ec<wbr>49db0599<wbr>bb3ae2a5<wbr>a371fd09<wbr>1126b825</code></td>
+</tr>
+<tr>
+<td><code>UOV/reproduce_uov_4.py</code></td>
+<td><code class="digest">53412abe<wbr>e248abd1<wbr>64cd49a2<wbr>671f61b6<wbr>89cb8217<wbr>93e718dd<wbr>78ff2d93<wbr>481aaec7</code></td>
+</tr>
+<tr>
+<td><code>UOV/reproduce_uov_5.py</code></td>
+<td><code class="digest">7c17b10e<wbr>3d71bc33<wbr>54db0841<wbr>ffd2d4ad<wbr>135a0d5c<wbr>63cf3c2c<wbr>08906fef<wbr>ef229fba</code></td>
+</tr>
+<tr>
+<td><code>candidates.csv</code></td>
+<td><code class="digest">0a768f1c<wbr>0d21d746<wbr>cbd7501e<wbr>a0dfbefe<wbr>55bb3b82<wbr>c5c70dd2<wbr>3d0d2146<wbr>79b93adc</code></td>
+</tr>
+<tr>
+<td><code>classification-public.md</code></td>
+<td><code class="digest">4518f71f<wbr>c8cf21dd<wbr>ddebc1a0<wbr>040b8a0f<wbr>2733bf5b<wbr>0866ef7d<wbr>0d6ccf3e<wbr>c2699d44</code></td>
+</tr>
+<tr>
+<td><code>findings.csv</code></td>
+<td><code class="digest">cf2a50f1<wbr>edd340ba<wbr>f57eec75<wbr>2c49400c<wbr>bdae9eb5<wbr>db83e410<wbr>937da396<wbr>d7760e13</code></td>
+</tr>
+<tr>
+<td><code>reports/FAEST-1.md</code></td>
+<td><code class="digest">6b0a8ce9<wbr>acfa9e87<wbr>6707672f<wbr>e56d953e<wbr>52a0cfa3<wbr>fea19154<wbr>dbb92e41<wbr>3b250c02</code></td>
+</tr>
+<tr>
+<td><code>reports/FAEST-2.md</code></td>
+<td><code class="digest">2b0dca54<wbr>57afebdf<wbr>d4d7f620<wbr>df8831bc<wbr>23218bb3<wbr>0c5d19cd<wbr>f3e83dde<wbr>3e8c961a</code></td>
+</tr>
+<tr>
+<td><code>reports/HAWK-1.md</code></td>
+<td><code class="digest">aeda0cca<wbr>966e55e4<wbr>6c45afa5<wbr>27a57d14<wbr>ed5eb39f<wbr>aa498e4c<wbr>52dbf506<wbr>ea3fd2eb</code></td>
+</tr>
+<tr>
+<td><code>reports/HAWK-2.md</code></td>
+<td><code class="digest">d38dd570<wbr>4b6a5563<wbr>bb8ce3a1<wbr>aca590a7<wbr>0cf7be3d<wbr>8c7dc353<wbr>06dce818<wbr>4384f829</code></td>
+</tr>
+<tr>
+<td><code>reports/MAYO-1.md</code></td>
+<td><code class="digest">4969e240<wbr>75ef616d<wbr>7625df9c<wbr>e90d7ef4<wbr>eb026f0d<wbr>7eb337ed<wbr>8683d5aa<wbr>f18471ff</code></td>
+</tr>
+<tr>
+<td><code>reports/MAYO-2.md</code></td>
+<td><code class="digest">adb2b38b<wbr>4dcb883b<wbr>e9cd855b<wbr>98568478<wbr>6c3baed6<wbr>3284d0e4<wbr>e3909658<wbr>59f0f920</code></td>
+</tr>
+<tr>
+<td><code>reports/MAYO-3.md</code></td>
+<td><code class="digest">12f3631c<wbr>ac004af1<wbr>25c228fd<wbr>131d7c4d<wbr>441b9db3<wbr>52da1fe7<wbr>4ce83da3<wbr>97c3ff88</code></td>
+</tr>
+<tr>
+<td><code>reports/MQOM-1.md</code></td>
+<td><code class="digest">75963a50<wbr>2799ec1d<wbr>5ae27958<wbr>fdf30ffc<wbr>85d5f5e5<wbr>8a4e54a5<wbr>027348a7<wbr>dee7a862</code></td>
+</tr>
+<tr>
+<td><code>reports/MQOM-2.md</code></td>
+<td><code class="digest">9f43c8ad<wbr>8e218af6<wbr>69f5fb20<wbr>a7ce5297<wbr>7e4de54a<wbr>7d465fa5<wbr>96d1c3b2<wbr>b764951e</code></td>
+</tr>
+<tr>
+<td><code>reports/MQOM-3.md</code></td>
+<td><code class="digest">b874e2d3<wbr>1da86276<wbr>066fa745<wbr>f3e6751f<wbr>bc2e4302<wbr>ced340b7<wbr>3ac92a9c<wbr>b684d42c</code></td>
+</tr>
+<tr>
+<td><code>reports/QR-UOV-1.md</code></td>
+<td><code class="digest">85e6e16f<wbr>1dbd64d1<wbr>393f1a7f<wbr>8beb0677<wbr>e1fb5a3d<wbr>e69aaa8d<wbr>b13830e5<wbr>e7676d89</code></td>
+</tr>
+<tr>
+<td><code>reports/QR-UOV-2.md</code></td>
+<td><code class="digest">8cc53063<wbr>313bc565<wbr>8018a1a5<wbr>7c967274<wbr>580f4750<wbr>0a483c40<wbr>1e538e16<wbr>df014405</code></td>
+</tr>
+<tr>
+<td><code>reports/QR-UOV-3.md</code></td>
+<td><code class="digest">a5038f34<wbr>94a289b0<wbr>836110d3<wbr>7c9a879e<wbr>7da20187<wbr>d24c838f<wbr>e24745ec<wbr>2e9b685f</code></td>
+</tr>
+<tr>
+<td><code>reports/SDitH-1.md</code></td>
+<td><code class="digest">6dd74d7f<wbr>14fffd78<wbr>46a160b6<wbr>aafbe5f7<wbr>e2905812<wbr>a015eca6<wbr>b5dd6a09<wbr>cb113f0a</code></td>
+</tr>
+<tr>
+<td><code>reports/SDitH-2.md</code></td>
+<td><code class="digest">d0100bca<wbr>a1175a6c<wbr>52bef8ff<wbr>0dd7f34a<wbr>22e4799c<wbr>531f5b0a<wbr>ddad40ef<wbr>29a73792</code></td>
+</tr>
+<tr>
+<td><code>reports/SDitH-3.md</code></td>
+<td><code class="digest">ec796b36<wbr>df573ea2<wbr>f6d98f7f<wbr>0d8db4ca<wbr>dae2d2a5<wbr>07514261<wbr>0dc434cd<wbr>b820107a</code></td>
+</tr>
+<tr>
+<td><code>reports/SNOVA-1.md</code></td>
+<td><code class="digest">8a945d61<wbr>205a5d15<wbr>4f5ca2ed<wbr>4c66e20a<wbr>4901f86a<wbr>1a3ebd57<wbr>f9c83eaa<wbr>198e173a</code></td>
+</tr>
+<tr>
+<td><code>reports/SNOVA-2.md</code></td>
+<td><code class="digest">6721d459<wbr>e408c317<wbr>560cc962<wbr>5464e0d0<wbr>283fc6d8<wbr>673081c1<wbr>1887e858<wbr>57b775a1</code></td>
+</tr>
+<tr>
+<td><code>reports/SNOVA-3.md</code></td>
+<td><code class="digest">7035f6ea<wbr>de194e39<wbr>85ed6032<wbr>ccb5d321<wbr>cb487e98<wbr>b1322098<wbr>34d0f541<wbr>bcc6c5c7</code></td>
+</tr>
+<tr>
+<td><code>reports/SNOVA-4.md</code></td>
+<td><code class="digest">3cc23131<wbr>7d61ef92<wbr>455b1c6c<wbr>759e927f<wbr>0483fd6e<wbr>4ce9db47<wbr>cb01c186<wbr>5da7b9c7</code></td>
+</tr>
+<tr>
+<td><code>reports/SNOVA-5.md</code></td>
+<td><code class="digest">931d87ca<wbr>dc52a790<wbr>2b1e211e<wbr>bd5cf328<wbr>266a8811<wbr>bbabbdee<wbr>15a5b73e<wbr>aa76d96b</code></td>
+</tr>
+<tr>
+<td><code>reports/SNOVA-6.md</code></td>
+<td><code class="digest">a7b93670<wbr>bebede21<wbr>0357ef22<wbr>5d5d79e3<wbr>ba5581d9<wbr>83c48b3a<wbr>b970fb3c<wbr>8b8e5051</code></td>
+</tr>
+<tr>
+<td><code>reports/SNOVA-7.md</code></td>
+<td><code class="digest">fb580596<wbr>87345fd8<wbr>2a589a80<wbr>8a248023<wbr>53805d29<wbr>3b695f75<wbr>124e212f<wbr>998e4ddf</code></td>
+</tr>
+<tr>
+<td><code>reports/SQIsign-1.md</code></td>
+<td><code class="digest">9b8028f3<wbr>71327df2<wbr>354aabee<wbr>1bd1d1a5<wbr>962a9727<wbr>94963400<wbr>00559396<wbr>7f73f06f</code></td>
+</tr>
+<tr>
+<td><code>reports/SQIsign-2.md</code></td>
+<td><code class="digest">9f00ac43<wbr>a70a594d<wbr>55e3c996<wbr>1a54a3a9<wbr>005c4f1f<wbr>b88a43c9<wbr>172d17f2<wbr>c2b71544</code></td>
+</tr>
+<tr>
+<td><code>reports/SQIsign-3.md</code></td>
+<td><code class="digest">f2bde8a6<wbr>1028eb9f<wbr>9552229b<wbr>323fde60<wbr>76c68dd1<wbr>b848b13a<wbr>6cad3eda<wbr>ed474517</code></td>
+</tr>
+<tr>
+<td><code>reports/SQIsign-4.md</code></td>
+<td><code class="digest">640ced2f<wbr>6c0cd635<wbr>d8a49943<wbr>79e2083e<wbr>1a6945ac<wbr>35e74d55<wbr>66e9467b<wbr>d32cd1e0</code></td>
+</tr>
+<tr>
+<td><code>reports/SQIsign-5.md</code></td>
+<td><code class="digest">73f9e459<wbr>6ef0db7d<wbr>c2be3e4b<wbr>c4ff699d<wbr>40278067<wbr>5eecb37c<wbr>9d662c4b<wbr>41549d1a</code></td>
+</tr>
+<tr>
+<td><code>reports/UOV-1.md</code></td>
+<td><code class="digest">17796396<wbr>a9089cf5<wbr>3dae88cf<wbr>63cbc9b5<wbr>16ec5701<wbr>9cef2371<wbr>4d5a7354<wbr>e162312c</code></td>
+</tr>
+<tr>
+<td><code>reports/UOV-2.md</code></td>
+<td><code class="digest">cd9027ff<wbr>be2d90a0<wbr>345816a9<wbr>b3cf4cb6<wbr>3ec897ba<wbr>0de7792b<wbr>051115e0<wbr>b2e75876</code></td>
+</tr>
+<tr>
+<td><code>reports/UOV-3.md</code></td>
+<td><code class="digest">99096377<wbr>503258a1<wbr>4e1c82bf<wbr>eeffae95<wbr>0e42c801<wbr>419b6350<wbr>b4889e0b<wbr>4b0d7b00</code></td>
+</tr>
+<tr>
+<td><code>reports/UOV-4.md</code></td>
+<td><code class="digest">1885bd75<wbr>cd85024e<wbr>b6e59939<wbr>f7bac935<wbr>5915cf7d<wbr>b29ec36d<wbr>07450ebb<wbr>733e6e40</code></td>
+</tr>
+<tr>
+<td><code>reports/UOV-5.md</code></td>
+<td><code class="digest">c9223b8b<wbr>92410be6<wbr>7c5d1274<wbr>b52d40df<wbr>84f18ca9<wbr>2ae8d934<wbr>fc835683<wbr>fd9d982c</code></td>
+</tr>
+<tr>
+<td><code>reproducers.csv</code></td>
+<td><code class="digest">0be078e6<wbr>c1af5f85<wbr>3b421ccd<wbr>d8fec5c9<wbr>b86121d9<wbr>ca3a2856<wbr>375d2407<wbr>0c3e9bb1</code></td>
+</tr>
+<tr>
+<td><code>security/reproduce_hawk_1.py</code></td>
+<td><code class="digest">60dc964f<wbr>3d009f3a<wbr>8c8dc28a<wbr>4fbd2985<wbr>6236ff71<wbr>60d96dea<wbr>4b326007<wbr>0d5fea60</code></td>
+</tr>
+<tr>
+<td><code>snapshot.json</code></td>
+<td><code class="digest">80c50d13<wbr>97be79af<wbr>7798243a<wbr>15f25be7<wbr>1aa8eab4<wbr>4307aeab<wbr>d6be9ba7<wbr>ed45a1f7</code></td>
+</tr>
+</tbody>
+</table></div>
+</main>
+<footer class="site-footer">
+<p>Independent analysis; ratings are not issued or endorsed by NIST. Source and reproduction material: <code>ngcc-harness/nist</code>.</p>
+</footer>
+</body>
+</html>

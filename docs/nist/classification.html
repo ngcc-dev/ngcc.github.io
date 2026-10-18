@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: NIST report classification</title>
+<link rel="icon" type="image/png" href="../assets/mag-glass.png">
+<link rel="stylesheet" href="../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="style.css?v=a38b7088">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="index.html"><img class="brand-icon" src="../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="index.html">Findings</a><a href="classification.html">Classification</a><a href="reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">NIST Round 3</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="index.html">NIST signature reports</a> › Classification</p>
+<h1 id="nist-additional-signature-report-classification">NIST additional-signature report classification</h1>
+<p>This policy is specific to the NIST additional digital signature process. It
+uses the required EUF-CMA model, claimed security categories, and evaluation
+criteria on the official <a href="https://csrc.nist.gov/Projects/pqc-dig-sig/standardization/call-for-proposals">NIST call page</a>
+and in the <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/call-for-proposals-dig-sig-sept-2022.pdf">call PDF</a>.
+The call permits security estimates to assume at most <code>2^64</code> chosen-message
+signing queries. Ratings here are independent project assessments, not ratings issued by NIST.
+NGCC findings may supply prior evidence, but their ratings do not transfer
+automatically.</p>
+<p>Each numbered report carries a <code>Credit</code> attribution and independent
+<code>Severity</code>, <code>Status</code>, <code>Layer</code>, <code>Discovery</code>, <code>Exploitation</code>, and <code>Remediation</code>
+fields. These use the same
+classification axes as the NGCC study, but severity is assessed against the
+NIST additional-signature call and the submission's own claims. An earlier
+NGCC rating is evidence, not a rating that automatically transfers here.</p>
+<p>Ratings describe cryptanalytic impact on the <strong>affected scheme and parameters</strong>:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Rating</th>
+<th>Interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><span class="sev sev-critical">Critical</span></td>
+<td>Full key recovery or general forgery invalidates the intended security target; state query/work requirements and whether demonstrated or estimated.</td>
+</tr>
+<tr>
+<td><span class="sev sev-high">High</span></td>
+<td>A serious failure short of a required-property break: for example, a well-supported recovery/forgery path with one material gap, an end-to-end side-channel recovery without an explicit resistance claim, or failure of a claimed SUF-CMA property when EUF-CMA remains intact.</td>
+</tr>
+<tr>
+<td><span class="sev sev-medium">Medium</span></td>
+<td>Confirmed repeated or measured leakage without recovery, a material constant-time rewrite, or a substantive binding/robustness defect whose attack consequence is unresolved.</td>
+</tr>
+<tr>
+<td><span class="sev sev-low">Low</span></td>
+<td>Source-level secret dependence without a measured channel when a local repair is known, or another narrow security-relevant robustness/API weakness.</td>
+</tr>
+<tr>
+<td><span class="sev sev-info">Info</span></td>
+<td>Historical context, a withdrawn claim, or an observation without an established attack on the evaluated submission version.</td>
+</tr>
+</tbody>
+</table></div>
+<p>A Critical rating does not mean every parameter can be attacked cheaply.
+The result, concrete costs, scope and confidence must accompany the rating.
+These are project assessments under the NIST evaluation baseline, not CVSS
+scores or NIST-issued ratings. Strong-unforgeability, side-channel or fault
+models are distinguished from the required EUF-CMA model.</p>
+<p>A candidate-specific proof gap is normally Low when a reproduced calculation
+shows that the submitted reduction becomes ineffective within NIST's stated
+evaluation budget, but no attack follows. Generic looseness without a concrete
+boundary is Informational. A limitation that the submission itself identifies
+as a proof artifact remains Informational only when it is generic looseness
+without a reproduced concrete boundary. A candidate-specific calculation that
+makes the submitted reduction ineffective within NIST's stated evaluation
+budget is Low even when the submission acknowledges the loss and no attack
+follows. High requires a supported recovery or forgery path with a material
+remaining gap; failure of a proof alone is not High.</p>
+<p>The <code>2^64</code> chosen-message figure is an estimation assumption, not a hard
+boundary on relevant attacks. NIST's call §4.B.2 (physical p.14) says that
+attacks using more messages may also be considered and that NIST is primarily
+concerned with classical, rather than quantum, queries to the signing oracle.
+Reports therefore state both the query count and query model; crossing <code>2^64</code>
+does not by itself make an attack irrelevant, and a quantum-query reduction is
+not presented as the call's primary signing-oracle model.</p>
+<p>A concrete security-margin calculation may be a Low / Lead without a
+demonstrated attack when it is candidate-specific, reproducible from a primary
+model, and leaves less than two bits of margin under that model while a
+documented unresolved modeling choice could erase the margin. The report must
+identify the omitted cost, memory assumption, or heuristic and must not present
+the calculation as an attack. A model-dependent observation without such a
+concrete boundary is Informational.</p>
+<p><code>Status</code> describes evidence strength, independently of severity:</p>
+<ul>
+<li><strong>Confirmed:</strong> source/specification reasoning, a mathematical certificate,
+  or a controlled reproducible experiment directly establishes the exact
+  reported behavior. This does not imply end-to-end exploitation.</li>
+<li><strong>Probable:</strong> the mechanism and consequence are strongly supported, but an
+  important source, platform, or experimental step remains unchecked.</li>
+<li><strong>Lead:</strong> a plausible candidate-specific attack still depends on a material
+  unvalidated assumption or experiment.</li>
+<li><strong>Proof gap:</strong> a claimed theorem, reduction, or bound is insufficient, but
+  an attack of the claimed strength has not been established.</li>
+<li><strong>Withdrawn:</strong> the stable report is false, duplicate, out of scope, or
+  superseded. Withdrawn reports have Informational severity. A withdrawn
+  <em>candidate</em> or claim is recorded separately from report status.</li>
+</ul>
+<p><code>Layer</code> identifies the root cause:</p>
+<ul>
+<li><strong>Design:</strong> the normative construction, parameter choice, proof, or
+  advertised portable performance profile contains the weakness.</li>
+<li><strong>Implementation:</strong> submitted code introduces an API, parser,
+  memory-safety, arithmetic, or randomness defect not required by the design.</li>
+<li><strong>Side-channel:</strong> the finding depends on a timing, branch, cache, division,
+  power, fault, or other execution trace and does not meet the Design rule.</li>
+<li><strong>Evaluation:</strong> the issue is confined to KAT, archive, build, provenance, or
+  other evaluation material.</li>
+</ul>
+<p><code>Discovery</code> records the reasoning needed to identify and substantiate the
+mechanism, rather than severity or attack runtime: <strong>Trivial</strong> for direct local
+inspection; <strong>Moderate</strong> for focused review or a standard attack pattern;
+<strong>Non-trivial</strong> for a multi-step candidate-specific argument; and <strong>Hard</strong> for
+substantial new cryptanalytic insight or engineering.</p>
+<p><code>Remediation</code> may be <strong>None</strong> for an accurate historical or withdrawn-claim record that requires no change to the evaluated submission.</p>
+<p><code>Exploitation</code> is a short factual boundary such as <code>source-only</code>,
+<code>measured-channel</code>, <code>candidate-specific path</code>, or <code>end-to-end</code>. It states the
+strongest completed step and the observation model. <code>Remediation</code> is
+<strong>None</strong>, <strong>Local</strong>, <strong>Moderate</strong>, or <strong>Architectural</strong>, describing respectively
+no change for an accurate historical record; a small constant-time/API repair;
+a material implementation replacement or proof/parameter reassessment that
+preserves the construction and API; or a change to the construction, API, or
+advertised performance profile.</p>
+<h2 id="constant-time-classification">Constant-time classification</h2>
+<p>Constant-time surveys distinguish public control flow from operations on a
+secret or secret-derived operand. A report answers, in order: what is secret;
+who can observe the trace; whether a channel was measured and repeated;
+whether observations have a candidate-specific map to a key or forgery; and
+whether that map was executed end to end. Source-level review alone is not a
+timing measurement or a constant-time certification.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Evidence and consequence</th>
+<th>Usual severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Secret branch/address in source, no measured channel, local repair</td>
+<td><span class="sev sev-low">Low</span></td>
+</tr>
+<tr>
+<td>Repeated secret leakage, measured channel, or material rewrite; no recovery</td>
+<td><span class="sev sev-medium">Medium</span></td>
+</tr>
+<tr>
+<td>Fine-grained leakage intrinsic to an advertised fast path with no supplied or known competitive portable constant-time realization</td>
+<td>High may be justified</td>
+</tr>
+<tr>
+<td>Stable oracle and candidate-specific recovery path with one channel or scale gap</td>
+<td><span class="sev sev-high">High</span></td>
+</tr>
+<tr>
+<td>End-to-end recovery/forgery without an explicit resistance claim</td>
+<td><span class="sev sev-high">High</span></td>
+</tr>
+<tr>
+<td>End-to-end recovery/forgery contradicting an explicit relevant resistance claim</td>
+<td><span class="sev sev-critical">Critical</span></td>
+</tr>
+</tbody>
+</table></div>
+<p>Remediation does not mechanically set severity. Local normally supports Low;
+a Moderate rewrite supports Medium only when the report independently
+establishes repeated finer-grained leakage and explains why the affected trace
+must be hidden. Architectural remediation may support High for an intrinsic
+advertised fast path. A costly repair alone does not raise source-only secret
+dependence above Low, particularly when the specification treats the observed
+predicate as public or simulatable. Public-indexed tables, branches on public
+lengths, and verifier rejection paths are not secret leaks. The absence of a
+hardened implementation by itself does not prove a design defect.</p>
+<h2 id="entropy-and-malleability-classification">Entropy and malleability classification</h2>
+<p>The survey traces key-generation and signing entropy from the NIST
+<code>randombytes</code> boundary to all scheme-specific expanders and salts. Seed replay
+in KAT testing is a control, not an attacker capability. Deterministic
+signing or a signer that deliberately ignores fresh external coins is an
+observation until the specification, proof, nonce-reuse behavior, or a
+demonstrated attack makes it security relevant. Entropy estimates count
+reachable states under the scheme's actual derivation and domain separation
+rather than just buffer widths.</p>
+<p>NIST's call §4.B.4 (physical p.18) identifies resistance to isolated coding
+errors, random-number-generator malfunction, and nonce reuse as a desirable
+property, rather than a minimum acceptability requirement. This project rates
+a break that requires one exact repeat of the external signing-RNG output
+Informational when the submission makes no explicit hedged-signing or
+randomness-reuse-resistance claim. The report still records a demonstrated key
+recovery or fresh-message forgery and its precise operational consequence.
+Low or a stronger rating requires an additional candidate-specific trigger in
+the claimed operating model, a contradiction of an explicit robustness claim,
+or a break that does not require RNG failure. FAEST cross-profile reuse remains
+Low because its trigger includes the specified deterministic-signing mode and
+missing profile separation, rather than only an external RNG malfunction.</p>
+<p>Malleability tests distinguish (1) a modified signed message that verifies to
+the same message, which is relevant to SUF-CMA or canonical encoding, from (2)
+a modification that verifies to a different message, which is a direct
+EUF-CMA concern. Sampled mutation, truncation, extension, zero-input, and
+wrong-key tests provide negative evidence only for the tested cases. Failure
+of a claimed SUF-CMA property is normally High because NIST requires EUF-CMA
+and treats stronger properties as additional claims; an EUF-CMA forgery is
+Critical when it defeats the claimed category.</p><h2 id="governing-nist-documents">Governing NIST documents</h2>
+<ul>
+<li><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/standardization/call-for-proposals">Call for Proposals</a></li>
+<li><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">Round 3 additional signatures</a></li>
+</ul>
+</main>
+<footer class="site-footer">
+<p>Independent analysis; ratings are not issued or endorsed by NIST. Source and reproduction material: <code>ngcc-harness/nist</code>.</p>
+</footer>
+</body>
+</html>

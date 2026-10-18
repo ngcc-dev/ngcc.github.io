@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: MQOM-2</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="../style.css?v=a38b7088">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="../index.html">Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">NIST Round 3</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../index.html">NIST signature reports</a> › <code>MQOM-2</code></p>
+
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-info">Info</span></td></tr><tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>All 18 Round3 CT and OT sets by common construction; retained runs are MQOM3-L1-gf16-fast CT and OT</td></tr><tr><th>Discovery</th><td>Non-trivial</td></tr><tr><th>Exploitation</th><td>end-to-end key recovery under repeated signing entropy outside EUF-CMA</td></tr><tr><th>Remediation</th><td>Local</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py MQOM-2</code><br><small>source: <code>nist/MQOM/reproduce_mqom_2.py</code> · SHA-256 <code class="digest">4fc5291b<wbr>d3c78913<wbr>99dac8d7<wbr>30eb4d7f<wbr>40ac6216<wbr>385fab95<wbr>e703f235<wbr>04dfe0b5</code></small><br><small>submitted-Python-reference key recovery and fresh-message signing witness with different-prefix control</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/MQOM_specifications.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/mqom3_submission_package.zip">submission ZIP</a></td></tr></table>
+
+<h1 id="mqom-2-informational-repeated-signing-entropy-reveals-the-secret-vector">MQOM-2 — Informational: repeated signing entropy reveals the secret vector</h1>
+<p>The MQOM signing algorithm draws <code>mseed</code> and <code>salt</code> from external randomness.
+They are not derived from the signing key or message. Reusing <code>mseed</code> and the
+salt prefix retained by <code>TweakSalt</code> fixes the seed trees and masked secret
+corrections. The full salts need not match: <code>TweakSalt</code> replaces the last two
+bytes for CT sets and the last three bytes for OT sets with domain-separation
+data. Different messages and full salts normally select different hidden
+leaves. In a repetition where the two hidden leaves differ, the union of both
+openings reveals every leaf; summing their expanded secret shares and the
+public correction recovers the full secret vector <code>x</code>.</p>
+<p>Run the retained witness against the submitted Python reference implementation:</p>
+<pre><code class="language-sh">python3 MQOM/reproduce_mqom_2.py
+python3 MQOM/reproduce_mqom_2.py MQOM3-L1-gf16-fast-ot
+</code></pre>
+<p>The submitted Python reference requires NumPy, Numba, PyCryptodome and joblib,
+as listed in its <code>requirements.txt</code>. Install those optional dependencies with:</p>
+<pre><code class="language-sh">python3 -m pip install -r \
+  MQOM/submission/submission_package_v3/Reference_Implementation_Python/requirements.txt
+</code></pre>
+<p>The script exits with <code>SKIP</code> when a dependency is unavailable. With the
+dependencies installed, each retained command creates two valid signatures
+with the same <code>mseed</code> and salt prefix but different full salts, recovers <code>x</code>,
+builds a replacement secret key, and verifies a signature on a fresh message.
+It also signs with the same <code>mseed</code> and a different salt prefix and confirms
+that the attack candidate is not the secret vector.</p>
+<p>This does not give an attacker control of randomness in the standard EUF-CMA
+experiment and the submission does not claim hedged signing. NIST's call
+§4.B.4 identifies resistance to RNG malfunction and nonce reuse as a desirable
+rather than mandatory property. The public harness methodology therefore rates
+this Informational while recording the demonstrated end-to-end consequence.
+A stuck RNG, process fork, or VM restore supplies the required precondition.
+Deriving <code>mseed</code> from the secret key, message, fresh randomness, and a domain
+tag would prevent identical internal seeds under that failure.</p>
+<h2 id="harness-reproduction">Harness reproduction</h2>
+<p>From the <code>ngcc-harness</code> checkout, run the pinned source script through the harness-side dispatcher:</p>
+<pre><code class="language-sh">python3 nist/reproduce.py MQOM-2
+</code></pre>
+</main>
+<footer class="site-footer">
+<p>Independent analysis; ratings are not issued or endorsed by NIST. Source and reproduction material: <code>ngcc-harness/nist</code>.</p>
+</footer>
+</body>
+</html>

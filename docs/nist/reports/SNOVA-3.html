@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: SNOVA-3</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="../style.css?v=a38b7088">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="../index.html">Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">NIST Round 3</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../index.html">NIST signature reports</a> › <code>SNOVA-3</code></p>
+
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-info">Info</span></td></tr><tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>Earlier Round1 design; not established against pinned Round3</td></tr><tr><th>Discovery</th><td>Non-trivial</td></tr><tr><th>Exploitation</th><td>published historical weak-key forgery; no current-version exploit</td></tr><tr><th>Remediation</th><td>None</td></tr><tr><th>Credit</th><td>Original cryptanalysis by Ward Beullens; Round-3 applicability reassessment by Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>Primary-source review; no retained executable reproducer.</td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/SNOVA_specifications.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/SNOVA_Round3.zip">submission ZIP</a></td></tr></table>
+
+<h1 id="snova-3-informational-historical-weak-public-keys-and-reduced-rank-whipping-forgery">SNOVA-3 — Informational: historical weak public keys and reduced-rank whipping forgery</h1>
+<p>The published result is High against the original affected configurations.
+This report rates the record Informational because no attack is
+established against the pinned Round-3 version. The paper includes a
+practically breakable fraction of historical keys, but does not establish that
+every original key can be broken practically.</p>
+<p>Beullens identifies SNOVA's structured whipping transformation and uses rank reduction to make the remaining signature-forgery system easier. For the historical SNOVA-37-17-2 set, the paper estimates that roughly 1 in 500 public keys admits a universal forgery attack around 2^97 bit operations, while approximately 1 in 143,000 is breakable within minutes. Other parameter estimates improve by factors between 2^8 and 2^39. This is a forgery result, distinct from the later wedge-product oil-space recovery. <a href="https://eprint.iacr.org/2024/1297">Improved Cryptanalysis of SNOVA, ePrint 2024/1297</a>, received August 19, 2024; latest listed revision February 24, 2025.</p>
+<p>The <a href="https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/w_VTjKtIeAk">SNOVA team's August 22, 2024 response</a> acknowledges problematic weak keys for l=2 and l=3 and temporarily discourages those sets. Its September 30 follow-up describes adjustments intended to retain the key/signature sizes. This response is mitigation evidence for a historical version, not proof that a particular new source build has been exhaustively analyzed.</p>
+<p>The <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/SNOVA_specifications.pdf">Round-3 specification</a>, physical pp.18–19, explicitly states that the Round-1 weak-key issue was resolved in the Round-2 update. Round 3 additionally fixes the public ABQ generation seed; Algorithm 7 uses <code>SNOVA_ABQ</code> for recommended sets and describes checking the generated Q matrices for nonzero values. The current header (<code>SNOVA/submission/SNOVA_Round3/Reference_Implementation/SNOVA_I_S/snova.h#L37</code>) defaults <code>FIXED_ABQ</code> to 1 and <code>ROUND2_T12</code> to 0; the reference initialization (<code>SNOVA/submission/SNOVA_Round3/Reference_Implementation/SNOVA_I_S/snova_ref.c#L231</code>) selects fixed ABQ generation through line 244. Current recommended parameter names and tuples differ from the original SNOVA-37-17-2 example.</p>
+<p>These source observations explain why the historical random-ABQ weak-key frequency cannot simply be assigned to the pinned v3.0 recommended keys. They do not prove that every fixed whipping map is secure: the current specification's §5.2.2 still analyzes MinRank-assisted forgery and states heuristic rank-distribution assumptions.</p>
+<p>No old-package weak-key search or universal-forgery experiment has been rerun here, and there is no demonstrated Round-3 exploit in this report. A proper reproduction requires the old generation rules and an independently verified new-message forgery, with ordinary non-weak keys as controls. Current KAT success is unrelated evidence. Retained primary-source provenance is in <span class="citation-path">security/harvests.jsonl</span>.</p>
+<h2 id="harness-reproduction">Harness reproduction</h2>
+<p>This historical or withdrawn-claim report has no retained automated reproducer. <code>python3 nist/reproduce.py SNOVA-3</code> reports that limit explicitly.</p>
+</main>
+<footer class="site-footer">
+<p>Independent analysis; ratings are not issued or endorsed by NIST. Source and reproduction material: <code>ngcc-harness/nist</code>.</p>
+</footer>
+</body>
+</html>

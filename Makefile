@@ -14,8 +14,10 @@ PORT  ?= 8000
 .PHONY: build check serve sync sync-performance clean
 build:
 	python3 tools/build.py
+	$(MAKE) -C nist build
 check: build
 	python3 tools/check.py
+	$(MAKE) -C nist check-built
 
 serve: build
 	python3 -m http.server -d docs $(PORT)
@@ -28,4 +30,5 @@ sync-performance:
 	@test -n "$(PERF_SOURCE)" || { echo "set PERF_SOURCE=/path/to/harness-checkout" >&2; exit 2; }
 	python3 tools/sync_performance.py "$(PERF_SOURCE)"
 clean:
+	$(MAKE) -C nist clean
 	python3 tools/build.py --clean

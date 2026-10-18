@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: SQIsign-4</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="../style.css?v=a38b7088">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="../index.html">Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">NIST Round 3</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../index.html">NIST signature reports</a> › <code>SQIsign-4</code></p>
+
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-lead">Lead</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>Round3 p324_3 p500_27 p664_17 concrete-security claims</td></tr><tr><th>Discovery</th><td>Moderate</td></tr><tr><th>Exploitation</th><td>model-dependent projected margin with no end-to-end attack</td></tr><tr><th>Remediation</th><td>Architectural</td></tr><tr><th>Credit</th><td>Original attack by Benjamin Wesolowski; independent parameter extrapolation and cost-model reassessment by Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py SQIsign-4</code><br><small>source: <code>nist/SQIsign/reproduce_sqisign_4.py</code> · SHA-256 <code class="digest">a052c353<wbr>25236d0d<wbr>b9710aa2<wbr>fa5d056c<wbr>07df4531<wbr>eb855aaa<wbr>a8277c8d<wbr>59d5853f</code></small><br><small>deterministic cost-model comparison with memory-charging controls</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/sqisign_specification.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/sqisign.zip">submission ZIP</a></td></tr></table>
+
+<h1 id="sqisign-4-low-free-memory-attack-extrapolation-falls-below-category-targets">SQIsign-4 — Low: free-memory attack extrapolation falls below category targets</h1>
+<p>SQIsign's pinned <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/sqisign_specification.pdf">specification</a> incorporates the new
+<code>p^(1/3+o(1))</code> supersingular endomorphism-ring attack.  Section 1.1 (physical
+pp. 4–5) calls its concrete implications uncertain, notes its exponential
+memory, and describes the parameters as a middle-of-the-road choice. The
+submitters say they are optimistic that the parameters meet or surpass NIST's
+targets, barring improvements such as a memory-free <code>p^(1/3+o(1))</code> attack;
+they do not say that the current parameters would fail. Section 8.2.1.2
+(physical pp. 108–109) uses fixed memory caps of <code>2^80</code>, <code>2^120</code>, and <code>2^160</code>
+stored j-invariants.</p>
+<h2 id="the-model-dependent-shortfall">The model-dependent shortfall</h2>
+<p>The specification models a memory-<code>w</code> attack as generating at least
+<code>sqrt(p/w)</code> j-invariants and assigns each generated value <code>2^c_j</code> binary
+operations, where <code>c_j</code> is 27.3, 29.8, or 31.4.  At the submitted caps, using
+the exact Round-3 primes gives 150.09, 222.18, and 285.44 bits of work.  These
+are above NIST's 143-, 207-, and 272-gate category thresholds and agree with
+the specification's rounded 149.8, 221.8, and 285.4 figures.</p>
+<p>If the same lower-bound formula is extrapolated to <code>w = p^(1/3)</code> and memory is
+free, its time exponent becomes <code>log2(p)/3 + c_j</code>:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>parameter</th>
+<th style="text-align: right;">free-memory work</th>
+<th style="text-align: right;">category target</th>
+<th style="text-align: right;">shortfall</th>
+<th style="text-align: right;">stored entries</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>p324_3</td>
+<td style="text-align: right;">135.83</td>
+<td style="text-align: right;">143</td>
+<td style="text-align: right;">7.17</td>
+<td style="text-align: right;"><code>2^108.53</code></td>
+</tr>
+<tr>
+<td>p500_27</td>
+<td style="text-align: right;">198.05</td>
+<td style="text-align: right;">207</td>
+<td style="text-align: right;">8.95</td>
+<td style="text-align: right;"><code>2^168.25</code></td>
+</tr>
+<tr>
+<td>p664_17</td>
+<td style="text-align: right;">254.10</td>
+<td style="text-align: right;">272</td>
+<td style="text-align: right;">17.90</td>
+<td style="text-align: right;"><code>2^222.70</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>This is the concrete-margin lead.  It is an uncapped, free-random-access-memory
+extrapolation of a bound that the specification states only for its considered
+parameter range.  The listed memory is in stored field elements, not bits.</p>
+<h2 id="memory-and-cost-model-caveats">Memory and cost-model caveats</h2>
+<p>The conclusion reverses when memory access is charged.  As an explicit
+sensitivity test, charging <code>w^(1/3)</code> binary operations per generated
+j-invariant raises the optimized exponents to 144.71, 224.34, and 296.94,
+above all three targets.  NIST's call §4.B.3 (physical p. 16) permits category
+comparisons to account for the cost of accessing extremely large memory.  The
+specification's hard cap is its own concrete convention rather than a NIST
+metric, but it also yields positive margins.</p>
+<p>Wesolowski's own rough Section 4.1 model in
+<a href="https://eprint.iacr.org/2026/1486">ePrint 2026/1486</a> supplies a second caveat.
+Re-evaluated at the exact Round-3 primes, it gives approximately <code>2^135.6</code>,
+<code>2^203.4</code>, and <code>2^264.1</code> Fp2 operations using <code>2^117.3</code>, <code>2^178.9</code>, and
+<code>2^234.7</code> entries.  Charging <code>log2(p)^2</code> bit operations per Fp2 operation raises
+the work to 152.3, 221.4, and 282.9 bits.  This is another explicit cost-model
+choice rather than a lower bound on an Fp2 operation, but under it the concrete
+model does not demonstrate a category shortfall.  The reproducer calibrates its
+implementation of the model to within 2.3 bits of the paper's printed examples.</p>
+<p>The paper also makes clear that its asymptotic result is conditional on a
+smoothness heuristic, carries a superpolynomial overhead hidden in the
+<code>o(1)</code> exponent, and needs high memory. Its abstract says that the impact on
+concrete parameters remains to be clarified. The table above is therefore a
+cost-model extrapolation, not a consequence that the paper claims for these
+three parameter sets.</p>
+<h2 id="classification-and-limits">Classification and limits</h2>
+<p>This is Low / Lead because the free-memory arithmetic is below every target,
+but no accepted resource accounting establishes an attack below a claimed
+category.  No attack implementation was run at scale, the hidden <code>o(1)</code> cost
+is material, and both alternative cost models above retain positive margins:
+one charges memory access, while the other charges bit operations for each Fp2
+operation. The specification itself acknowledges this uncertainty. Parameter
+growth or a better-supported time-memory-area analysis would resolve the lead.</p>
+<p>Recompute the models with:</p>
+<pre><code class="language-sh">python3 SQIsign/reproduce_sqisign_4.py
+</code></pre>
+<p>The script checks the pinned specification, exact primes, capped and uncapped
+specification formulas, a charged-memory sensitivity model, and the retained
+Wesolowski Section 4.1 approximation.  It is a deterministic cost-model check,
+not a cryptanalytic attack.</p>
+<h2 id="harness-reproduction">Harness reproduction</h2>
+<p>From the <code>ngcc-harness</code> checkout, run the pinned source script through the harness-side dispatcher:</p>
+<pre><code class="language-sh">python3 nist/reproduce.py SQIsign-4
+</code></pre>
+</main>
+<footer class="site-footer">
+<p>Independent analysis; ratings are not issued or endorsed by NIST. Source and reproduction material: <code>ngcc-harness/nist</code>.</p>
+</footer>
+</body>
+</html>

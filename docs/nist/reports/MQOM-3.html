@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: MQOM-3</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="../style.css?v=a38b7088">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="../index.html">Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">NIST Round 3</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../index.html">NIST signature reports</a> › <code>MQOM-3</code></p>
+
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>Nine Round3 correlated-tree parameter sets; one-tree sets excluded</td></tr><tr><th>Discovery</th><td>Moderate</td></tr><tr><th>Exploitation</th><td>proof/model gap; no forgery or key recovery</td></tr><tr><th>Remediation</th><td>Moderate</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py MQOM-3</code><br><small>source: <code>nist/MQOM/reproduce_mqom_3.py</code> · SHA-256 <code class="digest">2e893dfb<wbr>46a4cd79<wbr>92b6b4c8<wbr>f314b107<wbr>cace68b6<wbr>031d0c9b<wbr>874fe80e<wbr>432b9c65</code></small><br><small>Table 26 arithmetic and nine-set scope check</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/MQOM_specifications.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/mqom3_submission_package.zip">submission ZIP</a></td></tr></table>
+
+<h1 id="mqom-3-low-correlated-tree-standard-mq-bound-falls-1949-bits-short">MQOM-3 — Low: correlated-tree standard-MQ bound falls 19–49 bits short</h1>
+<h2 id="proof-scope">Proof scope</h2>
+<p>MQOM's security discussion (§5.1, physical pp.73–78) first gives a formal
+EUF-KO theorem common to both tree variants. It then states that EUF-CMA follows
+by simulating the signing oracle. For the correlated-tree variant, that step is
+given by the external FR26 result and assumes partial-guessing one-wayness of
+MQ (PGOW-MQ). For the one-tree variant, the stated reduction instead relies
+directly on standard MQ. Thus the specification does discuss EUF-CMA; the gap
+reported here is confined to the correlated-tree assumption chain.</p>
+<p>The specification calls PGOW-MQ weaker than standard MQ because the adversary
+has a prefix-validation oracle. Section 5.3.2, physical pp.90–91, gives a
+non-tight reduction from PGOW-MQ to standard MQ. Table 26 (physical p.91)
+reports these lower bounds:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th style="text-align: right;">Category</th>
+<th style="text-align: right;">Table 26 lower bound</th>
+<th style="text-align: right;">Submission target</th>
+<th style="text-align: right;">Gap</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GF(2)</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">122</td>
+<td style="text-align: right;">143</td>
+<td style="text-align: right;">21</td>
+</tr>
+<tr>
+<td>GF(2)</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">188</td>
+<td style="text-align: right;">207</td>
+<td style="text-align: right;">19</td>
+</tr>
+<tr>
+<td>GF(2)</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">245</td>
+<td style="text-align: right;">272</td>
+<td style="text-align: right;">27</td>
+</tr>
+<tr>
+<td>GF(16)</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">121</td>
+<td style="text-align: right;">143</td>
+<td style="text-align: right;">22</td>
+</tr>
+<tr>
+<td>GF(16)</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">171</td>
+<td style="text-align: right;">207</td>
+<td style="text-align: right;">36</td>
+</tr>
+<tr>
+<td>GF(16)</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">223</td>
+<td style="text-align: right;">272</td>
+<td style="text-align: right;">49</td>
+</tr>
+</tbody>
+</table></div>
+<p>Every one of the nine correlated-tree sets maps to one of these field/category
+rows, so the standard-MQ reduction alone certifies a lower bound 19–49 bits
+below the submission's adopted NIST gate-count target. The specification
+describes the reduction's loss relative to its full-MQ estimates as 20–65 bits;
+that is a different comparison from the target gaps tabulated above.</p>
+<h2 id="classification-and-limits">Classification and limits</h2>
+<p>This is a Low proof gap, not an attack. The calculation does not give an
+algorithm meeting a Table 26 lower bound. Section 5.3.3 separately analyzes
+PGOW-MQ directly and argues that its validation oracle is unlikely to provide
+a significant practical advantage. Those estimates support the parameter
+rationale but do not turn the non-tight standard-MQ reduction into a proof at
+the claimed targets.</p>
+<p>The nine one-tree sets are outside this report because their stated EUF-CMA
+reduction relies directly on standard MQ without the PGOW-MQ step. Closing the
+finding requires a tighter reduction, a sufficiently supported direct PGOW-MQ
+hardness result at each target, or use of the one-tree construction.</p>
+<h2 id="reproduction">Reproduction</h2>
+<pre><code class="language-sh">python3 MQOM/reproduce_mqom_3.py
+</code></pre>
+<p>The deterministic standard-library script pins the specification, recomputes
+the six target gaps from Table 26, and checks <code>parameters.csv</code> to confirm that
+all nine <code>-ct</code> sets and no <code>-ot</code> sets are in scope. It is a table/model check,
+not a cryptanalytic attack.</p>
+<h2 id="harness-reproduction">Harness reproduction</h2>
+<p>From the <code>ngcc-harness</code> checkout, run the pinned source script through the harness-side dispatcher:</p>
+<pre><code class="language-sh">python3 nist/reproduce.py MQOM-3
+</code></pre>
+</main>
+<footer class="site-footer">
+<p>Independent analysis; ratings are not issued or endorsed by NIST. Source and reproduction material: <code>ngcc-harness/nist</code>.</p>
+</footer>
+</body>
+</html>

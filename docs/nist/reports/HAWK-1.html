@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: HAWK-1</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="../style.css?v=a38b7088">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="../index.html">Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">NIST Round 3</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../index.html">NIST signature reports</a> › <code>HAWK-1</code></p>
+
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr><tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>Pinned HAWK v1.1; challenge256 practically attacked by authors;512/1024 claimed categories undermined</td></tr><tr><th>Discovery</th><td>Hard</td></tr><tr><th>Exploitation</th><td>published end-to-end HAWK-256; local model controls</td></tr><tr><th>Remediation</th><td>Architectural</td></tr><tr><th>Credit</th><td>Zygimantas Straznickas and Stephen A. Weis, with Claude Mythos Preview assistance; independent local verification by Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Candidate disposition</th><td>Withdrawn from the NIST competition on 2026-07-29</td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py HAWK-1</code><br><small>source: <code>nist/security/reproduce_hawk_1.py</code> · SHA-256 <code class="digest">60dc964f<wbr>3d009f3a<wbr>8c8dc28a<wbr>4fbd2985<wbr>6236ff71<wbr>60d96dea<wbr>4b326007<wbr>0d5fea60</code></small><br><small>model-controls; source-review; published end-to-end attack</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/round-2/spec-files/hawk-spec-round2-web.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/round-2/submission-pkg/hawk-submission-round2.zip">submission ZIP</a></td></tr></table>
+
+<h1 id="hawk-1-critical-public-key-only-signing-key-recovery-through-reduced-dimension-svp">HAWK-1 — Critical: public-key-only signing-key recovery through reduced-dimension SVP</h1>
+<p>The Anthropic attack compromises HAWK's proposed security margins and recovers
+a working equivalent signing key from public information. The HAWK team
+confirmed the improvement and withdrew the candidate on <strong>29 July 2026</strong>;
+NIST confirmed the withdrawal that day. The current <a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">NIST Round 3
+page</a>
+links that announcement and marks HAWK withdrawn. The announcement,
+confirmation and dates are in the <a href="https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/2r2u6SbHun4">primary pqc-forum
+thread</a>.
+This rating describes the candidate's cryptanalytic failure; it does not mean
+that all its parameter sizes have a cheap practical attack.</p>
+<h2 id="affected-version-and-attacker-access">Affected version and attacker access</h2>
+<p>The evaluated package is NIST's <strong>Round 2 HAWK v1.1, 5 February 2025</strong>,
+because the Round 3 page supplies no HAWK package. See the pinned
+<span class="citation-path">provenance</span>, <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/round-2/spec-files/hawk-spec-round2-web.pdf">specification</a>, and
+<span class="citation-path">external parameter inventory</span>. The structural result covers
+HAWK-256, HAWK-512 and HAWK-1024. HAWK-256 is a challenge set with no NIST
+category; HAWK-512 and HAWK-1024 claimed categories 1 and 5 respectively.
+This is not an assertion that a separate Round 3 HAWK implementation was
+downloaded or tested here.</p>
+<p>The attacker needs the public key, not a signing oracle, leaked randomness,
+fault access or a side channel. An equivalent signing basis suffices for
+fresh-message forgery; recovery of the original compact-key seed is
+unnecessary. The <a href="https://github.com/anthropics/cryptography-research-demo/blob/fa01c398b42bb7d94eadff75a42dfb45da484457/HAWK/README.md">released attack
+implementation</a>
+outputs a decoded 592-byte HAWK-256 signing key, rather than the original
+96-byte seed-based NIST secret-key encoding. It verifies that key using the
+alternate signing entry point in the <code>hawk-sign/dev</code> reference implementation
+at the commit pinned by upstream's <code>nix/hawk256-ref.nix</code>. This review has not
+established source identity between that development revision and the pinned
+NIST v1.1 <code>Reference_Implementation</code>.</p>
+<h2 id="mechanism-and-concrete-impact">Mechanism and concrete impact</h2>
+<p>From public Gram matrix <code>Q = B* B</code>, the attack constructs a rank-<code>n</code>
+cocycle lattice. The involution <code>tau(zeta) = -zeta</code> exposes
+<code>B^-1 tau(B)</code> as a shortest vector. Recovering an equivalent key takes
+polynomially many exact-SVP calls in dimension <code>n/2 + 1</code>; the resulting attack
+is still exponential. <a href="https://anthropic.com/document/hawk_key_recovery.pdf">Straznickas and Weis, Theorem 6.1 and
+§6</a>.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Set</th>
+<th style="text-align: right;">Previous estimated BKZ block size</th>
+<th style="text-align: right;">Exact-SVP oracle dimension</th>
+<th style="text-align: right;">Previous total AGPS20 gate estimate</th>
+<th style="text-align: right;">New per-call AGPS20 estimate</th>
+<th style="text-align: right;">New total AGPS20 gate bound</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HAWK-256</td>
+<td style="text-align: right;">211</td>
+<td style="text-align: right;">129</td>
+<td style="text-align: right;">not specified for this challenge set</td>
+<td style="text-align: right;">practical recovery reported</td>
+<td style="text-align: right;">practical recovery reported</td>
+</tr>
+<tr>
+<td>HAWK-512</td>
+<td style="text-align: right;">452</td>
+<td style="text-align: right;">257</td>
+<td style="text-align: right;">2^150</td>
+<td style="text-align: right;">2^86.0</td>
+<td style="text-align: right;">at most 2^108</td>
+</tr>
+<tr>
+<td>HAWK-1024</td>
+<td style="text-align: right;">940</td>
+<td style="text-align: right;">513</td>
+<td style="text-align: right;">2^288</td>
+<td style="text-align: right;">2^157.8</td>
+<td style="text-align: right;">at most 2^182</td>
+</tr>
+</tbody>
+</table></div>
+<p>The final column prices the <strong>complete oracle-call budget</strong>; the preceding
+column is per SVP call. These are model-based classical gate estimates, not measured
+runtimes or NIST category bit counts. The paper additionally gives more
+aggressive heuristic GSA-intersect estimates of about <code>2^80.8</code> gates at block
+size 205 for HAWK-512 and <code>2^146.5</code> at block size 432 for HAWK-1024. Its
+HAWK-256 experiments recovered working keys in hours on a 96-core server; it
+did not attempt HAWK-512 recovery. <a href="https://anthropic.com/document/hawk_key_recovery.pdf">Paper, Table 1 and §6.1 text following the
+table</a>.</p>
+<p>The <a href="https://www.anthropic.com/research/discovering-cryptographic-weaknesses">authors' announcement</a>
+dates public disclosure to <strong>28 July 2026</strong>, following disclosure to the
+HAWK team in June. Its approximately <code>2^38</code> HAWK-256 headline and the
+AGPS20 totals above use different cost accounting. The result is specific
+to HAWK's structure; this report does not transfer it to Falcon, ML-DSA or
+other lattice signatures. The team considered straightforward parameter
+doubling or higher module rank uncompetitive, rather than publishing a
+drop-in repair. <a href="https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/2r2u6SbHun4">Team response</a>.</p>
+<h2 id="local-reproduction-and-limits">Local reproduction and limits</h2>
+<pre><code class="language-sh">python3 security/reproduce_hawk_1.py
+python3 security/harvest.py nist-round3 hawk-pqc-forum hawk-key-recovery-paper hawk-demo-archive
+python3 security/reproduce_hawk_1.py --require-cache
+</code></pre>
+<p>The cheap control passes locally. It checks cocycle identities using a known
+triangular basis in two toy rings, computes oracle dimensions 129/257/513,
+recomputes the published gate-bound arithmetic, and verifies available
+harvested evidence against its recorded hashes. The toy basis is supplied
+to the control: <strong>this is not unknown-key recovery or a proof of the full
+reduction</strong>. Cached-source checks are visibly SKIP on a fresh clone until
+harvested; <code>--require-cache</code> makes missing artifacts return exit 77.</p>
+<p>The full external attack is <strong>not reproduced locally</strong>. SageMath and Nix are
+absent in this environment. The pinned upstream revision is
+<code>fa01c398b42bb7d94eadff75a42dfb45da484457</code>; its source archive SHA-256 is
+<code>3f318c7124e1fe93e6450e77d3702c3c4555b3cd24470dbc93006ed6b7364fed</code>.
+The harvested paper SHA-256 is
+<code>056faead316ea9a8eb01000cb9c548e79e21ad09a0684c3d52bbc1093183ac89</code>.</p>
+<p>An optional external recovery requires the pinned upstream dependencies
+and reviewed setup, including Sage/fpylll and the sieve's AVX512-VNNI CPU
+support. Once those dependencies are available, its documented recovery
+entry point is:</p>
+<pre><code class="language-sh"># In the reviewed, pinned upstream HAWK directory, with its dependencies configured:
+sage -python -m hawk_recover /path/to/owned-hawk256-public-key.hex --out recovered_sk.bin
+</code></pre>
+<p>Retain final reference-signature verification; do not use <code>--skip-verify</code>
+as evidence of successful recovery. The output's decoded-key format cannot
+be passed directly to the ordinary NIST seed-key API wrapper. Neither
+the upstream setup script nor the attack pipeline has been executed here.
+Passing ordinary KATs is compatible with this finding:
+functional agreement does not restore the lost security margin.</p>
+<p>Retrieval statuses, times, URLs and artifact hashes are recorded in
+<span class="citation-path">the append-only harvest log</span>; operational details
+are in security/README.md (<code>security/README.md</code>). No candidate source is
+patched by this report. Withdrawal is the published disposition; there is
+no reviewed fixed HAWK variant in this pinned study.</p>
+<h2 id="harness-reproduction">Harness reproduction</h2>
+<p>From the <code>ngcc-harness</code> checkout, run the pinned source script through the harness-side dispatcher:</p>
+<pre><code class="language-sh">python3 nist/reproduce.py HAWK-1
+</code></pre>
+<p>The retained script's algebra and cost-model subchecks can pass, but the dispatcher returns SKIP (77) because it does not execute the claimed end-to-end SVP key-recovery pipeline.</p>
+</main>
+<footer class="site-footer">
+<p>Independent analysis; ratings are not issued or endorsed by NIST. Source and reproduction material: <code>ngcc-harness/nist</code>.</p>
+</footer>
+</body>
+</html>

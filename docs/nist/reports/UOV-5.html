@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: UOV-5</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="../style.css?v=a38b7088">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="../index.html">Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">NIST Round 3</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../index.html">NIST signature reports</a> › <code>UOV-5</code></p>
+
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>All four recommended sets and all three key formats</td></tr><tr><th>Discovery</th><td>Moderate</td></tr><tr><th>Exploitation</th><td>confirmed proof-scope and bound gap; no key recovery or forgery</td></tr><tr><th>Remediation</th><td>Moderate</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py UOV-5</code><br><small>source: <code>nist/UOV/reproduce_uov_5.py</code> · SHA-256 <code class="digest">7c17b10e<wbr>3d71bc33<wbr>54db0841<wbr>ffd2d4ad<wbr>135a0d5c<wbr>63cf3c2c<wbr>08906fef<wbr>ef229fba</code></small><br><small>pinned signer-flow witness and theorem query-bound arithmetic</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/UOV_Specification_R3.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/UOV-R3.zip">submission ZIP</a></td></tr></table>
+
+<h1 id="uov-5-low-the-formal-euf-cma-theorem-does-not-cover-the-recommended-signer">UOV-5 — Low: the formal EUF-CMA theorem does not cover the recommended signer</h1>
+<h2 id="scope-mismatch">Scope mismatch</h2>
+<p>The specification states in §4, physical p.22, that no formal reduction from a
+well-known hard problem has been presented for UOV. It then points to Appendix
+A for the EUF-CMA argument for <strong>salt-UOV</strong>. That construction fixes a random
+vinegar vector and resamples the salt until the linear system is solvable.</p>
+<p>The recommended signer in Figure 2 and the submitted <code>ov.c</code> does the opposite:
+it samples one salt, derives vinegar from the message, salt, secret seed and an
+attempt counter, and retries with new vinegar until its secret linear system is
+invertible. The specification argues that known attacks apply to both variants,
+but that is not a reduction for the recommended signing distribution.</p>
+<h2 id="quantitative-limit">Quantitative limit</h2>
+<p>Appendix-A Theorem 1 gives the salt-UOV reduction numerator</p>
+<p><code>1 - (q_h + q_s) * q_s * 2^-128</code>.</p>
+<p>At the NIST evaluation budget <code>q_s=2^64</code>, this is already zero when <code>q_h=0</code>
+and negative for any positive hash-query budget. The theorem also loses a
+factor <code>q_h+q_s+1</code>. These observations concern only what the theorem certifies;
+they do not yield an attack on either signer.</p>
+<p>Run the retained source and arithmetic certificate with:</p>
+<pre><code class="language-sh">python3 UOV/reproduce_uov_5.py
+</code></pre>
+<p>It pins the specification and submitted signer, confirms the fixed-salt,
+retry-vinegar source order, and evaluates the theorem numerator at the NIST
+signing-query budget. Because a proof for a related signer cannot establish the
+required EUF-CMA claim for the submitted signer, this is a Low Proof gap. A
+remedy is a reduction covering Figure 2's exact distribution and realistic
+query budgets, or adoption of a signing procedure covered by an applicable
+proof.</p>
+<h2 id="harness-reproduction">Harness reproduction</h2>
+<p>From the <code>ngcc-harness</code> checkout, run the pinned source script through the harness-side dispatcher:</p>
+<pre><code class="language-sh">python3 nist/reproduce.py UOV-5
+</code></pre>
+</main>
+<footer class="site-footer">
+<p>Independent analysis; ratings are not issued or endorsed by NIST. Source and reproduction material: <code>ngcc-harness/nist</code>.</p>
+</footer>
+</body>
+</html>

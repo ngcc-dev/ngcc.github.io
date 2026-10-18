@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: MAYO-1</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="../style.css?v=a38b7088">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="../index.html">Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">NIST Round 3</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../index.html">NIST signature reports</a> › <code>MAYO-1</code></p>
+
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr><tr><th>Layer</th><td>side-channel</td></tr><tr><th>Affected</th><td>Submitted Round3 portable reference signer for MAYO-1/2/3/5</td></tr><tr><th>Discovery</th><td>Moderate</td></tr><tr><th>Exploitation</th><td>source-level documented rank/retry trace; no measured channel or recovery</td></tr><tr><th>Remediation</th><td>Local</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py MAYO-1</code><br><small>source: <code>nist/MAYO/reproduce_mayo_1.py</code> · SHA-256 <code class="digest">5f572166<wbr>140300cd<wbr>d75d80a0<wbr>0d5cd387<wbr>11ea5e31<wbr>c761b049<wbr>d0842f29<wbr>39ce3e1b</code></small><br><small>pinned-source data-flow and branch-model witness</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/mayo_specification.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/MAYO.zip">submission ZIP</a></td></tr></table>
+
+<h1 id="mayo-1-low-documented-signing-retry-contradicts-the-broad-constant-control-flow-claim">MAYO-1 — Low: documented signing retry contradicts the broad constant-control-flow claim</h1>
+<h2 id="affected-implementation-and-claim">Affected implementation and claim</h2>
+<p>The finding applies to the submitted portable reference signer for MAYO-1,
+MAYO-2, MAYO-3 and MAYO-5. The retained evaluation builds the common code once
+per parameter set. The Round 3 specification, §3, says the C implementations
+“avoid secret-dependent data indexing and secret-dependent control flow.”  It
+also says, more narrowly, that revealing whether the solver must restart is
+acceptable.  This report records the concrete exception to the broad claim; it
+does not turn that design rationale into a key-recovery claim.</p>
+<p>The design discussion on physical p.4 explains why MAYO retains the salt and
+retries with fresh preimage-sampling randomness, despite the resulting proof
+loss.  In §5.3, physical pp.31–32, the specification bounds the per-signature
+restart probability by
+<code>B = (q^(k-(n-o)) + q^(m-ko))/(q-1)</code>.  For the submitted parameters this is
+1/15 (6.67%) for MAYO1, 1/240 (0.417%) for MAYO2, and 1/3840 (0.0260%, about
+2^-11.9) for both MAYO3 and MAYO5.  These are the specification's bounds, not
+timing measurements made by this survey.</p>
+<h2 id="data-flow-and-observable-behavior">Data flow and observable behavior</h2>
+<p>The compact secret seed is assigned at <code>src/mayo.c:443</code>.  It is included in the
+SHAKE input at lines 473-477 and again in the attempt expansion at lines
+493-497.  The resulting vinegar values and the secret oil-space matrix <code>sk-&gt;O</code>
+are passed into <code>m_calculate_M_and_VPV</code> at lines 499-506, producing the hidden
+linear system <code>A</code>.</p>
+<p><code>sample_solution</code> computes the last-row rank predicate from that matrix at
+<code>src/arithmetic.c:75-79</code>.  Under <code>ENABLE_CT_TESTING</code>, line 83 explicitly marks
+the byte defined to Valgrind immediately before the branch at lines 86-88.  The
+caller branches on the return value and breaks out of the attempt loop at
+<code>src/mayo.c:520-523</code>; failure performs another full attempt.  Thus the signing
+control-flow trace exposes the number of rank-deficient attempts even though
+the hidden system and its derivation contain secret data.</p>
+<p>The submitted echelon-form implementation otherwise uses fixed bounds, masked
+pivot selection, and public loop indices (<code>src/generic/echelon_form.h:45-136</code>).
+No secret-indexed table was found in the portable GF(16) path.</p>
+<h2 id="impact-and-classification">Impact and classification</h2>
+<p>This is a confirmed source-level branch observable to a local timer, branch
+tracer, or physical observer.  The number of attempts is not serialized in the
+signature.  The specification deliberately discusses the retry probability,
+accounts for its information-theoretic leakage in the proof, and states that
+revealing whether the solver restarts is acceptable.  The submitted Valgrind
+instrumentation likewise declassifies the rank result immediately before the
+branch.  This survey did not establish correlation with the long-term oil
+space, measure a stable same-public-input timing channel, or map observations
+to key recovery or a forgery.</p>
+<p>The defect established here is therefore the conflict between that documented
+exception and the blanket statement that all C implementations avoid
+secret-dependent control flow.  Correcting the broad statement is local, and
+the public harness methodology assigns Low severity to this source-level
+implementation-claim exception.  NIST's required EUF-CMA property is not shown
+to fail.</p>
+<p>The submitters' narrower rationale is that, with a fixed public salt and fresh
+vinegars for each attempt, the retry count need not be hidden.  That may be a
+valid distributional argument, but it is different from the specification's
+blanket implementation claim.  A proof that the trace is independent of the
+long-term key, or a leakage experiment and recovery analysis, would change the
+security interpretation.</p>
+<h2 id="reproduction">Reproduction</h2>
+<pre><code class="language-sh">python3 MAYO/reproduce_mayo_1.py
+</code></pre>
+<p>The deterministic witness pins the specification and three relevant source
+files by SHA-256, verifies the ordered secret-to-branch source trace, and checks
+the rank-predicate branch model.  It reports PASS only for that root-cause
+witness.  It explicitly does not claim a measured timing channel, key recovery,
+or forgery.</p>
+<p>The functional control is:</p>
+<pre><code class="language-sh">python3 MAYO/survey_runtime.py
+</code></pre>
+<p>All four libraries passed seeded replay, seed sensitivity, signature diversity,
+message recovery, malformed-length rejection and sampled mutation rejection.
+Those results are compatible with this side-channel finding.</p>
+<h2 id="remediation-and-follow-up">Remediation and follow-up</h2>
+<p>A local documentation repair can qualify the blanket implementation claim and
+identify the deliberately declassified retry result.  An implementation that
+instead promises a fixed control-flow trace can run all 256 attempts and
+mask-select the first successful solution, or use another fixed-work batching
+strategy; that optional strengthening is a material signing-cost change.</p>
+<p>Future work should instrument attempt counts for many keys while holding the
+public message protocol fixed, measure timing on each supported backend, and
+test whether observations distinguish or recover properties of <code>O</code>.  Until
+then the demonstrated boundary remains source-level leakage only.</p>
+<h2 id="harness-reproduction">Harness reproduction</h2>
+<p>From the <code>ngcc-harness</code> checkout, run the pinned source script through the harness-side dispatcher:</p>
+<pre><code class="language-sh">python3 nist/reproduce.py MAYO-1
+</code></pre>
+</main>
+<footer class="site-footer">
+<p>Independent analysis; ratings are not issued or endorsed by NIST. Source and reproduction material: <code>ngcc-harness/nist</code>.</p>
+</footer>
+</body>
+</html>

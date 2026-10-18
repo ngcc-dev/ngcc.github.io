@@ -1,0 +1,12 @@
+/* NIST subsite-only contrast fixes. These variables override the shared site. */
+body.nist-site {
+  --sev-high-bg: #9c3b00;
+  --sev-high-fg: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  body.nist-site {
+    --sev-critical-bg: #c62828;
+    --sev-critical-fg: #ffffff;
+  }
+}

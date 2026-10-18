@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: UOV-3</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="../style.css?v=a38b7088">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="../index.html">Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">NIST Round 3</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../index.html">NIST signature reports</a> › <code>UOV-3</code></p>
+
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>uov-Is classic PKC and PKC+SKC formats</td></tr><tr><th>Discovery</th><td>Moderate</td></tr><tr><th>Exploitation</th><td>confirmed cost/model calculation for a generic public-key-only forgery; no attack execution</td></tr><tr><th>Remediation</th><td>Moderate</td></tr><tr><th>Credit</th><td>sqrt(q) rescaling result by Ward Beullens and Markku-Juhani O. Saarinen; local cost-model verification by Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py UOV-3</code><br><small>source: <code>nist/UOV/reproduce_uov_3.py</code> · SHA-256 <code class="digest">bc2da347<wbr>c1b54d7a<wbr>0bb35f1f<wbr>279234ec<wbr>49db0599<wbr>bb3ae2a5<wbr>a371fd09<wbr>1126b825</code></small><br><small>specification collision formula and sqrt-q rescaling check</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/UOV_Specification_R3.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/UOV-R3.zip">submission ZIP</a></td></tr></table>
+
+<h1 id="uov-3-low-uov-is-collision-forgery-estimate-relies-on-a-memory-penalty">UOV-3 — Low: uov-Is collision-forgery estimate relies on a memory penalty</h1>
+<h2 id="result">Result</h2>
+<p>Section 4.1 of the specification describes a meet-in-the-middle forgery that
+matches public-map evaluations <code>P(s)</code> against message-and-salt hashes. Its
+attacker-favorable RAM estimate is
+<code>2^10.7 * sqrt(q^m * m * log2(q))</code>. For uov-Is, <code>q=16</code> and <code>m=64</code>, so the
+formula evaluates to <code>2^142.7</code> binary gates, slightly below NIST's Category-1
+reference of about <code>2^143</code>.</p>
+<p>The specification acknowledges this value, rounds Table 5 to 143, and argues
+that the large list incurs enough memory-access cost to restore the claimed
+level. It also acknowledges but does not include a known <code>sqrt(q)</code> rescaling
+gain. Because <code>P(c*s)=c^2*P(s)</code> and squaring is bijective in characteristic
+two, that gain is two bits for GF(16), producing the optimistic RAM estimate
+<code>2^140.7</code>. Accounting for normalization work reduces the gain somewhat; the
+review estimated roughly <code>2^141.2</code> unless that work is amortized.</p>
+<h2 id="evidence-and-limits">Evidence and limits</h2>
+<p>The retained check evaluates the specification formula and the exact
+<code>sqrt(q)</code> adjustment:</p>
+<pre><code class="language-sh">python3 UOV/reproduce_uov_3.py
+</code></pre>
+<p>This is a cost/model certificate. It does not allocate the lists or execute a
+forgery. Estimates put the list storage around <code>2^123</code> entries, or roughly
+<code>2^131</code> bits depending on representation. A memoryless collision search loses
+part of the Gray-code evaluation advantage and exceeds the claimed level. The
+security conclusion therefore depends on the memory-cost model NIST applies,
+which is why this narrow confirmed margin issue is rated Low.</p>
+<p>A larger <code>m</code> would remove the dependence on a disputed memory penalty. A full
+evaluation should state hash, evaluation, normalization, storage and memory
+access costs under one consistent model.</p>
+<h2 id="harness-reproduction">Harness reproduction</h2>
+<p>From the <code>ngcc-harness</code> checkout, run the pinned source script through the harness-side dispatcher:</p>
+<pre><code class="language-sh">python3 nist/reproduce.py UOV-3
+</code></pre>
+</main>
+<footer class="site-footer">
+<p>Independent analysis; ratings are not issued or endorsed by NIST. Source and reproduction material: <code>ngcc-harness/nist</code>.</p>
+</footer>
+</body>
+</html>

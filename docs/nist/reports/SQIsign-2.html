@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: SQIsign-2</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="../style.css?v=a38b7088">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="../index.html">Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">NIST Round 3</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../index.html">NIST signature reports</a> › <code>SQIsign-2</code></p>
+
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr><tr><th>Layer</th><td>side-channel</td></tr><tr><th>Affected</th><td>Reference p324_3 p500_27 p664_17 key generation and signing</td></tr><tr><th>Discovery</th><td>Moderate</td></tr><tr><th>Exploitation</th><td>source-level secret response norm to variable-time inverse trace; no measured channel or recovery</td></tr><tr><th>Remediation</th><td>Moderate</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py SQIsign-2</code><br><small>source: <code>nist/SQIsign/reproduce_sqisign_2.py</code> · SHA-256 <code class="digest">ff9a1bd1<wbr>d85f94bd<wbr>34f0a57c<wbr>c1185a23<wbr>08d533ed<wbr>f75cd178<wbr>7528bf44<wbr>bbcc1318</code></small><br><small>pinned-source secret-to-inverse trace and abstract controls</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/sqisign_specification.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/sqisign.zip">submission ZIP</a></td></tr></table>
+
+<h1 id="sqisign-2-low-a-secret-response-norm-reaches-variable-time-multiprecision-arithmetic">SQIsign-2 — Low: a secret response norm reaches variable-time multiprecision arithmetic</h1>
+<p>The reference signer passes a secret response norm directly to a multiprecision
+modular inverse whose loop counts, branches, division shapes, and copy lengths
+depend on those values. This is a concrete path from per-signature secret state
+to the program's control-flow and memory trace in every submitted parameter set.</p>
+<p>During response generation, <code>quat_response_element</code> derives <code>ideal_skchall</code>
+from the secret ideal, challenge ideal, and randomized response work at
+<code>sign.c:266</code> (<code>SQIsign/submission/SQIsign/Reference_Implementation/src/signature/ref/lvlx/sign.c#L266</code>).
+The signer passes <code>ideal_skchall.norm</code> to <code>ibz_invmod</code> at
+<code>sign.c:331</code> (<code>SQIsign/submission/SQIsign/Reference_Implementation/src/signature/ref/lvlx/sign.c#L331</code>).
+It also branches on GCD/sampling results at lines 276–313. A second inverse at
+line 359 uses <code>deg_odd</code>; that value is the response degree <code>q_rsp</code> disclosed by
+the signature representation (specification physical pp.8 and 105), so it does
+not support this secret-dependent trace. The finding rests on the first inverse.</p>
+<p><code>ibz_invmod</code> labels itself variable time and uses the secret operand to choose
+initial ordering, trim limb lengths, control the outer Lehmer loop, select
+Lehmer versus division steps, size temporary arrays/copies, and terminate at
+<code>mp.c:2446</code> (<code>SQIsign/submission/SQIsign/Reference_Implementation/src/mp/ref/lvlx/mp.c#L2446</code>).
+Representative secret-dependent sites include the comparison at line 2467,
+length scans at lines 2479–2485 and 2549–2555, loop termination at lines
+2488–2491, and the division/Lehmer choice at lines 2495–2508.</p>
+<p>This is not an accidental contradiction in the documentation. The
+<a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/sqisign_specification.pdf">specification</a>, §8.5 (physical PDF page 111), states that the
+supplied implementation is not constant time overall. The submitted
+<code>README.md:100</code> (<code>SQIsign/submission/SQIsign/Reference_Implementation/README.md#L100</code>)
+and
+<code>ct-quaternion.supp:1</code> (<code>SQIsign/submission/SQIsign/Reference_Implementation/test/ct-quaternion.supp#L1</code>)
+deliberately exclude the multiprecision, quaternion, and <code>id2iso</code> layers from
+the general ctgrind result. Those disclosures correctly limit the implementation
+claim; they do not remove the secret-dependent execution behavior from the
+submitted signer.</p>
+<p>Run the deterministic source certificate with:</p>
+<pre><code class="language-sh">python3 SQIsign/reproduce_sqisign_2.py --output SQIsign/results/SQIsign-2.json
+</code></pre>
+<p>It verifies the all-parameter harness inventory, the secret-to-inverse call
+sites, the value-dependent inverse implementation, and the submission's stated
+ctgrind exclusions. A small integer control illustrates differing inverse
+traces. It is not a timing test and does not claim to recover any part of a
+secret key.</p>
+<p>The rating is Low because this is a source-level secret-dependent trace with no
+measured channel, candidate-specific extraction, or key recovery. The specific
+trace can be closed by replacing the inverse of <code>ideal_skchall.norm</code> with a
+fixed-bound constant-time inverse. The modulus <code>remain</code> is a power of two, and
+the same submitted <code>mp.c</code> already contains the fixed-iteration Newton–Hensel
+helper <code>ibz_invmod_2e</code>, used by <code>ibz_invmat</code>. Exposing or adapting that helper
+for this call is a concrete starting point, although its complete operand-level
+constant-time behavior and bounds still require validation. Integrating and
+validating the repair across all parameter sets is a material implementation
+change, so remediation is Moderate rather than Architectural. That repair would
+address this finding; certifying the full signer would separately require
+reviewing every secret path through the exempted multiprecision, quaternion,
+and ideal-to-isogeny components, followed by unsuppressed taint and controlled
+timing tests on all three parameter sets.</p>
+<h2 id="harness-reproduction">Harness reproduction</h2>
+<p>From the <code>ngcc-harness</code> checkout, run the pinned source script through the harness-side dispatcher:</p>
+<pre><code class="language-sh">python3 nist/reproduce.py SQIsign-2
+</code></pre>
+</main>
+<footer class="site-footer">
+<p>Independent analysis; ratings are not issued or endorsed by NIST. Source and reproduction material: <code>ngcc-harness/nist</code>.</p>
+</footer>
+</body>
+</html>

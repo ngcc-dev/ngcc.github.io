@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: QR-UOV-2</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="../style.css?v=a38b7088">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="../index.html">Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">NIST Round 3</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../index.html">NIST signature reports</a> › <code>QR-UOV-2</code></p>
+
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>Round3 main q127 delta2 category 1/3/5 parameters</td></tr><tr><th>Discovery</th><td>Moderate</td></tr><tr><th>Exploitation</th><td>proof/model gap at 2^64 queries; no attack</td></tr><tr><th>Remediation</th><td>Moderate</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py QR-UOV-2</code><br><small>source: <code>nist/QR-UOV/reproduce_qruov_2.py</code> · SHA-256 <code class="digest">916656bf<wbr>973ea632<wbr>4eb617a0<wbr>71dcdcda<wbr>8e2b1bfa<wbr>5d4ed041<wbr>993c9e87<wbr>8c11269d</code></small><br><small>specification formula and query-budget model check including additive QROM loss</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/qruov_specifications.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/QR_UOV%20-%20Round3.zip">submission ZIP</a></td></tr></table>
+
+<h1 id="qr-uov-2-low-euf-cma-reduction-does-not-cover-nists-264-query-estimate">QR-UOV-2 — Low: EUF-CMA reduction does not cover NIST's 2^64-query estimate</h1>
+<h2 id="bound-and-nist-baseline">Bound and NIST baseline</h2>
+<p>QR-UOV's Theorem 2 contains the reduction factor
+<code>(1 - qsign * epsilon_rank)^-1</code> and assumes
+<code>qsign * epsilon_rank &lt; 1/2</code> (specification §6.2, physical pp.36–38). Here
+<code>epsilon_rank</code> is a worst-case-over-keys rank-rejection probability. The
+specification does not prove that worst-case bound. It instead models the
+secret-structured signing matrix as a uniform random matrix and obtains</p>
+<pre><code class="language-text">epsilon_rank approximately 1.173e-19 &lt; 2^-62.88.
+</code></pre>
+<p>Even under that additional heuristic, the specification states that the
+condition is supported only when signature generations per key are limited to
+<code>qsign &lt;= 2^61</code>. It expressly says the calculation is not a worst-case bound.</p>
+<p>NIST's call §4.B.2, physical p.14, says that for estimating security strength
+the attacker may be assumed to obtain signatures on no more than <code>2^64</code>
+chosen messages. Applying QR-UOV's own uniform-matrix estimate gives</p>
+<pre><code class="language-text">2^61 * epsilon_rank = 0.270431... &lt; 1/2
+2^64 * epsilon_rank = 2.163448... &gt; 1
+</code></pre>
+<p>Thus the theorem's required premise already fails before the full NIST query
+ceiling. At <code>2^64</code>, even the displayed denominator is no longer a meaningful
+positive reduction factor.</p>
+<h2 id="independent-qrom-loss">Independent QROM loss</h2>
+<p>Theorem 2 also contains the additive term</p>
+<pre><code class="language-text">(3/2) * qsign' * sqrt((qsign' + 3*qsign + qqro + 5) / 2^lambda).
+</code></pre>
+<p>Here <code>qsign'</code> counts the random-oracle evaluations made during signing, so it
+is at least <code>qsign</code>. Even in the favorable case <code>qsign'=qsign</code> and <code>qqro=0</code>,
+this term alone is approximately <code>2^33.58</code>, <code>2^1.58</code>, and <code>2^-30.42</code> at
+<code>qsign=2^64</code> for <code>lambda=128</code>, <code>192</code>, and <code>256</code>, respectively. It reaches one
+at about <code>2^41.61</code> signing queries for category 1 and <code>2^62.94</code> for category 3.
+The theorem's bound is therefore vacuous before the NIST ceiling for those two
+categories independently of the rank-probability issue.</p>
+<h2 id="classification-and-limits">Classification and limits</h2>
+<p>This is a candidate-specific proof and usage-bound shortfall, rated Low /
+Proof gap under the project methodology. It is <strong>not an attack</strong>: the
+calculation neither proves that the structured matrices attain the heuristic
+failure probability nor turns rank failures into a forgery. It does not show
+that any QR-UOV parameter has fewer than its claimed security bits in practice.
+Conversely, the absence of a worst-case bound means the theorem is not fully
+established even within the proposed <code>2^61</code> operational limit.</p>
+<p>Closing the report requires a suitable per-key usage rule accepted as part of
+the security target, parameters that keep both losses meaningful through
+<code>2^64</code>, or a proof that avoids or rigorously bounds the rank-rejection and
+QROM losses.</p>
+<h2 id="reproduction">Reproduction</h2>
+<pre><code class="language-sh">python3 QR-UOV/reproduce_qruov_2.py
+</code></pre>
+<p>The deterministic script evaluates the specification's finite-field
+random-matrix formula for every main-set value of <code>m</code>, checks the pinned
+specification, compares the products at <code>2^61</code> and <code>2^64</code>, and evaluates the
+first additive QROM term for all three security parameters. This is a
+cost/model check of the stated theorem, not a security reduction or attack.</p>
+<h2 id="harness-reproduction">Harness reproduction</h2>
+<p>From the <code>ngcc-harness</code> checkout, run the pinned source script through the harness-side dispatcher:</p>
+<pre><code class="language-sh">python3 nist/reproduce.py QR-UOV-2
+</code></pre>
+</main>
+<footer class="site-footer">
+<p>Independent analysis; ratings are not issued or endorsed by NIST. Source and reproduction material: <code>ngcc-harness/nist</code>.</p>
+</footer>
+</body>
+</html>

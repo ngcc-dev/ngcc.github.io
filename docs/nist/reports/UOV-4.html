@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: UOV-4</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="../style.css?v=a38b7088">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="../index.html">Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">NIST Round 3</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../index.html">NIST signature reports</a> › <code>UOV-4</code></p>
+
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-lead">Lead</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>uov-V and uov-Ip classic PKC and PKC+SKC formats</td></tr><tr><th>Discovery</th><td>Non-trivial</td></tr><tr><th>Exploitation</th><td>cost/model margin observation for public-key key recovery; no attack execution</td></tr><tr><th>Remediation</th><td>Moderate</td></tr><tr><th>Credit</th><td>Original truncated-ring analysis by Hiroki Furue and Yasuhiko Ikematsu; independent Round-3 recomputation by Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py UOV-4</code><br><small>source: <code>nist/UOV/reproduce_uov_4.py</code> · SHA-256 <code class="digest">53412abe<wbr>e248abd1<wbr>64cd49a2<wbr>671f61b6<wbr>89cb8217<wbr>93e718dd<wbr>78ff2d93<wbr>481aaec7</code></small><br><small>exact-integer specification formula check for all Round3 sets</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/UOV_Specification_R3.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/UOV-R3.zip">submission ZIP</a></td></tr></table>
+
+<h1 id="uov-4-low-truncated-ring-estimates-leave-almost-no-uov-v-ram-margin">UOV-4 — Low: truncated-ring estimates leave almost no uov-V RAM margin</h1>
+<h2 id="result">Result</h2>
+<p>Re-evaluating the specification's §4.6 truncated-polynomial-ring and
+Furue–Ikematsu intersection formulas gives the following minimum RAM-gate
+costs:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter set</th>
+<th style="text-align: right;">Recomputed cost</th>
+<th style="text-align: right;">Claimed reference</th>
+<th style="text-align: right;">Margin</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>uov-Ip</td>
+<td style="text-align: right;">144.75</td>
+<td style="text-align: right;">143</td>
+<td style="text-align: right;">+1.75</td>
+</tr>
+<tr>
+<td>uov-Is</td>
+<td style="text-align: right;">158.55</td>
+<td style="text-align: right;">143</td>
+<td style="text-align: right;">+15.55</td>
+</tr>
+<tr>
+<td>uov-III</td>
+<td style="text-align: right;">213.12</td>
+<td style="text-align: right;">207</td>
+<td style="text-align: right;">+6.12</td>
+</tr>
+<tr>
+<td>uov-V</td>
+<td style="text-align: right;">272.05</td>
+<td style="text-align: right;">272</td>
+<td style="text-align: right;">+0.05</td>
+</tr>
+</tbody>
+</table></div>
+<p>The uov-V result is effectively on its claimed boundary under the
+submission's primary RAM-gate model; uov-Ip has less than two bits of margin.
+Table 5 reports <code>floor(log2(cost))</code>: 144, 158, 213 and 272, rather than values
+rounded to the nearest integer. Flooring the recomputed values gives exactly
+those four entries. The calculation does not place a Round-3 parameter set
+below its claim.</p>
+<p>The post-submission Schur–Macaulay estimator was separately reviewed with the
+authors' full shape search. It gives about 143.9, 158.1, 216.6 and 280.7 for
+Ip, Is, III and V, respectively, so it also does not lower a Round-3 set below
+its target. An earlier 271.7 figure for uov-V came from a 0.32-bit row-counting
+convention applied to plain wedge, rather than the new Schur attack.</p>
+<h2 id="reproduction-and-interpretation">Reproduction and interpretation</h2>
+<pre><code class="language-sh">python3 UOV/reproduce_uov_4.py
+</code></pre>
+<p>The script implements the specification formulas with exact integer power
+series and prints every Round-3 optimum. It is a deterministic cost/model
+check, not a key-recovery run. The specification also reports substantial
+MEM-2D additions for these attacks, including 48 bits for uov-V, and warns
+that the underlying semi-regularity heuristics have counterexamples.</p>
+<p>This report records a Low Lead because the candidate-specific reproduced
+calculation leaves only 0.05 bit of RAM-model margin for uov-V and 1.75 bits
+for uov-Ip, while no current estimate establishes an attack below target under
+a complete memory-aware model. The rating follows the methodology's Low / Lead
+rule for a reproducible candidate-specific primary-model estimate with less
+than two bits of margin and an unresolved modeling choice that could erase it.
+Parameter changes would be warranted only after that missing step is resolved.</p>
+<h2 id="harness-reproduction">Harness reproduction</h2>
+<p>From the <code>ngcc-harness</code> checkout, run the pinned source script through the harness-side dispatcher:</p>
+<pre><code class="language-sh">python3 nist/reproduce.py UOV-4
+</code></pre>
+</main>
+<footer class="site-footer">
+<p>Independent analysis; ratings are not issued or endorsed by NIST. Source and reproduction material: <code>ngcc-harness/nist</code>.</p>
+</footer>
+</body>
+</html>
