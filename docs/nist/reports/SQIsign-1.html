@@ -11,14 +11,14 @@
 <body class="nist-site">
 <header class="site-header">
 <a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
-<nav><a href="../index.html">Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">NIST Round 3</a></nav>
+<nav><a href="../index.html">Home</a><a href="../on-ramp.html">Security Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">Official NIST On-Ramp Round 3</a></nav>
 </header>
 <main>
-<p class="crumb"><a href="../index.html">NIST signature reports</a> › <code>SQIsign-1</code></p>
+<p class="crumb"><a href="../on-ramp.html">NIST Signature On-Ramp (Round 3)</a> › <code>SQIsign-1</code></p>
 
-<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-info">Info</span></td></tr><tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>Submitted p324_3 p500_27 p664_17 reference libraries</td></tr><tr><th>Discovery</th><td>Moderate</td></tr><tr><th>Exploitation</th><td>all-parameter same-message re-signing witness; no fresh-message forgery</td></tr><tr><th>Remediation</th><td>Architectural</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py SQIsign-1</code><br><small>source: <code>nist/SQIsign/reproduce_sqisign_1.py</code> · SHA-256 <code class="digest">2c1ee2fa<wbr>e341f662<wbr>40cc2131<wbr>de8c54a5<wbr>e921c9e0<wbr>f3c5a38e<wbr>0825733b<wbr>a87e29ee</code></small><br><small>all-parameter deterministic mutation witness with changed-message controls</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/sqisign_specification.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/sqisign.zip">submission ZIP</a></td></tr></table>
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr><tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>p324_3, p500_27, and p664_17</td></tr><tr><th>Discovery</th><td>Moderate</td></tr><tr><th>Exploitation</th><td>Trivial derivation of a second signature on an already signed message; no fresh-message forgery</td></tr><tr><th>Remediation</th><td>Architectural</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py SQIsign-1</code><br><small>source: <code>nist/SQIsign/reproduce_sqisign_1.py</code> · SHA-256 <code class="digest">2c1ee2fa<wbr>e341f662<wbr>40cc2131<wbr>de8c54a5<wbr>e921c9e0<wbr>f3c5a38e<wbr>0825733b<wbr>a87e29ee</code></small><br><small>all-parameter deterministic mutation witness with changed-message controls</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/sqisign_specification.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/sqisign.zip">submission ZIP</a></td></tr></table>
 
-<h1 id="sqisign-1-informational-distinct-response-encodings-verify-for-the-same-message">SQIsign-1 — Informational: distinct response encodings verify for the same message</h1>
+<h1 id="sqisign-1-medium-distinct-response-encodings-verify-for-the-same-message">SQIsign-1 — Medium: distinct response encodings verify for the same message</h1>
 <p>All three submitted parameter sets accept at least 64 distinct encodings of the
 response matrix as valid signatures for the same public key and message. The
 64-element family combines 16 choices for the unused high matrix bits, a
@@ -40,7 +40,10 @@ a valid signature can be transformed into another valid signature on the same
 message by changing the auxiliary isogeny or its non-unique two-dimensional
 representation. SQIsign claims EUF-CMA security (§8.1), and the NIST call asks
 for existential unforgeability. Re-signing an already signed message does not
-win EUF-CMA, and no strong-unforgeability claim is violated.</p>
+win EUF-CMA, and no strong-unforgeability claim is violated. The rating is
+nevertheless Medium because the public transformation is an end-to-end
+SUF-CMA break across every parameter set. Applications and protocols that
+require signature uniqueness cannot infer it from raw SQIsign signatures.</p>
 <p>The encoding and verification path matches the specification:</p>
 <ul>
 <li>Algorithm 3.10 (physical PDF page 20) normalizes only between <code>M</code> and <code>-M</code>
@@ -81,7 +84,7 @@ basis of this observation alone.</p>
 </code></pre>
 </main>
 <footer class="site-footer">
-<p>Independent analysis; ratings are not issued or endorsed by NIST. Source and reproduction material: <code>ngcc-harness/nist</code>.</p>
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
 </footer>
 </body>
 </html>

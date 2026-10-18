@@ -11,12 +11,12 @@
 <body class="nist-site">
 <header class="site-header">
 <a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
-<nav><a href="../index.html">Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">NIST Round 3</a></nav>
+<nav><a href="../index.html">Home</a><a href="../on-ramp.html">Security Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">Official NIST On-Ramp Round 3</a></nav>
 </header>
 <main>
-<p class="crumb"><a href="../index.html">NIST signature reports</a> › <code>SDitH-1</code></p>
+<p class="crumb"><a href="../on-ramp.html">NIST Signature On-Ramp (Round 3)</a> › <code>SDitH-1</code></p>
 
-<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr><tr><th>Layer</th><td>side-channel</td></tr><tr><th>Affected</th><td>Round3 portable reference backend; all 12 parameter sets</td></tr><tr><th>Discovery</th><td>Trivial</td></tr><tr><th>Exploitation</th><td>source/object-only secret table addresses and branch; no measured channel or recovery</td></tr><tr><th>Remediation</th><td>Local</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py SDitH-1</code><br><small>source: <code>nist/SDitH/reproduce_sdith_1.py</code> · SHA-256 <code class="digest">fbd2e8c8<wbr>a67fa8f6<wbr>3840d6ce<wbr>bf03fa10<wbr>2ca36b72<wbr>fb392f3a<wbr>c24afff0<wbr>efc47800</code></small><br><small>pinned-source and compiled-object control-flow witness</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/SDitH_specifications.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/sdith3_submission_package.zip">submission ZIP</a></td></tr></table>
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr><tr><th>Layer</th><td>side-channel</td></tr><tr><th>Affected</th><td>On-Ramp Round 3 portable reference key generation and signing; all 12 parameter sets, including repository KAT builds</td></tr><tr><th>Discovery</th><td>Trivial</td></tr><tr><th>Exploitation</th><td>source/object-only; no measured channel or key recovery</td></tr><tr><th>Remediation</th><td>Local</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py SDitH-1</code><br><small>source: <code>nist/SDitH/reproduce_sdith_1.py</code> · SHA-256 <code class="digest">fbd2e8c8<wbr>a67fa8f6<wbr>3840d6ce<wbr>bf03fa10<wbr>2ca36b72<wbr>fb392f3a<wbr>c24afff0<wbr>efc47800</code></small><br><small>pinned-source and compiled-object control-flow witness</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/SDitH_specifications.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/sdith3_submission_package.zip">submission ZIP</a></td></tr></table>
 
 <h1 id="sdith-1-low-portable-reference-backend-has-secret-dependent-tables-and-branches">SDitH-1 — Low: portable reference backend has secret-dependent tables and branches</h1>
 <h2 id="affected-operations">Affected operations</h2>
@@ -80,7 +80,7 @@ selection, and the supplied hardened helper alternative. The optional
 </code></pre>
 </main>
 <footer class="site-footer">
-<p>Independent analysis; ratings are not issued or endorsed by NIST. Source and reproduction material: <code>ngcc-harness/nist</code>.</p>
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
 </footer>
 </body>
 </html>

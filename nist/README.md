@@ -5,8 +5,10 @@ absent from the main ngcc.dev navigation while the NIST additional-signature
 review is in progress.
 
 The public source registry, report Markdown, classification policy, and
-reproduction references live in `ngcc-harness/nist/`. This directory contains
-only the page generator and its checks. From this directory:
+reproduction references live in `ngcc-harness/nist/`. `/nist/` is the general
+landing page; the On-Ramp Round 3 candidate and finding index is generated at
+`/nist/on-ramp.html`. This directory contains only the page generator and its
+checks. From this directory:
 
 ```sh
 make build                         # ../../ngcc-harness/nist -> ../docs/nist
@@ -23,9 +25,9 @@ link to the main index or navigation.
 
 Builds are written to a temporary sibling and replace `docs/nist/` only after
 all pages render successfully. The cleaner and builder reject output paths
-outside that exact directory, except isolated test directories beneath the
-system temporary directory whose basename is `nist`. Generated pages are
-public and indexable even though the main site does not currently link them.
+outside that exact directory. The checker uses a separate non-destructive
+fresh-build function for isolated temporary trees. Generated pages are public
+and indexable even though the main site does not currently link them.
 
 The reproduction page always links to the `ngcc-dev/ngcc-harness` repository
 root. Until `HARNESS_REV` names a 40-character lowercase commit, individual

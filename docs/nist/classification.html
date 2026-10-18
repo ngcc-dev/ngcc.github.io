@@ -11,7 +11,7 @@
 <body class="nist-site">
 <header class="site-header">
 <a class="brand" href="index.html"><img class="brand-icon" src="../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
-<nav><a href="index.html">Findings</a><a href="classification.html">Classification</a><a href="reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">NIST Round 3</a></nav>
+<nav><a href="index.html">Home</a><a href="on-ramp.html">Security Findings</a><a href="classification.html">Classification</a><a href="reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">Official NIST On-Ramp Round 3</a></nav>
 </header>
 <main>
 <p class="crumb"><a href="index.html">NIST signature reports</a> › Classification</p>
@@ -49,7 +49,7 @@ NGCC rating is evidence, not a rating that automatically transfers here.</p>
 </tr>
 <tr>
 <td><span class="sev sev-medium">Medium</span></td>
-<td>Confirmed repeated or measured leakage without recovery, a material constant-time rewrite, or a substantive binding/robustness defect whose attack consequence is unresolved.</td>
+<td>Confirmed repeated or measured leakage without recovery, a material constant-time rewrite, a demonstrated failure of an unclaimed stronger security property such as SUF-CMA, or a substantive binding/robustness defect whose attack consequence is unresolved.</td>
 </tr>
 <tr>
 <td><span class="sev sev-low">Low</span></td>
@@ -205,17 +205,20 @@ missing profile separation, rather than only an external RNG malfunction.</p>
 the same message, which is relevant to SUF-CMA or canonical encoding, from (2)
 a modification that verifies to a different message, which is a direct
 EUF-CMA concern. Sampled mutation, truncation, extension, zero-input, and
-wrong-key tests provide negative evidence only for the tested cases. Failure
-of a claimed SUF-CMA property is normally High because NIST requires EUF-CMA
-and treats stronger properties as additional claims; an EUF-CMA forgery is
-Critical when it defeats the claimed category.</p><h2 id="governing-nist-documents">Governing NIST documents</h2>
+wrong-key tests provide negative evidence only for the tested cases. A
+demonstrated efficient transformation of a valid signature into a distinct
+valid signature on the same message is normally Medium even when the
+submission does not claim SUF-CMA: it is an end-to-end break of a commonly
+used additional signature property, while leaving NIST's required EUF-CMA
+target intact. Failure of an explicit SUF-CMA claim is normally High. An EUF-CMA
+forgery is Critical when it defeats the claimed category.</p><h2 id="governing-nist-documents">Governing NIST documents</h2>
 <ul>
 <li><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/standardization/call-for-proposals">Call for Proposals</a></li>
-<li><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">Round 3 additional signatures</a></li>
+<li><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">On-Ramp Round 3 additional signatures</a></li>
 </ul>
 </main>
 <footer class="site-footer">
-<p>Independent analysis; ratings are not issued or endorsed by NIST. Source and reproduction material: <code>ngcc-harness/nist</code>.</p>
+<p>Updated 2026-10-18 16:38:32 UTC · Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
 </footer>
 </body>
 </html>

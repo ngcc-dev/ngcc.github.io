@@ -14,6 +14,7 @@ import html
 import os
 import re
 import shutil
+import sys
 import tempfile
 from html.parser import HTMLParser
 from pathlib import Path
@@ -42,6 +43,11 @@ REPORT_METADATA_LABELS = {
     "severity", "status", "layer", "affected", "discovery", "exploitation",
     "remediation", "credit", "candidate disposition", "date",
 }
+MAINTAINER_LINK = '<a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a>'
+DATED_FOOTER = f"Updated 2026-10-18 16:38:32 UTC · Maintained by: {MAINTAINER_LINK}"
+REPORT_FOOTER = f"Maintained by: {MAINTAINER_LINK}"
+
+
 FAMILIES = {
     "FAEST": "Symmetric-based signatures", "HAWK": "Lattice-based signatures", "MAYO": "Multivariate signatures",
     "MQOM": "MPC-in-the-Head signatures", "QR-UOV": "Multivariate signatures", "SDitH": "MPC-in-the-Head signatures",
@@ -61,13 +67,13 @@ TEMPLATE = """<!DOCTYPE html>
 <body class="nist-site">
 <header class="site-header">
 <a class="brand" href="{subroot}index.html"><img class="brand-icon" src="{prefix}assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
-<nav><a href="{subroot}index.html">Findings</a><a href="{subroot}classification.html">Classification</a><a href="{subroot}reproduction.html">Reproduction</a><a href="{nist_round3}">NIST Round 3</a></nav>
+<nav><a href="{subroot}index.html">Home</a><a href="{subroot}on-ramp.html">Security Findings</a><a href="{subroot}classification.html">Classification</a><a href="{subroot}reproduction.html">Reproduction</a><a href="{nist_round3}">Official NIST On-Ramp Round 3</a></nav>
 </header>
 <main>
 {body}
 </main>
 <footer class="site-footer">
-<p>Independent analysis; ratings are not issued or endorsed by NIST. Source and reproduction material: {source_reference}.</p>
+<p>{footer}</p>
 </footer>
 </body>
 </html>
@@ -79,7 +85,22 @@ def read_csv(path: Path) -> list[dict[str, str]]:
         sample = stream.read(4096)
         stream.seek(0)
         delimiter = ";" if sample.count(";") > sample.count(",") else ","
-        return list(csv.DictReader(stream, delimiter=delimiter))
+        rows = list(csv.reader(stream, delimiter=delimiter))
+    if not rows:
+        raise ValueError(f"{path}: empty CSV file")
+    header = rows[0]
+    if not header or any(not field.strip() for field in header):
+        raise ValueError(f"{path}: CSV header contains an empty field")
+    if len(set(header)) != len(header):
+        raise ValueError(f"{path}: CSV header contains duplicate fields")
+    result: list[dict[str, str]] = []
+    for line_number, row in enumerate(rows[1:], 2):
+        if len(row) != len(header):
+            raise ValueError(
+                f"{path}:{line_number}: expected {len(header)} fields, found {len(row)}"
+            )
+        result.append(dict(zip(header, row, strict=True)))
+    return result
 
 
 def get(row: dict[str, str], *names: str, default: str = "") -> str:
@@ -125,22 +146,32 @@ def public_harness_urls(revision: str | None) -> dict[str, str | bool | None]:
     }
 
 
-def validated_output(output: Path) -> Path:
-    """Confine destructive replacement to docs/nist or an isolated temp tree."""
-    resolved = output.resolve()
-    default = DEFAULT_OUTPUT.resolve()
-    temp_root = Path(tempfile.gettempdir()).resolve()
-    safe_temp = (
-        resolved.name == "nist"
-        and resolved != temp_root
-        and temp_root in resolved.parents
-        and resolved.parent != temp_root
-    )
-    if resolved != default and not safe_temp:
+def lexical_absolute(path: Path) -> Path:
+    """Return an absolute normalized path without following its final symlink."""
+    return Path(os.path.abspath(os.fspath(path)))
+
+
+def validated_output(output: Path, expected: Path | None = None) -> Path:
+    """Authorize only the site's fixed docs/nist destructive target."""
+    output = lexical_absolute(output)
+    default = lexical_absolute(expected or DEFAULT_OUTPUT)
+    if output != default:
         raise ValueError(f"refusing unsafe output directory: {output}")
-    if resolved == Path(resolved.anchor) or resolved.name in {".git", "."}:
+    if output == Path(output.anchor) or output.name in {".git", "."}:
         raise ValueError(f"refusing unsafe output directory: {output}")
-    return resolved
+    if output.is_symlink() or output.parent.is_symlink():
+        raise ValueError(f"refusing symlinked output directory: {output}")
+    if output.exists() and ((output / ".git").exists() or (output / "CNAME").exists()):
+        raise ValueError(f"refusing protected output directory: {output}")
+    return output
+
+
+def validate_source_output(source: Path, output: Path) -> None:
+    source_resolved = source.resolve()
+    output_resolved = output.resolve()
+    if (source_resolved == output_resolved or source_resolved in output_resolved.parents
+            or output_resolved in source_resolved.parents):
+        raise ValueError(f"source and output overlap: {source} and {output}")
 
 
 def official_nist_url(value: str, field: str, scheme: str) -> str:
@@ -162,7 +193,7 @@ def load_candidates(source: Path) -> dict[str, dict[str, str]]:
             raise ValueError(f"candidate registry has missing or duplicate scheme: {scheme!r}")
         spec = official_nist_url(get(row, "SpecURL", "SpecificationURL", "spec_url"), "SpecURL", scheme)
         archive = official_nist_url(get(row, "ArchiveURL", "ZipURL", "archive_url"), "ArchiveURL", scheme)
-        status = get(row, "CandidateStatus", "Status", "status", default="Round 3 candidate")
+        status = get(row, "CandidateStatus", "Status", "status", default="On-Ramp Round 3 candidate")
         round_no = get(row, "PackageRound", "Round", "round", default="3")
         candidates[scheme] = {
             "scheme": scheme, "family": get(row, "Family", "family", default=FAMILIES.get(scheme, "")),
@@ -179,7 +210,7 @@ def load_candidates(source: Path) -> dict[str, dict[str, str]]:
         raise ValueError(f"candidate registry mismatch; missing={missing}, extra={extra}")
     ordered = [get(row, "Scheme", "Candidate", "Name", "scheme") for row in rows]
     if ordered != SCHEME_ORDER:
-        raise ValueError(f"candidate order differs from NIST Round 3 order: {ordered}")
+        raise ValueError(f"candidate order differs from NIST On-Ramp Round 3 order: {ordered}")
     return candidates
 
 
@@ -242,6 +273,7 @@ def load_findings(source: Path, candidates: dict[str, dict[str, str]]) -> list[d
         report_text = get(row, "Report", default=f"reports/{fid}.md")
         report_path = resolve_report(source, report_text, scheme, fid)
         report_source = report_path.read_text(encoding="utf-8")
+        report_metadata, report_body = parse_report(report_source, fid)
         first_line = report_source.splitlines()[0] if report_source.splitlines() else ""
         heading = re.fullmatch(rf"#\s+{re.escape(fid)}\s+—\s+([^:]+):.*", first_line)
         if not heading:
@@ -249,34 +281,44 @@ def load_findings(source: Path, candidates: dict[str, dict[str, str]]) -> list[d
         heading_severity = heading.group(1).strip().casefold()
         if heading_severity not in SEVERITIES or SEVERITIES[heading_severity] != SEVERITIES[severity_raw]:
             raise ValueError(f"{fid}: report H1 severity {heading.group(1)!r} disagrees with registry")
-        date = get(row, "Date")
-        if not date:
-            head = report_source[:2500]
-            found = re.search(r"^(?:\*\*)?Date:(?:\*\*)?\s*(\d{4}-\d{2}-\d{2})\s*$", head, re.M)
-            date = found.group(1) if found else ""
+        metadata_severity = report_metadata["severity"].casefold()
+        if (metadata_severity not in SEVERITIES
+                or SEVERITIES[metadata_severity] != SEVERITIES[severity_raw]):
+            raise ValueError(f"{fid}: report Severity disagrees with registry")
+        for field, registry_value in (("status", status), ("layer", layer)):
+            if report_metadata[field].casefold() != registry_value:
+                raise ValueError(f"{fid}: report {field.title()} disagrees with registry")
+        for field in ("discovery", "remediation"):
+            if report_metadata[field].casefold() != get(row, field).casefold():
+                raise ValueError(f"{fid}: report {field.title()} disagrees with registry")
+        for report_field, csv_field in (("affected", "Scope"), ("exploitation", "Exploitation")):
+            if report_metadata[report_field] != get(row, csv_field):
+                raise ValueError(
+                    f"{fid}: report {report_field.title()} disagrees with registry {csv_field}"
+                )
+        date = report_metadata["date"]
         if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", date):
             raise ValueError(f"{fid}: missing or invalid report Date")
         credit = get(row, "Credit")
         if not credit:
             raise ValueError(f"{fid}: missing Credit")
-        disposition = ""
-        for line in report_source.splitlines()[1:20]:
-            disposition_match = re.fullmatch(r"(?:\*\*)?Candidate disposition:(?:\*\*)?\s*(.+)", line)
-            if disposition_match:
-                disposition = disposition_match.group(1).strip()
-                break
+        if report_metadata["credit"] != credit:
+            raise ValueError(f"{fid}: report Credit disagrees with registry")
+        disposition = report_metadata.get("candidate disposition", "")
         finding = {
             "id": fid, "scheme": scheme, "severity_key": severity_raw,
             "severity": SEVERITIES[severity_raw], "status": status,
             "layer": layer, "title": get(row, "Title"), "date": date,
             "reproducer": get(row, "Reproducer"),
             "verification": get(row, "Verification"),
-            "scope": get(row, "Scope", "Affected"),
+            "scope": report_metadata["affected"],
             "credit": credit,
             "discovery": get(row, "Discovery"),
-            "exploitation": get(row, "Exploitation"),
+            "exploitation": report_metadata["exploitation"],
             "remediation": get(row, "Remediation"),
             "disposition": disposition,
+            "report_metadata": report_metadata,
+            "report_body": report_body,
             "report_path": report_path, "report_rel": report_path.relative_to(source).as_posix(),
         }
         if not finding["title"]:
@@ -318,25 +360,38 @@ def markdown_body(text: str, *, trusted_html: bool = False) -> str:
     return re.sub(r"<table\b", '<div class="table-wrap"><table', body).replace("</table>", "</table></div>")
 
 
-def strip_report_metadata(text: str) -> str:
-    """Remove the report's leading metadata block; the page table renders it."""
+def parse_report(text: str, finding_id: str) -> tuple[dict[str, str], str]:
+    """Parse canonical report metadata and return it with the remaining Markdown."""
     lines = text.splitlines()
     if not lines:
-        return text
+        raise ValueError(f"{finding_id}: empty report")
     index = 1
     while index < len(lines) and not lines[index].strip():
         index += 1
     start = index
+    metadata: dict[str, str] = {}
     while index < len(lines):
         match = re.fullmatch(r"(?:\*\*)?([^:*]+):(?:\*\*)?\s*(.*)", lines[index])
         if not match or match.group(1).strip().casefold() not in REPORT_METADATA_LABELS:
             break
+        label = match.group(1).strip().casefold()
+        if label in metadata:
+            raise ValueError(f"{finding_id}: duplicate report metadata {label!r}")
+        metadata[label] = match.group(2).strip()
         index += 1
     if index == start:
-        return text
+        raise ValueError(f"{finding_id}: report has no metadata block")
+    required = {
+        "severity", "status", "layer", "affected", "discovery",
+        "exploitation", "remediation", "credit", "date",
+    }
+    missing = sorted(required - metadata.keys())
+    if missing:
+        raise ValueError(f"{finding_id}: missing report metadata: {', '.join(missing)}")
     while index < len(lines) and not lines[index].strip():
         index += 1
-    return "\n".join([lines[0], "", *lines[index:]]).rstrip() + "\n"
+    body = "\n".join([lines[0], "", *lines[index:]]).rstrip() + "\n"
+    return metadata, body
 
 
 def markdown_inline(text: str) -> str:
@@ -453,6 +508,7 @@ def render_page(output: Path, relative: Path, title: str, body: str, css_version
     page = TEMPLATE.format(title=html.escape(f"ngcc.dev: {title}"), prefix=prefix, subroot=subroot,
                            css_version=css_version, nist_css_version=nist_css_version,
                            body=body, source_reference=source_reference,
+                           footer=REPORT_FOOTER if relative.parts and relative.parts[0] == "reports" else DATED_FOOTER,
                            nist_round3=NIST_ROUND3)
     target = output / relative
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -578,7 +634,7 @@ def _build_into(source: Path, output: Path, harness_rev: str | None) -> tuple[in
             finding_cell = (f'{status_badge(str(finding["status"]))} <a href="{report_link}">'
                             f'<code>{html.escape(str(finding["id"]))}</code> {html.escape(str(finding["title"]))}</a>')
             if finding["scope"]:
-                finding_cell += f'<br><small>Affected: {html.escape(str(finding["scope"]))}</small>'
+                finding_cell += f'<br><small>Affected: {markdown_inline(str(finding["scope"]))}</small>'
             date = (f'<time datetime="{html.escape(str(finding["date"]))}">{html.escape(str(finding["date"]))}</time>'
                     if finding["date"] else "—")
             issue = (f'<td class="severity">{badge(finding)}</td><td class="layer">{html.escape(str(finding["layer"]))}</td>'
@@ -594,15 +650,36 @@ def _build_into(source: Path, output: Path, harness_rev: str | None) -> tuple[in
     active = [f for f in findings if f["status"] != "withdrawn"]
     counts = {label: sum(f["severity"] == label for f in active) for label in ("Critical", "High", "Medium", "Low", "Info")}
     count_text = ", ".join(f"{count} {label}" for label, count in counts.items() if count)
-    index_md = f"""# NIST additional digital signatures: independent security reports
+    index_md = f"""# NIST additional digital signature reports
 
-This is an independent review of the nine submissions listed by NIST for the
-third round of its additional post-quantum signature process. It applies the
+Independent security reports on digital signature initiatives run by the
+National Institute of Standards and Technology. Ratings are project
+assessments and are not issued or endorsed by NIST.
+
+## On-Ramp Round 3
+
+The current report collection covers the nine submissions in NIST's
+On-Ramp Round 3 additional post-quantum signature process.
+
+- [Browse the On-Ramp Round 3 findings](on-ramp.html)
+- [Read the classification policy](classification.html)
+- [Reproduce the published evidence](reproduction.html)
+- [Read the official NIST call for proposals]({NIST_CALL})
+- [Visit the official NIST On-Ramp Round 3 page]({NIST_ROUND3})
+"""
+    render_page(output, Path("index.html"), "NIST additional signature reports",
+                markdown_body(index_md), css_version, nist_css_version,
+                source_reference)
+
+    on_ramp_md = f"""# NIST Signature On-Ramp (Round 3)
+
+This page covers the nine submissions listed by NIST for On-Ramp Round 3 of
+its additional post-quantum signature process. It applies the
 [NIST-specific classification policy](classification.html) to the call's
 security requirements and each submission's own claims. Ratings are project
 assessments, not NIST findings.
 
-The official [NIST call for proposals]({NIST_CALL}) and [Round 3 candidate
+The official [NIST call for proposals]({NIST_CALL}) and [On-Ramp Round 3
 page]({NIST_ROUND3}) define the evaluation baseline and candidate set. Each
 candidate row links directly to the specification PDF and submission ZIP on
 `csrc.nist.gov`. Package rounds and candidate status come from the public
@@ -631,8 +708,8 @@ not a security endorsement. Reproducers, compact KAT material, source hashes,
 and harvesting records are maintained in
 {harness_markdown}.
 """
-    render_page(output, Path("index.html"), "NIST additional signature reports",
-                markdown_body(index_md, trusted_html=True), css_version, nist_css_version,
+    render_page(output, Path("on-ramp.html"), "NIST Signature On-Ramp (Round 3)",
+                markdown_body(on_ramp_md, trusted_html=True), css_version, nist_css_version,
                 source_reference)
 
     classification_path = find_input(source, "classification-public.md")
@@ -643,14 +720,15 @@ and harvesting records are maintained in
         '<p class="crumb"><a href="index.html">NIST signature reports</a> › Classification</p>\n'
         + classification_body
         + markdown_body(f"## Governing NIST documents\n\n- [Call for Proposals]({NIST_CALL})\n"
-                        f"- [Round 3 additional signatures]({NIST_ROUND3})\n")
+                        f"- [On-Ramp Round 3 additional signatures]({NIST_ROUND3})\n")
     )
     render_page(output, Path("classification.html"), "NIST report classification",
                 classification_body, css_version, nist_css_version, source_reference)
 
     for finding in findings:
         candidate = candidates[str(finding["scheme"])]
-        text = strip_report_metadata(finding["report_path"].read_text(encoding="utf-8"))
+        text = str(finding["report_body"])
+        report_metadata = dict(finding["report_metadata"])
         report_body = rewrite_report_links(markdown_body(text), finding, candidate, source,
                                            harness_blob or None, harness_tree or None)
         reproducer = reproducers[str(finding["id"])]
@@ -678,16 +756,16 @@ and harvesting records are maintained in
             f'<tr><th>Candidate disposition</th><td>{html.escape(str(finding["disposition"]))}</td></tr>'
             if finding["disposition"] else ""
         )
-        header = (f'<p class="crumb"><a href="../index.html">NIST signature reports</a> › '
+        header = (f'<p class="crumb"><a href="../on-ramp.html">NIST Signature On-Ramp (Round 3)</a> › '
                   f'<code>{html.escape(str(finding["id"]))}</code></p>\n\n'
                   f'<table class="meta issue-meta"><tr><th>Severity</th><td>{badge(finding)}</td></tr>'
                   f'<tr><th>Status</th><td>{status_badge(str(finding["status"]))}</td></tr>'
                   f'<tr><th>Layer</th><td>{html.escape(str(finding["layer"]))}</td></tr>'
-                  f'<tr><th>Affected</th><td>{html.escape(str(finding["scope"]))}</td></tr>'
-                  f'<tr><th>Discovery</th><td>{html.escape(str(finding["discovery"]))}</td></tr>'
-                  f'<tr><th>Exploitation</th><td>{html.escape(str(finding["exploitation"]))}</td></tr>'
-                  f'<tr><th>Remediation</th><td>{html.escape(str(finding["remediation"]))}</td></tr>'
-                  f'<tr><th>Credit</th><td>{markdown_inline(str(finding["credit"]))}</td></tr>'
+                  f'<tr><th>Affected</th><td>{markdown_inline(report_metadata["affected"])}</td></tr>'
+                  f'<tr><th>Discovery</th><td>{markdown_inline(report_metadata["discovery"])}</td></tr>'
+                  f'<tr><th>Exploitation</th><td>{markdown_inline(report_metadata["exploitation"])}</td></tr>'
+                  f'<tr><th>Remediation</th><td>{markdown_inline(report_metadata["remediation"])}</td></tr>'
+                  f'<tr><th>Credit</th><td>{markdown_inline(report_metadata["credit"])}</td></tr>'
                   f'<tr><th>Updated</th><td><time datetime="{html.escape(str(finding["date"]))}">'
                   f'{html.escape(str(finding["date"]))}</time></td></tr>'
                   f'{disposition_row}'
@@ -744,6 +822,7 @@ the same input are byte-identical, and `make check` verifies this property.
 def build(source: Path, output: Path, harness_rev: str | None = None) -> tuple[int, int]:
     """Build beside the destination and replace it only after success."""
     output = validated_output(output)
+    validate_source_output(source, output)
     output.parent.mkdir(parents=True, exist_ok=True)
     staging = Path(tempfile.mkdtemp(prefix=f".{output.name}.build-", dir=output.parent))
     staging.rmdir()  # _build_into requires a new directory.
@@ -764,7 +843,7 @@ def build(source: Path, output: Path, harness_rev: str | None = None) -> tuple[i
             raise
         if backup is not None:
             shutil.rmtree(backup)
-        print(f"nist build: 3 index/policy/reproduction pages, {counts[1]} reports, "
+        print(f"nist build: 4 landing/listing/policy/reproduction pages, {counts[1]} reports, "
               f"{counts[0]} candidates -> {output}")
         return counts
     finally:
@@ -781,7 +860,22 @@ def clean(output: Path) -> None:
     print(f"nist clean: removed {output}")
 
 
-def main() -> None:
+def build_fresh(source: Path, output: Path, harness_rev: str | None = None) -> tuple[int, int]:
+    """Build a new disposable tree without replacing or deleting existing data."""
+    output = lexical_absolute(output)
+    validate_source_output(source, output)
+    if output.exists() or output.is_symlink():
+        raise ValueError(f"fresh output already exists: {output}")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        return _build_into(source, output, harness_rev)
+    except Exception:
+        if output.is_dir() and not output.is_symlink():
+            shutil.rmtree(output)
+        raise
+
+
+def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--source", type=Path, default=DEFAULT_SOURCE)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
@@ -789,12 +883,17 @@ def main() -> None:
                         help="published ngcc-harness commit (40 lowercase hex characters)")
     parser.add_argument("--clean", action="store_true")
     args = parser.parse_args()
-    source, output = args.source.resolve(), args.output.resolve()
-    if args.clean:
-        clean(output)
-    else:
-        build(source, output, args.harness_rev)
+    try:
+        source, output = args.source.resolve(), lexical_absolute(args.output)
+        if args.clean:
+            clean(output)
+        else:
+            build(source, output, args.harness_rev)
+    except (OSError, ValueError) as error:
+        print(f"nist build: {error}", file=sys.stderr)
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

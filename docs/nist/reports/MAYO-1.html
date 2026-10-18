@@ -11,18 +11,18 @@
 <body class="nist-site">
 <header class="site-header">
 <a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
-<nav><a href="../index.html">Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">NIST Round 3</a></nav>
+<nav><a href="../index.html">Home</a><a href="../on-ramp.html">Security Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">Official NIST On-Ramp Round 3</a></nav>
 </header>
 <main>
-<p class="crumb"><a href="../index.html">NIST signature reports</a> › <code>MAYO-1</code></p>
+<p class="crumb"><a href="../on-ramp.html">NIST Signature On-Ramp (Round 3)</a> › <code>MAYO-1</code></p>
 
-<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr><tr><th>Layer</th><td>side-channel</td></tr><tr><th>Affected</th><td>Submitted Round3 portable reference signer for MAYO-1/2/3/5</td></tr><tr><th>Discovery</th><td>Moderate</td></tr><tr><th>Exploitation</th><td>source-level documented rank/retry trace; no measured channel or recovery</td></tr><tr><th>Remediation</th><td>Local</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py MAYO-1</code><br><small>source: <code>nist/MAYO/reproduce_mayo_1.py</code> · SHA-256 <code class="digest">5f572166<wbr>140300cd<wbr>d75d80a0<wbr>0d5cd387<wbr>11ea5e31<wbr>c761b049<wbr>d0842f29<wbr>39ce3e1b</code></small><br><small>pinned-source data-flow and branch-model witness</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/mayo_specification.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/MAYO.zip">submission ZIP</a></td></tr></table>
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr><tr><th>Layer</th><td>side-channel</td></tr><tr><th>Affected</th><td>submitted On-Ramp Round 3 portable reference signer, MAYO-1, MAYO-2, MAYO-3 and MAYO-5</td></tr><tr><th>Discovery</th><td>Moderate</td></tr><tr><th>Exploitation</th><td>pinned-source data-flow witness; no measured channel, key recovery, or forgery</td></tr><tr><th>Remediation</th><td>Local</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py MAYO-1</code><br><small>source: <code>nist/MAYO/reproduce_mayo_1.py</code> · SHA-256 <code class="digest">5f572166<wbr>140300cd<wbr>d75d80a0<wbr>0d5cd387<wbr>11ea5e31<wbr>c761b049<wbr>d0842f29<wbr>39ce3e1b</code></small><br><small>pinned-source data-flow and branch-model witness</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/mayo_specification.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/MAYO.zip">submission ZIP</a></td></tr></table>
 
 <h1 id="mayo-1-low-documented-signing-retry-contradicts-the-broad-constant-control-flow-claim">MAYO-1 — Low: documented signing retry contradicts the broad constant-control-flow claim</h1>
 <h2 id="affected-implementation-and-claim">Affected implementation and claim</h2>
 <p>The finding applies to the submitted portable reference signer for MAYO-1,
 MAYO-2, MAYO-3 and MAYO-5. The retained evaluation builds the common code once
-per parameter set. The Round 3 specification, §3, says the C implementations
+per parameter set. The On-Ramp Round 3 specification, §3, says the C implementations
 “avoid secret-dependent data indexing and secret-dependent control flow.”  It
 also says, more narrowly, that revealing whether the solver must restart is
 acceptable.  This report records the concrete exception to the broad claim; it
@@ -82,7 +82,8 @@ the rank-predicate branch model.  It reports PASS only for that root-cause
 witness.  It explicitly does not claim a measured timing channel, key recovery,
 or forgery.</p>
 <p>The functional control is:</p>
-<pre><code class="language-sh">python3 MAYO/survey_runtime.py
+<pre><code class="language-sh">make -C MAYO libs
+python3 MAYO/survey_runtime.py
 </code></pre>
 <p>All four libraries passed seeded replay, seed sensitivity, signature diversity,
 message recovery, malformed-length rejection and sampled mutation rejection.
@@ -103,7 +104,7 @@ then the demonstrated boundary remains source-level leakage only.</p>
 </code></pre>
 </main>
 <footer class="site-footer">
-<p>Independent analysis; ratings are not issued or endorsed by NIST. Source and reproduction material: <code>ngcc-harness/nist</code>.</p>
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
 </footer>
 </body>
 </html>

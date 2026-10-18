@@ -11,12 +11,12 @@
 <body class="nist-site">
 <header class="site-header">
 <a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
-<nav><a href="../index.html">Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">NIST Round 3</a></nav>
+<nav><a href="../index.html">Home</a><a href="../on-ramp.html">Security Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">Official NIST On-Ramp Round 3</a></nav>
 </header>
 <main>
-<p class="crumb"><a href="../index.html">NIST signature reports</a> › <code>SQIsign-4</code></p>
+<p class="crumb"><a href="../on-ramp.html">NIST Signature On-Ramp (Round 3)</a> › <code>SQIsign-4</code></p>
 
-<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-lead">Lead</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>Round3 p324_3 p500_27 p664_17 concrete-security claims</td></tr><tr><th>Discovery</th><td>Moderate</td></tr><tr><th>Exploitation</th><td>model-dependent projected margin with no end-to-end attack</td></tr><tr><th>Remediation</th><td>Architectural</td></tr><tr><th>Credit</th><td>Original attack by Benjamin Wesolowski; independent parameter extrapolation and cost-model reassessment by Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py SQIsign-4</code><br><small>source: <code>nist/SQIsign/reproduce_sqisign_4.py</code> · SHA-256 <code class="digest">a052c353<wbr>25236d0d<wbr>b9710aa2<wbr>fa5d056c<wbr>07df4531<wbr>eb855aaa<wbr>a8277c8d<wbr>59d5853f</code></small><br><small>deterministic cost-model comparison with memory-charging controls</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/sqisign_specification.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/sqisign.zip">submission ZIP</a></td></tr></table>
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-lead">Lead</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>On-Ramp Round 3 p324_3, p500_27, and p664_17 concrete-security claims</td></tr><tr><th>Discovery</th><td>Moderate</td></tr><tr><th>Exploitation</th><td>Model-dependent projected margin; no end-to-end attack at the claimed cost</td></tr><tr><th>Remediation</th><td>Architectural</td></tr><tr><th>Credit</th><td>Original attack by Benjamin Wesolowski; independent parameter extrapolation and cost-model reassessment by Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py SQIsign-4</code><br><small>source: <code>nist/SQIsign/reproduce_sqisign_4.py</code> · SHA-256 <code class="digest">a052c353<wbr>25236d0d<wbr>b9710aa2<wbr>fa5d056c<wbr>07df4531<wbr>eb855aaa<wbr>a8277c8d<wbr>59d5853f</code></small><br><small>deterministic cost-model comparison with memory-charging controls</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/sqisign_specification.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/sqisign.zip">submission ZIP</a></td></tr></table>
 
 <h1 id="sqisign-4-low-free-memory-attack-extrapolation-falls-below-category-targets">SQIsign-4 — Low: free-memory attack extrapolation falls below category targets</h1>
 <p>SQIsign's pinned <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/sqisign_specification.pdf">specification</a> incorporates the new
@@ -32,7 +32,7 @@ stored j-invariants.</p>
 <p>The specification models a memory-<code>w</code> attack as generating at least
 <code>sqrt(p/w)</code> j-invariants and assigns each generated value <code>2^c_j</code> binary
 operations, where <code>c_j</code> is 27.3, 29.8, or 31.4.  At the submitted caps, using
-the exact Round-3 primes gives 150.09, 222.18, and 285.44 bits of work.  These
+the exact On-Ramp Round 3 primes gives 150.09, 222.18, and 285.44 bits of work.  These
 are above NIST's 143-, 207-, and 272-gate category thresholds and agree with
 the specification's rounded 149.8, 221.8, and 285.4 figures.</p>
 <p>If the same lower-bound formula is extrapolated to <code>w = p^(1/3)</code> and memory is
@@ -84,7 +84,7 @@ specification's hard cap is its own concrete convention rather than a NIST
 metric, but it also yields positive margins.</p>
 <p>Wesolowski's own rough Section 4.1 model in
 <a href="https://eprint.iacr.org/2026/1486">ePrint 2026/1486</a> supplies a second caveat.
-Re-evaluated at the exact Round-3 primes, it gives approximately <code>2^135.6</code>,
+Re-evaluated at the exact On-Ramp Round 3 primes, it gives approximately <code>2^135.6</code>,
 <code>2^203.4</code>, and <code>2^264.1</code> Fp2 operations using <code>2^117.3</code>, <code>2^178.9</code>, and
 <code>2^234.7</code> entries.  Charging <code>log2(p)^2</code> bit operations per Fp2 operation raises
 the work to 152.3, 221.4, and 282.9 bits.  This is another explicit cost-model
@@ -118,7 +118,7 @@ not a cryptanalytic attack.</p>
 </code></pre>
 </main>
 <footer class="site-footer">
-<p>Independent analysis; ratings are not issued or endorsed by NIST. Source and reproduction material: <code>ngcc-harness/nist</code>.</p>
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
 </footer>
 </body>
 </html>

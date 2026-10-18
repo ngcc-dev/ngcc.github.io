@@ -11,16 +11,16 @@
 <body class="nist-site">
 <header class="site-header">
 <a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
-<nav><a href="../index.html">Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">NIST Round 3</a></nav>
+<nav><a href="../index.html">Home</a><a href="../on-ramp.html">Security Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">Official NIST On-Ramp Round 3</a></nav>
 </header>
 <main>
-<p class="crumb"><a href="../index.html">NIST signature reports</a> › <code>MAYO-2</code></p>
+<p class="crumb"><a href="../on-ramp.html">NIST Signature On-Ramp (Round 3)</a> › <code>MAYO-2</code></p>
 
-<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>Round3 MAYO1 MAYO2 MAYO3 MAYO5 security reduction</td></tr><tr><th>Discovery</th><td>Moderate</td></tr><tr><th>Exploitation</th><td>proof/model limitation within the NIST query budget; no forgery or key-recovery attack</td></tr><tr><th>Remediation</th><td>Moderate</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py MAYO-2</code><br><small>source: <code>nist/MAYO/reproduce_mayo_2.py</code> · SHA-256 <code class="digest">135a5607<wbr>c15d7f34<wbr>1c98d5dc<wbr>164ef265<wbr>57a17522<wbr>f5dedf3f<wbr>3dcc71f7<wbr>bd02b56a</code></small><br><small>exact Theorem 1 multiplicative-loss model check</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/mayo_specification.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/MAYO.zip">submission ZIP</a></td></tr></table>
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>On-Ramp Round 3 MAYO1, MAYO2, MAYO3 and MAYO5 security reduction</td></tr><tr><th>Discovery</th><td>Moderate</td></tr><tr><th>Exploitation</th><td>proof/model limitation; no forgery or key-recovery attack</td></tr><tr><th>Remediation</th><td>Moderate</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py MAYO-2</code><br><small>source: <code>nist/MAYO/reproduce_mayo_2.py</code> · SHA-256 <code class="digest">57ab61d7<wbr>41350af0<wbr>eee3b71b<wbr>237c0a37<wbr>712c119f<wbr>160a0c83<wbr>80af8aed<wbr>4d6b14be</code></small><br><small>exact Theorem 1 multiplicative-loss model check</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/mayo_specification.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/MAYO.zip">submission ZIP</a></td></tr></table>
 
 <h1 id="mayo-2-low-theorem-1-covers-only-a-small-signing-query-range">MAYO-2 — Low: Theorem 1 covers only a small signing-query range</h1>
 <h2 id="bound-and-scope">Bound and scope</h2>
-<p>Theorem 1 of the Round-3 specification (§5.2, physical p.28) proves a ROM
+<p>Theorem 1 of the On-Ramp Round 3 specification (§5.2, physical p.28) proves a ROM
 EUF-CMA bound only under <code>Qs*B &lt; 1</code>, where <code>Qs</code> is the number of signing
 queries and</p>
 <pre><code class="language-text">B = (q^(k-(n-o)) + q^(m-k*o)) / (q-1).
@@ -95,7 +95,7 @@ formula/model check, not an attack.</p>
 </code></pre>
 </main>
 <footer class="site-footer">
-<p>Independent analysis; ratings are not issued or endorsed by NIST. Source and reproduction material: <code>ngcc-harness/nist</code>.</p>
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
 </footer>
 </body>
 </html>

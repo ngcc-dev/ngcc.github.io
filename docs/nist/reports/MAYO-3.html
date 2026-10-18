@@ -11,22 +11,22 @@
 <body class="nist-site">
 <header class="site-header">
 <a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
-<nav><a href="../index.html">Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">NIST Round 3</a></nav>
+<nav><a href="../index.html">Home</a><a href="../on-ramp.html">Security Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">Official NIST On-Ramp Round 3</a></nav>
 </header>
 <main>
-<p class="crumb"><a href="../index.html">NIST signature reports</a> › <code>MAYO-3</code></p>
+<p class="crumb"><a href="../on-ramp.html">NIST Signature On-Ramp (Round 3)</a> › <code>MAYO-3</code></p>
 
-<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-lead">Lead</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>Round3 MAYO2 concrete Category-1 estimate</td></tr><tr><th>Discovery</th><td>Non-trivial</td></tr><tr><th>Exploitation</th><td>published heuristic direct-forgery cost model; no attack execution or experiments</td></tr><tr><th>Remediation</th><td>Moderate</td></tr><tr><th>Credit</th><td>Original cryptanalysis by Massimo Ostuzzi; independent verification and cost-model reassessment by Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py MAYO-3</code><br><small>source: <code>nist/MAYO/reproduce_mayo_3.py</code> · SHA-256 <code class="digest">a5b1bf56<wbr>51fad3ea<wbr>41192613<wbr>15cfe3b8<wbr>0177f7bb<wbr>c4cd3848<wbr>1e7309f8<wbr>d305cc6a</code></small><br><small>self-contained selected-cost certificate across field-operation and specialization conventions</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/mayo_specification.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/MAYO.zip">submission ZIP</a></td></tr></table>
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-lead">Lead</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>On-Ramp Round 3 MAYO2 concrete Category-1 estimate</td></tr><tr><th>Discovery</th><td>Non-trivial</td></tr><tr><th>Exploitation</th><td>Published heuristic direct-forgery cost model; no attack execution or experiments</td></tr><tr><th>Remediation</th><td>Moderate</td></tr><tr><th>Credit</th><td>Original cryptanalysis by Massimo Ostuzzi; independent verification and cost-model reassessment by Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py MAYO-3</code><br><small>source: <code>nist/MAYO/reproduce_mayo_3.py</code> · SHA-256 <code class="digest">73496823<wbr>bae1d455<wbr>8a727bf9<wbr>304bbedc<wbr>f516796b<wbr>cde9bf01<wbr>1b81d9aa<wbr>9ee0e79b</code></small><br><small>self-contained selected-cost certificate across field-operation and specialization conventions</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/mayo_specification.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/MAYO.zip">submission ZIP</a></td></tr></table>
 
 <h1 id="mayo-3-low-mayo2-structural-forgery-estimate-depends-on-cost-accounting">MAYO-3 — Low: MAYO2 structural-forgery estimate depends on cost accounting</h1>
 <h2 id="result">Result</h2>
 <p>Ostuzzi's September 2026 paper
 <a href="https://eprint.iacr.org/2026/2247">Geometric Forgeries: Structural Cryptanalysis of MAYO</a>
-gives a new structural direct-forgery strategy for Round-3 MAYO. Its Table 6
+gives a new structural direct-forgery strategy for On-Ramp Round 3 MAYO. Its Table 6
 reports 140 bits for MAYO2, against the submitters' Category-1 target of 143
 bit operations. An independent reimplementation of the paper's Theorems 1 and
 3 and Section 7.2 dimension model reproduced the estimate as <code>2^140.8</code> bit
-operations. The same reimplementation reproduced all four printed Round-3
+operations. The same reimplementation reproduced all four printed On-Ramp Round 3
 figures to within 0.8 bit.</p>
 <p>The paper's result depends on how a field operation and per-guess work are
 priced:</p>
@@ -68,7 +68,7 @@ the target, rather than the roughly 3-bit shortfall under the paper's
 exponent from 2.81 to 3: the corresponding value is 142.9.</p>
 <h2 id="specialization-cost-sensitivity">Specialization-cost sensitivity</h2>
 <p>The paper author's generic baseline charges a per-guess specialization cost,
-but the structural Round-3 model omits that cost. Applying the same generic
+but the structural On-Ramp Round 3 model omits that cost. Applying the same generic
 specialization formula to the structural schedule raises the estimate to 145.1
 under the paper convention and 146.3 under the submission convention. The
 optimizing block schedule also changes from four blocks of size two to two
@@ -96,7 +96,7 @@ of per-guess specialization would determine whether the lead survives.</p>
 <h2 id="reproduction">Reproduction</h2>
 <pre><code class="language-sh">python3 MAYO/reproduce_mayo_3.py
 </code></pre>
-<p>The deterministic standard-library script pins the Round-3 specification,
+<p>The deterministic standard-library script pins the On-Ramp Round 3 specification,
 recomputes the selected dimensions, verifies the exact specialization
 operation count, and checks all five estimates above from the independently
 verified cost certificates. It records the verified full-paper SHA-256. It is
@@ -108,7 +108,7 @@ search, an experiment, or an attack execution.</p>
 </code></pre>
 </main>
 <footer class="site-footer">
-<p>Independent analysis; ratings are not issued or endorsed by NIST. Source and reproduction material: <code>ngcc-harness/nist</code>.</p>
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
 </footer>
 </body>
 </html>
