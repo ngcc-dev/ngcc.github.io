@@ -194,6 +194,27 @@ VDOO_FULL=1 sign-33/reproduce_public_structural_forgery.sh
 <pre><code class="language-sh">python3 sign-33/reproduce_padding_nibble.py
 </code></pre>
 <p>The script runs the 680-bit scan in a child process separate from the signer and requires exactly bits 68.4–68.7 to be accepted. It then re-verifies the 15 high-nibble aliases, the honest and changed-message controls and the low-nibble and salt controls, each in its own fresh process. It takes about 2 seconds.</p>
+<h2 class="issue-heading" id="sign-33-9-a-wedge-intersection-attack-on-vdoo-512-is-estimated-at-2379-gates">sign-33-9: A wedge-intersection attack on VDOO-512 is estimated at 2^379 gates</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-lead">Lead</span></td></tr>
+<tr><th>Affected</th><td>VDOO-512 specification and parameter set</td></tr>
+<tr><th>Discovery</th><td>Non-trivial</td></tr>
+<tr><th>Exploitation</th><td>Reported key-recovery estimate of about 2^379.18 gates under semi-regularity and generic-rank heuristics; not executed</td></tr>
+<tr><th>Credit</th><td>Siyu Li, Hao Guo, Peigen Li, and Siyong Tao</td></tr>
+<tr><th>Date</th><td>2026-10-19</td></tr>
+</table></div>
+<p>Reference: <a href="https://eprint.iacr.org/2026/2528">Li, Guo, Li, and Tao, <em>Revisiting the Security of VDOO</em>, ePrint 2026/2528</a></p>
+<p>The authors <a href="https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/LA5Z--9hCTU">announced the <code>2^379</code> estimate on 2026-09-21</a>, with details deferred to the paper. The paper observes that retaining only VDOO's last oil space gives a generalized UOV instance. For VDOO-512, the submitted parameters <code>(q, v, d, o1, o2) = (256, 260, 10, 10, 175)</code> yield <code>UOV(n = 455, o = 175, m = 195)</code>. Applying the published wedge-reconciliation estimate with <code>(k, D, l) = (123, 52, 1)</code> costs about <code>2^432.10</code> gates. The stronger wedge-intersection variant gives <code>UOV(n = 455, o = 70, m = 583)</code> and, with <code>(k, D, l) = (33, 37, 1)</code>, costs about <code>2^379.18</code> gates. Both figures are below the claimed 512-bit level; the latter is about 133 bits below it. The same calculation gives about <code>2^172.20</code> and <code>2^947.65</code> gates at the 128- and 256-bit sets, so this finding affects only VDOO-512.</p>
+<p>After recovery of the final oil space, polar images are expected to span the corresponding hidden output space. The last layer can then be removed and the residual multilayer trapdoor recovered with polynomial overhead. The attack uses the specified VDOO structure and parameters; it does not depend on any implementation defect.</p>
+<p>The numerical estimate assumes semi-regular public polynomials in the truncated ring used by the wedge analysis. The output-space step additionally assumes generic rank, although its full-span condition can be checked after recovering the oil space. Neither a full-size wedge computation nor VDOO-512 key recovery has been performed. The report therefore records a quantified below-target design attack as <code>Critical / Lead</code>, not as a confirmed key recovery.</p>
+<h3 id="reproducing_8">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-33/reproduce_wedge_estimate.py
+</code></pre>
+<p>The certificate recomputes the truncated-Hilbert-series coefficients and gate conversions for all four estimates quoted above. It confirms the paper's arithmetic, not its semi-regularity or generic-rank heuristics.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -16,7 +16,7 @@
 <main>
 <p class="crumb"><a href="../on-ramp.html">NIST Signature On-Ramp (Round 3)</a> › <code>UOV-2</code></p>
 
-<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-lead">Lead</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>uov-Ip in classic, PKC and PKC+SKC formats</td></tr><tr><th>Discovery</th><td>Non-trivial</td></tr><tr><th>Exploitation</th><td>Cost/model check for a public-key-only direct forgery; no attack execution</td></tr><tr><th>Remediation</th><td>Moderate</td></tr><tr><th>Credit</th><td>Polynomial XL analysis by Hiroki Furue and Momonari Kudo; independent uov-Ip application and cost-model reassessment by Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py UOV-2</code><br><small>source: <code>nist/UOV/reproduce_uov_2.py</code> · SHA-256 <code class="digest">7bb7f9e9<wbr>67fcdf13<wbr>46a30b5e<wbr>d4db9c0c<wbr>d61a5c77<wbr>4ab31457<wbr>22ad5791<wbr>c79ca1e8</code></small><br><small>paper-calibrated PXL formula and dense-memory cost check</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/UOV_Specification_R3.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/UOV-R3.zip">submission ZIP</a></td></tr></table>
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-lead">Lead</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>uov-Ip in classic, PKC and PKC+SKC formats</td></tr><tr><th>Discovery</th><td>Non-trivial</td></tr><tr><th>Exploitation</th><td>Cost/model check for a public-key-only direct forgery; no attack execution</td></tr><tr><th>Remediation</th><td>Moderate</td></tr><tr><th>Credit</th><td>Polynomial XL analysis by Hiroki Furue and Momonari Kudo; independent uov-Ip application and cost-model reassessment by Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py UOV-2</code><br><small>source: <code>nist/UOV/reproduce_uov_2.py</code> · SHA-256 <code class="digest">39d5c5ef<wbr>a137bd8f<wbr>3205e9b1<wbr>4478b2dd<wbr>cd4fe9a4<wbr>684f698a<wbr>e7829d5f<wbr>c611109c</code></small><br><small>paper-calibrated PXL formula and dense-memory cost check</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/UOV_Specification_R3.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/UOV-R3.zip">submission ZIP</a></td></tr></table>
 
 <h1 id="uov-2-low-polynomial-xl-places-uov-ip-near-the-category-1-boundary">UOV-2 — Low: Polynomial XL places uov-Ip near the Category-1 boundary</h1>
 <h2 id="result">Result</h2>
@@ -38,6 +38,12 @@ reduced system of 44 equations in 44 variables over GF(256) gives:</p>
 </thead>
 <tbody>
 <tr>
+<td style="text-align: right;">2.37 (asymptotic existence bound)</td>
+<td style="text-align: right;"><code>2^125.5</code></td>
+<td style="text-align: right;"><code>2^132.6</code></td>
+<td style="text-align: right;">about <code>2^103.7</code> bits</td>
+</tr>
+<tr>
 <td style="text-align: right;">2.81</td>
 <td style="text-align: right;"><code>2^132.9</code></td>
 <td style="text-align: right;"><code>2^140.0</code></td>
@@ -55,7 +61,14 @@ reduced system of 44 equations in 44 variables over GF(256) gives:</p>
 <code>r=log2(q)</code>. NIST's Category-1 classical gate reference is about <code>2^143</code>.
 Thus the estimate is roughly three bits below the reference only when a matrix
 exponent near 2.81 applies to the very large dense elimination with omitted
-constants. At cubic elimination it remains above the reference.</p>
+constants. Substituting the approximately 2.37 exponent from asymptotic
+matrix-multiplication existence results makes the formula print a much lower
+<code>2^132.6</code> gate count. That row is only a formal sensitivity endpoint. It does
+not describe a practical multiplication algorithm, and there is no proof that
+the asymptotic exponent applies to PXL's structured matrices at these finite
+dimensions. It also changes the optimal PXL schedule and still requires about
+<code>2^103.7</code> bits of dense matrix storage. It therefore supplies no attack-cost
+claim. At cubic elimination the estimate remains above the reference.</p>
 <h2 id="evidence-and-limitations">Evidence and limitations</h2>
 <p>The public harness implementation of the Furue–Kudo formulas first reproduces the
 paper's published Table-1 values, then evaluates uov-Ip. The focused numbered

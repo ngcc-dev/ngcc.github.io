@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: QR-UOV-4</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="../style.css?v=a38b7088">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="../index.html">Home</a><a href="../on-ramp.html">Security Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">Official NIST On-Ramp Round 3</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../on-ramp.html">NIST Signature On-Ramp (Round 3)</a> › <code>QR-UOV-4</code></p>
+
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-lead">Lead</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>On-Ramp Round 3 1q127L10 and 5q127L10, with either public-expansion backend, under the submission's omega=2.37 free-memory PXL convention</td></tr><tr><th>Discovery</th><td>Hard</td></tr><tr><th>Exploitation</th><td>Conditional public-key direct-forgery cost/model path; structured toy forgeries but no PXL or full-scale attack execution</td></tr><tr><th>Remediation</th><td>Moderate</td></tr><tr><th>Credit</th><td>Underdetermined reduction by Yasufumi Hashimoto and geometric formulation by Massimo Ostuzzi; Polynomial XL by Hiroki Furue and Momonari Kudo; zero-guess composition and On-Ramp evaluation by Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py QR-UOV-4</code><br><small>source: <code>nist/QR-UOV/reproduce_qruov_4.py</code> · SHA-256 <code class="digest">4cd44c76<wbr>1208cd09<wbr>0f866680<wbr>3affbb79<wbr>afe3b458<wbr>d8f10a13<wbr>af5c6f21<wbr>0402285d</code></small><br><small>exact residual dimensions and specification-formula costs plus ten structured quotient-ring toy forgeries</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/qruov_specifications.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/QR_UOV%20-%20Round3.zip">submission ZIP</a></td></tr></table>
+
+<h1 id="qr-uov-4-low-zero-guess-hashimotopxl-composition-conditionally-falls-below-two-targets">QR-UOV-4 — Low: zero-guess Hashimoto–PXL composition conditionally falls below two targets</h1>
+<h2 id="result">Result</h2>
+<p>QR-UOV specification §7.2, physical pp.42–43, estimates Polynomial XL
+(PXL) after the Thomae–Wolf reduction. It says that PXL is difficult to
+combine with the stronger partition-based underdetermined solvers because
+both guess variables before substituting their values. That explanation does
+not cover Hashimoto's zero-guess boundary.</p>
+<p>In <a href="https://eprint.iacr.org/2026/1122">Ostuzzi's geometric formulation</a>,
+<a href="https://eprint.iacr.org/2021/1045">Hashimoto</a> extraction with <code>k_H=0</code> and
+partition parameter <code>b</code> leaves a square <code>MQ(m-b-1,m-b-1)</code> residual. No
+variable value has been guessed at this point, so PXL can make its own
+symbolic choice of variables on the residual. Substitution in Ostuzzi's
+equation (7), the original Hashimoto condition, and <a href="https://eprint.iacr.org/2026/1054">Asanuma et al.'s
+restatement</a> gives:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter set</th>
+<th style="text-align: right;">Original <code>(n,m)</code></th>
+<th style="text-align: right;"><code>b</code></th>
+<th style="text-align: right;">Hashimoto residual</th>
+<th style="text-align: right;">Thomae–Wolf residual</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1q127L10</td>
+<td style="text-align: right;">(600,60)</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">49</td>
+<td style="text-align: right;">51</td>
+</tr>
+<tr>
+<td>5q127L10</td>
+<td style="text-align: right;">(1150,110)</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">100</td>
+<td style="text-align: right;">101</td>
+</tr>
+<tr>
+<td>3q127L3</td>
+<td style="text-align: right;">(306,78)</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">75</td>
+<td style="text-align: right;">76</td>
+</tr>
+<tr>
+<td>5q31L10</td>
+<td style="text-align: right;">(1240,120)</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">110</td>
+<td style="text-align: right;">111</td>
+</tr>
+</tbody>
+</table></div>
+<p>Applying the specification's affine Hilbert-series formula, its gate
+conversion, and the <a href="https://eprint.iacr.org/2021/1609">PXL paper's</a>
+asymptotic <code>omega=2.37</code> matrix exponent gives:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Parameter set</th>
+<th style="text-align: right;">Recomputed TW→PXL</th>
+<th style="text-align: right;">Hashimoto(0)→PXL</th>
+<th style="text-align: right;">Target</th>
+<th style="text-align: right;">Margin</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1q127L10</td>
+<td style="text-align: right;">148.64</td>
+<td style="text-align: right;"><strong>141.95</strong></td>
+<td style="text-align: right;">143</td>
+<td style="text-align: right;"><strong>-1.05</strong></td>
+</tr>
+<tr>
+<td>5q127L10</td>
+<td style="text-align: right;">272.98</td>
+<td style="text-align: right;"><strong>270.05</strong></td>
+<td style="text-align: right;">272</td>
+<td style="text-align: right;"><strong>-1.95</strong></td>
+</tr>
+<tr>
+<td>3q127L3</td>
+<td style="text-align: right;">210.58</td>
+<td style="text-align: right;">208.74</td>
+<td style="text-align: right;">207</td>
+<td style="text-align: right;">+1.74</td>
+</tr>
+<tr>
+<td>5q31L10</td>
+<td style="text-align: right;">275.45</td>
+<td style="text-align: right;">273.90</td>
+<td style="text-align: right;">272</td>
+<td style="text-align: right;">+1.90</td>
+</tr>
+</tbody>
+</table></div>
+<p>The centrifugation and initial square-system costs are below 49 bits for the
+two affected sets in the same model and do not change the displayed totals.
+The result corrects the submission's chosen estimator: under that estimator,
+the stated reason for using only Thomae–Wolf before PXL misses two
+below-target rows.</p>
+<p>Those figures price one residual solve. If each conditioned square residual
+has the independent random-system success probability <code>1-e^-1</code>, repeated
+reductions add about <code>log2(1/(1-e^-1)) = 0.66</code> bit: approximately <strong>142.61</strong>
+and <strong>270.71</strong> bits. This is a heuristic sensitivity, not a measured
+full-size success rate. The ten small structured toys needed an average of
+2.4 target attempts; they do not establish that unsuccessful full-size
+residuals can be screened cheaply before PXL. At Level I the restart-adjusted
+margin is only about 0.39 bit, so small omitted costs could erase it.</p>
+<h2 id="why-this-remains-a-lead">Why this remains a lead</h2>
+<p>The figures are not practical finite-size attack costs. They depend on three
+material assumptions:</p>
+<ol>
+<li><code>omega=2.37</code> is an asymptotic existence bound. Neither the PXL paper, the
+   submission, nor this study supplies an algorithm or crossover showing that
+   it applies to these dense matrices at dimensions 49 and 100. Replacing it
+   by the PXL paper's <code>omega=2.81</code> sensitivity gives 148.24 and 288.33 bits,
+   both above target.</li>
+<li>The modeled PXL storage is about <code>2^110.27</code> and <code>2^211.15</code> field elements,
+   or <code>2^113.08</code> and <code>2^213.96</code> bits. A specific logarithmic memory-access
+   charge gives about 148.73 and 277.77 bits. This is a sensitivity model;
+   the size of a defensible access charge has not been fixed by the toy runs.</li>
+<li>PXL assumes suitable semi-regular behavior. Five retained Sage trials
+   validate zero-guess centrifugation and a lifted forgery for random
+   quadratic maps over GF(31). A separate dependency-free toy constructs the
+   submitted q=31, ell=3 quotient-ring public-map distribution at reduced
+   dimensions <code>(V,M)=(3,2)</code>. Seeds 20261018 through 20261027 all produced the
+   predicted 4-by-4 residual, Hilbert function <code>[1,4,6,4,1,0]</code>, and a valid
+   lifted forgery. This is useful structured evidence, but it does not
+   establish semi-regularity at dimensions 49 or 100 and uses brute-force
+   residual solving rather than PXL. The specification's Table 13 experiments
+   likewise concern the original QR-MQ system rather than the conditioned
+   residual.</li>
+</ol>
+<p>The alternative CryptographicEstimators implementation gives lower numbers
+under a different homogeneous convention. It is a sensitivity check, not
+independent confirmation of the specification's affine calculation.</p>
+<p>This is therefore <strong>Low / Lead</strong> under the project's security-margin rule.
+It is not a demonstrated category break or full-scale forgery. If full-size
+structured-residual tests and a realizable finite-size cost establish a
+below-target path, the direct EUF-CMA consequence would require a
+substantially higher severity assessment.</p>
+<h2 id="other-parameter-observations">Other parameter observations</h2>
+<p>Recalculation of the submission and Round-2 tables shows that the previously
+reported thinnest published QR-UOV margin is 5q127L10 at 273 bits, one bit
+above its 272-bit target. The q=7 and q=31 sets remain above their targets
+under the specification's formula; another estimator puts 5q31L10 at 271.9
+under a different convention, so that value is not presented as a separate
+attack.</p>
+<p>The characteristic-two divided-square row-selection mechanism studied for
+UOV does not transfer directly to odd-characteristic QR-UOV. Higher
+characteristic-p divided-power methods exist, but no sparse-row gain for the
+submitted QR-UOV sets was established here.</p>
+<h2 id="reproduction">Reproduction</h2>
+<pre><code class="language-sh">python3 QR-UOV/reproduce_qruov_4.py
+</code></pre>
+<p>The dependency-free script checks the two Hashimoto applicability
+inequalities, residual dimensions, specification-formula PXL optima, omitted
+preprocessing cost, memory units, and <code>omega=2.81</code> sensitivity. It is a
+deterministic cost/model check, not PXL execution.</p>
+<p>The optional mechanism tests are:</p>
+<pre><code class="language-sh">python3 QR-UOV/analysis/hashimoto_pxl/structured_toy.py --trials 10
+sage QR-UOV/analysis/hashimoto_pxl/toy_hashimoto.sage
+</code></pre>
+<p>The first command constructs small quotient-ring QR-UOV maps without external
+packages. The second uses random MQ maps. Neither runs PXL or validates the
+full-size cost.</p>
+<h2 id="harness-reproduction">Harness reproduction</h2>
+<p>From the <code>ngcc-harness</code> checkout, run the pinned source script through the harness-side dispatcher:</p>
+<pre><code class="language-sh">python3 nist/reproduce.py QR-UOV-4
+</code></pre>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+</footer>
+</body>
+</html>

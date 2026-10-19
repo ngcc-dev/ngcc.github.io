@@ -202,3 +202,29 @@ python3 sign-33/reproduce_padding_nibble.py
 ```
 
 The script runs the 680-bit scan in a child process separate from the signer and requires exactly bits 68.4–68.7 to be accepted. It then re-verifies the 15 high-nibble aliases, the honest and changed-message controls and the low-nibble and salt controls, each in its own fresh process. It takes about 2 seconds.
+
+## sign-33-9: A wedge-intersection attack on VDOO-512 is estimated at 2^379 gates
+
+Severity: Critical
+Status: Lead
+Layer: Design
+Affected: VDOO-512 specification and parameter set
+Discovery: Non-trivial
+Exploitation: Reported key-recovery estimate of about 2^379.18 gates under semi-regularity and generic-rank heuristics; not executed
+Credit: Siyu Li, Hao Guo, Peigen Li, and Siyong Tao
+Date: 2026-10-19
+Reference: [Li, Guo, Li, and Tao, *Revisiting the Security of VDOO*, ePrint 2026/2528](https://eprint.iacr.org/2026/2528)
+
+The authors [announced the `2^379` estimate on 2026-09-21](https://groups.google.com/a/list.nist.gov/g/pqc-forum/c/LA5Z--9hCTU), with details deferred to the paper. The paper observes that retaining only VDOO's last oil space gives a generalized UOV instance. For VDOO-512, the submitted parameters `(q, v, d, o1, o2) = (256, 260, 10, 10, 175)` yield `UOV(n = 455, o = 175, m = 195)`. Applying the published wedge-reconciliation estimate with `(k, D, l) = (123, 52, 1)` costs about `2^432.10` gates. The stronger wedge-intersection variant gives `UOV(n = 455, o = 70, m = 583)` and, with `(k, D, l) = (33, 37, 1)`, costs about `2^379.18` gates. Both figures are below the claimed 512-bit level; the latter is about 133 bits below it. The same calculation gives about `2^172.20` and `2^947.65` gates at the 128- and 256-bit sets, so this finding affects only VDOO-512.
+
+After recovery of the final oil space, polar images are expected to span the corresponding hidden output space. The last layer can then be removed and the residual multilayer trapdoor recovered with polynomial overhead. The attack uses the specified VDOO structure and parameters; it does not depend on any implementation defect.
+
+The numerical estimate assumes semi-regular public polynomials in the truncated ring used by the wedge analysis. The output-space step additionally assumes generic rank, although its full-span condition can be checked after recovering the oil space. Neither a full-size wedge computation nor VDOO-512 key recovery has been performed. The report therefore records a quantified below-target design attack as `Critical / Lead`, not as a confirmed key recovery.
+
+### Reproducing
+
+```sh
+python3 sign-33/reproduce_wedge_estimate.py
+```
+
+The certificate recomputes the truncated-Hilbert-series coefficients and gate conversions for all four estimates quoted above. It confirms the paper's arithmetic, not its semi-regularity or generic-rank heuristics.

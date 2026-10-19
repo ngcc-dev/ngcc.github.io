@@ -16,49 +16,62 @@
 <main>
 <p class="crumb"><a href="../on-ramp.html">NIST Signature On-Ramp (Round 3)</a> › <code>SQIsign-5</code></p>
 
-<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>Theorem 8.1.7 security claim for p324_3, p500_27, and p664_17</td></tr><tr><th>Discovery</th><td>Moderate</td></tr><tr><th>Exploitation</th><td>Concrete proof-bound gap; no forgery or key-recovery attack</td></tr><tr><th>Remediation</th><td>Moderate</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py SQIsign-5</code><br><small>source: <code>nist/SQIsign/reproduce_sqisign_5.py</code> · SHA-256 <code class="digest">c6f3db73<wbr>aa936b62<wbr>36787799<wbr>db228a1b<wbr>5092f3b4<wbr>3410b201<wbr>45694b73<wbr>27ed7457</code></small><br><small>deterministic cost-model check of Theorem 8.1.7</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/sqisign_specification.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/sqisign.zip">submission ZIP</a></td></tr></table>
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>Theorem 8.1.7 guarantee for p324_3, p500_27, and p664_17</td></tr><tr><th>Discovery</th><td>Moderate</td></tr><tr><th>Exploitation</th><td>Concrete proof-bound gap for all three levels; no forgery or key-recovery attack</td></tr><tr><th>Remediation</th><td>Moderate</td></tr><tr><th>Credit</th><td>Later Round-2 proof analysis by Maher Mamah and David Jao; pinned-theorem and On-Ramp parameter evaluation by Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py SQIsign-5</code><br><small>source: <code>nist/SQIsign/reproduce_sqisign_5.py</code> · SHA-256 <code class="digest">4f80c54d<wbr>dd011511<wbr>71697cdf<wbr>0ace8819<wbr>44a3fb22<wbr>cef536bb<wbr>6fbeec5e<wbr>c4236710</code></small><br><small>deterministic check of the pinned bound and failed premise of the later Round-2 theorem</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/sqisign_specification.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/sqisign.zip">submission ZIP</a></td></tr></table>
 
-<h1 id="sqisign-5-low-rom-bound-loses-security-at-264-signing-queries">SQIsign-5 — Low: ROM bound loses security at 2^64 signing queries</h1>
+<h1 id="sqisign-5-low-pinned-rom-bound-loses-every-category-guarantee-before-its-target">SQIsign-5 — Low: pinned ROM bound loses every category guarantee before its target</h1>
 <p>Theorem 8.1.7 in the pinned <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/sqisign_specification.pdf">specification</a> (physical
-p. 106) gives SQIsign's EUF-CMA reduction in the
-random-oracle model.  One of its nonnegative additive terms is</p>
+p. 106) gives SQIsign's EUF-CMA reduction in the random-oracle model. One of
+its nonnegative additive terms is</p>
 <pre><code class="language-text">(q + 1)(s + 1) / 2^(lambda + 1),
 </code></pre>
 <p>where <code>q</code> bounds random-oracle queries and <code>s</code> bounds signing-oracle queries.
-NIST permits up to <code>s = 2^64</code> chosen-message signing queries when estimating
-security.  With that value, this term reaches one by
-<code>q = 2^(lambda-63)</code>: approximately <code>2^65</code>, <code>2^129</code>, and <code>2^193</code> oracle queries
-for the three parameter sets.  These query exponents are far below the
-corresponding 143-, 207-, and 272-gate category thresholds.</p>
-<p>The term alone is about one half for the Level-I set when both <code>q</code> and <code>s</code> are
-<code>2^64</code>; it exceeds one at roughly <code>2^65</code> random-oracle queries.  For Levels III
-and V, its respective thresholds are roughly <code>2^129</code> and <code>2^193</code>.  Once the
-term reaches one, the theorem's right-hand side supplies no nontrivial upper
-bound on forgery probability. The separate final min-entropy term is</p>
+At NIST's <code>s=2^64</code> evaluation baseline, the term reaches one around
+<code>q=2^(lambda-63)</code>: approximately <code>2^65</code>, <code>2^129</code>, and <code>2^193</code> queries for
+p324_3, p500_27, and p664_17. These thresholds precede the respective 143-,
+207-, and 272-gate category targets.</p>
+<p>The separate final min-entropy term printed in the theorem is</p>
 <pre><code class="language-text">(q + s + 1)s / (sqrt(p) 2^lambda).
 </code></pre>
-<p>At <code>q = 2^lambda</code> and <code>s = 2^64</code>, its base-2 logarithm is approximately
-<code>-98.8</code>, <code>-188.4</code>, and <code>-270.0</code> for the three parameter sets. It therefore
-remains small under the On-Ramp Round 3 primes and does not repair this
-statistical-distance loss.</p>
-<p>The theorem is stated only in the classical ROM and is accompanied by a proof
-sketch based on an earlier Fiat–Shamir-with-hints theorem.  Remark 8.1.8 obtains
-a QROM statement only in the Algebraic Isogeny Model.  Section 1.1's statement
-that the reduction is tight is expressly qualified on accepting standard
-heuristics; the query-dependent term above still limits the concrete guarantee
-available from the displayed theorem.</p>
-<p>This is Low / Proof gap.  It does <strong>not</strong> give an attack: no signature is
-forged, no key is recovered, and the calculation does not estimate SQIsign's
-actual forgery advantage.  It shows only that Theorem 8.1.7 does not certify
-the claimed concrete security through NIST's signing-query baseline.  A tighter
-reduction or an explicit, accepted per-key usage limit is needed to close it.</p>
-<p>Recompute the terms with:</p>
+<p>At <code>q=2^lambda</code> and <code>s=2^64</code>, its base-2 logarithm is approximately -98.8,
+-188.4, and -270.0. It remains small under the On-Ramp primes and does not
+repair the earlier statistical-distance loss.</p>
+<p>The theorem is stated only in the classical ROM. Remark 8.1.8 obtains a QROM
+statement only in the Algebraic Isogeny Model. Section 8.1 also says that the
+underlying complete proof concerns a previous SQIsign version with even-degree
+responses. The v3 specification adapts that framework to odd-degree responses
+but retains the displayed loss.</p>
+<h2 id="why-the-later-round-2-bound-does-not-narrow-this-finding">Why the later Round-2 bound does not narrow this finding</h2>
+<p>Mamah and Jao's <a href="https://eprint.iacr.org/2026/1775">security-proof note</a>
+improves the Round-2 min-entropy analysis from <code>O(1/sqrt(p))</code> to <code>O(1/p)</code>.
+Their Theorem 3 uses the commitment-degree condition <code>Nmix &gt; p^2</code>. Under that
+condition its two statistical terms are</p>
+<pre><code class="language-text">(q+1) 2 sqrt(s+1) / sqrt(p) + 16 (q+s+1)s / p.
+</code></pre>
+<p>SQIsign v3 does not meet the premise. Table 9 (physical p. 92) fixes</p>
+<pre><code class="language-text">Dmix = next_prime(p * 2^(2*lambda)).
+</code></pre>
+<p>Ignoring the negligible next-prime increment, this is below <code>p^2</code> by 69.58,
+120.75, and 156.09 bits for the three On-Ramp sets. The v3 specification
+accordingly cites the Mamah--Jao result only while saying tighter reductions
+“may be possible” and leaves that work for the future immediately before
+Theorem 8.1.7.</p>
+<p>Directly substituting the v3 primes into the later formula gives hypothetical
+thresholds near <code>2^129.79</code>, <code>2^219.38</code>, and <code>2^301.04</code> random-oracle queries,
+but those numbers do not establish a v3 theorem. The previous report used them
+to say that Levels III and V were covered. That narrowing was unsupported and
+has been removed. The applicable pinned guarantee remains loose for all three
+sets.</p>
+<p>This remains <strong>Low / Proof gap</strong>. Neither calculation gives an attack: no
+signature is forged, no key is recovered, and the proof term does not estimate
+SQIsign's actual forgery advantage. A v3 proof satisfying the later theorem's
+premises, a new tight analysis for the v3 commitment distribution, or an
+accepted per-key query limit would close the gap.</p>
+<p>Recompute the terms and the <code>Dmix &lt; p^2</code> premise failure with:</p>
 <pre><code class="language-sh">python3 SQIsign/reproduce_sqisign_5.py
 </code></pre>
-<p>The deterministic script checks the pinned specification and NIST baseline,
-computes the exact first integer <code>q</code> that makes the term at least one, and
-checks the final min-entropy term for every On-Ramp Round 3 prime.  It is a proof-bound
-calculation, not an attack.</p>
+<p>The script checks the pinned specification and NIST baseline, computes the
+printed terms for every current prime, and reports the later formula only as
+an inapplicable sensitivity calculation.</p>
 <h2 id="harness-reproduction">Harness reproduction</h2>
 <p>From the <code>ngcc-harness</code> checkout, run the pinned source script through the harness-side dispatcher:</p>
 <pre><code class="language-sh">python3 nist/reproduce.py SQIsign-5
