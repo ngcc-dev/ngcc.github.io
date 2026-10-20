@@ -96,6 +96,26 @@ when gcc or AVX2/BMI2 support is missing.</p>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 security/rbg_protocol_dependency.py --report-id kem-01-3
 </code></pre>
+<h2 class="issue-heading" id="kem-01-4-deterministic-encapsulation-overflows-its-key-buffer-and-derives-the-wrong-secret">kem-01-4: Deterministic encapsulation overflows its key buffer and derives the wrong secret</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td><code>mdkem_enc</code> in reference and aarch64 implementations at all three levels; avx2 and neon allocate the correct <code>2*SEED_BYTES</code></td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Deterministic encapsulation and decapsulation derive different shared secrets; a fixed-length stack write occurs; no attacker-controlled corruption shown</td></tr>
+<tr><th>Credit</th><td>Kr0emer and Chen Peng (陈鹏); corrected overflow localization by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-19</td></tr>
+</table></div>
+<p>Original source: <a href="https://github.com/ngcc-dev/ngcc-harness/issues/24">NGCC harness issue 24</a></p>
+<p>Validated and corrected on 2026-10-20. In the reference and aarch64 trees, <code>mdkem_enc</code> allocates <code>kr[SEED_BYTES]</code>, then calls <code>Hash2(kr, buf, 2*SEED_BYTES)</code> (<code>kem.c:40–52</code>). For Aigis-Enc+-I, <code>Hash2</code> is <code>hash256</code> and writes 32 bytes into the 16-byte <code>kr</code>; the subsequent encryption also reads <code>kr + SEED_BYTES</code>. The analogous output is twice the allocated size in -II and -III. The avx2 and neon trees instead allocate <code>kr[2*SEED_BYTES]</code>. The original issue attributed the write to the earlier <code>Hash(buf + SEED_BYTES, pk, PK_BYTES)</code> call, but that call writes only <code>SEED_BYTES</code> output bytes; its third argument is the input length.</p>
+<p>In our Aigis-Enc+-I replay, AddressSanitizer reports a stack-buffer overflow, and the uninstrumented deterministic path yields a different shared secret from decapsulation. The ordinary randomized encapsulation round trip agrees. The helper is declared in <code>api.h</code> but is not part of the NGCC uniform KEM ABI or called by the submitted KAT path. The hash write has a fixed length, not an attacker-controlled size. This limited API defect warrants Low; no memory disclosure, control-flow impact, or IND-CCA break is demonstrated.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-01/reproduce_mdkem_overflow.py
+</code></pre>
+<p>The wrapper builds the frozen level-I reference source with <code>-DUSE_SHA3</code>, the submitted speed-test configuration, in a temporary directory. It requires an ASan write failure and checks deterministic mismatch with a normal-path agreement control. The KAT build uses <code>-DUSE_NICCS_API</code>; the undersized allocation is independent of that hash backend. The other levels and the aarch64/avx2/neon allocations were source-inspected, not run.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

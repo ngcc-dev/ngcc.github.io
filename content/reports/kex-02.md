@@ -185,3 +185,25 @@ python3 kex-02/reproduce_failure_bound.py
 ```
 
 The arithmetic certificate recomputes all eight BW-set bounds from transcribed Table 1 values at `N=S=1`; check the theorem text and values in the frozen PDF separately. It does not measure failures or execute a protocol attack.
+
+## kex-02-7: Incoming message lengths are ignored before fixed-size reads
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: Submitted AFS-KEX C128, C256 and C512 uniform-API reference wrappers
+Discovery: Trivial
+Exploitation: A short peer-supplied message can cause an out-of-bounds read; no secret disclosure or protocol break demonstrated
+Credit: fa1c4 (University of Science and Technology of China)
+Date: 2026-10-20
+Original source: [NGCC harness issue 32](https://github.com/ngcc-dev/ngcc-harness/issues/32)
+
+The receive-side pass-2, pass-3 and pass-4 functions accept `m1_len_bytes`, `m2_len_bytes` and `m3_len_bytes` respectively, then discard them. Passes 2 and 3 feed the caller buffers into fixed-size KEM decapsulation; pass 3 also reads the seed suffix of `m2`, and pass 4 reads `m3[i]` for every seed byte (`KEX_AlgorithmInstance.c`, all three trees). A peer can supply a one-byte buffer with its true length, yet the wrapper proceeds to read the expected full message. The reporter observed AddressSanitizer errors; our certificate confirms the source path, not the precise runtime crash or any disclosure.
+
+### Reproducing
+
+```sh
+python3 kex-02/reproduce_short_messages.py
+```
+
+The source certificate checks all three receive functions in all three submitted parameter sets. It does not execute malformed exchanges.

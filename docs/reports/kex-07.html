@@ -57,6 +57,25 @@ unknown-key-share and requires equal keys. Its controls require an honest
 exchange to agree, and an independently generated key or a non-congruent
 re-encoding of the same coefficient to give different keys. It runs in about
 a second; pass a larger trial count as the first argument.</p>
+<h2 class="issue-heading" id="kex-07-2-short-responder-messages-reach-fixed-size-decryption-without-a-length-check">kex-07-2: Short responder messages reach fixed-size decryption without a length check</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All nine submitted NEV-AKE reference uniform-API wrappers</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>A short peer-supplied responder message can cause an out-of-bounds read; no secret disclosure or protocol break demonstrated</td></tr>
+<tr><th>Credit</th><td>fa1c4 (University of Science and Technology of China)</td></tr>
+<tr><th>Date</th><td>2026-10-20</td></tr>
+</table></div>
+<p>Original source: <a href="https://github.com/ngcc-dev/ngcc-harness/issues/33">NGCC harness issue 33</a></p>
+<p><code>kex_derive_ss_a</code> discards <code>mb_len_bytes</code> and passes <code>mb</code> to <code>ake_der_init</code> in all nine wrappers (<code>kat_test/KEX_AlgorithmInstance.c:158–173</code> in C1). The core splits that pointer into a fixed-size PKE ciphertext and KEM ciphertext before decrypting both (<code>ake.c:177–207</code>). A one-byte responder buffer therefore does not constrain either read. The reporter observed an AddressSanitizer error. Our source check confirms the unchecked path and scope, not the precise runtime crash or any disclosure.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kex-07/reproduce_short_message.py
+</code></pre>
+<p>The certificate traces the length discard and fixed-size decryption in all nine submitted trees. It does not execute a malformed exchange.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

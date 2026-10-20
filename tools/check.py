@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Verify the rendered site in docs/: internal links, anchors, tag balance.
 
-    python3 tools/check.py        (exit 1 if anything is wrong)
+    python3 tools/check.py                 (check the whole site)
+    python3 tools/check.py --ngcc-only     (do not inspect the NIST subsite)
 
 Run before committing; docs/ is what GitHub Pages serves, so a stale or
 broken build is visible immediately.
@@ -17,7 +18,14 @@ HREF = re.compile(r'(?:href|src)="([^"]*)"')
 
 
 def main():
-    pages = sorted(DOCS.rglob("*.html"))
+    if "--ngcc-only" in sys.argv:
+        pages = sorted(
+            p for top in DOCS.iterdir() if top.name != "nist"
+            for p in (top.rglob("*.html") if top.is_dir() else [top])
+            if p.suffix == ".html"
+        )
+    else:
+        pages = sorted(DOCS.rglob("*.html"))
     if not pages:
         sys.exit("check: docs/ has no pages — run `make build`")
     ids = {p: set(re.findall(r'id="([^"]*)"', p.read_text(encoding="utf-8"))) for p in pages}

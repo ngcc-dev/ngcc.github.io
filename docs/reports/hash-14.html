@@ -53,6 +53,26 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/crypthashforu
 <pre><code class="language-sh">python3 hash-14/reproduce_named_xof_prefix.py
 </code></pre>
 <p>It tests every length from 0 to 3199 bits on three random streams and the all-zero stream. It requires equality for exactly the 1537-2560-bit lengths and none outside that window, and it checks the two named wrappers in the source (<code>laurus_512.c:260</code>, <code>laurus_xof.c:261</code>). It runs in under one second.</p>
+<h2 class="issue-heading" id="hash-14-2-laurus-xof-ignores-the-requested-output-length-and-overruns-shorter-digest-buffers">hash-14-2: Laurus-XOF ignores the requested output length and overruns shorter digest buffers</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Submitted Laurus-XOF reference <code>CryptHash</code> wrapper</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>A caller providing a 512- or 1024-bit output buffer receives a write beyond it; no secret disclosure or cryptographic break shown</td></tr>
+<tr><th>Credit</th><td>fa1c4 (University of Science and Technology of China)</td></tr>
+<tr><th>Date</th><td>2026-10-20</td></tr>
+</table></div>
+<p>Original source: <a href="https://github.com/ngcc-dev/ngcc-harness/issues/30">NGCC harness issue 30</a></p>
+<p>The XOF wrapper accepts <code>digest_len_bits</code>, but passes its fixed <code>DIGEST_BIT_LENGTH = 2048</code> to <code>laurus_xof</code> instead (<code>Laurus-XOF/CryptHash_AlgorithmInstance.c:14–18</code> and its header). A caller requesting 512 bits and allocating the corresponding 64 bytes is therefore written 256 bytes. The output-size argument is not checked or honored. The XOF core can take a variable output length; this is a wrapper error, not an attack on the hash construction.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C hash-14 lib/libLaurus-XOF.so
+python3 hash-14/reproduce_xof_output_length.py
+</code></pre>
+<p>The native call requests 512 bits in a larger sentinel-backed buffer, confirms that bytes past the requested 64 change, and compares the entire result with a 2048-bit control request. It does not make an out-of-bounds allocation or infer exploitability from the overwrite.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

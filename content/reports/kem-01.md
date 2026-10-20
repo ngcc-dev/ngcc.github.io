@@ -89,3 +89,27 @@ The shipped `drng.c` makes the three implementations work and this is not a cryp
 ```sh
 python3 security/rbg_protocol_dependency.py --report-id kem-01-3
 ```
+
+## kem-01-4: Deterministic encapsulation overflows its key buffer and derives the wrong secret
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: `mdkem_enc` in reference and aarch64 implementations at all three levels; avx2 and neon allocate the correct `2*SEED_BYTES`
+Discovery: Trivial
+Exploitation: Deterministic encapsulation and decapsulation derive different shared secrets; a fixed-length stack write occurs; no attacker-controlled corruption shown
+Credit: Kr0emer and Chen Peng (陈鹏); corrected overflow localization by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-19
+Original source: [NGCC harness issue 24](https://github.com/ngcc-dev/ngcc-harness/issues/24)
+
+Validated and corrected on 2026-10-20. In the reference and aarch64 trees, `mdkem_enc` allocates `kr[SEED_BYTES]`, then calls `Hash2(kr, buf, 2*SEED_BYTES)` (`kem.c:40–52`). For Aigis-Enc+-I, `Hash2` is `hash256` and writes 32 bytes into the 16-byte `kr`; the subsequent encryption also reads `kr + SEED_BYTES`. The analogous output is twice the allocated size in -II and -III. The avx2 and neon trees instead allocate `kr[2*SEED_BYTES]`. The original issue attributed the write to the earlier `Hash(buf + SEED_BYTES, pk, PK_BYTES)` call, but that call writes only `SEED_BYTES` output bytes; its third argument is the input length.
+
+In our Aigis-Enc+-I replay, AddressSanitizer reports a stack-buffer overflow, and the uninstrumented deterministic path yields a different shared secret from decapsulation. The ordinary randomized encapsulation round trip agrees. The helper is declared in `api.h` but is not part of the NGCC uniform KEM ABI or called by the submitted KAT path. The hash write has a fixed length, not an attacker-controlled size. This limited API defect warrants Low; no memory disclosure, control-flow impact, or IND-CCA break is demonstrated.
+
+### Reproducing
+
+```sh
+python3 kem-01/reproduce_mdkem_overflow.py
+```
+
+The wrapper builds the frozen level-I reference source with `-DUSE_SHA3`, the submitted speed-test configuration, in a temporary directory. It requires an ASan write failure and checks deterministic mismatch with a normal-path agreement control. The KAT build uses `-DUSE_NICCS_API`; the undersized allocation is independent of that hash backend. The other levels and the aarch64/avx2/neon allocations were source-inspected, not run.

@@ -18,15 +18,32 @@
 <h1 id="litchi-hash-15">Litchi (hash-15)</h1>
 <div class="table-wrap"><table class="meta">
 <tr><th>Candidate</th><td>Litchi</td></tr>
-<tr><th>Family</th><td>Symmetric (sponge)</td></tr>
-<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/Litchi.zip">Official submission archive</a></td></tr>
+<tr><th>Family</th><td>Symmetric (permutation-based)</td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/Litchi.zip">Litchi.zip</a></td></tr>
 <tr><th>Specification</th><td><a href="https://github.com/ngcc-dev/ngcc-harness/raw/dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/hash-15/hash-15-spec.pdf" title="Download hash-15-spec.pdf from GitHub">hash-15-spec.pdf</a>&nbsp;<a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/hash-15/hash-15-spec.pdf" title="Open the hash-15 specification PDF">PDF</a></td></tr>
 <tr><th>Performance</th><td><a href="../performance/x86_1/hash-15.html">x86_1</a> · <a href="../performance/arm_1/hash-15.html">arm_1</a></td></tr>
 </table></div>
 
-<h3 id="review-status">Review status</h3>
-<p>No vulnerability finding is currently published for this candidate. This is not a security endorsement: it records only the present state of the public finding inventory, and the candidate remains under review.</p>
-<p>See the <a href="../constant-time/hash-15.html">constant-time review</a> and the performance reports (<a href="../performance/x86_1/hash-15.html">x86_1</a> · <a href="../performance/arm_1/hash-15.html">arm_1</a>). See the <a href="https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101538083238924288.html">official submission page</a>.</p>
+<h2 class="issue-heading issue-heading-first" id="hash-15-1-litchi-xof-ignores-the-requested-output-length-and-overruns-shorter-digest-buffers">hash-15-1: Litchi-XOF ignores the requested output length and overruns shorter digest buffers</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Submitted Litchi-XOF reference <code>CryptHash</code> wrapper</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>A caller providing a 512- or 768-bit output buffer receives a write beyond it; no secret disclosure or cryptographic break shown</td></tr>
+<tr><th>Credit</th><td>fa1c4 (University of Science and Technology of China)</td></tr>
+<tr><th>Date</th><td>2026-10-20</td></tr>
+</table></div>
+<p>Original source: <a href="https://github.com/ngcc-dev/ngcc-harness/issues/31">NGCC harness issue 31</a></p>
+<p>The XOF wrapper accepts <code>digest_len_bits</code>, but passes its fixed <code>DIGEST_BIT_LENGTH = 1024</code> to <code>litchi_xof</code> instead (<code>Litchi-XOF/CryptHash_AlgorithmInstance.c:14–18</code> and its header). A caller requesting 512 bits and allocating the corresponding 64 bytes is therefore written 128 bytes. The output-size argument is not checked or honored. The XOF core can take a variable output length; this is a wrapper error, not an attack on the hash construction.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C hash-15
+python3 hash-15/reproduce_xof_output_length.py
+</code></pre>
+<p>The native call requests 512 bits in a larger sentinel-backed buffer, confirms that bytes past the requested 64 change, and compares the entire result with a 1024-bit control request. It does not make an out-of-bounds allocation or infer exploitability from the overwrite.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

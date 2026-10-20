@@ -42,3 +42,25 @@ unknown-key-share and requires equal keys. Its controls require an honest
 exchange to agree, and an independently generated key or a non-congruent
 re-encoding of the same coefficient to give different keys. It runs in about
 a second; pass a larger trial count as the first argument.
+
+## kex-07-2: Short responder messages reach fixed-size decryption without a length check
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: All nine submitted NEV-AKE reference uniform-API wrappers
+Discovery: Trivial
+Exploitation: A short peer-supplied responder message can cause an out-of-bounds read; no secret disclosure or protocol break demonstrated
+Credit: fa1c4 (University of Science and Technology of China)
+Date: 2026-10-20
+Original source: [NGCC harness issue 33](https://github.com/ngcc-dev/ngcc-harness/issues/33)
+
+`kex_derive_ss_a` discards `mb_len_bytes` and passes `mb` to `ake_der_init` in all nine wrappers (`kat_test/KEX_AlgorithmInstance.c:158–173` in C1). The core splits that pointer into a fixed-size PKE ciphertext and KEM ciphertext before decrypting both (`ake.c:177–207`). A one-byte responder buffer therefore does not constrain either read. The reporter observed an AddressSanitizer error. Our source check confirms the unchecked path and scope, not the precise runtime crash or any disclosure.
+
+### Reproducing
+
+```sh
+python3 kex-07/reproduce_short_message.py
+```
+
+The certificate traces the length discard and fixed-size decryption in all nine submitted trees. It does not execute a malformed exchange.

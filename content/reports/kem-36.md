@@ -32,25 +32,22 @@ python3 security/trike_threshold_differential.py --trials 1000
 
 The script builds an isolated copy with the literal PDF expression and compares both complete KEMs on identical deterministic trials.
 
-## kem-36-2: The specified weak-key test rejects every key
+## kem-36-2: Withdrawn — Algorithm 9 already uses binomial collision counts
 
-Severity: Low
-Status: Confirmed
+Severity: Info
+Status: Withdrawn
 Layer: Design
-Affected: TRIKE specification, all parameter sets; submitted implementations use a different formula
+Affected: None; the frozen specification and submitted implementations use the same binomial formula
 Discovery: Trivial
-Exploitation: Literal specified key generation never terminates; submitted code is unaffected
+Exploitation: None; the original claim resulted from misreading PDF notation
 Credit: Zhenyu Xiong and Mingsheng Wang, with AI assistance
 Date: 2026-09-30
 Original source: [Xiong and Wang's TRIKE analysis](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/6LRD73BAIXBHGRSZRC7Z7XUMNGGVDY27/)
+Follow-up source: [TRIKE team's correction](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/4D2SSOK2HD6DKIEXYRJMHPNX35WPZSDK/)
 
-Appendix Algorithm 9 sums the squares of the distance multiplicities in both its intra-block and inter-block tests. For any secret block of weight `d`, the intra-block multiplicities sum to `C(d,2)`, so their squares sum to at least `C(d,2)`. The inter-block multiplicities sum to `d^2`, so their squares sum to at least `d^2`. These lower bounds already exceed Table 11's `s` and `s'` thresholds for every specified set. The literal algorithm therefore rejects every candidate key.
+Withdrawn on 2026-10-20. Visual inspection of Appendix Algorithm 9 (frozen PDF, physical p. 29) shows `C(cnt_{u,j},2)` and `C(μ,2)`, not squared multiplicities. Text extraction rendered the stacked binomial notation misleadingly as `cnt²` and `μ²`. The original report and its certificate evaluated that nonexistent squared formula, so their rejection conclusion does not apply to TRIKE.
 
-All submitted implementations instead weight a multiplicity `i` by `C(i,2)`, which is the collision count described in the surrounding prose. That code terminates, so this is a specification-level non-progress defect rather than a break of the archived executable implementations.
-
-### Proposed fixes
-
-The [original post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/6LRD73BAIXBHGRSZRC7Z7XUMNGGVDY27/) proposes replacing each squared multiplicity in Algorithm 9 with the binomial count `C(mu,2)`. This section records the proposal without evaluating it.
+The submitted source also uses binomial collision counts. The team's reply correctly identifies the notation; no fix to this formula is required. This withdrawal concerns only kem-36-2 and does not assess the team's other proposed revisions.
 
 ### Reproducing
 
@@ -58,7 +55,7 @@ The [original post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.
 python3 kem-36/reproduce_weak_key_test.py
 ```
 
-The certificate checks all six specified parameter sets and verifies the distinct binomial formula in all eight submitted reference and optimized source trees.
+The updated check confirms the binomial source formula in all eight submitted reference and optimized trees. The PDF notation was checked visually; this script does not parse or certify it.
 
 ## kem-36-3: Decapsulation fails to free the private h0 buffer
 

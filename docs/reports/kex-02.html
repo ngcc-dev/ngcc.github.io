@@ -169,6 +169,25 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <pre><code class="language-sh">python3 kex-02/reproduce_failure_bound.py
 </code></pre>
 <p>The arithmetic certificate recomputes all eight BW-set bounds from transcribed Table 1 values at <code>N=S=1</code>; check the theorem text and values in the frozen PDF separately. It does not measure failures or execute a protocol attack.</p>
+<h2 class="issue-heading" id="kex-02-7-incoming-message-lengths-are-ignored-before-fixed-size-reads">kex-02-7: Incoming message lengths are ignored before fixed-size reads</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Submitted AFS-KEX C128, C256 and C512 uniform-API reference wrappers</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>A short peer-supplied message can cause an out-of-bounds read; no secret disclosure or protocol break demonstrated</td></tr>
+<tr><th>Credit</th><td>fa1c4 (University of Science and Technology of China)</td></tr>
+<tr><th>Date</th><td>2026-10-20</td></tr>
+</table></div>
+<p>Original source: <a href="https://github.com/ngcc-dev/ngcc-harness/issues/32">NGCC harness issue 32</a></p>
+<p>The receive-side pass-2, pass-3 and pass-4 functions accept <code>m1_len_bytes</code>, <code>m2_len_bytes</code> and <code>m3_len_bytes</code> respectively, then discard them. Passes 2 and 3 feed the caller buffers into fixed-size KEM decapsulation; pass 3 also reads the seed suffix of <code>m2</code>, and pass 4 reads <code>m3[i]</code> for every seed byte (<code>KEX_AlgorithmInstance.c</code>, all three trees). A peer can supply a one-byte buffer with its true length, yet the wrapper proceeds to read the expected full message. The reporter observed AddressSanitizer errors; our certificate confirms the source path, not the precise runtime crash or any disclosure.</p>
+<h3 id="reproducing_6">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kex-02/reproduce_short_messages.py
+</code></pre>
+<p>The source certificate checks all three receive functions in all three submitted parameter sets. It does not execute malformed exchanges.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
