@@ -147,3 +147,50 @@ Encapsulator and decapsulator share the submitted convention, so self-generated 
 ```sh
 python3 kem-39/reproduce_spec_mismatches.py
 ```
+
+## kem-39-6: The IND-CPA hybrid needs a public-key-dependent shift not covered by its assumption
+
+Severity: Medium
+Status: Proof gap
+Layer: Design
+Affected: Weaver-640, -1024, and -2048 (submitted as WeaverKEM-128, -256, and -512); Theorem 4.5's Game 2 to Game 3 transition
+Discovery: Moderate
+Exploitation: The fixed-offset assumption does not directly justify the adaptive challenge-message hybrid; no IND-CPA distinguisher or key recovery demonstrated
+Credit: Haotian (NGCC PKC Forum sender), with ChatGPT assistance
+Date: 2026-10-21
+Original source: [Haotian's PKC Forum comment](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/VM2AQVK23DIQDOXRBZZTAMO6OD6BTL6K/) and [harness issue #34](https://github.com/ngcc-dev/ngcc-harness/issues/34)
+
+Definition 4.2 (printed p. 27) defines Shifted-MLWR for a **fixed** public
+offset `Δ`. In Theorem 4.5 (printed pp. 28–30), however, the IND-CPA
+adversary sees `pk = (A, Compressq(T, d_t))` before choosing its two challenge
+messages. The Game 2 to Game 3 transition then uses
+`Δ_b = (0, MsgEncode(μ_b))ᵀ` for the chosen message. Thus `Δ_b` can depend on
+the public key and hence on the challenge matrix assembled from `A` and `T`.
+A reduction given a sample for a predetermined `Δ` cannot generally choose
+the required `Δ_b` only after it receives the adversary's messages.
+
+Corollary A.9 (printed pp. 54–55) explicitly covers each *fixed* message.
+Its bound being uniform over fixed messages does not by itself exchange the
+quantifiers to cover a message selected after seeing the public matrix. An
+adaptive-offset reduction, or an additional joint-distribution argument,
+could close this gap; none is supplied for this game transition in the frozen
+specification. Appendix A.4's pre-rounding statistical-distance argument
+appears compatible with an offset computed from the public matrix, but the
+appendix also says its sufficient entropy conditions are not established for
+the concrete sets. Thus the immediate gap is the fixed-offset formulation of
+the heuristic assumption used in Theorem 4.5, not evidence that the
+submitted ciphertexts are distinguishable or that Weaver's concrete
+parameters miss their target. The stronger adaptive assumption remains to
+be justified for those sets, which is why this stays Medium.
+
+### Reproducing
+
+```sh
+python3 kem-39/reproduce_adaptive_offset_gap.py
+```
+
+The certificate checks the fixed-offset definition, the adaptive challenge
+game and the fixed-message corollary in the frozen specification. Its small
+quantifier example illustrates why a bound for every predetermined offset
+does not alone imply the same bound for offsets chosen from the public matrix;
+it is not a Weaver attack.

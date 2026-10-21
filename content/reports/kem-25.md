@@ -68,3 +68,50 @@ python3 kem-25/reproduce_rejection_mismatch.py
 The certificate checks the specification language and all 48 submitted
 `cca.c` copies, including the three compressed sets in each implementation
 family, and requires the explicit-return pattern.
+
+## kem-25-2: The sspRLWE reduction treats correlated transformed error as spherical
+
+Severity: Low
+Status: Proof gap
+Layer: Design
+Affected: Theorem 1's general `k=4` sspRLWE hardness argument; all submitted NEV parameter sets use `k=4`
+Discovery: Moderate
+Exploitation: A stated distributional step in the hardness reduction is false; no distinguisher, decapsulation attack, or key recovery demonstrated
+Credit: Haotian (NGCC PKC Forum sender), with ChatGPT assistance
+Date: 2026-10-21
+Original source: [Haotian's PKC Forum comment](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/26RYY4RTBJ2JMXXVYOVQRSVPOVPM2F3Q/) and [harness issue #35](https://github.com/ngcc-dev/ngcc-harness/issues/35)
+Follow-up source: [NEV team's acknowledgment](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/SERNKUKLVVPLBZVSZDFIB6YXWTFM7SQJ/)
+
+Lemma 2 (printed p. 5) says that, for independent spherical discrete Gaussians
+`X` and `E`, the error `Y = VX + E` is statistically close to a spherical
+Gaussian with `γ² = α² + 2β²`, where `V` is multiplication by
+`1 − x^(n/k)`. Theorem 1 (printed p. 10) uses that claim to pass its
+transformed error to an sspRLWE solver. But the Gaussian shape matrix is
+`α²I + β²VVᵀ`, and `VVᵀ = 2I − S − Sᵀ` for the negacyclic shift
+`S = x^(n/k)`. At `k=4`, `S + Sᵀ` has nonzero off-diagonal entries, so this is
+not the claimed spherical shape. The cancellation does hold at `k=2`.
+Every submitted set uses `k=4`; the issue is therefore in the stated proof,
+not merely an unused generalization.
+
+The [NEV team acknowledges](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/SERNKUKLVVPLBZVSZDFIB6YXWTFM7SQJ/)
+the covariance miscalculation. It says a larger `γ` and an earlier hardness
+argument with `γ² = α² + 4β²` can repair the reasoning. At `k=4`, the
+eigenvalues of `VVᵀ` are `2 ± √2`, so a reduction choosing its own additive
+error with shape `γ′²I − β²VVᵀ` can in principle recover a spherical target
+for `γ′² = α² + (2 + √2)β²`, within that older `4β²` margin. This identifies
+a concrete repair route, not a completed check of the discrete-Gaussian
+smoothing conditions. The team says its concrete parameters were not chosen
+from the erroneous constant; §8.4 uses Core-SVP/MATZOV estimates instead.
+The loss is to the stated tighter proof, with no shown effect on the chosen
+parameters or an attack on the submitted KEM, hence Low.
+
+### Reproducing
+
+```sh
+python3 kem-25/reproduce_gaussian_shape_gap.py
+```
+
+The certificate checks the frozen lemma and theorem text, confirms the
+submitted `k=4` setting, and computes the exact negacyclic matrix identity
+and the `2 ± √2` spectrum at a small dimension. It does not establish the
+repaired reduction or estimate security at the real parameters.

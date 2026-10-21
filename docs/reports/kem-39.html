@@ -142,6 +142,49 @@ gcc -O2 -DWEAVER_MODE=3 -I&quot;$D&quot; kem-39/reproduce_high_bch_omission.c \
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 kem-39/reproduce_spec_mismatches.py
 </code></pre>
+<h2 class="issue-heading" id="kem-39-6-the-ind-cpa-hybrid-needs-a-public-key-dependent-shift-not-covered-by-its-assumption">kem-39-6: The IND-CPA hybrid needs a public-key-dependent shift not covered by its assumption</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr>
+<tr><th>Affected</th><td>Weaver-640, -1024, and -2048 (submitted as WeaverKEM-128, -256, and -512); Theorem 4.5's Game 2 to Game 3 transition</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>The fixed-offset assumption does not directly justify the adaptive challenge-message hybrid; no IND-CPA distinguisher or key recovery demonstrated</td></tr>
+<tr><th>Credit</th><td>Haotian (NGCC PKC Forum sender), with ChatGPT assistance</td></tr>
+<tr><th>Date</th><td>2026-10-21</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/VM2AQVK23DIQDOXRBZZTAMO6OD6BTL6K/">Haotian's PKC Forum comment</a> and <a href="https://github.com/ngcc-dev/ngcc-harness/issues/34">harness issue #34</a></p>
+<p>Definition 4.2 (printed p. 27) defines Shifted-MLWR for a <strong>fixed</strong> public
+offset <code>Δ</code>. In Theorem 4.5 (printed pp. 28–30), however, the IND-CPA
+adversary sees <code>pk = (A, Compressq(T, d_t))</code> before choosing its two challenge
+messages. The Game 2 to Game 3 transition then uses
+<code>Δ_b = (0, MsgEncode(μ_b))ᵀ</code> for the chosen message. Thus <code>Δ_b</code> can depend on
+the public key and hence on the challenge matrix assembled from <code>A</code> and <code>T</code>.
+A reduction given a sample for a predetermined <code>Δ</code> cannot generally choose
+the required <code>Δ_b</code> only after it receives the adversary's messages.</p>
+<p>Corollary A.9 (printed pp. 54–55) explicitly covers each <em>fixed</em> message.
+Its bound being uniform over fixed messages does not by itself exchange the
+quantifiers to cover a message selected after seeing the public matrix. An
+adaptive-offset reduction, or an additional joint-distribution argument,
+could close this gap; none is supplied for this game transition in the frozen
+specification. Appendix A.4's pre-rounding statistical-distance argument
+appears compatible with an offset computed from the public matrix, but the
+appendix also says its sufficient entropy conditions are not established for
+the concrete sets. Thus the immediate gap is the fixed-offset formulation of
+the heuristic assumption used in Theorem 4.5, not evidence that the
+submitted ciphertexts are distinguishable or that Weaver's concrete
+parameters miss their target. The stronger adaptive assumption remains to
+be justified for those sets, which is why this stays Medium.</p>
+<h3 id="reproducing_5">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-39/reproduce_adaptive_offset_gap.py
+</code></pre>
+<p>The certificate checks the fixed-offset definition, the adaptive challenge
+game and the fixed-message corollary in the frozen specification. Its small
+quantifier example illustrates why a bound for every predetermined offset
+does not alone imply the same bound for offsets chosen from the public matrix;
+it is not a Weaver attack.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -83,6 +83,49 @@ section records the proposal without evaluating it.</p>
 <p>The certificate checks the specification language and all 48 submitted
 <code>cca.c</code> copies, including the three compressed sets in each implementation
 family, and requires the explicit-return pattern.</p>
+<h2 class="issue-heading" id="kem-25-2-the-ssprlwe-reduction-treats-correlated-transformed-error-as-spherical">kem-25-2: The sspRLWE reduction treats correlated transformed error as spherical</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr>
+<tr><th>Affected</th><td>Theorem 1's general <code>k=4</code> sspRLWE hardness argument; all submitted NEV parameter sets use <code>k=4</code></td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>A stated distributional step in the hardness reduction is false; no distinguisher, decapsulation attack, or key recovery demonstrated</td></tr>
+<tr><th>Credit</th><td>Haotian (NGCC PKC Forum sender), with ChatGPT assistance</td></tr>
+<tr><th>Date</th><td>2026-10-21</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/26RYY4RTBJ2JMXXVYOVQRSVPOVPM2F3Q/">Haotian's PKC Forum comment</a> and <a href="https://github.com/ngcc-dev/ngcc-harness/issues/35">harness issue #35</a>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/SERNKUKLVVPLBZVSZDFIB6YXWTFM7SQJ/">NEV team's acknowledgment</a></p>
+<p>Lemma 2 (printed p. 5) says that, for independent spherical discrete Gaussians
+<code>X</code> and <code>E</code>, the error <code>Y = VX + E</code> is statistically close to a spherical
+Gaussian with <code>γ² = α² + 2β²</code>, where <code>V</code> is multiplication by
+<code>1 − x^(n/k)</code>. Theorem 1 (printed p. 10) uses that claim to pass its
+transformed error to an sspRLWE solver. But the Gaussian shape matrix is
+<code>α²I + β²VVᵀ</code>, and <code>VVᵀ = 2I − S − Sᵀ</code> for the negacyclic shift
+<code>S = x^(n/k)</code>. At <code>k=4</code>, <code>S + Sᵀ</code> has nonzero off-diagonal entries, so this is
+not the claimed spherical shape. The cancellation does hold at <code>k=2</code>.
+Every submitted set uses <code>k=4</code>; the issue is therefore in the stated proof,
+not merely an unused generalization.</p>
+<p>The <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/SERNKUKLVVPLBZVSZDFIB6YXWTFM7SQJ/">NEV team acknowledges</a>
+the covariance miscalculation. It says a larger <code>γ</code> and an earlier hardness
+argument with <code>γ² = α² + 4β²</code> can repair the reasoning. At <code>k=4</code>, the
+eigenvalues of <code>VVᵀ</code> are <code>2 ± √2</code>, so a reduction choosing its own additive
+error with shape <code>γ′²I − β²VVᵀ</code> can in principle recover a spherical target
+for <code>γ′² = α² + (2 + √2)β²</code>, within that older <code>4β²</code> margin. This identifies
+a concrete repair route, not a completed check of the discrete-Gaussian
+smoothing conditions. The team says its concrete parameters were not chosen
+from the erroneous constant; §8.4 uses Core-SVP/MATZOV estimates instead.
+The loss is to the stated tighter proof, with no shown effect on the chosen
+parameters or an attack on the submitted KEM, hence Low.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-25/reproduce_gaussian_shape_gap.py
+</code></pre>
+<p>The certificate checks the frozen lemma and theorem text, confirms the
+submitted <code>k=4</code> setting, and computes the exact negacyclic matrix identity
+and the <code>2 ± √2</code> spectrum at a small dimension. It does not establish the
+repaired reduction or estimate security at the real parameters.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
