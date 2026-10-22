@@ -58,3 +58,34 @@ The script is the model published with the forum post, parallelized and given
 assertions for all six reported pairs. It labels the second result as a model
 lower bound on the per-key worst-case DFR required by the cited reduction.
 NumPy is required; the calculation is CPU intensive.
+
+## kem-41-2: Key generation ignores XOF failure and can return decryption keys sampled from stale stack data
+
+Severity: High
+Status: Confirmed
+Layer: Implementation
+Affected: ZEN-128, ZEN-256 and ZEN-512 reference implementations; optimized variants have the same error-discarding path by source inspection but were not run
+Discovery: Moderate
+Exploitation: Address-space exhaustion can make key generation sample an unwritten stack buffer; the demonstrated same-thread public-data call sequence permits decryption-key recovery, but no remote trigger or affected deployment is demonstrated
+Credit: harry0597 (NGCC PKC Forum sender; signed Hui Wen and XingYu Wu), with DeepSeek assistance
+Date: 2026-10-22
+Original source: [Hui Wen and XingYu Wu's PKC Forum report](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/MDKAVOLOV5VMHHZXAWCWGQTOBIQUB7B7/)
+Follow-up source: [Correction of the ZEN-128 encapsulation claim](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XS5NSYQB2IES2J4Y4FDKFBXOFL6I5CKN/)
+
+The supplied `pseudoXOF` returns an error without writing its output when an allocation fails (`auxfunc.c:482–498`). ZEN's `void zen_pseudoXOF` discards that return (`symmetric.c:13–22`), and `poly_generate_f` or `poly_generate_gf` samples the unwritten stack buffer (`poly.c:311–317` at 128, `:393–399` at 256, `:640–646` at 512). Key generation neither propagates the error nor rejects the resulting key (`pke.c:19–80`; `KEM_AlgorithmInstance.c:80–101` in the 128-bit reference tree, with corresponding paths at the other levels). The general defect is secret sampling from uninitialized memory; public recovery is the demonstrated case, when a preceding operation in the same thread leaves public-key data in that stack area. The flaw is in ZEN's error handling, not the placeholder XOF's cryptographic strength; any replacement that can fail without filling its output requires that error to be handled.
+
+In an independent `-O2` reference build, a 64 MiB `RLIMIT_AS` and retained allocations caused real XOF allocation failures without interposition or candidate-code changes. The witness generates the preceding public key and the faulted key in one process and thread, with a public-key encryption in between to exercise the stack-reuse path. At all three levels, `kem_keygen` nevertheless returned success. A scan using only the preceding public key and the newly returned public key selected the decryption polynomial through the public relation `h·f = g` with small `g`. A key assembled from that polynomial, the returned public key, and a recomputed `H(pk)` decapsulated a fresh honest ciphertext to the sender's shared secret. The true decryption-secret prefix matched only as a final control; a wrong preceding public key and a normal key generation yielded no selected candidates. At ZEN-512, an additional failed allocation left the holder's stored `H(pk)` unwritten, so the returned holder key itself did **not** match the sender, while the publicly reconstructed key did. In a separate 24-seed ZEN-128 sweep, a counting-only allocation wrapper delegated every request to real `malloc`: 11 key generations returned vulnerable keys and 13 entered a retry loop. Smaller 256/512 sweeps also observed both outcomes. These are build- and memory-state-dependent observations, not a demonstrated way to exhaust a remote service.
+
+The same unchecked wrapper also makes encapsulation return success after an XOF failure. We independently observed seed-independent faulted ZEN-128 PKE ciphertexts and a KEM shared-secret mismatch, but did **not** independently attempt the forum's plaintext or sender-session-key recovery from faulted encapsulations. The key-generation witness covers the primary consequence at all three levels.
+
+### Proposed fixes
+
+The forum report proposes propagating XOF/hash failures through ZEN's samplers and KEM entry points, and not returning a key after an unwritten output is sampled. This records the proposal without evaluating a revised implementation.
+
+### Reproducing
+
+```sh
+sh kem-41/reproduce_keygen_fail_open.sh
+```
+
+The witness compiles each frozen reference tree with GCC `-O2` and no allocation interposition. It applies a 64 MiB address-space limit, retains ordinary small allocations, and checks public-only candidate selection, fresh decapsulation, a wrong-public-key control, and a normal-keygen control. It prints `CONFIRMED kem-41-2` for each level on the tested host. Stack overlap and the memory-exhaustion trigger can vary with build and host; an unsupported layout is reported as a skip.
