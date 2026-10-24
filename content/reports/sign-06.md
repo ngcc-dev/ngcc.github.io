@@ -175,3 +175,27 @@ sh sign-06/reproduce_absorb_compression.sh
 ```
 
 The script checks that the wrapper is identical in all eight trees, builds the archived per-set sources in a temporary directory, and checks the 256-bit model of `mu` at all four levels, with a prefix-bit control. It then runs the 24-bit-reduced collision and signature transfer at 256 and 512, with a flipped-suffix control and a full-width control on the same pair. It takes about 8 seconds and needs `gcc`. The full-width `2^128` collision is not attempted.
+
+## sign-06-7: The strong-unforgeability MSIS premise is trivial at 256 and 512
+
+Severity: Medium
+Status: Proof gap
+Layer: Design
+Affected: COMPASS-SIG-256 and COMPASS-SIG-512 strong-unforgeability analysis
+Discovery: Moderate
+Exploitation: The stated MSIS problem has an elementary solution for most public matrices; no signature forgery or failure of EUF-CMA is demonstrated
+Credit: Haotian (NGCC PKC Forum sender)
+Date: 2026-10-24
+Original source: [Haotian's PKC Forum comment](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/HZSXA6R5HQ7T7D53NATD6KXFODGRBAFJ/)
+
+Theorem 2 (§4.1, physical p. 17) bounds its claimed SUF-CMA advantage using MSIS with `Az = u (mod q)`, `||z||∞ ≤ 2γ` and `||u||∞ ≤ 2γ′`, where `γ′ = γ2 − ηe·τ`. Even the nonzero choice `z = (1, 0, …, 0)`, with the centered first column of `A` as `u`, satisfies the residual bound with probability `0.813301` for COMPASS-SIG-256 and `0.814416` for COMPASS-SIG-512 under the theorem's uniform-matrix model (Table 1, physical p. 15). Thus the assumed MSIS term does not provide a hard problem for these sets. The same simple witness has negligible success at the 128- and 384-bit sets.
+
+There is also a bound mismatch: Verify (Algorithm 3, physical p. 13) imposes only a lower ℓ2 bound, not a `γ′` bound on the reconstructed low part. Subtracting two accepted signatures with the same challenge and high part guarantees at most `2γ2`, not `2γ′`; at both affected sets `2γ2 = (q−1)/2`, the entire centered coefficient range. This is a candidate-specific gap in the *strong*-unforgeability argument, not a demonstrated signature forgery. Theorem 2's EUF-CMA inequality does not contain this MSIS term.
+
+### Reproducing
+
+```sh
+python3 sign-06/reproduce_trivial_msis.py
+```
+
+The certificate checks the frozen specification's parameter rows and theorem premises, then computes the uniform-matrix probabilities and the verification-bound equality. It does not find two valid signatures or attack the implemented signer.

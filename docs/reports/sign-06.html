@@ -169,6 +169,26 @@ python3 sign-06/reproduce_challenge_image.py
 <pre><code class="language-sh">sh sign-06/reproduce_absorb_compression.sh
 </code></pre>
 <p>The script checks that the wrapper is identical in all eight trees, builds the archived per-set sources in a temporary directory, and checks the 256-bit model of <code>mu</code> at all four levels, with a prefix-bit control. It then runs the 24-bit-reduced collision and signature transfer at 256 and 512, with a flipped-suffix control and a full-width control on the same pair. It takes about 8 seconds and needs <code>gcc</code>. The full-width <code>2^128</code> collision is not attempted.</p>
+<h2 class="issue-heading" id="sign-06-7-the-strong-unforgeability-msis-premise-is-trivial-at-256-and-512">sign-06-7: The strong-unforgeability MSIS premise is trivial at 256 and 512</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr>
+<tr><th>Affected</th><td>COMPASS-SIG-256 and COMPASS-SIG-512 strong-unforgeability analysis</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>The stated MSIS problem has an elementary solution for most public matrices; no signature forgery or failure of EUF-CMA is demonstrated</td></tr>
+<tr><th>Credit</th><td>Haotian (NGCC PKC Forum sender)</td></tr>
+<tr><th>Date</th><td>2026-10-24</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/HZSXA6R5HQ7T7D53NATD6KXFODGRBAFJ/">Haotian's PKC Forum comment</a></p>
+<p>Theorem 2 (§4.1, physical p. 17) bounds its claimed SUF-CMA advantage using MSIS with <code>Az = u (mod q)</code>, <code>||z||∞ ≤ 2γ</code> and <code>||u||∞ ≤ 2γ′</code>, where <code>γ′ = γ2 − ηe·τ</code>. Even the nonzero choice <code>z = (1, 0, …, 0)</code>, with the centered first column of <code>A</code> as <code>u</code>, satisfies the residual bound with probability <code>0.813301</code> for COMPASS-SIG-256 and <code>0.814416</code> for COMPASS-SIG-512 under the theorem's uniform-matrix model (Table 1, physical p. 15). Thus the assumed MSIS term does not provide a hard problem for these sets. The same simple witness has negligible success at the 128- and 384-bit sets.</p>
+<p>There is also a bound mismatch: Verify (Algorithm 3, physical p. 13) imposes only a lower ℓ2 bound, not a <code>γ′</code> bound on the reconstructed low part. Subtracting two accepted signatures with the same challenge and high part guarantees at most <code>2γ2</code>, not <code>2γ′</code>; at both affected sets <code>2γ2 = (q−1)/2</code>, the entire centered coefficient range. This is a candidate-specific gap in the <em>strong</em>-unforgeability argument, not a demonstrated signature forgery. Theorem 2's EUF-CMA inequality does not contain this MSIS term.</p>
+<h3 id="reproducing_6">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-06/reproduce_trivial_msis.py
+</code></pre>
+<p>The certificate checks the frozen specification's parameter rows and theorem premises, then computes the uniform-matrix probabilities and the verification-bound equality. It does not find two valid signatures or attack the implemented signer.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

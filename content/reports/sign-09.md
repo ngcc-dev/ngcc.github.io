@@ -74,3 +74,31 @@ sh sign-09/reproduce_input_lengths.sh
 ```
 
 The witness compiles the frozen DOVE-128 reference code with AddressSanitizer. It confirms short-public-key and short-signature reads in verification, a short-secret-key read in classic signing, and the exact-size pkc_skc secret-key read. It also checks that the source files in the performance-optimal packages are byte-identical. No exploitation beyond the memory reads was attempted.
+
+## sign-09-4: The EUF-CMA proof neither embeds the MQ target nor justifies signature simulation
+
+Severity: Medium
+Status: Proof gap
+Layer: Design
+Affected: DOVE-128, -256 and -512 security proof, both classic and pkc_skc variants
+Discovery: Moderate
+Exploitation: Theorem 1 does not establish its MQ-target reduction or the claimed signature-distribution equivalence; no signature forgery or key recovery is demonstrated
+Credit: Haotian (NGCC PKC Forum sender); unsalted pre-query consequence by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-24
+Original source: [Haotian's PKC Forum comment](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/J34BWSBLHSX2VOX5MNUTW6KQ6W26APU3/)
+
+Theorem 1's Game 2 (§4.4, physical p. 15) claims that a forgery solves a supplied DOVE-MQ instance. That challenge contains both a map and an independently chosen target (Definition 1, p. 14). The proof replaces the public map and extracts a preimage of the forged-message hash, but never links that hash to the supplied target. A guess-the-hash-query embedding would introduce a loss that the claimed reduction does not account for.
+
+Game 2 also samples a uniform signature vector `s`, sets the hash target to `P*(s)`, and asserts that this simulates signing. The submitted signer instead retries vinegar choices when its linear system is singular (`DOVE_classic_ref/SIG_AlgorithmInstance.c:297–337`); no bound establishes that the resulting signature distribution matches the simulation. Because the submitted target is unsalted (Sign and Verify, physical pp. 8–9), Game 2 additionally aborts if the adversary hashes a message before requesting its signature, despite bounding that abort as negligible. This last consequence shares the missing salt binding already present in the submitted construction; the target-embedding and distribution gaps do not depend on it. None of these proof gaps demonstrates a distinguisher, forgery or key recovery.
+
+### Proposed fixes
+
+Haotian suggests binding a fresh salt to the hash target and points to a [modified UOV approach](https://eprint.iacr.org/2024/609) that fixes one vinegar choice while retrying salt on inconsistency. These would change the submitted algorithm and are recorded without evaluating a revision.
+
+### Reproducing
+
+```sh
+python3 sign-09/reproduce_euf_simulation_gap.py
+```
+
+The certificate checks the frozen MQ definition, the theorem's target-extraction and simulation assertions, the submitted Sign/Verify hash inputs and the singular-system retry. It checks the unsalted pre-query consequence separately; it does not attack the real signer or prove the two signature distributions distinguishable.

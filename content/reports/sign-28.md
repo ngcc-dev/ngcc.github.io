@@ -160,12 +160,17 @@ Exploitation: Source inspection establishes signing-time branches on secret posi
 Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
 Date: 2026-10-17
 Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/4U6TKMOVLA2QGDAEE63QYQS5B7WTXBGG/)
+Follow-up source: [SYDO team's PKC Forum reply](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/FT7C5LXUMI6LLLGRZKDIUQ26A5YH4UGE/)
 
 The reference signer rederives and checks its public key on every call. `sydo_ref_derive_public_key` expands the long-term `seed_sk` with `sample_x_positions`, which stores each accepted secret position bit by bit. The inlined `set_bit_lsb_first` selects its set or clear operation with `if (bit)` (`src/sydo.c:99–114,238–292,580–616,700–709`). The six reference copies of this source are byte-identical.
 
 The six optimized copies are also affected. Their signer calls `sydo_detail::compute_witness<P>(u_extended, sk.witness.data())` on every signature (`src/sign.cpp:142`). `compute_witness` reads each raw witness bit and passes it directly to the same branching `set_bit_lsb_first` (`src/keys.inc:83–90,686–716`). All six copies of each optimized file are byte-identical. This path has no XOF-rejection confound: its branch operand is the stored witness bit itself. Thus both implementations execute control flow depending on the long-term witness under every signature made with one key. Replacing the set/clear branch with a masked assignment is a local implementation change.
 
 The forum post reports six distinct callgrind instruction profiles for six keys, stable when changing only the message or signing randomness. That aggregate experiment does not isolate the secret-bit branch: `sample_x_positions` also has variable XOF rejection, and changing the key necessarily changes the public key because hybrid keys failed the signer's consistency check. The source establishes the secret operand, but no wall-clock or cache observation and no recovery map were demonstrated. The finding therefore records the source-level control-flow defect at Low severity rather than treating the aggregate profile as an attack.
+
+### Proposed fixes
+
+The team says its development version signs with the stored witness, samples the witness only during key generation, and encodes its bits without secret-dependent branching. It plans to include these changes in a future update. This is recorded without evaluating the revision.
 
 ### Reproducing
 
