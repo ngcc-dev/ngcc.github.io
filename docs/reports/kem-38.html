@@ -184,6 +184,48 @@ BB_NPROC=12 BB_PROBE_SHARDS=8 BB_SCAN_SHARDS=1000 \
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 security/rbg_protocol_dependency.py --report-id kem-38-7
 </code></pre>
+<h2 class="issue-heading" id="kem-38-8-cubic-jet-syzygies-recover-uvws-secret-structure-from-the-public-key">kem-38-8: Cubic-jet syzygies recover UVW&#x27;s secret structure from the public key</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>UVW-KEM-128, with key recovery and decapsulation demonstrated; UVW-KEM-256, where the distinguishing step is confirmed on a submitted key but recovery was not run; UVW-KEM-512 has the same structure, but neither step was run</td></tr>
+<tr><th>Discovery</th><td>Non-trivial</td></tr>
+<tr><th>Exploitation</th><td>From a UVW-KEM-128 public key alone, the twin pairing, scalings and Reed–Solomon description are recovered in under a minute on 28 cores, after which every ciphertext decapsulates in about 0.4 seconds; the method is polynomial in <code>n</code></td></tr>
+<tr><th>Credit</th><td>Liping Wang (wanglp, NGCC PKC Forum sender) for the cubic-jet distinguishing route; syzygy key recovery and full-size decapsulation by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-26</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/D2DTPPLQWKGE3QZQCTDEMXYPKPGHXH4A/">Liping Wang's PKC Forum post</a></p>
+<p>UVW's IND-CPA theorem (Theorem 3, physical p. 19) assumes that the Generalized (U+V, U+W) Code Distinguishing problem is hard (physical p. 16). The specification argues that distinguishing amounts to finding codewords of the form <code>(u,u)D</code>, and that this takes exponential time when <code>k1 = k2</code> (physical pp. 22–25). The forum post instead applies the order-2, degree-3 multiplicity method of <a href="https://eprint.iacr.org/2026/1630">Ghoshal, Ishai, Jain and Sun</a> and <a href="https://eprint.iacr.org/2026/1984">Weis</a> to shortened public codes of dimension <code>Θ(√n)</code>, and claims polynomial-time key recovery at all three levels without describing the extraction.</p>
+<p>The distinguishing step works as described. Shorten the public code at <code>n/2 − k_l</code> random positions and view its <code>n'</code> columns as points in <code>F_q^{k_l}</code>. Then count the cubic forms whose gradient vanishes at every point, which by Euler's identity also vanish there to order two. For random points, this is the generic <code>max(0, C(k_l+2,3) − n'·k_l)</code>. On public keys from the frozen reference key generation, the count exceeds that by <code>k2 − k_l + 2</code>:</p>
+<ul>
+<li>UVW-KEM-128 at <code>k_l = 53</code>: 800 against 636.</li>
+<li>UVW-KEM-256 (<code>q = 857</code>, <code>n = 1708</code>) at <code>k_l = 74</code>: 1,983 against 1,628.</li>
+</ul>
+<p>Random codes of the same shape give exactly the generic count. So does the twin structure with a random block in place of the Reed–Solomon generator, so the excess comes from the hidden Reed–Solomon component.</p>
+<p>The excess also yields the secret structure. When the jet system has no more rows than cubic monomials, its row dependencies form a space of dimension <code>k2 − k_l + 2</code>. Split each dependency into one <code>k_l</code>-sized block per surviving column. A column whose twin also survives the shortening has rank-1 blocks, the twins carry the same coefficient vector, and the block direction lies on the line through the two columns. Its coordinates give the ratio of the twins' secret scalings. A column whose twin was shortened has rank-2 blocks. Three adaptive rounds pair all 430 twin classes of a UVW-KEM-128 key. Each round, at <code>k_l = 53</code>, finds a 164-dimensional dependency space of a 25,599 × 26,235 system in about 16 seconds.</p>
+<p>Subtracting each scaled twin pair gives a <code>[430, 215]</code> code whose square has dimension 429, so it is a generalized Reed–Solomon code. Sidelnikov–Shestakov then recovers its support and multipliers up to the eight Möbius maps that fix the public complement <code>{0, 431, 432, ∞}</code> of <code>α = (1, …, 430)</code>. Each of the eight is a valid description of the code.</p>
+<p>For a ciphertext, the attacker forms the same pairwise differences of <code>c1</code> and list-decodes them with the submitted Guruswami–Sudan decoder. The <code>w = 116</code> errors leave about 640 error-free coordinates, which determine <code>r</code> from <code>(I_k | T)</code>. That gives <code>e</code>, then <code>m = c2 ⊕ H3(r, e)</code>, the <code>d = H2(m)</code> check, the full <code>H1(m)</code> re-derivation and <code>K = H4(m, c1, c2)</code>.</p>
+<p>The attack recovers an equivalent decapsulation description: the pairing, scalings and one of the eight Reed–Solomon descriptions. This is not necessarily the victim's byte-for-byte secret key, but it decapsulates the victim's ciphertexts. The following results come from separate local runs and were scored against the secret key, monomial map and sender secrets. None of these enters the attack.</p>
+<ul>
+<li><strong>Structure recovery:</strong> on five fresh frozen UVW-KEM-128 key pairs, all 430 pairs and all 430 scaling ratios were correct. On the four keys where it was scored, one of the eight Reed–Solomon descriptions matched the secret support exactly, with proportional multipliers.</li>
+<li><strong>Decapsulation:</strong> across four key pairs, the recovered key decapsulated 18 of 18 fresh ciphertexts to the sender's shared secret. Each passed the <code>d</code> check and the re-derivation.</li>
+<li><strong>Controls:</strong></li>
+<li>A ciphertext under a different key pair fails to decode.</li>
+<li>A flipped <code>c1</code> bit fails to decode.</li>
+<li>A flipped <code>c2</code> bit fails the checks.</li>
+<li>A random code yields no dependencies.</li>
+</ul>
+<p>This breaks UVW-KEM-128 confidentiality from the public key alone, and refutes the code-distinguishing assumption at both measured levels. The jet system has <code>Θ(n^{1.5})</code> rows and columns, so dense elimination costs <code>O(n^{4.5})</code> per round. The post's figures for full key recovery, <code>2^53.68</code>, <code>2^57.75</code> and <code>2^61.56</code> bit operations, were not checked. UVW-KEM-256 key recovery and both UVW-KEM-512 steps were not run. They would need 68,672- and about 186,000-row systems respectively.</p>
+<h3 id="reproducing_7">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh kem-38/reproduce_jet_distinguisher.sh                 # scaled models and controls
+NGCC_LONG=1 sh kem-38/reproduce_jet_distinguisher.sh     # adds a full-size UVW-KEM-128 count
+sh kem-38/reproduce_key_recovery.sh                      # full UVW-KEM-128 key recovery
+</code></pre>
+<p>The distinguisher certificate counts jets for model keys at <code>n</code> = 140 and 200, with twin-shape and random controls that must match the generic count. Its long mode generates a fresh frozen UVW-KEM-128 public key and repeats the count at <code>n = 860</code>, <code>k_l = 53</code>, with a random control.</p>
+<p>The key-recovery witness is a smaller check than the local runs above. It builds the frozen UVW-KEM-128 reference key generation and encapsulation (<code>uvw_sender.c</code>) and produces one key pair with three ciphertexts. It then recovers the structure from the public key alone (<code>uvw_key_recovery.c</code>) and decapsulates the ciphertexts with the submitted list decoder (<code>uvw_attack_decaps.c</code>). All three sender shared secrets must be reproduced. Three controls must fail: a ciphertext from a second key pair, a flipped <code>c2</code> bit, and a flipped <code>c1</code> bit. Recovery reads the secret monomial map only after the structure file is written, to score the pairing. The witness needs OpenMP and about 1.4 GB, and took about one minute on 28 cores. The UVW-KEM-256 count is not part of either script.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

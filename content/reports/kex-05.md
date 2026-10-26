@@ -93,12 +93,17 @@ Exploitation: 175,000/275,000/300,000 accepted handshakes for full identity-key 
 Credit: Sun Shuzhou, with GLM-5.3 assistance
 Date: 2026-09-29
 Original source: [Sun's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/2OIYBCQOZQCKMO2DCKFMD2A4GE4RR5RM/)
+Follow-up source: [Loom team's 2026-10-26 clarification](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/S4BGI5DH4KDW6IV75G6L77VT7QZO64AX/)
 
 Loom embeds Shuttle as its long-term authentication mechanism. At every level, the 13 source files implementing signing, sampling, and response encoding are byte-identical to the corresponding submitted Shuttle reference files. Figure 1, Eq. (8), and §4.1.1 define the transition as returning `y−v` on its selected interval, while Algorithm 22 and `irs.c:382–399` return `y+v` for that event. This reversed sign leaves secret-dependent covariance in accepted responses, and the signing secret's constant first component provides a public anchor for estimating the remaining coefficients. Loom's `loom.c` calls this signer for authentication and verifies the resulting signature in `loom_auth_ver`.
 
 The reported formal-parameter experiment used 175,000, 275,000, and 300,000 accepted handshakes, recovered all 768, 1,536, and 3,072 identity-key coefficients exactly, and impersonated the responder in 20 of 20 fresh handshakes at each level. Restoring the transition sign makes the same estimator fail. We independently verified the byte-for-byte embedding and protocol call path. An independent public driver obtains ordinary signatures, estimates the challenge-conditioned covariance, checks the recovered coefficients through the public-key relation and key-generation bounds, and produces an accepted fresh-message signature using the resulting equivalent key.
 
 Recovering the responder's long-term authentication key yields fresh-session impersonation and directly violates Loom's AKE authentication claim, hence Critical. A submitter response states that decryption-failure behavior and rollback security are out of scope; that position does not affect this independent identity-key recovery.
+
+### Proposed fixes
+
+The Loom team relays the Shuttle team's view that the reversed sign is a specification typo and that correcting the plus/minus sign resolves the reported issue. This statement is recorded without evaluating a revised candidate.
 
 ### Reproducing
 

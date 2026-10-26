@@ -78,13 +78,14 @@ witnesses and their controls. See <code>tools/README.md</code>.</p>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Reference implementation, all four parameter sets</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
-<tr><th>Exploitation</th><td>Trivial for the first encapsulation in a fresh process</td></tr>
-<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Exploitation</th><td>Trivial for the first encapsulation in a fresh process; later-session recovery from two consecutive public ciphertexts has an analytic upper bound of 2^80 trials</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance; consecutive-session extension by Hao Yan, Yuhang Cao, Yao Tong, and Qiaosheng Zhang (Shanghai AI Lab; AI-assisted discovery, human verified)</td></tr>
 <tr><th>Date</th><td>2026-09-21</td></tr>
 </table></div>
-
+<p>Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/QLLKHWKUIIXT5GC7AHYME4AKYQKINI44/">Hao Yan and coauthors' PKC Forum analysis, 2026-10-26</a></p>
 <p><code>kem_enc</code> draws both its message <code>m</code> and salt consecutively from a file-scope SHAKE-256 PRNG context. The wrapper never initializes that context from the API-provided DRNG, so it begins in the same zero-initialized state in every fresh process.</p>
 <p>For a fixed public key, the first encapsulation in each fresh process consequently repeats both the ciphertext and shared secret. An attacker can run the public encapsulation algorithm in a fresh process with the recipient's public key and recover the exact first session key produced by another fresh process. Fixing key generation alone does not repair this independent KEM confidentiality failure.</p>
+<p>The follow-up identifies a second failure in the same encapsulation generator. Its context is a 208-byte array, but each update writes only the first 26 bytes (<code>common/symmetric.h:41–44</code>, <code>common/symmetric.c:111–116</code>). The output and next-state calls use the same input to the prefix-consistent <code>pseudoXOF</code>. Thus the 16-byte salt in each ciphertext is the first 16 bytes of the next state, leaving only 10 unknown bytes. Given two consecutive ciphertexts from one stream, with no intervening generator calls, an observer can enumerate at most <code>2^80</code> states consistent with the first salt, check them against the second salt, and derive the second encapsulation's message and shared secret. This route also applies if the generator is initialized with an unknown seed. The full search was not run; its bound follows from the submitted source and the native check below. Reclassified scope on 2026-10-26; severity and status are unchanged.</p>
 <p>Every encapsulation operation must obtain fresh entropy from the API DRNG or initialize a per-operation generator from it. Message and salt generation must not use predictable global state.</p>
 <h3 id="reproducing_2">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
@@ -92,6 +93,10 @@ witnesses and their controls. See <code>tools/README.md</code>.</p>
 <pre><code class="language-sh">tools/reproduce.sh kem-17
 </code></pre>
 <p>It reports identical first public-key, ciphertext, and shared-secret digests for HEP-QC. The Aigis-Enc+ control differs across the two seeds.</p>
+<p>The native generator check runs the unmodified reference encapsulation:</p>
+<pre><code class="language-sh">sh kem-17/reproduce_prng_state_leak.sh        # optional argument: search bits (default 16)
+</code></pre>
+<p>For each parameter set, it checks that the context stays zero beyond 26 bytes and that the first ciphertext's salt equals the next state's prefix. It then searches the low 16 of the 80 unknown state bits, taking the other 64 from the true state as a scaling hint. The recovered state must regenerate the second ciphertext and shared secret, and the holder's decapsulation must agree. A flipped first salt yields no candidate. The <code>CTX_LEN = 26</code>, <code>SALT_BYTES = 16</code> state-update code is shared by all four reference sets, and the full <code>2^80</code> search is not run.</p>
 <h2 class="issue-heading" id="kem-17-4-public-column-multiplicities-break-the-epc-p-assumption">kem-17-4: Public column multiplicities break the EPC-P assumption</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">

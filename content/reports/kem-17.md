@@ -66,13 +66,16 @@ Status: Confirmed
 Layer: Implementation
 Affected: Reference implementation, all four parameter sets
 Discovery: Trivial
-Exploitation: Trivial for the first encapsulation in a fresh process
-Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Exploitation: Trivial for the first encapsulation in a fresh process; later-session recovery from two consecutive public ciphertexts has an analytic upper bound of 2^80 trials
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance; consecutive-session extension by Hao Yan, Yuhang Cao, Yao Tong, and Qiaosheng Zhang (Shanghai AI Lab; AI-assisted discovery, human verified)
 Date: 2026-09-21
+Follow-up source: [Hao Yan and coauthors' PKC Forum analysis, 2026-10-26](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/QLLKHWKUIIXT5GC7AHYME4AKYQKINI44/)
 
 `kem_enc` draws both its message `m` and salt consecutively from a file-scope SHAKE-256 PRNG context. The wrapper never initializes that context from the API-provided DRNG, so it begins in the same zero-initialized state in every fresh process.
 
 For a fixed public key, the first encapsulation in each fresh process consequently repeats both the ciphertext and shared secret. An attacker can run the public encapsulation algorithm in a fresh process with the recipient's public key and recover the exact first session key produced by another fresh process. Fixing key generation alone does not repair this independent KEM confidentiality failure.
+
+The follow-up identifies a second failure in the same encapsulation generator. Its context is a 208-byte array, but each update writes only the first 26 bytes (`common/symmetric.h:41–44`, `common/symmetric.c:111–116`). The output and next-state calls use the same input to the prefix-consistent `pseudoXOF`. Thus the 16-byte salt in each ciphertext is the first 16 bytes of the next state, leaving only 10 unknown bytes. Given two consecutive ciphertexts from one stream, with no intervening generator calls, an observer can enumerate at most `2^80` states consistent with the first salt, check them against the second salt, and derive the second encapsulation's message and shared secret. This route also applies if the generator is initialized with an unknown seed. The full search was not run; its bound follows from the submitted source and the native check below. Reclassified scope on 2026-10-26; severity and status are unchanged.
 
 Every encapsulation operation must obtain fresh entropy from the API DRNG or initialize a per-operation generator from it. Message and salt generation must not use predictable global state.
 
@@ -85,6 +88,14 @@ tools/reproduce.sh kem-17
 ```
 
 It reports identical first public-key, ciphertext, and shared-secret digests for HEP-QC. The Aigis-Enc+ control differs across the two seeds.
+
+The native generator check runs the unmodified reference encapsulation:
+
+```sh
+sh kem-17/reproduce_prng_state_leak.sh        # optional argument: search bits (default 16)
+```
+
+For each parameter set, it checks that the context stays zero beyond 26 bytes and that the first ciphertext's salt equals the next state's prefix. It then searches the low 16 of the 80 unknown state bits, taking the other 64 from the true state as a scaling hint. The recovered state must regenerate the second ciphertext and shared secret, and the holder's decapsulation must agree. A flipped first salt yields no candidate. The `CTX_LEN = 26`, `SALT_BYTES = 16` state-update code is shared by all four reference sets, and the full `2^80` search is not run.
 
 ## kem-17-4: Public column multiplicities break the EPC-P assumption
 
