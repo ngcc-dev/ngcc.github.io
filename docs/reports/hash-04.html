@@ -129,6 +129,26 @@ make -C hash-04 reproduce-full
 <h3 id="reproducing_4">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>Inspect the cited table access. For equal-length first-byte choices <code>0x00</code> and <code>0x80</code>, the first table addresses differ by 128 entries; the two inputs differ only in secret content.</p>
+<h2 class="issue-heading" id="hash-04-6-explicit-full-parameter-collisions-break-champ-512">hash-04-6: Explicit full-parameter collisions break CHAMP-512</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>CHAMP-512 construction and submitted reference and optimized implementations; CHAMP-1024 has no explicit collision from this work</td></tr>
+<tr><th>Discovery</th><td>Non-trivial</td></tr>
+<tr><th>Exploitation</th><td>A published search produced distinct 41,800-byte messages with the same complete 512-bit digest; its recorded bridge search used 30,325 candidates and its 64-list relation search processed 32,517,717 intermediate pairs in about six seconds</td></tr>
+<tr><th>Credit</th><td>Sunan Wang (sunan.wang, NGCC CryptHash Forum sender)</td></tr>
+<tr><th>Date</th><td>2026-10-28</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/3EQ3HHXXCOHEQCJZGMG4RIOFYXQEJW4H/">CryptHash Forum post</a></p>
+<p>At CHAMP-512's submitted prime <code>p = 2^128 − 15449</code>, Wang found two different, equal-length messages whose original products of CHAMP's public matrices agree exactly modulo <code>p</code>. Their complete 512-bit digests therefore coincide; the collision does not depend on the output encoding. The shorter pair is 334,400 bits per message. The <a href="https://github.com/snipernan/champ512-collisions/tree/cfefda841c614c825f61689cb51bc8a7a7751c9c">pinned construction and message files</a> include a second, 427,262,006-bit collision pair.</p>
+<p>For the short pair, an invertible change of basis exposes two equal-length blocks whose products differ by a nilpotent adjustment. A 269-bit bridge makes conjugation of that adjustment scale it by a fixed field element <code>ρ</code>. The product of 1,216 chosen blocks then depends on the choices through a weighted sum <code>Σ εᵢρⁱ mod p</code> and their parity. A 64-list generalized-birthday search found two distinct choices with equal sums and parity, giving identical original matrix products. The supplied search replay records 30,325 bridge candidates and 32,517,717 intermediate pairs in the relation search. This is a completed attack on the submitted 512-bit instance, well below its 256-bit collision-security target.</p>
+<h3 id="reproducing_5">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 hash-04/reproduce_full_collision.py
+</code></pre>
+<p>The witness fetches the two short messages at the pinned commit, checks their SHA-256 values and distinctness, computes their original matrix products independently, and hashes both with the frozen CHAMP-512 library. It requires the full digest to match, then changes one input bit as a control. It also checks the long pair's equal-length matrix-product identity and modeled digest from a pinned 1.7 KB certificate, without downloading or hashing the 53 MB messages. As a separate local check, fresh builds of the submitted reference and optimized C sources accepted the short pair with the same digest. The reporter's package records direct C checks for both pairs. The search's general success rate and a CHAMP-1024 extension have not been established.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

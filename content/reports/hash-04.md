@@ -127,3 +127,27 @@ Constant-time fix (hard, hence High and Design): the design's speed comes from i
 ### Reproducing
 
 Inspect the cited table access. For equal-length first-byte choices `0x00` and `0x80`, the first table addresses differ by 128 entries; the two inputs differ only in secret content.
+
+## hash-04-6: Explicit full-parameter collisions break CHAMP-512
+
+Severity: Critical
+Status: Confirmed
+Layer: Design
+Affected: CHAMP-512 construction and submitted reference and optimized implementations; CHAMP-1024 has no explicit collision from this work
+Discovery: Non-trivial
+Exploitation: A published search produced distinct 41,800-byte messages with the same complete 512-bit digest; its recorded bridge search used 30,325 candidates and its 64-list relation search processed 32,517,717 intermediate pairs in about six seconds
+Credit: Sunan Wang (sunan.wang, NGCC CryptHash Forum sender)
+Date: 2026-10-28
+Original source: [CryptHash Forum post](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/3EQ3HHXXCOHEQCJZGMG4RIOFYXQEJW4H/)
+
+At CHAMP-512's submitted prime `p = 2^128 − 15449`, Wang found two different, equal-length messages whose original products of CHAMP's public matrices agree exactly modulo `p`. Their complete 512-bit digests therefore coincide; the collision does not depend on the output encoding. The shorter pair is 334,400 bits per message. The [pinned construction and message files](https://github.com/snipernan/champ512-collisions/tree/cfefda841c614c825f61689cb51bc8a7a7751c9c) include a second, 427,262,006-bit collision pair.
+
+For the short pair, an invertible change of basis exposes two equal-length blocks whose products differ by a nilpotent adjustment. A 269-bit bridge makes conjugation of that adjustment scale it by a fixed field element `ρ`. The product of 1,216 chosen blocks then depends on the choices through a weighted sum `Σ εᵢρⁱ mod p` and their parity. A 64-list generalized-birthday search found two distinct choices with equal sums and parity, giving identical original matrix products. The supplied search replay records 30,325 bridge candidates and 32,517,717 intermediate pairs in the relation search. This is a completed attack on the submitted 512-bit instance, well below its 256-bit collision-security target.
+
+### Reproducing
+
+```sh
+python3 hash-04/reproduce_full_collision.py
+```
+
+The witness fetches the two short messages at the pinned commit, checks their SHA-256 values and distinctness, computes their original matrix products independently, and hashes both with the frozen CHAMP-512 library. It requires the full digest to match, then changes one input bit as a control. It also checks the long pair's equal-length matrix-product identity and modeled digest from a pinned 1.7 KB certificate, without downloading or hashing the 53 MB messages. As a separate local check, fresh builds of the submitted reference and optimized C sources accepted the short pair with the same digest. The reporter's package records direct C checks for both pairs. The search's general success rate and a CHAMP-1024 extension have not been established.
