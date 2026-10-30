@@ -37,7 +37,7 @@ Exploitation: About 20–30 million public signatures, followed by seconds of CP
 Credit: Bing Shi <roadicing@gmail.com>
 Date: 2026-09-26
 Original source: [Shi's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/62AUZI56IWGEN34OQTD6Z2U6APFMRYWC/) and [public proof of concept](https://github.com/roadicing/darts-key-recovery-attack/tree/5df01ac2b3e4b7a804fae5b3c5b4f8ad531cdaff)
-Follow-up source: [Martin Feussner's independent DARTS-128 recovery](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/J7RWJSD6H5IBCXDBD2XSHKCKGARBT6TA/) and [the DARTS team's confirmation](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/3XGOCUUIBO5UJ5C4GQKIIWR3AHAQNI2X/)
+Follow-up source: [Martin Feussner's independent DARTS-128 recovery](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/J7RWJSD6H5IBCXDBD2XSHKCKGARBT6TA/), [the DARTS team's confirmation](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/3XGOCUUIBO5UJ5C4GQKIIWR3AHAQNI2X/), and [version 2.0 announcement](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/6V6TNUOGT6DIGDGNEONV7PVACXWUONM4/)
 
 Step 9 of Algorithm 7 accepts every signing attempt when the hidden branch bit is `b=1`, but for `b=0` accepts only when `Comp_d(omega) = Comp_d(omega+c alpha)`. Because `omega=A round(y)`, this asymmetric restart tilts the joint distribution of the published challenge and rounded response by a small key-dependent multiple of the sparse secret. Shi separates that impulse train from a smooth fixed bias, then enumerates the few uncertain coefficients and checks candidates with the exact public relation `e=(q+1)/2 beta-A s mod q`, requiring ternary `e`.
 
@@ -47,7 +47,7 @@ Feussner independently reports full DARTS-128 recovery and fresh-message forgery
 
 ### Proposed fixes
 
-The [DARTS team's response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/3XGOCUUIBO5UJ5C4GQKIIWR3AHAQNI2X/) proposes replacing the submitted `(1-b)c*alpha` comparison term by `(1-2b)c*alpha`. This section records the proposal without evaluating it.
+The [DARTS team's response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/3XGOCUUIBO5UJ5C4GQKIIWR3AHAQNI2X/) proposes replacing the submitted `(1-b)c*alpha` comparison term by `(1-2b)c*alpha`. Its 2026-10-30 announcement says version 2.0 corrects Step 9 of Algorithm 7 and updates the corresponding implementation and test vectors. These proposals and reported changes are recorded without evaluating the revised candidate.
 
 ### Reproducing
 
@@ -68,12 +68,13 @@ Exploitation: Honest signatures from either implementation fail verification in 
 Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
 Date: 2026-10-06
 Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/PHSEM2FMDUS6IKY4N3GQCIZLFJEWMIVK/)
+Follow-up source: [DARTS version 2.0 announcement](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/6V6TNUOGT6DIGDGNEONV7PVACXWUONM4/)
 
 The reference `poly_uniform` initially squeezes nine blocks and retains leftovers using `% 16` (`poly.c:917–945`). AVX2 initially squeezes seven blocks, then uses `% Q_BITS` in its scalar path and a separate four-way refill path (`poly.c:1266–1355`). These differences are consistent with divergent `ExpandA` matrices: the first-record public keys in the submitted reference and AVX2 KATs share their seedA prefix and diverge immediately afterward at all three tiers. The forum reports mutual rejection of honest cross-implementation signatures at all three tiers, 4/4 seeds, while each build verifies its own signatures. Our certificate confirms the divergent source paths, not that runtime experiment. The specification does not fix the `PolyUniform` squeeze schedule, so this is an implementation interoperability finding, not a design or forgery claim.
 
 ### Proposed fixes
 
-The forum reports that changing AVX2's expansion read pattern restores reference-KAT verification. This proposal is recorded without evaluating it.
+The forum reports that changing AVX2's expansion read pattern restores reference-KAT verification. The DARTS team later announced that version 2.0 resolves consistency issues between the reference and optimized implementations, without identifying this ExpandA mismatch specifically. These proposals and reported changes are recorded without evaluating the revised candidate.
 
 ### Reproducing
 

@@ -57,3 +57,27 @@ python3 kem-19/reproduce_seed_ceiling.py
 ```
 
 The certificate checks the twelve affected source trees and both independent 256-bit ceilings; it does not run the exhaustive search.
+
+## kem-19-3: BCH decoding timing leaks Lore secret coefficients
+
+Severity: High
+Status: Probable
+Layer: Implementation
+Affected: Lore-L2 SM3 reference implementation (reported full secret recovery); Lore-L3/L4 and AVX/NEON variants have the same data-dependent decoder paths by source inspection. Lore-L1 is excluded.
+Discovery: Moderate
+Exploitation: The reporter claims complete recovery of the 1024-coefficient Lore-L2 secret using about 2,200–2,940 decapsulation timing queries on STM32F4; recovery has not been independently reproduced here.
+Credit: Jinnuo Li, with AI assistance
+Date: 2026-10-30
+Original source: [Jinnuo Li's PKC Forum report](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/EURSTLNLPYYJ3VV7JGJA5MAHNCKQMMKH/)
+
+The [PKC Forum report](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/EURSTLNLPYYJ3VV7JGJA5MAHNCKQMMKH/) describes three timing signals in the submitted BCH decoder. `compute_syndromes` branches on each decoded received-word bit and conditionally performs `2t` syndrome updates (`bch_codec.c:403–418`); Berlekamp–Massey returns early when its degree exceeds `t` (`:476–478`); and the locator search terminates after finding the required roots (`:511–519`). `decode_bch` also exits early for zero syndromes (`:544–554`). The word being decoded is derived from the secret-dependent decryption result (`poly.c:563–578`), and the decoder runs within decapsulation (`kem.c:198`). The reported measurements attribute roughly 13,208, 305,780, and 31,704 clock cycles to the three respective signals.
+
+The post reports complete recovery of all 1,024 secret coefficients on an STM32F4 using the unmodified Lore-L2 SM3 reference implementation, with 2,936.5, 2,212.5, and 2,218 average queries for its three attacks. It also reports complete recovery on ten x86-host keys using the second signal. These results are not independently reproduced in this report, so the status is Probable. The source-level secret-dependent paths are present in the frozen code; no dependence on the ICCS placeholder hash/XOF is part of this timing mechanism. Other levels and optimized implementations are included only by source inspection, not by measured end-to-end recovery.
+
+### Proposed fixes
+
+The reporter recommends implementing the syndrome, error-location, and correction steps in constant time across the affected versions. This recommendation is recorded without evaluation; the forum post does not provide a measured constant-time replacement or a Lore team response.
+
+### Reproducing
+
+Inspect the cited `bch_codec.c`, `poly.c`, and `kem.c` paths in the archived Lore-L2 SM3 reference source. This confirms the secret-dependent control flow and its decapsulation call path, but does not reproduce the timing deltas or the reported key recovery. The [original forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/EURSTLNLPYYJ3VV7JGJA5MAHNCKQMMKH/) gives the platforms, query counts, and measured timing differences; it includes no reproducer or trace data.

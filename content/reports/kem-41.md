@@ -14,6 +14,7 @@ Exploitation: Model lower bounds on the per-key worst-case failure probability e
 Credit: Leo Luo (archive sender `leoluo`)
 Date: 2026-10-03
 Original source: [Leo Luo's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/LHS3HBDIJHUIDAKS5Q7H3FXGDY7CLNHZ/)
+Follow-up source: [ZEN team's revised-version announcement](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/AZGO7YMBSBRJNAY55767GRFQW652UQNB/)
 
 Theorem 2 in §5.2 writes the PKE correctness error as
 `delta_ZEN = max_m Pr[Decrypt(sk, Encrypt(pk,m,rho)) != m]`, with the
@@ -46,7 +47,7 @@ In a [further exchange](https://list.niccs.org.cn/archives/list/pkcforum@list.ni
 
 ### Proposed fixes
 
-The team states that it will clarify the quantifiers and assumptions, revise the concrete DFR and failure-attack analysis, and investigate both worst-case and independent-key proof approaches. This records the proposal without evaluating it.
+The team initially stated that it would clarify the quantifiers and assumptions, revise the concrete DFR and failure-attack analysis, and investigate both worst-case and independent-key proof approaches. Its 2026-10-30 announcement says the revised specification now distinguishes average-case and worst-case failure probabilities and gives a revised concrete-security evaluation. These proposals and reported changes are recorded without evaluating the revised candidate.
 
 ### Reproducing
 
@@ -70,7 +71,7 @@ Exploitation: Address-space exhaustion can make key generation sample an unwritt
 Credit: harry0597 (NGCC PKC Forum sender; signed Hui Wen and XingYu Wu), with DeepSeek assistance
 Date: 2026-10-22
 Original source: [Hui Wen and XingYu Wu's PKC Forum report](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/MDKAVOLOV5VMHHZXAWCWGQTOBIQUB7B7/)
-Follow-up source: [Correction of the ZEN-128 encapsulation claim](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XS5NSYQB2IES2J4Y4FDKFBXOFL6I5CKN/)
+Follow-up source: [Correction of the ZEN-128 encapsulation claim](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XS5NSYQB2IES2J4Y4FDKFBXOFL6I5CKN/) and [ZEN team's revised-version announcement](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/AZGO7YMBSBRJNAY55767GRFQW652UQNB/)
 
 The supplied `pseudoXOF` returns an error without writing its output when an allocation fails (`auxfunc.c:482–498`). ZEN's `void zen_pseudoXOF` discards that return (`symmetric.c:13–22`), and `poly_generate_f` or `poly_generate_gf` samples the unwritten stack buffer (`poly.c:311–317` at 128, `:393–399` at 256, `:640–646` at 512). Key generation neither propagates the error nor rejects the resulting key (`pke.c:19–80`; `KEM_AlgorithmInstance.c:80–101` in the 128-bit reference tree, with corresponding paths at the other levels). The general defect is secret sampling from uninitialized memory; public recovery is the demonstrated case, when a preceding operation in the same thread leaves public-key data in that stack area. The flaw is in ZEN's error handling, not the placeholder XOF's cryptographic strength; any replacement that can fail without filling its output requires that error to be handled.
 
@@ -80,7 +81,7 @@ The same unchecked wrapper also makes encapsulation return success after an XOF 
 
 ### Proposed fixes
 
-The forum report proposes propagating XOF/hash failures through ZEN's samplers and KEM entry points, and not returning a key after an unwritten output is sampled. This records the proposal without evaluating a revised implementation.
+The forum report proposes propagating XOF/hash failures through ZEN's samplers and KEM entry points, and not returning a key after an unwritten output is sampled. The ZEN team later announced that its revised x86 reference and AVX2 implementations fix the allocation-failure-induced uninitialized-memory issue; it says updates for the other platforms will follow. These proposals and reported changes are recorded without evaluating the revised implementations.
 
 ### Reproducing
 
