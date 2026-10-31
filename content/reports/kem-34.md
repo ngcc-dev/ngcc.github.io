@@ -99,3 +99,26 @@ The specification requires a primitive `2n`-th root of unity in `Z_q` for its ne
 ```sh
 python3 kem-34/reproduce_parameters.py
 ```
+
+## kem-34-5: Dual-hybrid attacks put Rudraksh2-512-I below its target
+
+Severity: Critical
+Status: Probable
+Layer: Design
+Affected: Rudraksh2-512-I
+Discovery: Moderate
+Exploitation: Estimated 2^495.5 operations for key recovery (MATZOV dual-hybrid, lattice-estimator gate-count model); not executed
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-31
+
+The Rudraksh2-512-I public key is an uncompressed MLWE sample with `ℓn = 2048`, `q = 7681` and CBD₂ secret and error (`lwekem512/params.h`). Table 14 claims Core-SVP 2^512 and 2^527 gates, and §3.2.5 states that the Core-SVP estimates meet the required security. The lattice-estimator's MATZOV dual-hybrid attack costs 2^495.5 in its default gate-count model and 2^482.1 in ADPS16 Core-SVP, below the primal attacks that Table 14 reflects. The estimate relies on the dual-attack heuristics the estimator adopts.
+
+In Core-SVP the same attack gives 124.35 and 249.71 bits for Rudraksh2-128-I and -256-I, below Table 14's 129 and 267 and below their targets. In the gate-count model those sets are at 147.7 and 269.5 bits, above target, so they are not included in this rating.
+
+### Reproducing
+
+```sh
+LATTICE_ESTIMATOR_PATH=../lattice-estimator sage -python kem-34/reproduce_dual_hybrid.py
+```
+
+The script requires lattice-estimator commit `53da598` and prints the best attack for each Rudraksh2-I set in both cost models. It takes about nine minutes.

@@ -24,19 +24,26 @@ The source-level witness is the chain `src/common/ccakem.c:125-132` → `src/sch
 
 ## kem-04-2: The rejection key does not bind the received ciphertext
 
-Severity: High
+Severity: Critical
 Status: Confirmed
 Layer: Design
-Affected: All BAG-Piglet parameter sets
-Discovery: Moderate
-Exploitation: Observable rejection keys give a plaintext-checking oracle; challenge-key recovery is unshown
+Affected: All BAG-Piglet parameter sets; key recovery executed for BAG-Piglet-128 and -256
+Discovery: Non-trivial
+Exploitation: Recovery of the decryption secret `x` and of honest challenge keys from 57,057 (BAG-Piglet-128) and 353,557–392,779 (BAG-Piglet-256, two runs) decapsulation queries; about 2^19 and 2^26 queries estimated for -384 and -512, not run
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-09-25
 
-Algorithm 2 (§1.4) specifies `K(ξ, ct')` on rejection, where `ct'` is the re-encryption of the decrypted message rather than the received ciphertext; `ccakem_decaps` follows it. Distinct invalid ciphertexts that decrypt to the same message therefore share a rejection key, exposing a plaintext-checking oracle when keys are observable. This departs from standard Fujisaki–Okamoto rejection, so the stated IND-CCA2 proof does not establish the submitted construction's claim. A mauled challenge returns `K(ξ, c*)`, not the challenge key `K*`; the witness demonstrates rejection-key collisions, not challenge-key recovery or a full IND-CCA2 attack.
+Algorithm 2 (§1.4) specifies `K(ξ, ct')` on rejection, where `ct'` is the re-encryption of the decrypted message rather than the received ciphertext; `ccakem_decaps` follows it. Distinct invalid ciphertexts that decrypt to the same message therefore share a rejection key, exposing a plaintext-checking oracle when keys are observable. This departs from standard Fujisaki–Okamoto rejection, so the stated IND-CCA2 proof does not establish the submitted construction's claim.
+
+The oracle recovers the decryption secret `x`. The attacker records the rejection key of one ciphertext that decrypts to a fixed nonzero `m0`; a later decapsulation returns that key exactly when its ciphertext also decrypts to `m0`. Probe ciphertexts with `u = (u1, 0)` place a chosen subspace in the suffix that the augmented-Gabidulin decoder annihilates (`augabidulin.c:70–133`) and a known number of extra error dimensions in the prefix, so decoding succeeds exactly when that subspace meets the support of `x·u1` plus a known offset. Taking `u1 = 1` tests `Supp(x)`; taking `u1 = h1` with offset `s1` tests `Supp(y1)`. With both supports known, `s1 = x·h1 + y1` is an overdetermined linear system over F2 whose unique solution is `x`, which decrypts any honest ciphertext to its key `K*`.
+
+Reclassified from High to Critical on 2026-10-31 after recovery of `x` and the challenge key. The separate implicit-rejection seed is not recovered. At BAG-Piglet-384 and -512 the reference decoder accepts errors beyond its textbook radius, so the probes were not calibrated there; the query counts for those sets are estimates.
 
 ### Reproducing
 
 ```sh
 python3 kem-04/reproduce_rejection_key.py kem-04/lib/libbag_piglet_128.so
+sh kem-04/reproduce_key_recovery.sh     # NGCC_LONG=1 adds BAG-Piglet-256
 ```
+
+The second script builds `kem-04/reproduce_key_recovery.c` against the unmodified reference sources. The attack uses only the public key and `ccakem_decaps` outputs; the secret key is read only by the final validation line. BAG-Piglet-128 takes about five minutes; BAG-Piglet-256 takes about an hour.

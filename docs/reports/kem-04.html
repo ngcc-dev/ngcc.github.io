@@ -45,21 +45,25 @@
 <h2 class="issue-heading" id="kem-04-2-the-rejection-key-does-not-bind-the-received-ciphertext">kem-04-2: The rejection key does not bind the received ciphertext</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
 <tr><th>Scope</th><td>design</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
-<tr><th>Affected</th><td>All BAG-Piglet parameter sets</td></tr>
-<tr><th>Discovery</th><td>Moderate</td></tr>
-<tr><th>Exploitation</th><td>Observable rejection keys give a plaintext-checking oracle; challenge-key recovery is unshown</td></tr>
+<tr><th>Affected</th><td>All BAG-Piglet parameter sets; key recovery executed for BAG-Piglet-128 and -256</td></tr>
+<tr><th>Discovery</th><td>Non-trivial</td></tr>
+<tr><th>Exploitation</th><td>Recovery of the decryption secret <code>x</code> and of honest challenge keys from 57,057 (BAG-Piglet-128) and 353,557–392,779 (BAG-Piglet-256, two runs) decapsulation queries; about 2^19 and 2^26 queries estimated for -384 and -512, not run</td></tr>
 <tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
 <tr><th>Date</th><td>2026-09-25</td></tr>
 </table></div>
 
-<p>Algorithm 2 (§1.4) specifies <code>K(ξ, ct')</code> on rejection, where <code>ct'</code> is the re-encryption of the decrypted message rather than the received ciphertext; <code>ccakem_decaps</code> follows it. Distinct invalid ciphertexts that decrypt to the same message therefore share a rejection key, exposing a plaintext-checking oracle when keys are observable. This departs from standard Fujisaki–Okamoto rejection, so the stated IND-CCA2 proof does not establish the submitted construction's claim. A mauled challenge returns <code>K(ξ, c*)</code>, not the challenge key <code>K*</code>; the witness demonstrates rejection-key collisions, not challenge-key recovery or a full IND-CCA2 attack.</p>
+<p>Algorithm 2 (§1.4) specifies <code>K(ξ, ct')</code> on rejection, where <code>ct'</code> is the re-encryption of the decrypted message rather than the received ciphertext; <code>ccakem_decaps</code> follows it. Distinct invalid ciphertexts that decrypt to the same message therefore share a rejection key, exposing a plaintext-checking oracle when keys are observable. This departs from standard Fujisaki–Okamoto rejection, so the stated IND-CCA2 proof does not establish the submitted construction's claim.</p>
+<p>The oracle recovers the decryption secret <code>x</code>. The attacker records the rejection key of one ciphertext that decrypts to a fixed nonzero <code>m0</code>; a later decapsulation returns that key exactly when its ciphertext also decrypts to <code>m0</code>. Probe ciphertexts with <code>u = (u1, 0)</code> place a chosen subspace in the suffix that the augmented-Gabidulin decoder annihilates (<code>augabidulin.c:70–133</code>) and a known number of extra error dimensions in the prefix, so decoding succeeds exactly when that subspace meets the support of <code>x·u1</code> plus a known offset. Taking <code>u1 = 1</code> tests <code>Supp(x)</code>; taking <code>u1 = h1</code> with offset <code>s1</code> tests <code>Supp(y1)</code>. With both supports known, <code>s1 = x·h1 + y1</code> is an overdetermined linear system over F2 whose unique solution is <code>x</code>, which decrypts any honest ciphertext to its key <code>K*</code>.</p>
+<p>Reclassified from High to Critical on 2026-10-31 after recovery of <code>x</code> and the challenge key. The separate implicit-rejection seed is not recovered. At BAG-Piglet-384 and -512 the reference decoder accepts errors beyond its textbook radius, so the probes were not calibrated there; the query counts for those sets are estimates.</p>
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 kem-04/reproduce_rejection_key.py kem-04/lib/libbag_piglet_128.so
+sh kem-04/reproduce_key_recovery.sh     # NGCC_LONG=1 adds BAG-Piglet-256
 </code></pre>
+<p>The second script builds <code>kem-04/reproduce_key_recovery.c</code> against the unmodified reference sources. The attack uses only the public key and <code>ccakem_decaps</code> outputs; the secret key is read only by the final validation line. BAG-Piglet-128 takes about five minutes; BAG-Piglet-256 takes about an hour.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

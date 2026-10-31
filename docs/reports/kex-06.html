@@ -50,27 +50,32 @@
 <pre><code class="language-sh">sh kex-06/reproduce_ephemeral_seed.sh
 </code></pre>
 <p>The script checks the <code>nike_sharedb</code> source lines, then builds the unmodified MAMBA-NIKE-384 and -512 <code>nike.c</code> in a temporary copy with a test <code>nike_randombytes</code>. It checks honest agreement, that a session draws only <code>mu</code> and the 32-byte <code>noiseseed</code>, that the correct seed reproduces <code>M1</code> and the session key, and that a one-bit-wrong seed does not. It takes about 2 seconds and exits 77 without gcc.</p>
-<h2 class="issue-heading" id="kex-06-2-static-key-reconciliation-admits-an-active-reaction-recovery-path">kex-06-2: Static-key reconciliation admits an active reaction-recovery path</h2>
+<h2 class="issue-heading" id="kex-06-2-static-key-reconciliation-allows-active-key-recovery">kex-06-2: Static-key reconciliation allows active key recovery</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
 <tr><th>Scope</th><td>design</td></tr>
-<tr><th>Status</th><td><span class="issue-status status-lead">Lead</span></td></tr>
-<tr><th>Affected</th><td>MAMBA-NIKE-128 and -384 recovered with the raw-reconciliation oracle; the same unvalidated static-key path is present in all sets</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All five MAMBA-NIKE parameter sets</td></tr>
 <tr><th>Discovery</th><td>Hard</td></tr>
-<tr><th>Exploitation</th><td>Complete MAMBA-NIKE-128 and -384 static-key recovery in 71 raw-reconciliation queries; the deployed hashed-key route is estimated at about 2^15 reactions but is not implemented or benchmarked</td></tr>
-<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang</td></tr>
+<tr><th>Exploitation</th><td>Complete static-key recovery through the deployed hashed-key responder from 213–666 session-key reveals, depending on the set; the raw-reconciliation oracle recovers MAMBA-NIKE-128 and -384 in 71 queries</td></tr>
+<tr><th>Credit</th><td>Zhenyu Xiong and Mingsheng Wang; deployed-API recovery by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
 <tr><th>Date</th><td>2026-09-27</td></tr>
 </table></div>
 <p>Reference: <a href="https://eprint.iacr.org/archive/2026/2232/1790653241.pdf">Xiong and Wang, ePrint 2026/2232, 2026-09-29 revision, §6</a></p>
 <p>The static responder applies D4 reconciliation to an unvalidated attacker-chosen one-pass message under the same long-term secret. Its intermediate product is linear in that secret, while the dither is derived from the attacker's public <code>mu</code>. Chosen monomial messages therefore turn each reconciliation group into a small lookup problem over four secret coefficients.</p>
-<p>The pinned artifact uses the reference implementation's <code>STATISTICAL_TEST</code> path, which returns the raw reconciliation bits rather than their hash. A fixed 71-query probe set recovers complete MAMBA-NIKE-128 and -384 secrets; local runs recovered 1/1 and 5/5 keys. That validates the candidate-specific algebra and raw reaction oracle. It does <strong>not</strong> validate the artifact's claimed roughly <code>2^15</code> route from the deployed API's single hashed-key confirmation bit, and the specification's Appendix B explicitly limits its theorem to passive security and disclaims active/key-reuse security. The NGCC <a href="https://www.niccs.org.cn/niccs/Notice/tT7TSQiz.pdf">Evaluation Criteria</a> §1(1), however, require key-exchange protocols to satisfy a suitable security model such as CK, CK+, eCK, or eCK-PFS. For those reasons this is a High Lead and a NIKE category/security-model mismatch, not a claimed break of the stated passive theorem.</p>
+<p>The pinned artifact uses the reference implementation's <code>STATISTICAL_TEST</code> path, which returns the raw reconciliation bits rather than their hash. A fixed 71-query probe set recovers complete MAMBA-NIKE-128 and -384 secrets; local runs recovered 1/1 and 5/5 keys.</p>
+<p>The deployed responder <code>kex_derive_ss_b</code> returns only <code>SHAKE256("MAMBA-NIKE-KDF20" ‖ ν ‖ pk_B ‖ M1)</code> and checks the initiator key only for length (<code>KEX_AlgorithmInstance.c:336–366</code>). With <code>û</code> close to a constant, each reconciliation bit is a known threshold predicate of four secret coefficients. Each query makes all but 12 group bits predictable, and the attacker resolves the remaining bits by testing 2^12 candidates offline against the revealed key. The recovered secret reproduces <code>pk_B</code> exactly and derives an honest initiator's session key; a secret with one wrong coefficient is rejected. The revealed sessions are attacker-originated non-test sessions, which CK and eCK allow, and B's key is never corrupted, so B's other sessions stay fresh.</p>
+<p>The specification's Appendix B limits its theorem to passive security and disclaims active and key-reuse security. The NGCC <a href="https://www.niccs.org.cn/niccs/Notice/tT7TSQiz.pdf">Evaluation Criteria</a> §1(1), however, require key-exchange protocols to satisfy a suitable security model such as CK, CK+, eCK, or eCK-PFS. Reclassified from High / Lead to Critical / Confirmed on 2026-10-31 after the deployed-API recovery. With only a key-confirmation equality bit, the same method needed 2,542–4,949 queries for MAMBA-NIKE-128, -192 and -384; the rating does not rest on that model.</p>
 <p>An actively secure static NIKE cannot reconcile arbitrary unauthenticated peer input under a reused secret and then expose key confirmation. The construction needs transcript binding and an active-security transform rather than only the passive theorem it currently supplies.</p>
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">sh kex-06/reproduce_reaction_recovery.sh
 </code></pre>
 <p>The wrapper fetches the <a href="https://github.com/acprk/ngcc-round1-cryptanalysis/tree/e724a12a834bfc063dc0d2959d864842f269eb1e/mamba-nike-key-recovery">pinned artifact</a>, builds it against the archived reference sources here, and runs the demonstrated 128- and 384-bit raw-oracle recoveries.</p>
+<pre><code class="language-sh">sh kex-06/reproduce_hashed_key_recovery.sh     # NGCC_LONG=1 runs all five sets
+</code></pre>
+<p>This builds <code>kex-06/reproduce_hashed_key_recovery.c</code> against the unmodified reference sources without <code>STATISTICAL_TEST</code> and queries only <code>kex_derive_ss_b</code>. Victim keys come from <code>kex_init_b</code> with OS randomness, so query counts vary slightly between runs: about 215 for MAMBA-NIKE-128 (under a minute), 250 for -192, 345 for -256, 415 for -384 and 630–670 for -512. The full run takes about 30 minutes.</p>
 <h2 class="issue-heading" id="kex-06-3-reconciliation-leakage-makes-the-passive-security-bound-vacuous">kex-06-3: Reconciliation leakage makes the passive-security bound vacuous</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">

@@ -66,6 +66,27 @@
 </code></pre>
 <p>The certificate exhausts the three-bit χ inputs and checks both reported masks against the linear rotations: the 16-active-position mask used above has weight 32 per round, while the all-ones mask used for the reported ZC-1280 reduced-round trail has 64 active positions and weight 128 per round. It then prints the unresolved multi-round limitation.</p>
 <p>Run <code>python3 security/zc_message_modification.py</code> for the extension's rate-only systems and a replay of the reduced-round collision against the submitted permutation. The witness does not rerun the long search. Its reduced permutation uses the reference code's last-four-round constants, not the first four rounds of the full schedule.</p>
+<h2 class="issue-heading" id="hash-31-3-an-8-column-iterative-trail-gives-an-estimated-2125-collision">hash-31-3: An 8-column iterative trail gives an estimated 2^125 collision</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-lead">Lead</span></td></tr>
+<tr><th>Affected</th><td>ZC-DMC-1536-512 and -768</td></tr>
+<tr><th>Discovery</th><td>Non-trivial</td></tr>
+<tr><th>Exploitation</th><td>Estimated 2^125.1 (-512) and 2^129 (-768) work, conditional on independence over ten probabilistic rounds; collisions executed for three and four rounds only</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-31</td></tr>
+</table></div>
+
+<p>Fix a bit position <code>z</code> and let <code>D</code> have plane 0 active on the odd lanes and plane 2 active on the even lanes, all at <code>z</code>. The plane-2 ρ offset <code>(5, 0)</code> has no z-rotation, so after the first ρ the active bits share columns, θ sees zero column parity, and the second ρ maps the even lanes back onto themselves: the linear layer fixes <code>D</code> exactly. Each active χ column keeps its difference with probability 1/4; consecutive rounds are correlated, and the measured rate is 2^-12 per round from every start round.</p>
+<p>In the first block, a rate difference on plane 0 at <code>z</code> becomes <code>W</code> (planes 0 and 2, all lanes) and then <code>D</code>. After a prefix fixes 9 (-512) or 13 (-768) capacity bits, message modification makes the first two rounds free, so the block costs about 2^120. The second block cancels the rate part of <code>D</code> and follows <code>D → D</code> for all twelve rounds; its output difference is rate-only, and a third message block cancels it. Its own 5 or 9 capacity conditions repeat the first block 2^5 or 2^9 times, giving about 2^125.1 and 2^129 against collision targets of 2^256 and 2^384.</p>
+<p>The 2^-12 rate was measured for single rounds at every start and for windows of up to four rounds; independence across ten consecutive probabilistic rounds is assumed. No full-round collision was attempted.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh security/zc_column_trail.sh
+</code></pre>
+<p>The script checks that the reference linear layer fixes the trail patterns at every <code>z</code> and measures the one-round rate at each start round. It then finds fresh three-round collisions for ZC-DM and ZC-DMC at -512 and -768 from the zero IV with padding, replays stored four-round -512 collisions, and checks every pair with the independent Python mode model. The full twelve-round digests differ. It uses the reference code's last-R-round convention and runs in about 10 seconds.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

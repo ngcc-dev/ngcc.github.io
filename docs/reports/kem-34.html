@@ -105,6 +105,26 @@ python3 kem-34/reproduce_parameters.py
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 kem-34/reproduce_parameters.py
 </code></pre>
+<h2 class="issue-heading" id="kem-34-5-dual-hybrid-attacks-put-rudraksh2-512-i-below-its-target">kem-34-5: Dual-hybrid attacks put Rudraksh2-512-I below its target</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-probable">Probable</span></td></tr>
+<tr><th>Affected</th><td>Rudraksh2-512-I</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Estimated 2^495.5 operations for key recovery (MATZOV dual-hybrid, lattice-estimator gate-count model); not executed</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-10-31</td></tr>
+</table></div>
+
+<p>The Rudraksh2-512-I public key is an uncompressed MLWE sample with <code>ℓn = 2048</code>, <code>q = 7681</code> and CBD₂ secret and error (<code>lwekem512/params.h</code>). Table 14 claims Core-SVP 2^512 and 2^527 gates, and §3.2.5 states that the Core-SVP estimates meet the required security. The lattice-estimator's MATZOV dual-hybrid attack costs 2^495.5 in its default gate-count model and 2^482.1 in ADPS16 Core-SVP, below the primal attacks that Table 14 reflects. The estimate relies on the dual-attack heuristics the estimator adopts.</p>
+<p>In Core-SVP the same attack gives 124.35 and 249.71 bits for Rudraksh2-128-I and -256-I, below Table 14's 129 and 267 and below their targets. In the gate-count model those sets are at 147.7 and 269.5 bits, above target, so they are not included in this rating.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">LATTICE_ESTIMATOR_PATH=../lattice-estimator sage -python kem-34/reproduce_dual_hybrid.py
+</code></pre>
+<p>The script requires lattice-estimator commit <code>53da598</code> and prints the best attack for each Rudraksh2-I set in both cost models. It takes about nine minutes.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

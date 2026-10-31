@@ -131,3 +131,30 @@ sh kem-09/reproduce_pco_key_recovery.sh            # full key recovery; NGCC_LON
 The first script shows the rejection-key collision directly: it uses the prebuilt `kem-09/lib/*.so` through ctypes, checks that honest decapsulation returns `K*` and that 16 bit-0 flips of `c*` give at least four identical outputs different from `K*`, and, when `hashlib` provides SM3, confirms the value is `H(salt‖c*)`. It runs in under a second.
 
 The second script performs the full key recovery. It builds a small C attack (`kem-09/pco_cheetah.c`) in a temporary directory and queries only the prebuilt library through the uniform ABI loaded with `dlopen`; it never links the submission's internal decrypt. It prints, per set, that honest decapsulation matches, the recovered-versus-true coefficient count, the rebuilt-key re-decapsulation check, and the rejected-wrong-coefficient control, with the setup and recovery-batch query counts and wall time. The setup is the honest check plus about 80–90 decapsulations of bit-flipped ciphertexts that identify `C0`; it is reported separately from the recovery batch. By default it recovers the smallest set (Cheetah128), reported both for a single-process sequential run and for a fork-parallel run; `NGCC_LONG=1` recovers all four sets. The batch queries are independent, so the parallel run uses `fork()` workers (the decapsulator reads no mutable global state). With 24 workers, the recovery batch took 1.2 s (83,968 queries) for Cheetah128, 4.8 s (225,280) for Cheetah256, 20.8 s (448,512) for Cheetah384 and 76 s (1,088,000) for Cheetah512; the sequential Cheetah128 run took 15 s.
+
+## kem-09-5: Natural decryption failures recover the secret key
+
+Severity: Critical
+Status: Probable
+Layer: Design
+Affected: Cheetah128 and Cheetah256; for Cheetah384 and Cheetah512 the estimated cost of this route far exceeds the target within 2^80 queries
+Discovery: Non-trivial
+Exploitation: Estimated 2^63.1 decapsulation queries for Cheetah256 and 2^77.3–2^79.8 queries from about 2^95 encapsulations for Cheetah128; key recovery executed on simulated failures only
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-10-31
+
+Algorithm 15 publishes `Compress(A·s+e)` and Algorithm 16 encrypts with its decompression, so the decryption noise contains the public-key rounding term `e_pk·r`. With that term, the exact per-coefficient noise law gives log2 failure rates of −77.84, −51.54, −115.06 and −198.95 for the four sets, against Table 2's −129, −176, −189 and −243. The model's Cheetah256 noise standard deviation (245.5) matches the 244.1 measured on honest encapsulations through the reference code.
+
+An attacker that encapsulates honestly knows `K` and sees a failure as a decapsulation output different from `K`. It also knows its own `r`, `e1`, `e2` and ciphertext rounding errors, and the failure condition is linear in the secret. Expectation-maximisation over the unknown failing position and sign, followed by a public-key consistency check, recovers `s`, which decapsulates any challenge. Cheetah256 needs about 3,000 failures, or 2^63.1 honest queries without preselection. Cheetah128 needs about 1,500 failures from ciphertexts preselected for large `r` and `e1` norms: 2^77.3 queries under the exact norm-tilted law (2^79.8 under a Gaussian model), selected from about 2^95 honest encapsulations by a Cramér estimate. That is below 2^128 unless one encapsulation costs more than 2^33 operations. For Cheetah384 and Cheetah512 the same preselection needs about 2^748 and 2^5351 encapsulations to stay within 2^80 queries.
+
+No 2^63-query run was performed. The failures were drawn from the exact failure-conditioned noise law under the usual independent uniform-rounding model, not from real ciphertexts, and the model was compared with the reference code only through the noise standard deviation.
+
+### Reproducing
+
+```sh
+python3 kem-09/reproduce_failure_rate.py     # requires numpy
+python3 kem-09/reproduce_boost_cost.py       # requires numpy and scipy
+sh kem-09/reproduce_failure_recovery.sh      # NGCC_LONG=1 adds boosted Cheetah128
+```
+
+The first script computes the exact noise law and failure rates with and without `e_pk`. The second computes the preselection costs above, including the exact tilted Cheetah128 rate, in under a minute. The third measures the noise of 20,000 Cheetah256 encapsulations through the reference `KEM_Cheetah.c`, then recovers a fresh Cheetah256 secret exactly from 3,000 simulated failures in about 40 seconds; `NGCC_LONG=1` also recovers a Cheetah128 secret from 1,500 boosted failures.
