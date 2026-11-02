@@ -193,6 +193,93 @@ fixed-weight solutions.</p>
 <pre><code class="language-sh">sh kem-26/reproduce_rs_decoder_iterations.sh
 </code></pre>
 <p>The native component witness includes the frozen NSS-HQC-128 decoder, checks that clean and random received words take different numbers of trials, and verifies its trial-loop result against the submitted <code>rs_decode</code>. It does <strong>not</strong> reproduce a secret-key timing oracle or key recovery; those remain the reporter's observations.</p>
+<h2 class="issue-heading" id="kem-26-6-same-key-multi-instance-decoding-puts-nss-hqc-128-below-its-target">kem-26-6: Same-key multi-instance decoding puts NSS-HQC-128 below its target</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>NSS-HQC-128 under one reused encapsulation key</td></tr>
+<tr><th>Discovery</th><td>Non-trivial</td></tr>
+<tr><th>Exploitation</th><td>Conditional <code>2^127.624</code> bit-operation estimate after <code>2^77</code> observed honest ciphertexts; full-size decoding not executed</td></tr>
+<tr><th>Credit</th><td>Yongge Wang, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-01</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/EGVF5KFURYZWTINU2KQILECGE6HIPI5V/">Wang's PKC Forum publication post</a></p>
+<p>NSS-HQC publishes <code>u = r1 + h*r2</code>, with both ephemeral vectors of weight 66 at the 128-bit level (specification Algorithm 2). This is a public <code>[58886,29443]</code> syndrome-decoding instance of weight 132. Each ciphertext supplies 29,443 rotated targets for the same public code. A decoder that recovers the true <code>(r1,r2)</code> can decompress the second component, remove its public dither, subtract the known <code>s*r2</code> contribution and decode the residual message; the key is the public <code>H_κ(m || ct_full)</code> (Algorithms 2, 4–6). The compressed-message recovery follows those equations but was not executed at full size.</p>
+<p>Under May and Sá Diogo's pinned DS-DOOM estimator, <code>2^76</code> honest ciphertexts still cost at least <code>2^128</code> bit operations, while <code>2^77</code> cost <code>2^127.624</code> with about <code>2^106.696</code> bits of memory. The targets must be independently generated ciphertexts from other parties under the same public key, with ephemeral errors unknown to the attacker; attacker-generated encapsulations do not supply unknown decoding targets. The narrow 0.376-bit time margin is sensitive to the estimator's cost convention. The estimator counts cyclic rotations of each ciphertext as related targets. Honest observations need no chosen decapsulations, and the frozen specification gives no per-key session cap. The pinned estimator, preceding above-target control, and public ciphertext-to-key equations establish the stated model crossing, hence Critical / Confirmed. No full-size decoding or complete compressed-message recovery was executed.</p>
+<h3 id="reproducing_5">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">NGCC_ESTIMATOR_PYTHON=/path/to/python-with-numpy-scipy python3 security/reproduce_code_multi_instance.py kem-26
+</code></pre>
+<p>The witness checks the pinned estimator's first crossing and its preceding above-target control. It does not execute syndrome decoding.</p>
+<h2 class="issue-heading" id="kem-26-7-static-key-decoding-misses-the-nss-hqc-384-and-512-targets">kem-26-7: Static-key decoding misses the NSS-HQC-384 and -512 targets</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>NSS-HQC-384 and -512 static public keys; the 256-bit estimate is too close to its target for a robust separate claim</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Stern estimates of <code>2^372.995</code> and <code>2^489.799</code> bit operations before any quasi-cyclic discount; no full-size decoding run</td></tr>
+<tr><th>Credit</th><td>Yongge Wang, with AI assistance; independent estimator replay by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-01</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/EGVF5KFURYZWTINU2KQILECGE6HIPI5V/">Wang's PKC Forum publication post</a></p>
+<p>NSS-HQC's public key contains <code>s = x+h*y</code>, where both persistent secret vectors have fixed weight <code>w_sk</code> (specification Algorithm 1). Recovering the weight-<code>2w_sk</code> pair from <code>(h,s)</code> is a public <code>[2n,n]</code> binary syndrome-decoding problem. A recovered <code>y</code>, with <code>x=s+h*y</code>, is an equivalent decryption key: for a ciphertext <code>u=r1+h*r2</code>, first decompress the second component and remove its public dither, then subtract <code>u*y</code> to obtain the encoded message plus <code>x*r2+y*r1+e</code> and quantization noise. The submitted decoder and public FO derivation then recover the honest challenge shared secret. Reproducing the original <code>seed_sk</code> or the separate rejection seed is unnecessary for that path. A spurious unrelated fixed-weight solution is negligible under the usual random-code approximation; the witness computes that bound for each set.</p>
+<p>The submitted analysis prices key recovery by <code>1.0969 sqrt(n)</code> extrapolated from one HQC-128 datum (§4.5.2, Tables 7–8). Direct finite-size Stern costs with <code>cryptographic-estimators==2.1.1</code> are:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Set</th>
+<th style="text-align: right;">Static key SD instance</th>
+<th style="text-align: right;">Raw Stern time</th>
+<th style="text-align: right;">Memory, bits</th>
+<th style="text-align: right;">After <code>sqrt(n)</code> QC discount</th>
+<th style="text-align: right;">Target</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NSS-HQC-128 control</td>
+<td style="text-align: right;"><code>[58886,29443,146]</code></td>
+<td style="text-align: right;">167.887</td>
+<td style="text-align: right;">43.537</td>
+<td style="text-align: right;">160.464</td>
+<td style="text-align: right;">128</td>
+</tr>
+<tr>
+<td>NSS-HQC-256, marginal</td>
+<td style="text-align: right;"><code>[108986,54493,234]</code></td>
+<td style="text-align: right;">255.868</td>
+<td style="text-align: right;">46.201</td>
+<td style="text-align: right;">248.001</td>
+<td style="text-align: right;">256</td>
+</tr>
+<tr>
+<td>NSS-HQC-384</td>
+<td style="text-align: right;"><code>[245158,122579,350]</code></td>
+<td style="text-align: right;"><strong>372.995</strong></td>
+<td style="text-align: right;">49.710</td>
+<td style="text-align: right;">364.543</td>
+<td style="text-align: right;">384</td>
+</tr>
+<tr>
+<td>NSS-HQC-512</td>
+<td style="text-align: right;"><code>[435802,217901,466]</code></td>
+<td style="text-align: right;"><strong>489.799</strong></td>
+<td style="text-align: right;">52.200</td>
+<td style="text-align: right;">480.933</td>
+<td style="text-align: right;">512</td>
+</tr>
+</tbody>
+</table></div>
+<p>The 384- and 512-bit raw costs are below target by about 11 and 22 bits without relying on the quasi-cyclic discount. Their memory exponents are also below target. The 256-bit raw margin is only 0.132 bits, so its exact verdict depends on operation-count conventions; the 128-bit control stays above target. This route decodes the <em>persistent</em> public-key relation. No full-size search was run, but the public key equation, equivalent-key mapping and finite-size cost establish a below-target static-key route for the two higher sets.</p>
+<h3 id="reproducing_6">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">NGCC_ESTIMATOR_PYTHON=/path/to/python-with-cryptographic-estimators-2.1.1 python3 kem-26/reproduce_key_isd_estimate.py
+</code></pre>
+<p>The witness pins the estimator version, checks all four costs and memory values, and bounds unrelated fixed-weight solutions. It does not carry out the exponential decoding search.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

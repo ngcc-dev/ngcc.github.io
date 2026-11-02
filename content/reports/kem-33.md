@@ -119,3 +119,34 @@ sh kem-33/reproduce_opt_partial_compare.sh
 ```
 
 The script checks the source lines and prints each set's compared prefix sizes. It then builds the submitted optimized tree in a temporary directory and, for each of the four sets, confirms over 10 fresh key pairs (50 with `NGCC_LONG=1`) that a single bit flipped in the `u` tail and in the `v` tail keeps the honest key. Its controls are flips in the compared prefixes and the salt, and the same tail flips against the prebuilt reference libraries; all of these change the key. Because the optimized API never seeds its SHAKE PRNG, the harness seeds it through `prng_init` with fresh randomness, as the submitted `tests/qube-test.c` does. The run takes about 40 seconds, most of it compilation, and is skipped (exit 77) without gcc or AVX2.
+
+## kem-33-5: Same-key multi-instance decoding puts four QUBE sets below target
+
+Severity: Critical
+Status: Confirmed
+Layer: Design
+Affected: QUBE-128, -256 and -384 against NGCC targets, and specified QUBE-192 against its own 192-bit claim, under one reused encapsulation key; QUBE-512 does not cross in the checked model through `2^80` sessions
+Discovery: Non-trivial
+Exploitation: Conditional `2^127.846`, `2^191.437`, `2^255.933` and `2^383.527` bit-operation estimates; full-size decoding not executed
+Credit: Yongge Wang, with AI assistance
+Date: 2026-11-01
+Original source: [Wang's PKC Forum publication post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/EGVF5KFURYZWTINU2KQILECGE6HIPI5V/)
+
+The first QUBE ciphertext component is `u = h1*f1 + h2*f2 + g` (specification Fig. 2). Its three sparse vectors form a public `[3r,2r]` syndrome-decoding instance of weight `2wf+wg`. Each observed ciphertext gives `r` cyclic rotations of a target under the same key. The observations must be independently generated ciphertexts from other parties, with ephemeral errors unknown to the attacker; attacker-generated encapsulations do not supply unknown decoding targets. Recovering the correct `(f1,f2,g)` exposes `f1,f2`; subtracting `s1*f1+s2*f2` from the second component leaves the encoded message plus the designed residual error, which the public concatenated decoder can correct. The KEM's key derivation is then public. This design-level route applies to the specified reference construction.
+
+| Set | Honest ciphertexts under one key | DS-DOOM time | Memory, bits | Target |
+|---|---:|---:|---:|---:|
+| QUBE-128 | `2^71` | `2^127.846` | `2^98.366` | 128 |
+| QUBE-192 | `2^72` | `2^191.437` | `2^101.265` | 192 |
+| QUBE-256 | `2^74` | `2^255.933` | `2^104.695` | 256 |
+| QUBE-384 | `2^80` | `2^383.527` | `2^112.675` | 384 |
+
+These are first below-target points from May and Sá Diogo's pinned heuristic DS-DOOM estimator; each preceding session exponent remains above target. QUBE-192 is a specified and implemented set with its own 192-bit claim, although 192 bits is not a separate NGCC security level; the 128-, 256- and 384-bit rows determine this entry's Critical severity. QUBE-512 is a control at `2^512.465` after `2^80` sessions. The small margins, especially QUBE-256's 0.067 bits, could close under another cost convention. The estimator counts cyclic rotations of each ciphertext as related targets, and its unstructured-weight pricing does not charge for the candidate's per-block weight constraints. The same-key model is supported by the submitted API, which sets no per-key encapsulation limit. The pinned estimator, above-target controls, and public ciphertext-to-key equations establish the model crossings, hence Critical / Confirmed. No full-size decoding or message recovery was run.
+
+### Reproducing
+
+```sh
+NGCC_ESTIMATOR_PYTHON=/path/to/python-with-numpy-scipy python3 security/reproduce_code_multi_instance.py kem-33
+```
+
+The witness verifies the four crossings, their previous above-target points, and the QUBE-512 control against the hash-pinned official estimator.

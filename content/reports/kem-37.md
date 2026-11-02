@@ -62,3 +62,34 @@ python3 kem-37/reproduce_reencrypt_sampler.py
 ```
 
 The compact witness checks the decrypted-message-to-sampler dataflow and early exit in all four archived trees. It deliberately does not claim to reproduce a stable timing classifier or key recovery on every host.
+
+## kem-37-3: Same-key multi-instance decoding puts all TriQ-KEM sets below target
+
+Severity: Critical
+Status: Confirmed
+Layer: Design
+Affected: TriQ-KEM-128, -256, -384 and -512 under one reused encapsulation key
+Discovery: Non-trivial
+Exploitation: Conditional `2^127.522`, `2^255.557`, `2^383.352` and `2^511.537` bit-operation estimates; full-size decoding not executed
+Credit: Yongge Wang, with AI assistance
+Date: 2026-11-01
+Original source: [Wang's PKC Forum publication post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/EGVF5KFURYZWTINU2KQILECGE6HIPI5V/)
+
+The first ciphertext component is `u = r1+h*r2` (specification §III-C), with each vector's fixed weight 67, 132, 196 or 260. Ignoring the public bounded-density restriction gives a conservative `[2n,n]` syndrome-decoding instance of weight `2wr`; each ciphertext has `n` cyclic rotations. The observations must be independently generated ciphertexts from other parties under the same public key, with ephemeral errors unknown to the attacker; attacker-generated encapsulations do not supply unknown decoding targets. A decoder returning the actual `(r1,r2)` exposes `r2`. Subtracting `s*r2` from the second component leaves a publicly decodable codeword plus the designed weight-`we` error; the recovered message and public `(ek,salt)` then determine the shared key. The bounded-density condition makes the true error space smaller, but the estimator does not claim to exploit it.
+
+| Set | Honest ciphertexts | DS-DOOM time | Memory, bits | Target |
+|---|---:|---:|---:|---:|
+| TriQ-KEM-128 | `2^73` | `2^127.522` | `2^100.993` | 128 |
+| TriQ-KEM-256 | `2^77` | `2^255.557` | `2^108.243` | 256 |
+| TriQ-KEM-384 | `2^77` | `2^383.352` | `2^110.152` | 384 |
+| TriQ-KEM-512 | `2^78` | `2^511.537` | `2^112.533` | 512 |
+
+These are the first below-target points under May and Sá Diogo's pinned heuristic DS-DOOM estimator; each preceding exponent is above target. The margins are below one bit, and a different operation-cost convention could change the verdict. The estimator counts cyclic rotations of each ciphertext as related targets. The published API imposes no per-key session cap. The pinned estimator, preceding above-target controls, and public ciphertext-to-key equations establish the stated model crossings, hence Critical / Confirmed. No full-size decoder run or end-to-end key recovery was performed.
+
+### Reproducing
+
+```sh
+NGCC_ESTIMATOR_PYTHON=/path/to/python-with-numpy-scipy python3 security/reproduce_code_multi_instance.py kem-37
+```
+
+The witness checks all four first crossings and preceding above-target controls against the hash-pinned official estimator.

@@ -122,6 +122,67 @@ cc -std=c99 -O2 -ffunction-sections -fdata-sections -Wl,--gc-sections \
 <pre><code class="language-sh">sh kem-33/reproduce_opt_partial_compare.sh
 </code></pre>
 <p>The script checks the source lines and prints each set's compared prefix sizes. It then builds the submitted optimized tree in a temporary directory and, for each of the four sets, confirms over 10 fresh key pairs (50 with <code>NGCC_LONG=1</code>) that a single bit flipped in the <code>u</code> tail and in the <code>v</code> tail keeps the honest key. Its controls are flips in the compared prefixes and the salt, and the same tail flips against the prebuilt reference libraries; all of these change the key. Because the optimized API never seeds its SHAKE PRNG, the harness seeds it through <code>prng_init</code> with fresh randomness, as the submitted <code>tests/qube-test.c</code> does. The run takes about 40 seconds, most of it compilation, and is skipped (exit 77) without gcc or AVX2.</p>
+<h2 class="issue-heading" id="kem-33-5-same-key-multi-instance-decoding-puts-four-qube-sets-below-target">kem-33-5: Same-key multi-instance decoding puts four QUBE sets below target</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>QUBE-128, -256 and -384 against NGCC targets, and specified QUBE-192 against its own 192-bit claim, under one reused encapsulation key; QUBE-512 does not cross in the checked model through <code>2^80</code> sessions</td></tr>
+<tr><th>Discovery</th><td>Non-trivial</td></tr>
+<tr><th>Exploitation</th><td>Conditional <code>2^127.846</code>, <code>2^191.437</code>, <code>2^255.933</code> and <code>2^383.527</code> bit-operation estimates; full-size decoding not executed</td></tr>
+<tr><th>Credit</th><td>Yongge Wang, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-01</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/EGVF5KFURYZWTINU2KQILECGE6HIPI5V/">Wang's PKC Forum publication post</a></p>
+<p>The first QUBE ciphertext component is <code>u = h1*f1 + h2*f2 + g</code> (specification Fig. 2). Its three sparse vectors form a public <code>[3r,2r]</code> syndrome-decoding instance of weight <code>2wf+wg</code>. Each observed ciphertext gives <code>r</code> cyclic rotations of a target under the same key. The observations must be independently generated ciphertexts from other parties, with ephemeral errors unknown to the attacker; attacker-generated encapsulations do not supply unknown decoding targets. Recovering the correct <code>(f1,f2,g)</code> exposes <code>f1,f2</code>; subtracting <code>s1*f1+s2*f2</code> from the second component leaves the encoded message plus the designed residual error, which the public concatenated decoder can correct. The KEM's key derivation is then public. This design-level route applies to the specified reference construction.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Set</th>
+<th style="text-align: right;">Honest ciphertexts under one key</th>
+<th style="text-align: right;">DS-DOOM time</th>
+<th style="text-align: right;">Memory, bits</th>
+<th style="text-align: right;">Target</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>QUBE-128</td>
+<td style="text-align: right;"><code>2^71</code></td>
+<td style="text-align: right;"><code>2^127.846</code></td>
+<td style="text-align: right;"><code>2^98.366</code></td>
+<td style="text-align: right;">128</td>
+</tr>
+<tr>
+<td>QUBE-192</td>
+<td style="text-align: right;"><code>2^72</code></td>
+<td style="text-align: right;"><code>2^191.437</code></td>
+<td style="text-align: right;"><code>2^101.265</code></td>
+<td style="text-align: right;">192</td>
+</tr>
+<tr>
+<td>QUBE-256</td>
+<td style="text-align: right;"><code>2^74</code></td>
+<td style="text-align: right;"><code>2^255.933</code></td>
+<td style="text-align: right;"><code>2^104.695</code></td>
+<td style="text-align: right;">256</td>
+</tr>
+<tr>
+<td>QUBE-384</td>
+<td style="text-align: right;"><code>2^80</code></td>
+<td style="text-align: right;"><code>2^383.527</code></td>
+<td style="text-align: right;"><code>2^112.675</code></td>
+<td style="text-align: right;">384</td>
+</tr>
+</tbody>
+</table></div>
+<p>These are first below-target points from May and Sá Diogo's pinned heuristic DS-DOOM estimator; each preceding session exponent remains above target. QUBE-192 is a specified and implemented set with its own 192-bit claim, although 192 bits is not a separate NGCC security level; the 128-, 256- and 384-bit rows determine this entry's Critical severity. QUBE-512 is a control at <code>2^512.465</code> after <code>2^80</code> sessions. The small margins, especially QUBE-256's 0.067 bits, could close under another cost convention. The estimator counts cyclic rotations of each ciphertext as related targets, and its unstructured-weight pricing does not charge for the candidate's per-block weight constraints. The same-key model is supported by the submitted API, which sets no per-key encapsulation limit. The pinned estimator, above-target controls, and public ciphertext-to-key equations establish the model crossings, hence Critical / Confirmed. No full-size decoding or message recovery was run.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">NGCC_ESTIMATOR_PYTHON=/path/to/python-with-numpy-scipy python3 security/reproduce_code_multi_instance.py kem-33
+</code></pre>
+<p>The witness verifies the four crossings, their previous above-target points, and the QUBE-512 control against the hash-pinned official estimator.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

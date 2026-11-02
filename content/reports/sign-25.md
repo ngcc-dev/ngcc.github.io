@@ -78,6 +78,8 @@ SQIsign2D2 §4.1 chooses `log2 p ≈ 2λ` because it prices generic classical at
 
 [Mamah's concrete analysis](https://eprint.iacr.org/2026/1821) estimates `2^[138.78,143.51]` gates for the old 250.3-bit SQIsign Level-I prime with at most `2^80` stored entries. Level1-eff uses a nearby 254.6-bit prime. Scaling only the attack's dominant fixed-memory square-root term would add about `(254.6-250.3)/2 = 2.2` bits, suggesting `2^[140.9,145.7]` gates. This is context rather than a candidate-specific attack estimate: it does not recompute the smoothness or root-finding factors, its midpoint is above the roughly `2^143`-gate AES-128 reference, and its interval crosses that reference.
 
+Publication update: [ePrint 2026/1821](https://eprint.iacr.org/2026/1821) was revised on 2026-10-30. Its [revised Table 4](https://eprint.iacr.asia/2026/1821.pdf) still gives `2^[138.78,143.51]` for that old Level-I prime; it does not provide a new calculation for this submitted Level1-eff prime. The first-order extrapolation above remains a lead, not a measured candidate-specific attack.
+
 [SQIsign v3](https://sqisign.org/spec/sqisign-20260901.pdf) now uses approximately 326-, 505- and 669-bit primes for 128-, 192- and 256-bit targets. Its deliberately attacker-favourable model supports the seriousness of the parameter concern, but gives a lower bound used for parameter selection rather than an executable attack cost. For Level1-sec and the higher submitted profiles, the old sizing rationale is superseded but no candidate-specific concrete below-target cost is asserted here. No full-size key recovery or forgery was run.
 
 Reclassified from Medium to High on 2026-10-16. The status remains Lead because a candidate-specific below-target cost has not been established.

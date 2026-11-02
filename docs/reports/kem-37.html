@@ -74,6 +74,67 @@ cc -std=c99 -O3 -ffunction-sections -fdata-sections -Wl,--gc-sections \
 <pre><code class="language-sh">python3 kem-37/reproduce_reencrypt_sampler.py
 </code></pre>
 <p>The compact witness checks the decrypted-message-to-sampler dataflow and early exit in all four archived trees. It deliberately does not claim to reproduce a stable timing classifier or key recovery on every host.</p>
+<h2 class="issue-heading" id="kem-37-3-same-key-multi-instance-decoding-puts-all-triq-kem-sets-below-target">kem-37-3: Same-key multi-instance decoding puts all TriQ-KEM sets below target</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>TriQ-KEM-128, -256, -384 and -512 under one reused encapsulation key</td></tr>
+<tr><th>Discovery</th><td>Non-trivial</td></tr>
+<tr><th>Exploitation</th><td>Conditional <code>2^127.522</code>, <code>2^255.557</code>, <code>2^383.352</code> and <code>2^511.537</code> bit-operation estimates; full-size decoding not executed</td></tr>
+<tr><th>Credit</th><td>Yongge Wang, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-01</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/EGVF5KFURYZWTINU2KQILECGE6HIPI5V/">Wang's PKC Forum publication post</a></p>
+<p>The first ciphertext component is <code>u = r1+h*r2</code> (specification §III-C), with each vector's fixed weight 67, 132, 196 or 260. Ignoring the public bounded-density restriction gives a conservative <code>[2n,n]</code> syndrome-decoding instance of weight <code>2wr</code>; each ciphertext has <code>n</code> cyclic rotations. The observations must be independently generated ciphertexts from other parties under the same public key, with ephemeral errors unknown to the attacker; attacker-generated encapsulations do not supply unknown decoding targets. A decoder returning the actual <code>(r1,r2)</code> exposes <code>r2</code>. Subtracting <code>s*r2</code> from the second component leaves a publicly decodable codeword plus the designed weight-<code>we</code> error; the recovered message and public <code>(ek,salt)</code> then determine the shared key. The bounded-density condition makes the true error space smaller, but the estimator does not claim to exploit it.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Set</th>
+<th style="text-align: right;">Honest ciphertexts</th>
+<th style="text-align: right;">DS-DOOM time</th>
+<th style="text-align: right;">Memory, bits</th>
+<th style="text-align: right;">Target</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TriQ-KEM-128</td>
+<td style="text-align: right;"><code>2^73</code></td>
+<td style="text-align: right;"><code>2^127.522</code></td>
+<td style="text-align: right;"><code>2^100.993</code></td>
+<td style="text-align: right;">128</td>
+</tr>
+<tr>
+<td>TriQ-KEM-256</td>
+<td style="text-align: right;"><code>2^77</code></td>
+<td style="text-align: right;"><code>2^255.557</code></td>
+<td style="text-align: right;"><code>2^108.243</code></td>
+<td style="text-align: right;">256</td>
+</tr>
+<tr>
+<td>TriQ-KEM-384</td>
+<td style="text-align: right;"><code>2^77</code></td>
+<td style="text-align: right;"><code>2^383.352</code></td>
+<td style="text-align: right;"><code>2^110.152</code></td>
+<td style="text-align: right;">384</td>
+</tr>
+<tr>
+<td>TriQ-KEM-512</td>
+<td style="text-align: right;"><code>2^78</code></td>
+<td style="text-align: right;"><code>2^511.537</code></td>
+<td style="text-align: right;"><code>2^112.533</code></td>
+<td style="text-align: right;">512</td>
+</tr>
+</tbody>
+</table></div>
+<p>These are the first below-target points under May and Sá Diogo's pinned heuristic DS-DOOM estimator; each preceding exponent is above target. The margins are below one bit, and a different operation-cost convention could change the verdict. The estimator counts cyclic rotations of each ciphertext as related targets. The published API imposes no per-key session cap. The pinned estimator, preceding above-target controls, and public ciphertext-to-key equations establish the stated model crossings, hence Critical / Confirmed. No full-size decoder run or end-to-end key recovery was performed.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">NGCC_ESTIMATOR_PYTHON=/path/to/python-with-numpy-scipy python3 security/reproduce_code_multi_instance.py kem-37
+</code></pre>
+<p>The witness checks all four first crossings and preceding above-target controls against the hash-pinned official estimator.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

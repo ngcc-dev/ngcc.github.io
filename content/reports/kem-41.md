@@ -47,7 +47,7 @@ In a [further exchange](https://list.niccs.org.cn/archives/list/pkcforum@list.ni
 
 ### Proposed fixes
 
-The team initially stated that it would clarify the quantifiers and assumptions, revise the concrete DFR and failure-attack analysis, and investigate both worst-case and independent-key proof approaches. Its 2026-10-30 announcement says the revised specification now distinguishes average-case and worst-case failure probabilities and gives a revised concrete-security evaluation. These proposals and reported changes are recorded without evaluating the revised candidate.
+The team initially stated that it would clarify the quantifiers and assumptions, revise the concrete DFR and failure-attack analysis, and investigate both worst-case and independent-key proof approaches. Its 2026-10-30 announcement points to the [revised ZEN v2.0 specification](https://light-lattice.org/zen/specifications/20261030/ZEN-20261030.pdf) and says it now distinguishes average-case and worst-case failure probabilities. In a [2026-10-31 follow-up](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/3WCO47NOVLIYELKUXDNSB76LPXEAD3VU/), Leo Luo questions the revised worst-case DFRs (`2^-100`, `2^-127`, `2^-106`) and proposes a shifted-Gaussian failure-attack model giving 109, 176 and 138 security bits; he explicitly says the model's suitability remains unresolved and requests the team's derivation. This concerns the revised version only. Neither the revision nor that attack model has been evaluated here; the frozen-version classification is unchanged.
 
 ### Reproducing
 
@@ -81,7 +81,7 @@ The same unchecked wrapper also makes encapsulation return success after an XOF 
 
 ### Proposed fixes
 
-The forum report proposes propagating XOF/hash failures through ZEN's samplers and KEM entry points, and not returning a key after an unwritten output is sampled. The ZEN team later announced that its revised x86 reference and AVX2 implementations fix the allocation-failure-induced uninitialized-memory issue; it says updates for the other platforms will follow. These proposals and reported changes are recorded without evaluating the revised implementations.
+The forum report proposes propagating XOF/hash failures through ZEN's samplers and KEM entry points, and not returning a key after an unwritten output is sampled. The ZEN team later announced that its [2026-10-30 v2.0 implementation package](https://light-lattice.org/zen/implementations/20261030/ZEN-20261030.zip) fixes the allocation-failure-induced uninitialized-memory issue in the x86 reference and AVX2 implementations; it says updates for the other platforms will follow. This is a pointer to the team's revision, not an evaluation of it; the frozen-version finding remains unchanged.
 
 ### Reproducing
 

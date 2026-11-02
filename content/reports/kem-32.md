@@ -117,6 +117,7 @@ Exploitation: An order-19 public quotient reduces to an ordinary Goppa code afte
 Credit: Liping Wang; independent quotient audit by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-10-08
 Original source: [Liping Wang's QCTM structural-analysis post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XGAGQXXF4DD735AOVZJY67QHJS2M6LBH/)
+Follow-up source: [Yongge Wang's 2026-11-02 PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/EGVF5KFURYZWTINU2KQILECGE6HIPI5V/)
 
 Additional reference: [Weis, *Improving GIJS Key Recovery for Classic McEliece*, ePrint 2026/1984](https://eprint.iacr.org/2026/1984)
 
@@ -130,7 +131,7 @@ The exact public and secret-oracle row spaces agree on the archived KAT keys for
 | QCTM256 | `[1000,513]` | `[999,513]` |
 | QCTM512 | `[2000,1045]` | `[1999,1045]` |
 
-This defeats the stated rationale for excluding ordinary-Goppa structural analysis, hence Medium. The forum post estimates quotient key recovery using Weis's heuristic GIJS model, but does not show how a recovered quotient key yields a key for the full twisted QCTM decapsulation or cost that lifting step. No full-scheme key recovery is claimed here.
+This defeats the stated rationale for excluding ordinary-Goppa structural analysis, hence Medium. The forum post estimates quotient key recovery using Weis's heuristic GIJS model. [Yongge Wang's 2026-11-01 analysis](https://github.com/yonggewang/ClaudeAI/blob/main/NGCC/main.pdf), §4, derives an explicit character-projection lift from a recovered quotient description and demonstrates decapsulation on two scaled instances. Its lift assumes the returned description has the stated affine/Frobenius equivalence and that the alignment system has a unique solution; neither a real QCTM quotient key nor a full-size decapsulation key has been recovered. The construction strengthens the route to `kem-32-5` without establishing its heuristic key-recovery cost.
 
 ### Reproducing
 
@@ -151,9 +152,18 @@ Exploitation: The reporter estimates 2^141.3 and 2^142.0 bit operations respecti
 Credit: Liping Wang
 Date: 2026-10-08
 Original source: [Liping Wang's QCTM structural-analysis post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XGAGQXXF4DD735AOVZJY67QHJS2M6LBH/)
+Follow-up source: [Yongge Wang's 2026-11-02 PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/EGVF5KFURYZWTINU2KQILECGE6HIPI5V/)
 
 Additional reference: [Weis, *Improving GIJS Key Recovery for Classic McEliece*, ePrint 2026/1984](https://eprint.iacr.org/2026/1984)
 
 The public QCTM code exposes an ordinary Goppa quotient of degree 27 or 53 for these sets. The reporter applies Weis's heuristic GIJS key-recovery model to that quotient, estimating the costs above (or 2^176.7 and 2^177.7 bit operations with square-root memory charging). If this yields full QCTM decapsulation keys at comparable cost, both estimates fall below the claimed 256- and 512-bit levels.
 
-Three steps remain open: the GIJS/Weis assumptions have not been established at these quotient degrees; quotient-key recovery has not been demonstrated on a QCTM key; and lifting a recovered quotient key through the order-19 alignment and twist gauge to a full decapsulation key has not been implemented or costed. This is a candidate-specific Critical *lead*, not a confirmed key-recovery attack. The archived-key audit in `kem-32/reproduce_folded_quotient.sh` confirms only the prerequisite quotient.
+Two decisive steps remain open: the GIJS/Weis assumptions have not been established at these quotient degrees, and quotient-key recovery has not been demonstrated on a QCTM key. Wang's [follow-up analysis](https://github.com/yonggewang/ClaudeAI/blob/main/NGCC/main.pdf) supplies a polynomial-time conditional lifting algorithm and a scaled-key implementation. We ran its toy witness with two seeds, including an extra Frobenius twist: in both runs the lifted key matched the public code and decoded a fresh error. The proof's one-dimensional alignment condition is heuristic and was checked on those instances, not on full QCTM keys. No full-size key recovery or full-scheme attack has been executed. This remains a candidate-specific Critical *lead*. The archived-key audit in `kem-32/reproduce_folded_quotient.sh` confirms only the prerequisite quotient.
+
+### Reproducing
+
+```sh
+python3 kem-32/reproduce_lift_toy.py
+```
+
+The wrapper fetches Wang's hash-pinned toy script and checks two scaled-key lifts and fresh-error decodings. The quotient key is supplied to the toy; this does not recover a quotient key or decapsulate a full-size QCTM ciphertext.

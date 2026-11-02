@@ -162,3 +162,60 @@ sh kem-26/reproduce_rs_decoder_iterations.sh
 ```
 
 The native component witness includes the frozen NSS-HQC-128 decoder, checks that clean and random received words take different numbers of trials, and verifies its trial-loop result against the submitted `rs_decode`. It does **not** reproduce a secret-key timing oracle or key recovery; those remain the reporter's observations.
+
+## kem-26-6: Same-key multi-instance decoding puts NSS-HQC-128 below its target
+
+Severity: Critical
+Status: Confirmed
+Layer: Design
+Affected: NSS-HQC-128 under one reused encapsulation key
+Discovery: Non-trivial
+Exploitation: Conditional `2^127.624` bit-operation estimate after `2^77` observed honest ciphertexts; full-size decoding not executed
+Credit: Yongge Wang, with AI assistance
+Date: 2026-11-01
+Original source: [Wang's PKC Forum publication post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/EGVF5KFURYZWTINU2KQILECGE6HIPI5V/)
+
+NSS-HQC publishes `u = r1 + h*r2`, with both ephemeral vectors of weight 66 at the 128-bit level (specification Algorithm 2). This is a public `[58886,29443]` syndrome-decoding instance of weight 132. Each ciphertext supplies 29,443 rotated targets for the same public code. A decoder that recovers the true `(r1,r2)` can decompress the second component, remove its public dither, subtract the known `s*r2` contribution and decode the residual message; the key is the public `H_κ(m || ct_full)` (Algorithms 2, 4–6). The compressed-message recovery follows those equations but was not executed at full size.
+
+Under May and Sá Diogo's pinned DS-DOOM estimator, `2^76` honest ciphertexts still cost at least `2^128` bit operations, while `2^77` cost `2^127.624` with about `2^106.696` bits of memory. The targets must be independently generated ciphertexts from other parties under the same public key, with ephemeral errors unknown to the attacker; attacker-generated encapsulations do not supply unknown decoding targets. The narrow 0.376-bit time margin is sensitive to the estimator's cost convention. The estimator counts cyclic rotations of each ciphertext as related targets. Honest observations need no chosen decapsulations, and the frozen specification gives no per-key session cap. The pinned estimator, preceding above-target control, and public ciphertext-to-key equations establish the stated model crossing, hence Critical / Confirmed. No full-size decoding or complete compressed-message recovery was executed.
+
+### Reproducing
+
+```sh
+NGCC_ESTIMATOR_PYTHON=/path/to/python-with-numpy-scipy python3 security/reproduce_code_multi_instance.py kem-26
+```
+
+The witness checks the pinned estimator's first crossing and its preceding above-target control. It does not execute syndrome decoding.
+
+## kem-26-7: Static-key decoding misses the NSS-HQC-384 and -512 targets
+
+Severity: Critical
+Status: Confirmed
+Layer: Design
+Affected: NSS-HQC-384 and -512 static public keys; the 256-bit estimate is too close to its target for a robust separate claim
+Discovery: Moderate
+Exploitation: Stern estimates of `2^372.995` and `2^489.799` bit operations before any quasi-cyclic discount; no full-size decoding run
+Credit: Yongge Wang, with AI assistance; independent estimator replay by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-01
+Original source: [Wang's PKC Forum publication post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/EGVF5KFURYZWTINU2KQILECGE6HIPI5V/)
+
+NSS-HQC's public key contains `s = x+h*y`, where both persistent secret vectors have fixed weight `w_sk` (specification Algorithm 1). Recovering the weight-`2w_sk` pair from `(h,s)` is a public `[2n,n]` binary syndrome-decoding problem. A recovered `y`, with `x=s+h*y`, is an equivalent decryption key: for a ciphertext `u=r1+h*r2`, first decompress the second component and remove its public dither, then subtract `u*y` to obtain the encoded message plus `x*r2+y*r1+e` and quantization noise. The submitted decoder and public FO derivation then recover the honest challenge shared secret. Reproducing the original `seed_sk` or the separate rejection seed is unnecessary for that path. A spurious unrelated fixed-weight solution is negligible under the usual random-code approximation; the witness computes that bound for each set.
+
+The submitted analysis prices key recovery by `1.0969 sqrt(n)` extrapolated from one HQC-128 datum (§4.5.2, Tables 7–8). Direct finite-size Stern costs with `cryptographic-estimators==2.1.1` are:
+
+| Set | Static key SD instance | Raw Stern time | Memory, bits | After `sqrt(n)` QC discount | Target |
+|---|---:|---:|---:|---:|---:|
+| NSS-HQC-128 control | `[58886,29443,146]` | 167.887 | 43.537 | 160.464 | 128 |
+| NSS-HQC-256, marginal | `[108986,54493,234]` | 255.868 | 46.201 | 248.001 | 256 |
+| NSS-HQC-384 | `[245158,122579,350]` | **372.995** | 49.710 | 364.543 | 384 |
+| NSS-HQC-512 | `[435802,217901,466]` | **489.799** | 52.200 | 480.933 | 512 |
+
+The 384- and 512-bit raw costs are below target by about 11 and 22 bits without relying on the quasi-cyclic discount. Their memory exponents are also below target. The 256-bit raw margin is only 0.132 bits, so its exact verdict depends on operation-count conventions; the 128-bit control stays above target. This route decodes the *persistent* public-key relation. No full-size search was run, but the public key equation, equivalent-key mapping and finite-size cost establish a below-target static-key route for the two higher sets.
+
+### Reproducing
+
+```sh
+NGCC_ESTIMATOR_PYTHON=/path/to/python-with-cryptographic-estimators-2.1.1 python3 kem-26/reproduce_key_isd_estimate.py
+```
+
+The witness pins the estimator version, checks all four costs and memory values, and bounds unrelated fixed-weight solutions. It does not carry out the exponential decoding search.
