@@ -30,6 +30,8 @@ The Chinith team confirms that every implementation must bind `a_tilde_0` throug
 
 The team's response proposes including every coefficient `a_tilde_0, ..., a_tilde_(d-1)` in both signing and verification. This section records the proposal without evaluating it.
 
+The [Chinith team's 2026-11-02 announcement](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/TTYYGAPMWVQY6NPTZPUJKY6MOJERAWW3/) links its [version 0.0.2 specification and implementations](https://github.com/AntCPLab/Chinith/tree/main/0.0.2) and says they address the reported issues. This revision has not been evaluated here; the finding concerns the archived submission.
+
 ### Reproducing
 
 ```sh

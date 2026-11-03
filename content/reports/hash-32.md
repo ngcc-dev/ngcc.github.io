@@ -54,3 +54,28 @@ python3 security/zc_iterative_differential.py
 The certificate exhausts the three-bit χ inputs and checks both reported masks against the linear rotations: the 16-active-position mask used above has weight 32 per round, while the all-ones mask used for the reported ZC-1280 reduced-round trail has 64 active positions and weight 128 per round. It then prints the unresolved multi-round limitation.
 
 Run `python3 security/zc_message_modification.py` for the extension's rate-only systems and a replay of the reduced-round collision against the submitted permutation. The witness does not rerun the long search. Its reduced rounds use the reference code's last-round-constant convention, not the first four rounds of the full schedule.
+
+## hash-32-3: Sparse ZC-1280 trail gives a conditional 2^144 collision estimate
+
+Severity: Critical
+Status: Lead
+Layer: Design
+Affected: Submitted ZC-EDMC-1280-512 implementation; the alternate specified mapping and larger-output instances are not covered
+Discovery: Non-trivial
+Exploitation: Conditional 2^144 candidate trials with polynomial generation and storage; no twelve-round collision
+Credit: Zhongfeng Niu, Thomas Peyrin, Liu Zhang, and Chunning Zhou
+Date: 2026-11-02
+Original source: [Niu, Peyrin, Zhang, and Zhou's issue #37](https://github.com/ngcc-dev/ngcc-harness/issues/37)
+Follow-up source: [CryptHash Forum post](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/NVJUXBKSSV4OQU7AZCYH5TGLLUUHH4FR/)
+
+The submitted ZC-EDMC-1280-512 implementation uses `h(h(X) XOR cap(X))`, where both `h` calls use the last six submitted round constants. The reported rate-only difference occupies eight distinct χ columns and is fixed by the linear layer. Its exact one-round rate on a uniform state is `2^-16`. A legal common prefix from the zero IV fixes eight capacity conditions; an exact affine construction enforces the first three rounds of the inner half, leaving a 278-dimensional family, or `2^277` distinct unordered pairs. Sampling it costs polynomial work per pair.
+
+The midpoint capacity feed-forward preserves the difference, but changes the absolute condition bits; the attachment includes this adjustment. If each of the nine remaining rounds, across both halves, passes its actual 16-bit condition with conditional probability `2^-16` on the constructed family, the expected cost is `2^144` candidates. A later rate-block difference then merges the states, giving a collision below the `2^256` digest birthday bound. The tail probability is unproved, so this is a Lead without a full-round collision. The attachment shows a collision only for an explicitly defined two-plus-two-round reduction; its saved messages have different full twelve-round digests. This analysis does not resolve the submitted specification's different inner-function mapping.
+
+### Reproducing
+
+```sh
+python3 security/zc1280_issue37.py
+```
+
+The hash-pinned verifier checks the full-schedule three-round family and the reduced hash with padding and merging. The wrapper also checks saved full-round digests against the submitted native C implementation. No check establishes the remaining-round probability or a twelve-round collision.

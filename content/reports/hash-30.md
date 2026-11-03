@@ -55,3 +55,28 @@ sh security/zc_column_trail.sh
 ```
 
 The script checks that the reference linear layer fixes the trail patterns at every `z` and measures the one-round rate at each start round. It then finds fresh three-round collisions for ZC-DM and ZC-DMC at -512 and -768 from the zero IV with padding, replays stored four-round -512 collisions, and checks every pair with the independent Python mode model. The full twelve-round digests differ. It uses the reference code's last-R-round convention and runs in about 10 seconds.
+
+## hash-30-3: Sparse ZC-1280 trail gives a conditional 2^144 collision estimate
+
+Severity: Critical
+Status: Lead
+Layer: Design
+Affected: ZC-DM-1280-512; the 768- and 1024-bit-output instances are not covered
+Discovery: Non-trivial
+Exploitation: Conditional 2^144 candidate trials with polynomial generation and storage; no twelve-round collision
+Credit: Zhongfeng Niu, Thomas Peyrin, Liu Zhang, and Chunning Zhou
+Date: 2026-11-02
+Original source: [Niu, Peyrin, Zhang, and Zhou's issue #37](https://github.com/ngcc-dev/ngcc-harness/issues/37)
+Follow-up source: [CryptHash Forum post](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/NVJUXBKSSV4OQU7AZCYH5TGLLUUHH4FR/)
+
+The ZC-1280-512 state has a 704-bit rate. The reported difference occupies eight distinct χ columns wholly in that rate and is fixed by the submitted linear layer. Each column requires two bit conditions for the difference to persist, giving an exact one-round rate of `2^-16` on a uniform state. A common legal prefix from the zero IV fixes eight capacity conditions; the next message block selects the rate bits. An exact affine construction then enforces the first three rounds, leaving a 274-dimensional family, or `2^273` distinct unordered message pairs. Sampling it costs polynomial work per pair.
+
+For ZC-DM, twelve successful rounds make the permutation's output difference equal the input difference. The full-state Davies–Meyer feed-forward cancels both, giving a collision for distinct padded messages. If each of the nine remaining rounds independently passes its 16-bit condition with conditional probability `2^-16` on the constructed family, the expected cost is `2^144` candidates, below the `2^256` digest birthday bound. That tail probability has not been established for this generated distribution; the estimate is therefore a Lead, not a completed full-round attack. The attachment demonstrates a valid four-round collision and confirms that the same messages have different twelve-round digests.
+
+### Reproducing
+
+```sh
+python3 security/zc1280_issue37.py
+```
+
+The hash-pinned attachment verifier checks the entire three-round affine family and the reduced-round collision. The wrapper compares both saved messages' full twelve-round digests against the submitted native C hash. These checks establish the opening and reduced example, not the remaining-round probability or a full-round collision.

@@ -66,6 +66,27 @@
 </code></pre>
 <p>The certificate exhausts the three-bit χ inputs and checks both reported masks against the linear rotations: the 16-active-position mask used above has weight 32 per round, while the all-ones mask used for the reported ZC-1280 reduced-round trail has 64 active positions and weight 128 per round. It then prints the unresolved multi-round limitation.</p>
 <p>Run <code>python3 security/zc_message_modification.py</code> for the extension's rate-only systems and a replay of the reduced-round collision against the submitted permutation. The witness does not rerun the long search. Its reduced rounds use the reference code's last-round-constant convention, not the first four rounds of the full schedule.</p>
+<h2 class="issue-heading" id="hash-32-3-sparse-zc-1280-trail-gives-a-conditional-2144-collision-estimate">hash-32-3: Sparse ZC-1280 trail gives a conditional 2^144 collision estimate</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-lead">Lead</span></td></tr>
+<tr><th>Affected</th><td>Submitted ZC-EDMC-1280-512 implementation; the alternate specified mapping and larger-output instances are not covered</td></tr>
+<tr><th>Discovery</th><td>Non-trivial</td></tr>
+<tr><th>Exploitation</th><td>Conditional 2^144 candidate trials with polynomial generation and storage; no twelve-round collision</td></tr>
+<tr><th>Credit</th><td>Zhongfeng Niu, Thomas Peyrin, Liu Zhang, and Chunning Zhou</td></tr>
+<tr><th>Date</th><td>2026-11-02</td></tr>
+</table></div>
+<p>Original source: <a href="https://github.com/ngcc-dev/ngcc-harness/issues/37">Niu, Peyrin, Zhang, and Zhou's issue #37</a>
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/NVJUXBKSSV4OQU7AZCYH5TGLLUUHH4FR/">CryptHash Forum post</a></p>
+<p>The submitted ZC-EDMC-1280-512 implementation uses <code>h(h(X) XOR cap(X))</code>, where both <code>h</code> calls use the last six submitted round constants. The reported rate-only difference occupies eight distinct χ columns and is fixed by the linear layer. Its exact one-round rate on a uniform state is <code>2^-16</code>. A legal common prefix from the zero IV fixes eight capacity conditions; an exact affine construction enforces the first three rounds of the inner half, leaving a 278-dimensional family, or <code>2^277</code> distinct unordered pairs. Sampling it costs polynomial work per pair.</p>
+<p>The midpoint capacity feed-forward preserves the difference, but changes the absolute condition bits; the attachment includes this adjustment. If each of the nine remaining rounds, across both halves, passes its actual 16-bit condition with conditional probability <code>2^-16</code> on the constructed family, the expected cost is <code>2^144</code> candidates. A later rate-block difference then merges the states, giving a collision below the <code>2^256</code> digest birthday bound. The tail probability is unproved, so this is a Lead without a full-round collision. The attachment shows a collision only for an explicitly defined two-plus-two-round reduction; its saved messages have different full twelve-round digests. This analysis does not resolve the submitted specification's different inner-function mapping.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 security/zc1280_issue37.py
+</code></pre>
+<p>The hash-pinned verifier checks the full-schedule three-round family and the reduced hash with padding and merging. The wrapper also checks saved full-round digests against the submitted native C implementation. No check establishes the remaining-round probability or a twelve-round collision.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

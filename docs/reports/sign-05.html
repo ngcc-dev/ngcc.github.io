@@ -45,6 +45,7 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <p>The Chinith team confirms that every implementation must bind <code>a_tilde_0</code> through <code>a_tilde_(d-1)</code> and describes the omission as an implementation oversight. The same response lists three additional specification corrections concerning the <code>d=2</code>/<code>d=3</code>, EM/non-EM, and degree-lifting formulas; those errata are not separately classified here.</p>
 <h3 id="proposed-fixes">Proposed fixes</h3>
 <p>The team's response proposes including every coefficient <code>a_tilde_0, ..., a_tilde_(d-1)</code> in both signing and verification. This section records the proposal without evaluating it.</p>
+<p>The <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/TTYYGAPMWVQY6NPTZPUJKY6MOJERAWW3/">Chinith team's 2026-11-02 announcement</a> links its <a href="https://github.com/AntCPLab/Chinith/tree/main/0.0.2">version 0.0.2 specification and implementations</a> and says they address the reported issues. This revision has not been evaluated here; the finding concerns the archived submission.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">make -C sign-05 exploit
