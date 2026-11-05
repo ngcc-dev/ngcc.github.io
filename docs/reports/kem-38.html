@@ -218,6 +218,7 @@ BB_NPROC=12 BB_PROBE_SHARDS=8 BB_SCAN_SHARDS=1000 \
 <li>A random code yields no dependencies.</li>
 </ul>
 <p>This breaks UVW-KEM-128 confidentiality from the public key alone, and refutes the code-distinguishing assumption at both measured levels. The jet system has <code>Θ(n^{1.5})</code> rows and columns, so dense elimination costs <code>O(n^{4.5})</code> per round. The post's figures for full key recovery, <code>2^53.68</code>, <code>2^57.75</code> and <code>2^61.56</code> bit operations, were not checked. UVW-KEM-256 key recovery and both UVW-KEM-512 steps were not run. They would need 68,672- and about 186,000-row systems respectively.</p>
+<p>Later publication: <a href="https://eprint.iacr.org/2026/2710">Yongge Wang, <em>Hidden Curves and Short Duals: Cubic Jets, Dual Leaks, and the Limits of Masked-Code Encryption</em></a> develops the cubic-jet analysis and predicts a deficiency at every UVW parameter set. Its separate RLCE results concern constructions outside the NGCC submission. This pointer does not extend the full-size UVW recovery demonstrated here beyond UVW-KEM-128.</p>
 <h3 id="reproducing_7">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">sh kem-38/reproduce_jet_distinguisher.sh                 # scaled models and controls

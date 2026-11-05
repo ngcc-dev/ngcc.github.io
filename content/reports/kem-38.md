@@ -230,6 +230,8 @@ The attack recovers an equivalent decapsulation description: the pairing, scalin
 
 This breaks UVW-KEM-128 confidentiality from the public key alone, and refutes the code-distinguishing assumption at both measured levels. The jet system has `Θ(n^{1.5})` rows and columns, so dense elimination costs `O(n^{4.5})` per round. The post's figures for full key recovery, `2^53.68`, `2^57.75` and `2^61.56` bit operations, were not checked. UVW-KEM-256 key recovery and both UVW-KEM-512 steps were not run. They would need 68,672- and about 186,000-row systems respectively.
 
+Later publication: [Yongge Wang, *Hidden Curves and Short Duals: Cubic Jets, Dual Leaks, and the Limits of Masked-Code Encryption*](https://eprint.iacr.org/2026/2710) develops the cubic-jet analysis and predicts a deficiency at every UVW parameter set. Its separate RLCE results concern constructions outside the NGCC submission. This pointer does not extend the full-size UVW recovery demonstrated here beyond UVW-KEM-128.
+
 ### Reproducing
 
 ```sh

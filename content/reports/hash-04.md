@@ -76,6 +76,8 @@ Decode the public finalization of a target digest to obtain its matrix `T`, and 
 
 For a uniformly sampled 512-bit input to CHAMP-512, this gives a preimage in `2^256` time and storage; for a 1024-bit input to CHAMP-1024, it costs `2^512`. Both are below the NGCC requirement of `h`-bit preimage security for an `h`-bit digest ([Evaluation Criteria](https://www.niccs.org.cn/niccs/Notice/crlRB1ZY.pdf) §1(2)), so the result is Critical even though these full-scale costs are infeasible. The submitted witness recovers a 40-bit input for both variants with two lists of about `2^20` products. It does not give a distinct second preimage or a full-parameter collision.
 
+Follow-up: [Freeman Slaughter, *CHAMPing at the Bit*](https://eprint.iacr.org/2026/2713), Theorem 3, gives a linear-arithmetic-time decoder for every main-generator message of at most 42 bits at CHAMP-512 or 84 bits at CHAMP-1024. The digest is inverted to its matrix, lifted to the unique small integer matrix, and peeled one generator at a time using disjoint first-column slope intervals. This is a stronger result for these very short inputs; it does not change the arbitrary-length scope or costs above.
+
 ### Reproducing
 
 The quick target uses 32-bit inputs; the full target repeats the submitted 40-bit experiment. Both generate and verify targets through the submitted C libraries and include a changed-input control:
@@ -151,3 +153,31 @@ python3 hash-04/reproduce_full_collision.py
 ```
 
 The witness fetches the two short messages at the pinned commit, checks their SHA-256 values and distinctness, computes their original matrix products independently, and hashes both with the frozen CHAMP-512 library. It requires the full digest to match, then changes one input bit as a control. It also checks the long pair's equal-length matrix-product identity and modeled digest from a pinned 1.7 KB certificate, without downloading or hashing the 53 MB messages. As a separate local check, fresh builds of the submitted reference and optimized C sources accepted the short pair with the same digest. The reporter's package records direct C checks for both pairs. The search's general success rate and a CHAMP-1024 extension have not been established.
+
+## hash-04-7: Short commuting palindromes have a distribution-free square-root collision search
+
+Severity: Critical
+Status: Confirmed
+Layer: Design
+Affected: CHAMP-512 and CHAMP-1024 constructions with either specified generator pair; the submitted implementations use the main pair
+Discovery: Non-trivial
+Exploitation: Expected `O(sqrt(p))` class evaluations, `O(sqrt(p) log p)` field operations and `O(sqrt(p))` storage for equal-length 516- and 1028-bit collisions, without a distributional assumption; no full-size collision was computed by this method
+Credit: Freeman Slaughter <fslaughter@usf.edu>
+Date: 2026-11-05
+Original source: [Freeman Slaughter, *CHAMPing at the Bit: Short Square-Root Collisions for Two-Generator Cayley Hashes*, ePrint 2026/2713](https://eprint.iacr.org/2026/2713), Theorems 1–2 and Proposition 3
+
+CHAMP multiplies one of two public `2 x 2` matrices for each message bit, modulo `p = 2^128 − 15449` or `p = 2^256 − 36113`. For the implemented pair `A = [[−2,1],[4,−3]]`, `B = [[−5,2],[−6,2]]`, the symmetric matrix `S = [[22,−14],[−14,9]]` has determinant 2 and makes `SA` and `SB` symmetric. The specified alternative `B' = [[6,4],[−2,−1]]` has the same property with `S' = [[10,6],[6,1]]`, whose determinant is −26. Both forms are invertible at both submitted primes.
+
+Reversing a word therefore sends its product `X` to `S⁻¹ Xᵀ S`; every palindrome product lies in the three-dimensional space where `SX` is symmetric. Its traceless part lies in a two-dimensional subspace. Its projective direction, plus one class for scalar matrices, gives only `p + 2` classes. Products in the same class commute. Choose distinct `m`-bit half-words `u`, form palindromes `Pᵤ = u·rev(u)`, and find two with the same class. Then `PᵤPᵥ` and `PᵥPᵤ` are distinct, equal-length messages with exactly the same matrix product and complete CHAMP digest.
+
+With `m = ceil(log₂(p+3))`, the pigeonhole principle proves that such a pair exists among `2^m` half-words. For the distribution-free search, set `m₊ = ceil(log₂(2(p+2)))` and sample distinct half-words uniformly without replacement. Whatever the distribution of the `p + 2` classes, the probability of no match after `t ≤ p+2` draws is at most `exp(−t(t−1)/(4(p+2)))`. Thus the expected number of draws is at most `sqrt(π(p+2)) + O(1)`. Here `m₊` is 129 or 257, yielding 516- or 1028-bit collisions.
+
+Each class evaluation takes `O(log p)` field operations. The leading square-root factors are about `2^64` and `2^128`, below the [required](https://www.niccs.org.cn/niccs/Notice/crlRB1ZY.pdf) 256- and 512-bit collision levels. Slaughter supplies a distinct 144-bit collision using CHAMP's main matrices at a 36-bit toy prime, but no collision at either submitted prime. The Confirmed status applies to the algebraic bound and search analysis; the full-size search was not run.
+
+### Reproducing
+
+```sh
+python3 hash-04/reproduce_palindrome_classes.py
+```
+
+The independent witness checks both CHAMP generator pairs and reversal forms at the submitted primes, constructs class-based collisions at a small prime, verifies the paper's 144-bit toy collision and a changed-bit control, and exercises the short-message decoder on the main pair. It does not perform a full-size birthday search.
