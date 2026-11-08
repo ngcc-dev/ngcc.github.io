@@ -1,7 +1,7 @@
 <!-- synchronized report: hash-15/report.md -->
 Candidate: Litchi
 Family: Symmetric (permutation-based)
-Archive: [Litchi.zip](https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/Litchi.zip)
+Archive: [Litchi.zip](https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/Litchi.zip) (SHA-256: `16c798c93c6fbdc9ac3703113c120fe22df46569a93d7322aaba46effa3273eb`)
 
 ## hash-15-1: Litchi-XOF ignores the requested output length and overruns shorter digest buffers
 

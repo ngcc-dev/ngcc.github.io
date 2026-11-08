@@ -39,6 +39,15 @@ classification. A revised candidate requires separate evaluation. Reports may
 state that one attack route is independent of another mechanism, but must not
 turn that observation alone into a verdict on a proposed fix.
 
+## Finding dates
+
+`Date` is the UTC calendar date on which a new finding ID is first added to its
+candidate's `report.md`. It is not the date of an external paper, forum post,
+commit, or site publication. Later evidence, wording, and classification
+changes do not reset it. Record relevant source and revision dates separately
+with their links. Apply this rule to new filings; do not silently redate existing
+entries.
+
 ## Discovery effort
 
 Discovery effort is independent of severity, reproducibility, attribution, and
