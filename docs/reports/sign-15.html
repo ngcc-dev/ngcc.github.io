@@ -301,6 +301,85 @@ python3 sign-15/reproduce_last_byte_alias.py
 <pre><code class="language-sh">bash sign-15/reproduce_512_nonce_overlap.sh
 </code></pre>
 <p>The witness builds the submitted signer and verifier in a temporary directory, solves the public equations with FLINT, and checks the fresh-message forgery and negative control. It requires a C compiler and FLINT.</p>
+<h2 class="issue-heading" id="sign-15-14-verification-hashes-one-message-and-returns-another">sign-15-14: Verification hashes one message and returns another</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All four ATLAS sets, reference and optimized <code>sig_verify</code></td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>One signature on <code>0^r</code> verifies any <code>r</code>-byte message opened in the §4.7 signed-message mode; detached verification reads <code>r</code> bytes past the signature</td></tr>
+<tr><th>Credit</th><td>Hao Yan, Yuhang Cao, Yao Tong and Qiaosheng Zhang (Shanghai AI Lab; AI-assisted discovery, human verified)</td></tr>
+<tr><th>Date</th><td>2026-11-09</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/AXKDEMO2FJGNOAOMLHHPJPPROOEMYME4/">Yan, Cao, Tong and Zhang's PKC Forum post</a></p>
+<p><code>sig_verify</code> hashes the bytes in its <code>m</code> buffer only when <code>sn != m</code>; otherwise the zero-filled buffer stands in for the message (<code>SIG_lwrdsa128.c:465–477</code>). After the challenge check it copies <code>sn[CRYPTO_BYTES..]</code> into <code>m</code> (<code>:525–526</code>). §4.7 (physical p. 41) and the function's own comment describe signed-message opening, where <code>sn = σ ‖ M</code> and the verified <code>M</code> is returned. In that mode, in place or into a separate zeroed buffer, the message hashed is <code>0^r</code> and the message returned is attacker-chosen. One chosen-message signature on <code>0^r</code> therefore opens to any message of the same length. We reproduced three such forgeries per set.</p>
+<p>The NGCC API template instead passes a detached signature and an input message. There the correct message is hashed and the forged pairs reject. That mode still reads <code>r</code> bytes past the advertised <code>CRYPTO_BYTES</code> signature after every successful verification and overwrites the caller's message with them. The forgery is a fresh-message forgery through the documented signed-message mode, hence Critical; in our tests that mode also rejected honest signatures on nonzero messages.</p>
+<h3 id="reproducing_13">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh sign-15/reproduce_verify_substitution.sh
+</code></pre>
+<p>The script checks the hashing and copy code in all eight trees. It builds each unmodified reference set and checks the in-place and separate-buffer forgeries, then four controls: detached verification of the forged messages, and in-place opening of an honest signature on a nonzero message. Finally it places a detached signature before a guard page and requires the honest verification to fault. It takes about 10 seconds.</p>
+<h2 class="issue-heading" id="sign-15-15-sparse-challenges-break-the-claimed-buff-binding-below-each-level">sign-15-15: Sparse challenges break the claimed BUFF binding below each level</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All four ATLAS parameter sets</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Generic challenge collision under an attacker-chosen key: about 2^64.8 (ATLAS-128), 2^94.1 (ATLAS-192 as submitted), 2^128.5 (ATLAS-256) and 2^138.7 (ATLAS-512 as implemented) evaluations; not run</td></tr>
+<tr><th>Credit</th><td>Hao Yan, Yuhang Cao, Yao Tong and Qiaosheng Zhang (Shanghai AI Lab; AI-assisted discovery, human verified)</td></tr>
+<tr><th>Date</th><td>2026-11-09</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/AXKDEMO2FJGNOAOMLHHPJPPROOEMYME4/">Yan, Cao, Tong and Zhang's PKC Forum post</a></p>
+<p>§3.4 (physical p. 29) claims the BUFF properties M-S-UEO, MBS and NR, treating the challenge <code>c</code> as a collision-resistant digest of the key and message. The challenge is a sparse polynomial with at most <code>binomial(n, kappa)·2^kappa</code> values: 2^129.6, 2^188.2, 2^257.0 and 2^277.5 for the four sets as implemented (2^322.7 for the specified ATLAS-512). BUFF games let the adversary choose the key. With <code>t1 = 0</code> and signature <code>(z, h, c) = (0, 0, c)</code>, verification reduces to <code>c = H(mu ‖ pack(0))</code>. A birthday collision between two messages under one such key gives an MBS violation; two different <code>rho</code> values give an M-S-UEO violation. The cost is half the image exponent, below every set's level. BUFF is not an NGCC requirement, hence High.</p>
+<h3 id="reproducing_14">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh sign-15/reproduce_buff_collision.sh
+</code></pre>
+<p>For each unmodified reference set the script builds the <code>t1 = 0</code> key and a zero-response signature for one message. It requires verification to accept that message and reject another, then prints the challenge image and generic collision cost. A full-size collision is not searched.</p>
+<h2 class="issue-heading" id="sign-15-16-atlas-128-and-192-sample-secrets-from-a-narrower-shifted-range">sign-15-16: ATLAS-128 and -192 sample secrets from a narrower, shifted range</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>ATLAS-128 and ATLAS-192 reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Key distribution differs from the specification; public-key attack estimates remain far above target</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-09</td></tr>
+</table></div>
+
+<p>KeyGen samples <code>s1</code> uniformly from <code>[-eta, eta]</code> (Algorithm 1; Table 2, physical p. 22: <code>eta = 16, 8, 4, 4</code>). <code>rej_eta</code> takes 4-bit values <code>t</code> and accepts <code>t &lt;= 2·eta</code>, storing <code>eta - t</code> (<code>lwrdsa128/poly.c:411–418</code>). When <code>2·eta &gt;= 15</code>, every nibble is accepted, so ATLAS-128 coefficients are uniform on <code>[1, 16]</code> instead of <code>[-16, 16]</code>, and ATLAS-192 coefficients on <code>[-7, 8]</code> instead of <code>[-8, 8]</code>. ATLAS-256 and -512 (<code>eta = 4</code>) match the specification.</p>
+<p>For ATLAS-128 the shift is public. Subtracting 8 leaves a secret uniform on <code>[-7, 8]</code>, with half the specified standard deviation. Modelling the published <code>t1</code> (after the <code>q -&gt; p</code> rounding and the 10 dropped bits) as LWE with error modelled as uniform on <code>[-2^14, 2^14)</code>, the lattice-estimator's best MATZOV cost falls from 2^315.3 to 2^289.3. Both remain far above 128 bits; no below-target attack is shown.</p>
+<h3 id="reproducing_15">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh sign-15/reproduce_secret_range.sh
+LATTICE_ESTIMATOR_PATH=../lattice-estimator python3 sign-15/reproduce_secret_range_estimate.py
+</code></pre>
+<p>The first script generates one key per unmodified reference set and prints the observed <code>s1</code> range. The second needs lattice-estimator commit <code>53da598</code> in a Sage-enabled Python. It prints the specified and implemented ATLAS-128 public-key estimates and takes about a minute.</p>
+<h2 class="issue-heading" id="sign-15-17-the-secret-sampler-writes-one-coefficient-past-s1">sign-15-17: The secret sampler writes one coefficient past `s1`</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>ATLAS-256 and ATLAS-512 reference and optimized key generation; the same bound is in all eight trees</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Honest key generation wrote one secret coefficient past the stack <code>s1</code> object on 13/40 (ATLAS-256) and 10/40 (ATLAS-512) tested seeds; no attacker control</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-09</td></tr>
+</table></div>
+
+<p><code>rej_eta</code> limits its second write by <code>ctr &lt; N</code> rather than by its <code>len</code> argument (<code>lwrdsa256/poly.c:465</code>). <code>poly_uniform_eta</code> resumes it at <code>a-&gt;coeffs + ctr</code> with <code>len = N - ctr</code> when one XOF block does not fill the polynomial. The resumed call can therefore store one coefficient beyond the polynomial; for the last polynomial of <code>s1</code>, this is past the stack object in <code>sig_keygen</code>. ATLAS-256 and -512 reject some values and need a second block; AddressSanitizer reported the write in 13 and 10 of 40 key generations. In ATLAS-128 and -192, every 4-bit value passes the acceptance test, so the first block always fills the polynomial and the call never resumes. Replacing <code>N</code> with <code>len</code> fixes the bound.</p>
+<h3 id="reproducing_16">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh sign-15/reproduce_rej_eta_overflow.sh
+</code></pre>
+<p>The script checks the bound in all eight trees, then runs unmodified reference key generation under AddressSanitizer for 40 seeds per set. It requires a write past <code>s1</code> in <code>rej_eta</code> for ATLAS-256 and -512. It takes about 10 seconds.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

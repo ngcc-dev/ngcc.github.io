@@ -329,3 +329,94 @@ bash sign-15/reproduce_512_nonce_overlap.sh
 ```
 
 The witness builds the submitted signer and verifier in a temporary directory, solves the public equations with FLINT, and checks the fresh-message forgery and negative control. It requires a C compiler and FLINT.
+
+## sign-15-14: Verification hashes one message and returns another
+
+Severity: Critical
+Status: Confirmed
+Layer: Implementation
+Affected: All four ATLAS sets, reference and optimized `sig_verify`
+Discovery: Moderate
+Exploitation: One signature on `0^r` verifies any `r`-byte message opened in the §4.7 signed-message mode; detached verification reads `r` bytes past the signature
+Credit: Hao Yan, Yuhang Cao, Yao Tong and Qiaosheng Zhang (Shanghai AI Lab; AI-assisted discovery, human verified)
+Date: 2026-11-09
+Original source: [Yan, Cao, Tong and Zhang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/AXKDEMO2FJGNOAOMLHHPJPPROOEMYME4/)
+
+`sig_verify` hashes the bytes in its `m` buffer only when `sn != m`; otherwise the zero-filled buffer stands in for the message (`SIG_lwrdsa128.c:465–477`). After the challenge check it copies `sn[CRYPTO_BYTES..]` into `m` (`:525–526`). §4.7 (physical p. 41) and the function's own comment describe signed-message opening, where `sn = σ ‖ M` and the verified `M` is returned. In that mode, in place or into a separate zeroed buffer, the message hashed is `0^r` and the message returned is attacker-chosen. One chosen-message signature on `0^r` therefore opens to any message of the same length. We reproduced three such forgeries per set.
+
+The NGCC API template instead passes a detached signature and an input message. There the correct message is hashed and the forged pairs reject. That mode still reads `r` bytes past the advertised `CRYPTO_BYTES` signature after every successful verification and overwrites the caller's message with them. The forgery is a fresh-message forgery through the documented signed-message mode, hence Critical; in our tests that mode also rejected honest signatures on nonzero messages.
+
+### Reproducing
+
+```sh
+sh sign-15/reproduce_verify_substitution.sh
+```
+
+The script checks the hashing and copy code in all eight trees. It builds each unmodified reference set and checks the in-place and separate-buffer forgeries, then four controls: detached verification of the forged messages, and in-place opening of an honest signature on a nonzero message. Finally it places a detached signature before a guard page and requires the honest verification to fault. It takes about 10 seconds.
+
+## sign-15-15: Sparse challenges break the claimed BUFF binding below each level
+
+Severity: High
+Status: Confirmed
+Layer: Design
+Affected: All four ATLAS parameter sets
+Discovery: Moderate
+Exploitation: Generic challenge collision under an attacker-chosen key: about 2^64.8 (ATLAS-128), 2^94.1 (ATLAS-192 as submitted), 2^128.5 (ATLAS-256) and 2^138.7 (ATLAS-512 as implemented) evaluations; not run
+Credit: Hao Yan, Yuhang Cao, Yao Tong and Qiaosheng Zhang (Shanghai AI Lab; AI-assisted discovery, human verified)
+Date: 2026-11-09
+Original source: [Yan, Cao, Tong and Zhang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/AXKDEMO2FJGNOAOMLHHPJPPROOEMYME4/)
+
+§3.4 (physical p. 29) claims the BUFF properties M-S-UEO, MBS and NR, treating the challenge `c` as a collision-resistant digest of the key and message. The challenge is a sparse polynomial with at most `binomial(n, kappa)·2^kappa` values: 2^129.6, 2^188.2, 2^257.0 and 2^277.5 for the four sets as implemented (2^322.7 for the specified ATLAS-512). BUFF games let the adversary choose the key. With `t1 = 0` and signature `(z, h, c) = (0, 0, c)`, verification reduces to `c = H(mu ‖ pack(0))`. A birthday collision between two messages under one such key gives an MBS violation; two different `rho` values give an M-S-UEO violation. The cost is half the image exponent, below every set's level. BUFF is not an NGCC requirement, hence High.
+
+### Reproducing
+
+```sh
+sh sign-15/reproduce_buff_collision.sh
+```
+
+For each unmodified reference set the script builds the `t1 = 0` key and a zero-response signature for one message. It requires verification to accept that message and reject another, then prints the challenge image and generic collision cost. A full-size collision is not searched.
+
+## sign-15-16: ATLAS-128 and -192 sample secrets from a narrower, shifted range
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: ATLAS-128 and ATLAS-192 reference and optimized implementations
+Discovery: Moderate
+Exploitation: Key distribution differs from the specification; public-key attack estimates remain far above target
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-09
+
+KeyGen samples `s1` uniformly from `[-eta, eta]` (Algorithm 1; Table 2, physical p. 22: `eta = 16, 8, 4, 4`). `rej_eta` takes 4-bit values `t` and accepts `t <= 2·eta`, storing `eta - t` (`lwrdsa128/poly.c:411–418`). When `2·eta >= 15`, every nibble is accepted, so ATLAS-128 coefficients are uniform on `[1, 16]` instead of `[-16, 16]`, and ATLAS-192 coefficients on `[-7, 8]` instead of `[-8, 8]`. ATLAS-256 and -512 (`eta = 4`) match the specification.
+
+For ATLAS-128 the shift is public. Subtracting 8 leaves a secret uniform on `[-7, 8]`, with half the specified standard deviation. Modelling the published `t1` (after the `q -> p` rounding and the 10 dropped bits) as LWE with error modelled as uniform on `[-2^14, 2^14)`, the lattice-estimator's best MATZOV cost falls from 2^315.3 to 2^289.3. Both remain far above 128 bits; no below-target attack is shown.
+
+### Reproducing
+
+```sh
+sh sign-15/reproduce_secret_range.sh
+LATTICE_ESTIMATOR_PATH=../lattice-estimator python3 sign-15/reproduce_secret_range_estimate.py
+```
+
+The first script generates one key per unmodified reference set and prints the observed `s1` range. The second needs lattice-estimator commit `53da598` in a Sage-enabled Python. It prints the specified and implemented ATLAS-128 public-key estimates and takes about a minute.
+
+## sign-15-17: The secret sampler writes one coefficient past `s1`
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: ATLAS-256 and ATLAS-512 reference and optimized key generation; the same bound is in all eight trees
+Discovery: Moderate
+Exploitation: Honest key generation wrote one secret coefficient past the stack `s1` object on 13/40 (ATLAS-256) and 10/40 (ATLAS-512) tested seeds; no attacker control
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-09
+
+`rej_eta` limits its second write by `ctr < N` rather than by its `len` argument (`lwrdsa256/poly.c:465`). `poly_uniform_eta` resumes it at `a->coeffs + ctr` with `len = N - ctr` when one XOF block does not fill the polynomial. The resumed call can therefore store one coefficient beyond the polynomial; for the last polynomial of `s1`, this is past the stack object in `sig_keygen`. ATLAS-256 and -512 reject some values and need a second block; AddressSanitizer reported the write in 13 and 10 of 40 key generations. In ATLAS-128 and -192, every 4-bit value passes the acceptance test, so the first block always fills the polynomial and the call never resumes. Replacing `N` with `len` fixes the bound.
+
+### Reproducing
+
+```sh
+sh sign-15/reproduce_rej_eta_overflow.sh
+```
+
+The script checks the bound in all eight trees, then runs unmodified reference key generation under AddressSanitizer for 40 seeds per set. It requires a write past `s1` in `rej_eta` for ATLAS-256 and -512. It takes about 10 seconds.
