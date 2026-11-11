@@ -19,14 +19,31 @@
 <div class="table-wrap"><table class="meta">
 <tr><th>Candidate</th><td>QILIN</td></tr>
 <tr><th>Family</th><td>Symmetric (sponge)</td></tr>
-<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/QILIN.zip">Official submission archive</a></td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/QILIN.zip">QILIN.zip</a> (SHA-256: <code>10335345f6a6cca5e4be688ef42230dff983049483acecbd43f38febb7618609</code>)</td></tr>
 <tr><th>Specification</th><td><a href="https://github.com/ngcc-dev/ngcc-harness/raw/dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/hash-23/hash-23-spec.pdf" title="Download hash-23-spec.pdf from GitHub">hash-23-spec.pdf</a>&nbsp;<a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/hash-23/hash-23-spec.pdf" title="Open the hash-23 specification PDF">PDF</a></td></tr>
 <tr><th>Performance</th><td><a href="../performance/x86_1/hash-23.html">x86_1</a> · <a href="../performance/arm_1/hash-23.html">arm_1</a></td></tr>
 </table></div>
 
-<h3 id="review-status">Review status</h3>
-<p>No vulnerability finding is currently published for this candidate. This is not a security endorsement: it records only the present state of the public finding inventory, and the candidate remains under review.</p>
-<p>See the <a href="../constant-time/hash-23.html">constant-time review</a> and the performance reports (<a href="../performance/x86_1/hash-23.html">x86_1</a> · <a href="../performance/arm_1/hash-23.html">arm_1</a>). See the <a href="https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101536372126470144.html">official submission page</a>.</p>
+<h2 class="issue-heading issue-heading-first" id="hash-23-1-unvalidated-digest-lengths-overrun-the-final-block-stack-buffer">hash-23-1: Unvalidated digest lengths overrun the final-block stack buffer</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All six reference and optimized <code>CryptHash</code> wrappers</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>A request for an unsupported digest length writes message bytes past a 265-byte stack buffer, or never returns in the reference; no control-flow hijack demonstrated</td></tr>
+<tr><th>Credit</th><td>Kr0emer and Chen Peng (陈鹏), Hangzhou Institute of Technology, Xidian University</td></tr>
+<tr><th>Date</th><td>2026-11-11</td></tr>
+</table></div>
+<p>Original source: <a href="https://github.com/ngcc-dev/ngcc-harness/issues/38">GitHub issue #38</a></p>
+<p><code>CryptHash</code> computes the sponge rate from the caller's <code>digest_len_bits</code>, <code>rate_bits = 3136 - 2*digest_len_bits</code> (reference <code>CryptHash_AlgorithmInstance.c:70</code>, optimized <code>:17</code>), and never checks it. The supported lengths of 512, 768 and 1024 bits give rates of at most 264 bytes, which fit the fixed <code>uint8_t last_block[265]</code> (<code>:97</code>, optimized <code>:53</code>). A smaller request gives a larger rate. For 256 bits the rate is 328 bytes, and the final message fragment is copied into <code>last_block</code> (<code>:103</code>, optimized <code>:59</code>). A full fragment gives a 328-byte <code>memcpy</code> into the 265-byte stack buffer, a 63-byte overflow of message bytes. The reference then absorbs <code>rate_words*8</code> bytes from the same object (<code>:131–135</code>), so out-of-bounds stack bytes also enter the returned digest. A request for 1568 bits gives a zero rate, and the reference absorption loop never advances. An unsupported length such as 1000 returns success, with 120 output bytes from the reference and none from the optimized tree.</p>
+<p>The overflow is reached by an ordinary-looking request for a shorter digest, with attacker-supplied message bytes as the written data. The wrapper should reject every length other than the supported tiers before computing the rate.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh hash-23/reproduce_digest_length.sh
+</code></pre>
+<p>The script checks the unvalidated rate computation in all six wrappers. It then builds each unmodified wrapper with AddressSanitizer. As controls, 512-, 768- and 1024-bit requests with a 2623-bit message must run cleanly. A 256-bit request on the same message must give a <code>WRITE of size 328</code> in <code>CryptHash</code>. A 1568-bit request to each reference build must still be running after five seconds. It does not attempt to exploit the overwrite.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

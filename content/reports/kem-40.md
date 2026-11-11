@@ -101,6 +101,7 @@ Discovery: Moderate
 Exploitation: Offline IND-CCA real-or-random challenge-key distinction in at most 2^440 encryption-seed-prefix trials; no exhaustive run performed
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-10-06
+Follow-up source: [Xifeng Jin's 2026-11-10 independent report](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/YJESV7JPJ3K2NB2UWX6T3BOSBSLJIZ4Z/)
 
 The specification gives Encrypt a 512-bit seed and message (Algorithm 3, physical p. 10) and targets 512-bit classical security (§3 and Table 3). In the submitted `yuanyang-2048`, encapsulation derives its encryption seed from the message and public-key hash (`kem.c:157–165`), but `yy_encrypt` supplies only its first 55 bytes to the local SM3-DRNG (`kem.c:105–119`, `drng.h:15`). The DRBG itself accepts a longer seed (`drng.c:244–252`); the truncation is at this caller. Thus the first 512 DRBG output bits, the blinding message `B`, depend on at most 440 bits. The ciphertext ends with `u = msg XOR H(B || 44)` (`kem.c:129–145`), and the shared key is `H(msg || ct || 43)` (`kem.c:166–170`). The relevant optimized files are byte-identical.
 

@@ -172,3 +172,40 @@ sh kem-18/reproduce_pco_key_recovery.sh            # full key recovery; NGCC_LON
 The first script shows the rejection-key collision directly: it uses the prebuilt `kem-18/lib/*.so` through ctypes, checks that honest decapsulation returns `K*` and that 16 bit-0 flips of `c*` give at least four identical outputs different from `K*`, and, when `hashlib` provides SM3, confirms the value is `H(salt‖c*)`. It runs in about two seconds.
 
 The second script performs the full key recovery. It builds a small C attack (`kem-18/pco_loong.c`) in a temporary directory and queries only the prebuilt library through the uniform ABI loaded with `dlopen`; it never links the submission's internal decrypt. It prints, per set, that honest decapsulation matches, the recovered-versus-true coefficient count, the rebuilt-key re-decapsulation check, and the rejected-wrong-coefficient control, with the setup and recovery-batch query counts and wall time. The setup is the honest check plus about 80–90 decapsulations of bit-flipped ciphertexts that identify `C0`; it is reported separately from the recovery batch. By default it recovers the smallest set (Loong128), reported both for a single-process sequential run and for a fork-parallel run; `NGCC_LONG=1` recovers all four sets. The batch queries are independent, so the parallel run uses `fork()` workers (the decapsulator reads no mutable global state). With 24 workers, the recovery batch took 7.5 s (60,512 queries) for Loong128, 53 s (224,400) for Loong256, 231 s (320,500) for Loong384 and 322 s (276,864) for Loong512; the sequential Loong128 run took 135 s.
+
+## kem-18-5: Public-key consistency equations recover the `s2` secret block
+
+Severity: Medium
+Status: Confirmed
+Layer: Design
+Affected: Loong128 and Loong256; Loong384 and Loong512 not recovered
+Discovery: Moderate
+Exploitation: Public-key-only recovery of the 48- and 96-coefficient `s2` blocks; no below-target full-key attack demonstrated
+Credit: Gao Shixuan and Wang Zhinan, with Deepseek-V4.1-flash assistance
+Date: 2026-11-11
+Original source: [Gao and Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/OSTKQAPQQLHIQ6KE4YR5DRHNVNOV3GX5/)
+
+Algorithm 19 (p. 16) publishes
+
+```text
+B2 = PolysToBlockMat(A3*s1) + A4*S2 + E2,
+```
+
+compressed to `d_b` bits. Each `N×N` block of the first term is negacyclic, so subtracting the sign-adjusted, shifted first row of a block from each of its other rows cancels that term. Because `S2` is also negacyclic, the remaining terms are linear in the `k2·N` coefficients of `s2`, with coefficients from `A4` and hence from the public seed. This gives `k2·N(N−1)` equations: 528 for Loong128 and 1,440 for Loong256. Their errors are differences of two `E2` entries and two decompression errors, bounded by `2η + 2^(13−d_b)` (18 and 16).
+
+Our independent implementation reads only a fresh public key from the submitted library. For Loong128, 90 equations in a 139-dimensional Kannan embedding returned one candidate in about 7 s on each of two keys. For Loong256, 240 equations (dimension 337) and progressive BKZ up to block size 40 returned one candidate in about 400 s. Each candidate equalled the `s2` parsed from `sk` afterwards. One Loong384 attempt, with 320 equations and BKZ-40, returned no candidate. The method is unresolved for Loong384 and Loong512.
+
+`s2` is 48 of Loong128's 624 secret coefficients and 96 of Loong256's 1,120. Knowing it leaves `b1 − A2·s2 = A1·s1 + e1`. A plain-LWE model using only `b1` and the public-key rounding estimates this particular remaining-`s1` attack at 2^161.1 and 2^278.0 under the lattice-estimator's MATZOV model. Because the model ignores the remaining `B2` equations, these figures are not lower bounds on full-key recovery. This is a practical recovery of a long-term secret block without a demonstrated below-target full-key attack, hence Medium.
+
+### Reproducing
+
+With Python `numpy` and `fpylll`, and SM3 in `hashlib`:
+
+```sh
+python3 kem-18/reproduce_public_key_s2.py              # Loong128, two fresh keys
+NGCC_LONG=1 python3 kem-18/reproduce_public_key_s2.py  # adds Loong256
+LATTICE_ESTIMATOR_PATH=/path/to/lattice-estimator \
+  mamba run -n sage python kem-18/reproduce_public_key_s2_estimate.py
+```
+
+The first script generates each key pair with the prebuilt `kem-18/lib` library. It parses `pk` as the C code does, builds the public equations, runs the lattice reduction, and only then compares the unique candidate with the `s2` stored in `sk`. The estimate uses lattice-estimator commit `53da5982597709ba0fdf94ea37a84d822310fd84`; its model ignores the remaining `B2` equations, so its figures are not lower bounds.
