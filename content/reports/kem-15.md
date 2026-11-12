@@ -85,3 +85,54 @@ python3 kem-15/reproduce_fips202_unseeded_rng.py
 ```
 
 The witness builds each of the four frozen trees and runs its KEM API in separate processes after two different external-DRBG seeds. It requires identical key pairs, ciphertexts and shared secrets in those runs. As a negative control, explicit initialization of the internal RNG with different seeds must change the outputs.
+
+## kem-15-4: The FLIT512 AVX2 inverse NTT overflows and breaks its own round trips
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: Submitted FLIT512 AVX2 implementation; the FLIT512 reference and FLIT128/256 AVX2 trees did not fail
+Discovery: Moderate
+Exploitation: About 1.6×10⁻⁴ of honest encapsulations give a ciphertext that silently decapsulates to a different key; no secret-dependent decapsulation failure demonstrated
+Credit: Kr0emer and Chen Peng (陈鹏), Hangzhou Institute of Technology, Xidian University
+Date: 2026-11-12
+Original source: [GitHub issue #29 follow-up](https://github.com/ngcc-dev/ngcc-harness/issues/29#issuecomment-6812670759)
+
+The FLIT512 branch of `invntt_avx` adds each butterfly pair in 16-bit lanes and subtracts Q once from lanes above Q−1 (`ntt_avx.c:250–252`). Its comment assumes that the sum stays below 2Q (`:120`). However, the input from the AVX2 base multiplication is a signed Barrett representative. Negative sums are never reduced and can wrap around int16 over the seven layers, leaving one coefficient wrong modulo Q. The reference inverse NTT freezes every sum (`ntt.c:235`).
+
+We ran the archived API over the archived KAT seed stream. In 8 of 50,000 round trips the AVX2 build's encapsulated and decapsulated shared secrets differed, first at iteration 11058, and every call returned 0. The reference build failed none. So did the AVX2 build with only `poly_invntt_tomont` switched to the scalar `invntt_tomont` (`poly.c:92`). An instrumented build attributed every failure to a wrap in encapsulation's `h·r` product (`indcpa.c:94–95`). Wraps in decryption's `f·c` product occurred in 12 other round trips and changed no shared secret.
+
+The failure rate is far from negligible, but the demonstrated effect is an honest session that silently derives mismatched keys. No decapsulation oracle on the secret key is shown, hence Low.
+
+### Reproducing
+
+```sh
+sh kem-15/reproduce_avx2_invntt.sh
+NGCC_LONG=1 sh kem-15/reproduce_avx2_invntt.sh
+```
+
+The script builds the archived reference and AVX2 FLIT512 trees with their Makefile flags, outside the source tree, and requires an AVX2 CPU. The AVX2 build must fail first at iteration 11058, while the reference and scalar-inverse controls must not fail. A copy that counts int16 wraparounds in the sum must attribute each failure to encapsulation and none to decapsulation. The long run uses 50,000 iterations and adds FLIT128 and FLIT256 AVX2 controls.
+
+## kem-15-5: FLIT512 AVX2 base multiplication writes past stack arrays
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: Submitted FLIT512 AVX2 implementation, in key generation, encapsulation and decapsulation
+Discovery: Trivial
+Exploitation: Fixed 8- and 16-byte stack writes on every operation; a clang build fails every round trip, but no useful attacker control over the overwritten values, memory disclosure, or control-flow effect is demonstrated
+Credit: Kr0emer and Chen Peng (陈鹏), Hangzhou Institute of Technology, Xidian University, for the clang failure; stack-overflow localization by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-12
+Original source: [GitHub issue #29 follow-up](https://github.com/ngcc-dev/ngcc-harness/issues/29#issuecomment-6812670759)
+
+`basemul_avx_16x` declares six 8-element `int16_t` arrays (`basemul_avx.c:704`), but its two reduction loops load and store eight lanes at offsets 0 and 4 (`:727–746`). The second pass reads four elements past `ea`, `oa`, `eb` and `ob`, and writes four past `sa` and `sb`. `baseinv_avx_32x` stores 32-byte vectors into the 16-byte rows `esq[k]` and `osq[k]` (`:771`, `:789–790`), so its second row writes 16 bytes past both arrays. AddressSanitizer reports all eight accesses in the first key generation. The base multiplication also runs on `h·r` in encapsulation and on `f·c` in decapsulation.
+
+The writes land on whatever the compiler places next to those arrays. In our gcc 15.2 build the layout happens to be harmless. With clang 21 the same source failed all 200 tested round trips, and enlarging the arrays removed every failure. The written values depend on secret and ciphertext coefficients, but they go to fixed offsets in the same frame, and no further control is shown, hence Low.
+
+### Reproducing
+
+```sh
+sh kem-15/reproduce_avx2_stack_overflow.sh
+```
+
+The script builds the archived FLIT512 AVX2 tree with AddressSanitizer and requires out-of-bounds stack writes in both functions, while a copy with enlarged arrays runs cleanly. If an x86 clang is available, the unmodified tree must fail all 200 round trips and the enlarged copy none.
