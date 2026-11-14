@@ -97,12 +97,15 @@ Exploitation: About 1.6×10⁻⁴ of honest encapsulations give a ciphertext tha
 Credit: Kr0emer and Chen Peng (陈鹏), Hangzhou Institute of Technology, Xidian University
 Date: 2026-11-12
 Original source: [GitHub issue #29 follow-up](https://github.com/ngcc-dev/ngcc-harness/issues/29#issuecomment-6812670759)
+Follow-up source: [GitHub issue #39](https://github.com/ngcc-dev/ngcc-harness/issues/39)
 
 The FLIT512 branch of `invntt_avx` adds each butterfly pair in 16-bit lanes and subtracts Q once from lanes above Q−1 (`ntt_avx.c:250–252`). Its comment assumes that the sum stays below 2Q (`:120`). However, the input from the AVX2 base multiplication is a signed Barrett representative. Negative sums are never reduced and can wrap around int16 over the seven layers, leaving one coefficient wrong modulo Q. The reference inverse NTT freezes every sum (`ntt.c:235`).
 
 We ran the archived API over the archived KAT seed stream. In 8 of 50,000 round trips the AVX2 build's encapsulated and decapsulated shared secrets differed, first at iteration 11058, and every call returned 0. The reference build failed none. So did the AVX2 build with only `poly_invntt_tomont` switched to the scalar `invntt_tomont` (`poly.c:92`). An instrumented build attributed every failure to a wrap in encapsulation's `h·r` product (`indcpa.c:94–95`). Wraps in decryption's `f·c` product occurred in 12 other round trips and changed no shared secret.
 
 The failure rate is far from negligible, but the demonstrated effect is an honest session that silently derives mismatched keys. No decapsulation oracle on the secret key is shown, hence Low.
+
+The reporters' issue #39 restates the finding with 24 failures in 200,000 iterations. It adds a primitive-level differential in which `invntt_avx` differs from the scalar inverse in 28 of 200,000 random inputs, each time in one coefficient, offset by 1441 modulo Q. We have not rerun those larger counts.
 
 ### Reproducing
 

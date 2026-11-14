@@ -73,19 +73,19 @@ LATTICE_ESTIMATOR_PATH=/path/to/lattice-estimator \
 
 The script checks the integer factorizations, coprimality modulo 8191, quotient homomorphisms, CRT reconstruction, and exact covariance matrices before reproducing the six MATZOV BDD estimates. Its final `LIMITATION` line records the correlation not modeled by those estimates.
 
-## kem-18-3: Public consistency equations recover Loong128 and Loong256 shared secrets
+## kem-18-3: Public consistency equations recover Loong128, Loong256 and Loong384 shared secrets
 
 Severity: Critical
 Status: Confirmed
 Layer: Design
-Affected: Loong128 and Loong256; Loong384 and Loong512 were not evaluated
+Affected: Loong128, Loong256 and Loong384; Loong512 was not evaluated
 Discovery: Non-trivial
-Exploitation: Practical 48- and 96-variable lattice recoveries followed by 2^12 and 2^16 public re-encryptions
+Exploitation: Practical 48-, 96- and 160-variable lattice recoveries followed by 2^12, 2^16 and 2^20 public re-encryptions
 Credit: Tianyuan Xie, on behalf of the openHiTLS team, with GLM-5.3 assistance (corrected 2026-09-30)
 Date: 2026-09-29
 <!-- Credit correction: On 2026-09-30, the submitter clarified that “GPT-5.5” in the original submission email was a typo; the assistance was GLM-5.3. -->
 Original source: [Xie's PKC Forum post and PoC](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/VBOUFRS2CDGNLPEAR4ZBKZM4U5YHBTZY/)
-Follow-up source: [Xie's LoongKEM256 GitHub issue #23](https://github.com/ngcc-dev/ngcc-harness/issues/23)
+Follow-up source: [Xie's LoongKEM256 GitHub issue #23](https://github.com/ngcc-dev/ngcc-harness/issues/23) and [Xie's Loong384 PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/3NE2MGXI6LLZEDV4R75OG7M4VGZNWBBL/)
 
 LoongKEM publishes the structured matrix equation, naming the matrix `U0` in Algorithm 20; the reference implementation calls the corresponding buffer `U2`:
 
@@ -106,6 +106,10 @@ secret after 4,389 candidates. Ten further runs—five independent BKZ seeds and
 five shuffled public-equation subsets—each found one `r2` candidate, generated
 65,536 messages, and recovered the same posted secret. Their lattice phases
 took 2,746–3,089 seconds per core under a 12-way parallel load.
+
+For Loong384, `N=20` and `k2=8`: the same cancellation gives 3,040 equations in the 160 coefficients of `r2`, and a direct embedding is too large. Xie's 2026-11-14 post first projects through `X^20+1 = (X^4+1)·Φ40(X)` to 32 unknowns, recovered with a 93-dimensional BKZ-20 embedding. It then lifts back to 128 unknowns, solves a 281-dimensional weighted embedding with progressive BKZ-55 and beam decoding, and resolves `2^20` message candidates by public FO re-encryption. The code and transcript are pinned at commit [`a7d0c25`](https://github.com/ifeelok92/ngcc-analysis/tree/a7d0c25b6f36b003281aa82150cb8f5eb15f3569/instances/loong384). The repository omits the projection, lift and reduction drivers, so our replay reimplemented them from public data.
+
+The posted instance is the archived reference transcript for seed byte `0x43`. Our replay recovered its secret. On a fresh archived-code transcript whose secret was withheld, the pipeline recovered `r2` after progressive BKZ to 55 and four BKZ-55 tours, about 10 minutes on one core. One of the `2^20` candidates, found in 18 minutes on 16 workers, re-encrypted to the ciphertext and gave the held-out secret.
 
 ### Reproducing
 
@@ -136,6 +140,8 @@ attack has finished. It applies a compatibility-only float conversion to the
 PoC's post-BKZ RMS diagnostic on Sage builds where `fpylll` returns Sage
 integers; candidate recovery is unchanged. Our fully loaded runs took about
 46–52 minutes per core.
+
+There is no Loong384 wrapper yet. The pinned commit lacks the projection, lift and reduction drivers that a public-data rerun needs. Its `verify_candidate.py` and frozen artifacts check only the posted instance.
 
 ## kem-18-4: The rejection key hashes the re-encryption instead of the received ciphertext
 

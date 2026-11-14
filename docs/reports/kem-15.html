@@ -103,10 +103,12 @@ python3 kem-15/reproduce_random_compare.py
 <tr><th>Credit</th><td>Kr0emer and Chen Peng (陈鹏), Hangzhou Institute of Technology, Xidian University</td></tr>
 <tr><th>Date</th><td>2026-11-12</td></tr>
 </table></div>
-<p>Original source: <a href="https://github.com/ngcc-dev/ngcc-harness/issues/29#issuecomment-6812670759">GitHub issue #29 follow-up</a></p>
+<p>Original source: <a href="https://github.com/ngcc-dev/ngcc-harness/issues/29#issuecomment-6812670759">GitHub issue #29 follow-up</a>
+Follow-up source: <a href="https://github.com/ngcc-dev/ngcc-harness/issues/39">GitHub issue #39</a></p>
 <p>The FLIT512 branch of <code>invntt_avx</code> adds each butterfly pair in 16-bit lanes and subtracts Q once from lanes above Q−1 (<code>ntt_avx.c:250–252</code>). Its comment assumes that the sum stays below 2Q (<code>:120</code>). However, the input from the AVX2 base multiplication is a signed Barrett representative. Negative sums are never reduced and can wrap around int16 over the seven layers, leaving one coefficient wrong modulo Q. The reference inverse NTT freezes every sum (<code>ntt.c:235</code>).</p>
 <p>We ran the archived API over the archived KAT seed stream. In 8 of 50,000 round trips the AVX2 build's encapsulated and decapsulated shared secrets differed, first at iteration 11058, and every call returned 0. The reference build failed none. So did the AVX2 build with only <code>poly_invntt_tomont</code> switched to the scalar <code>invntt_tomont</code> (<code>poly.c:92</code>). An instrumented build attributed every failure to a wrap in encapsulation's <code>h·r</code> product (<code>indcpa.c:94–95</code>). Wraps in decryption's <code>f·c</code> product occurred in 12 other round trips and changed no shared secret.</p>
 <p>The failure rate is far from negligible, but the demonstrated effect is an honest session that silently derives mismatched keys. No decapsulation oracle on the secret key is shown, hence Low.</p>
+<p>The reporters' issue #39 restates the finding with 24 failures in 200,000 iterations. It adds a primitive-level differential in which <code>invntt_avx</code> differs from the scalar inverse in 28 of 200,000 random inputs, each time in one coefficient, offset by 1441 modulo Q. We have not rerun those larger counts.</p>
 <h3 id="reproducing_3">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">sh kem-15/reproduce_avx2_invntt.sh
