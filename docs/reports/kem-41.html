@@ -96,6 +96,26 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <pre><code class="language-sh">sh kem-41/reproduce_keygen_fail_open.sh
 </code></pre>
 <p>The witness compiles each frozen reference tree with GCC <code>-O2</code> and no allocation interposition. It applies a 64 MiB address-space limit, retains ordinary small allocations, and checks public-only candidate selection, fresh decapsulation, a wrong-public-key control, and a normal-keygen control. It prints <code>CONFIRMED kem-41-2</code> for each level on the tested host. Stack overlap and the memory-exhaustion trigger can vary with build and host; an unsupported layout is reported as a skip.</p>
+<h2 class="issue-heading" id="kem-41-3-decoding-stores-each-bit-at-a-secret-selected-address">kem-41-3: Decoding stores each bit at a secret-selected address</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>side-channel</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>ZEN_128, ZEN_256 and ZEN_512; reference and AVX2 implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Local address trace of one comparison bit per coefficient group on every decapsulation; no key recovery demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-15</td></tr>
+</table></div>
+<p><code>pke_dec</code> computes its simple decoding with masks, but uses the last comparison to choose where to write: <code>idx = (i &amp; (-mask)) | ((i + ZEN_N4) &amp; (~(-mask)))</code> followed by <code>t2[idx] = t1[i] &amp; 1</code> (<code>pke.c:185–186</code> in reference ZEN_128; the other levels and the AVX2 tree have the same statements). The comparison is between distances computed from the ciphertext and the private key, so the address of each store is a secret-dependent choice between two locations a quarter of the ring apart.</p>
+<p>An address-trace observer learns one comparison bit per group for every ciphertext it submits, before the validity decision. Key generation also reads an inverse table at an index formed from secret values (<code>ntt.c:341</code>). The specification describes the implementation as constant-time and validated with a dynamic tool. No oracle or recovery was built.</p>
+<p>Constant-time fix (easy, hence Low): write both slots with masked values.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sed -n '183,186p' kem-41/Implementations/Reference_Implementation/ZEN_128/pke.c
+</code></pre>
+<p>This is a source witness.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -137,3 +137,28 @@ python3 sign-19/certify_sm3_digest_overread.py
 ```
 
 The certificate checks the digest and copy sizes in all four affected reference trees; it does not execute a signer.
+
+## sign-19-7: The index sampler can run out of randomness, and the failure is ignored
+
+Severity: Medium
+Status: Confirmed
+Layer: Implementation
+Affected: Phoenix-384s (about 2^-27.6 per message digest) and 384f (2^-35.3); 128f, 192s and 256f at 2^-63 or less; SHAKE and SM3, reference and AVX2 implementations
+Discovery: Moderate
+Exploitation: A digest for which the sampler fails makes signing and verification continue with uninitialised index values; such digests cost about 2^28 hash evaluations to find for 384s. No forgery demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-15
+
+Phoenix derives part of each TFORS index set with `h2_generate_indices`. The function expands the message digest to a fixed 512-byte pool, takes eight bytes per sample, and collects distinct values until it has enough. When the 64 samples are used up it returns −1 (`hash_shake.c:102,112,130`; the SM3 trees are the same). Its only caller, `message_to_indices`, ignores the return value and reads the local array `indices1[]` regardless (`tfors.c:55–73`).
+
+For Phoenix-384s the sampler needs 27 distinct values out of 64, and 64 uniform draws from 64 values fall short with probability 2^-27.6. For 384f the figure is 2^-35.3. In a search over 1.12×10^9 digests the archived 384s sampler failed seven times; the witness replays one such digest.
+
+On failure the indices are whatever the stack held. An honest signer meets this about once in 2^27.6 messages and then opens TFORS leaves at positions that are not bound to the message. A verifier can be driven into the same path by a signature whose randomizer, counter and message were chosen to hit a failing digest. We did not turn this into a forgery; the positional part of each index is still computed from the digest. The consequence is unresolved, hence Medium.
+
+### Reproducing
+
+```sh
+sh sign-19/reproduce_h2_exhaustion.sh
+```
+
+The witness checks the pool, the failure return and the unchecked call in the reference SHAKE and SM3 384s trees. It then builds the archived Phoenix-SHAKE-384s sampler and requires −1 for one concrete digest and 0 for a neighbouring control. The failure probabilities are exact occupancy calculations and are not recomputed by the witness.

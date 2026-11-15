@@ -17,7 +17,7 @@
 
 <!-- synchronized report: sign-18/constant_time.md -->
 <h1 id="constant-time-review-18-origami">Constant-time review — 18 Origami</h1>
-<p>Scope: reference implementation, representative instance only: <code>Implementations and Test_Vectors/Implementations/Reference_Implementation/Origami-256/origami_ref.c</code>. Other instances and optimized implementations have not been proven source-equivalent. This is a source-level triage, not a constant-time certification.</p>
+<p>Scope: reference implementation, representative instance only: <code>Implementations and Test_Vectors/Implementations/Reference_Implementation/Origami-256/origami_ref.c</code>. <code>origami_ref.c</code> is byte-identical in the four instances, which differ only in <code>origami_params.h</code>, <code>SIG_AlgorithmInstance.h</code> and the Makefile; the optimized <code>origami_opt.c</code> is byte-identical to <code>origami_ref.c</code> and the optimized trees otherwise differ only in the Makefile. This is a source-level triage, not a constant-time certification.</p>
 <p>Secret: trapdoor/master seed, hidden central map and signing vinegar/solver state. Public: verification key, message and final signature.</p>
 <ul>
 <li>Branch/loop trace: <code>Implementations and Test_Vectors/Implementations/Reference_Implementation/Origami-256/origami_ref.c:636</code> — <code>solve_rect_random</code> chooses pivots by branching on hidden-zone matrix entries; row-skip at line 659 and retry at line 798 add further secret-dependent paths.</li>

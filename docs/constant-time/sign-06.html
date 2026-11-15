@@ -17,10 +17,10 @@
 
 <!-- synchronized report: sign-06/constant_time.md -->
 <h1 id="constant-time-review-06-compass-sig">Constant-time review — 06 COMPASS-SIG</h1>
-<p>Scope: reference implementation, representative instance only: <code>Implementations/Reference_Implementation/sign.c</code>. Other instances and optimized implementations have not been proven source-equivalent. This is a source-level triage, not a constant-time certification.</p>
+<p>Scope: reference implementation, representative instance only: <code>Implementations/Reference_Implementation/sign.c</code>. The per-set directories <code>COMPASS-SIG-&lt;N&gt;/</code> that the build uses hold a different <code>sign.c</code>; that file, <code>poly.c</code>, <code>polyvec.c</code>, <code>rounding.c</code>, <code>packing.c</code> and <code>symmetric-shake.c</code> are each byte-identical across the four reference and four optimized per-set trees. This is a source-level triage, not a constant-time certification.</p>
 <p>Secret: signing-key polynomials/basis, per-signature masks and sampler state. Public: verification key, algorithm parameters, message and serialized signature.</p>
 <ul>
-<li>Branch/loop trace: <code>Implementations/Reference_Implementation/sign.c:220</code> — The <code>polyvecl_chknorm(&amp;z, …)</code> retry branch tests a secret-key-dependent response.</li>
+<li>Branch/loop trace: <code>Implementations/Reference_Implementation/sign.c:220</code> — The <code>polyvecl_chknorm(&amp;z, …)</code> retry branch tests a secret-key-dependent response. In the per-set <code>COMPASS-SIG-128/sign.c</code> the same branch is at line 176, and lines 211–219 leave the <code>w1</code> comparison loop at the first mismatching coefficient.</li>
 <li>Table lookups and division/remainder: this source triage does not certify their absence or constant-time compilation. Only the explicitly traced operands above are classified. Public lengths, fixed parameters and verifier checks are not findings.</li>
 </ul>
 <p>Assessment: No new vulnerability report is promoted from this representative source triage. A compiler/architecture-specific timing and cache test is still needed before claiming constant-time behavior or exploitable leakage.</p>

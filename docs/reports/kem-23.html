@@ -92,6 +92,26 @@ PDF.</p>
 <pre><code class="language-sh">python3 kem-23/reproduce_short_ciphertext.py
 </code></pre>
 <p>The script checks the original archive against the SHA-256 above, fetching it if absent, and compiles each reference and optimized tree with AddressSanitizer, this repository's unmodified API shim and a small driver in a temporary directory. For each build it requires a clean honest round trip and a heap-buffer-overflow read in <code>mito_c_kem_from_string</code> for the one-byte-short buffer. It takes about 40 seconds and exits 77 if the compiler cannot build with AddressSanitizer.</p>
+<h2 class="issue-heading" id="kem-23-4-the-implicit-rejection-key-hashes-uninitialised-stack-bytes">kem-23-4: The implicit-rejection key hashes uninitialised stack bytes</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All nine Mito parameter sets; reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>The rejection key for a fixed invalid ciphertext can change between calls, which reveals rejection to a party who can compare the keys; no confidentiality attack demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-15</td></tr>
+</table></div>
+
+<p>Decapsulation derives the implicit-rejection key with <code>hash_j</code>. That function declares its input buffer as <code>in[SEED_BYTES + PARAM_K_BYTES + sizeof(ciphertext_kem_t)]</code>, copies in the public-key hash, <code>σ</code> and the serialized ciphertext, and then hashes <code>sizeof(in)</code> bytes (<code>symmetric.c:117–128</code>). The in-memory ciphertext structure stores its vectors in 64-bit words and is larger than the serialized ciphertext, so the last 14 to 32 bytes of the buffer are never written. They are whatever the stack held.</p>
+<p>The rejection key is therefore not a deterministic function of the secret and the ciphertext. In our build, three of the nine reference sets (Mito-1-512, Mito-2-E-128, Mito-2-E-512) returned two different keys for the same invalid ciphertext when the stack held different residue. The valid path does not use <code>hash_j</code> and was stable. Implicit rejection relies on an invalid ciphertext always mapping to the same pseudorandom key; a party who can submit one ciphertext twice and compare the results can detect rejection when the keys differ. The stale bytes also enter the hash from earlier computations, but we did not find a way to recover them from the output. Whether the key varies in a given deployment depends on the compiler and call sequence.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh kem-23/reproduce_reject_key_stack.sh
+</code></pre>
+<p>The witness checks <code>hash_j</code> in all 18 trees and, for each reference set, requires the hashed buffer to be longer than the bytes written into it. It also decapsulates one invalid ciphertext twice over different stack contents and reports how many sets returned two different keys; that count is informative, since it depends on the compiler's stack layout.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

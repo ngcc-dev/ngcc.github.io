@@ -65,6 +65,52 @@
 <pre><code class="language-sh">sh kem-21/reproduce_sigma_ceiling.sh
 </code></pre>
 <p>The script checks that the sampler and <code>kem.c</code> are shared by all ten trees. It then builds an attacker harness from an unmodified copy of each reference tree in a temporary directory and runs key generation, encapsulation and decapsulation in the prebuilt <code>kem-21/lib</code> libraries. At Viper-384 and -512 it recomputes the library's shared key from (pk, ct, σ[0..31]) in 20/20 sessions, checks that inverting ω bytes 32 onward leaves the ciphertext unchanged, and recovers the key by a 2^16 search over the low bits of σ with the rest given as a hint. Controls: honest decapsulation matches, a one-bit-wrong σ prefix is rejected, and Viper-256 is run to show that its σ width equals its target. It takes about 55 seconds; <code>NGCC_LONG=1</code> widens the search to 2^20 (about 15 minutes).</p>
+<h2 class="issue-heading" id="kem-21-3-the-e8-message-codec-is-variable-time-on-decrypted-values">kem-21-3: The E8 message codec is variable-time on decrypted values</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>side-channel</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All five MAMBA-Viper levels; reference and optimized implementations (all copies of <code>viper_e8.c</code> are identical)</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Decapsulation's branch pattern and loop counts depend on the decrypted lattice point before the re-encryption check; no key recovery demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-15</td></tr>
+</table></div>
+
+<p>Decapsulation decodes <code>v − sᵀu</code> with <code>viper_e8_decode</code> before the re-encryption check. The decoder is not constant-time. <code>d8_candidate</code> repairs parity only when the rounded coordinates have an odd sum (<code>viper_e8.c:141</code>) and then searches for the cheapest coordinate with data-dependent comparisons. <code>e8_rank</code> loops <code>for (v = 0; v &lt; d[pos]; v++)</code> over each decoded digit and returns early on an invalid vector (<code>:72–88</code>). Each step reads <code>e8_count_cache</code> at an index formed from the running digit sum (<code>:35–38</code>). Encapsulation and re-encryption run <code>e8_unrank</code> on the message with an early <code>break</code> (<code>:51–69</code>). The specification states that all implementations are "structurally constant-time" (p. 4) and that message decoding avoids branching on secret data (§8.10, p. 27).</p>
+<p>GCC 15.2 at the Makefile's <code>-O2</code> keeps conditional jumps at <code>viper_e8.c:141</code> and in the rank and unrank loops. The values that drive them derive from the private key and the ciphertext, so chosen ciphertexts change the trace before the validity decision. No oracle or recovery was built.</p>
+<p>Constant-time fix (moderate): evaluate both parity cases and all digit positions with masks, and replace the rank loops by fixed-length table scans.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">d=kem-21/Implementations/Reference_Implementation/MAMBA-Viper-128
+gcc -O2 -g -w -I&quot;$d&quot; -c &quot;$d/viper_e8.c&quot; -o /tmp/viper_e8.o
+objdump -dl --no-show-raw-insn /tmp/viper_e8.o |
+  awk '/^\/.*:[0-9]+/{loc=$1} /\tj[a-z]+ /{if ($2!=&quot;jmp&quot;) print loc, $2}' |
+  grep -E 'viper_e8.c:(5[5-7]|7[6-9]|141)( |$)'
+</code></pre>
+<p>The listing shows conditional jumps attributed to the unrank loop, the rank loop and the parity test. No timing was measured.</p>
+<h2 class="issue-heading" id="kem-21-4-decapsulation-never-checks-the-ciphertexts-field">kem-21-4: Decapsulation never checks the ciphertext&#x27;s `µ` field</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All five MAMBA-Viper levels; reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Ciphertexts with an arbitrary <code>µ</code> are accepted, so each message has many valid encryptions; no chosen-ciphertext attack demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-15</td></tr>
+</table></div>
+
+<p>Algorithm 8 re-encrypts the decrypted message with coins <code>ω′</code> from <code>G(hpk, m′)</code> and accepts only if the result equals the received ciphertext. In the code, the coins are a seed <code>σ</code> and a 32-byte value <code>µ = H(K̄)</code> (<code>kem.c:39–41</code>). <code>µ</code> seeds the dither and part of the secret sampling, and is sent as the last field of the ciphertext.</p>
+<p><code>viper_reencrypt_check</code> does not recompute <code>µ</code>. It takes <code>µ</code> from the received ciphertext (<code>viper.c:562</code>), re-encrypts <code>u</code> and <code>v</code> under it, and then compares that pointer with the same ciphertext bytes (<code>:583</code>), which can never differ. Any <code>µ</code> therefore passes, provided <code>u</code> and <code>v</code> were formed with it. At every level, 50 of 50 ciphertexts built honestly except for a random <code>µ</code> returned the valid-path key.</p>
+<p>Encryption as accepted is therefore not the deterministic function of <code>(m, G(hpk, m))</code> that the transform assumes: a party who knows <code>m</code> can produce 2^256 accepted ciphertexts for it. The shared key hashes the ciphertext, and forming <code>u</code> and <code>v</code> needs <code>m</code>, so we found no way to alter an honest ciphertext. The consequence for the IND-CCA argument is unresolved.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh kem-21/reproduce_mu_unchecked.sh
+</code></pre>
+<p>The witness checks the self-comparison in all ten trees, then builds each reference level and decapsulates 50 ciphertexts with an arbitrary <code>µ</code>. All must return the valid-path key; the same ciphertexts with one flipped bit of <code>u</code> must not.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

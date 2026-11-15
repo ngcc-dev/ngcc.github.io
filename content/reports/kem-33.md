@@ -150,3 +150,28 @@ NGCC_ESTIMATOR_PYTHON=/path/to/python-with-numpy-scipy python3 security/reproduc
 ```
 
 The witness verifies the four crossings, their previous above-target points, and the QUBE-512 control against the hash-pinned official estimator.
+
+## kem-33-6: Optimized QUBE-384 and -512 expand keys and encryption randomness from 256-bit seeds
+
+Severity: Critical
+Status: Confirmed
+Layer: Implementation
+Affected: Optimized QUBE-384 (`qube-4`, `qube-7`) and QUBE-512 (`qube-5`, `qube-8`); the reference implementation uses λ/8-byte seeds
+Discovery: Trivial
+Exploitation: About 2^256 key-generation trials recover a decapsulation key from its public key, and about 2^256 encryptions recover a shared secret from a ciphertext; not run
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-15
+
+The specification gives the key-generation randomness `ρ`, both derived seeds `ρ0` and `ρ1`, and the encryption randomness `ρc` λ/8 bytes each (Figs. 1 and 2, pp. 8–9). The reference tree follows it (`SEED_BYTES = PARAM_SECURITY_BYTES`). Every optimized parameter file instead fixes `SEED_BYTES` at 32, including the 384- and 512-bit sets (`src/x86/qube-4/parameters.h:63`, likewise `qube-5`, `-7`, `-8`).
+
+Key generation therefore draws a 32-byte `seed_pke` (`src/common/kem.c:49,56`), hashes it to two 32-byte seeds and stores the 32-byte `seed_dk` as the whole PKE decryption key (`src/x86/qube-5/qube.c:34–36,57,117`). The secret `y` and the vectors `x1`, `x2` are expanded from that seed, and the public key contains the matching `seed_ek` and both syndromes. An attacker can enumerate `seed_pke`, regenerate the public key and compare. Encapsulation likewise truncates the encryption randomness `θ` to 32 bytes (`kem.c:152`, `qube.c:165`), and the ciphertext part `u` is a function of `θ` and the public key. Enumerating `θ` against `u` yields `f1`, `f2`, `e` and `g`, hence the message and the shared secret. Both searches cost about 2^256, below the 384- and 512-bit targets.
+
+This is independent of the unseeded generator of kem-33-3: it holds for any source of the 32 bytes.
+
+### Reproducing
+
+```sh
+sh kem-33/reproduce_optimized_seed_width.sh
+```
+
+The source certificate checks the specification's λ/8-byte seeds, the reference definition, the fixed 32-byte `SEED_BYTES` in the four optimized high-level parameter files, and the lines that store `seed_dk` as the decryption key and initialise the encryption XOF from `SEED_BYTES` of `θ`. The 2^256 searches are not run.

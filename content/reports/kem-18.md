@@ -215,3 +215,32 @@ LATTICE_ESTIMATOR_PATH=/path/to/lattice-estimator \
 ```
 
 The first script generates each key pair with the prebuilt `kem-18/lib` library. It parses `pk` as the C code does, builds the public equations, runs the lattice reduction, and only then compares the unique candidate with the `s2` stored in `sk`. The estimate uses lattice-estimator commit `53da5982597709ba0fdf94ea37a84d822310fd84`; its model ignores the remaining `B2` equations, so its figures are not lower bounds.
+
+## kem-18-6: Modular reductions branch on secret-dependent values
+
+Severity: Low
+Status: Confirmed
+Layer: Side-channel
+Affected: Loong128, Loong256, Loong384 and Loong512; reference, optimized and additional implementations
+Discovery: Trivial
+Exploitation: Local branch trace of the sign and zero pattern of decryption intermediates before the re-encryption check; no key recovery demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-15
+
+Every coefficient reduction goes through `standard_mod`, which ends with `if (x < 0 && res != 0) res = Q - res;`, and `central_mod`, which tests `if (res > 4095)` (`poly.c:39–50,67–75`). Decryption applies them to the products of the ciphertext with the secret key: `mat_mul(U1, S2, …)`, the inner product with `s`, and `vector_central_modulo_q` on the result (`KEM_Loong.c:205–214`; `poly.c:258,289,440`). These run on attacker-chosen ciphertexts before the validity decision.
+
+GCC 15.2 at `-O2` and `-O3` keeps the conditional jumps (`jns`, `je`) attributed to `poly.c:45–47` at every inlined call site. A branch-trace observer therefore sees, per coefficient, whether a secret-dependent intermediate is negative or zero. No oracle or recovery was built.
+
+Constant-time fix (easy, hence Low): reduce with masks, as the samplers and message decoder in the same file already do.
+
+### Reproducing
+
+```sh
+d=kem-18/Implementations/Reference_Implementation/Loong128
+gcc -O2 -g -w -I"$d" -c "$d/poly.c" -o /tmp/loong_poly.o
+objdump -dl --no-show-raw-insn /tmp/loong_poly.o |
+  awk '/^\/.*:[0-9]+/{loc=$1} /\tj[a-z]+ /{if ($2!="jmp") print loc, $2}' |
+  grep -E 'poly.c:4[57]( |$)' | sort | uniq -c
+```
+
+The listing shows the conditional jumps of `standard_mod`. No timing was measured.

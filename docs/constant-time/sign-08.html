@@ -17,10 +17,11 @@
 
 <!-- synchronized report: sign-08/constant_time.md -->
 <h1 id="constant-time-review-08-darts">Constant-time review — 08 DARTS</h1>
-<p>Scope: reference implementation, representative instance only: <code>Implementations/Reference_Implementation/DARTS512/sign.c</code>. Other instances and optimized implementations have not been proven source-equivalent. This is a source-level triage, not a constant-time certification.</p>
+<p>Scope: reference implementation, representative instance only: <code>Implementations/Reference_Implementation/DARTS512/sign.c</code>. <code>sign.c</code> is byte-identical in the three reference, three AVX2 and three NEON per-set trees; other files differ between trees (for example <code>sampler.c</code>) and have not been proven equivalent. This is a source-level triage, not a constant-time certification.</p>
 <p>Secret: signing-key polynomials/basis, per-signature masks and sampler state. Public: verification key, algorithm parameters, message and serialized signature.</p>
 <ul>
 <li>Branch/loop trace: <code>Implementations/Reference_Implementation/DARTS512/sign.c:239</code> — The <code>reject1 || …</code> branch controls a rejection sampler on secret-key-dependent response values.</li>
+<li>Branch/loop trace: <code>sign.c:196-199</code> — the <code>compress_reject</code> restart compares <code>Comp_d(w0)</code> with <code>Comp_d(w0 + (1-b)c)</code>, so it can be taken only when the hidden bit <code>b</code> is 0 (<code>poly_mul_1_b</code>, <code>poly.c:147-153</code>). In key generation, <code>rej_p</code> (<code>sampler.c:153-174</code>) consumes one extra stream bit for each non-zero secret coefficient, so the number of refill iterations depends on the secret.</li>
 <li>Table lookups and division/remainder: this source triage does not certify their absence or constant-time compilation. Only the explicitly traced operands above are classified. Public lengths, fixed parameters and verifier checks are not findings.</li>
 </ul>
 <p>Assessment: No new vulnerability report is promoted from this representative source triage. A compiler/architecture-specific timing and cache test is still needed before claiming constant-time behavior or exploitable leakage.</p>

@@ -157,6 +157,26 @@ python3 sign-18/reproduce_public_forgery.py &quot;$T/UnfoldOrigami&quot;
 python3 sign-18/reproduce_tail_abort.py
 </code></pre>
 <p>The deterministic witness pins one naturally aborting call and one successful verified control, using ordinary messages and fresh per-call salts. It does not force a singular system or patch the signer.</p>
+<h2 class="issue-heading" id="sign-18-7-the-origami-512-signing-streams-do-not-absorb-the-end-of-the-salt">sign-18-7: The Origami-512 signing streams do not absorb the end of the salt</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Origami-512; reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Two salts that differ only in their last bytes give the same vinegar and kernel streams with different hash targets; no key recovery or forgery demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-15</td></tr>
+</table></div>
+<p>The contest build routes Origami's SHAKE calls through a wrapper that buffers its input and stops absorbing at 208 bytes: <code>shake_absorb</code> truncates <code>inlen</code> once the buffer is full (<code>symmetric_iccs.c:42–51</code>). At the 512-bit level the signing streams exceed that. The <code>sign-known</code> stream absorbs 218 bytes and the <code>kernel-sample</code> stream 221, with the salt last (<code>origami_ref.c:545,678</code>), so the final 10 and 13 salt bytes never reach the generator. The target hash is shorter and uses the whole salt.</p>
+<p>With the archived code, two 64-byte salts that differ in their last five bytes produce identical <code>sign-known</code> streams and different targets; Origami-384, which absorbs 186 bytes, does not. The vinegar values and kernel samples of a signature are therefore not bound to the full salt, as the specification's derivation has them. At least 51 salt bytes still enter, so a repeat needs a salt-prefix collision and no attack follows; the defect is latent.</p>
+<h3 id="reproducing_6">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">d=&quot;sign-18/Implementations and Test_Vectors/Implementations/Reference_Implementation/Origami-512&quot;
+sed -n '42,51p' &quot;$d/symmetric_iccs.c&quot;; grep -n 'SHAKE_BUF_BYTES' &quot;$d&quot;/*.c &quot;$d&quot;/*.h | head -3
+</code></pre>
+<p>This is a source witness for the truncation. The equal streams were observed with a driver against the archived code and are not part of the witness.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

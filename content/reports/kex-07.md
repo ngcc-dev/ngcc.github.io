@@ -64,3 +64,29 @@ python3 kex-07/reproduce_short_message.py
 ```
 
 The certificate traces the length discard and fixed-size decryption in all nine submitted trees. It does not execute a malformed exchange.
+
+## kex-07-3: Re-encryption rejection-samples from coins derived from the decrypted message
+
+Severity: Low
+Status: Confirmed
+Layer: Side-channel
+Affected: Every NEV-AKE parameter set whose `params.h` sets `ETA_R` to 9, including NEV-AKE-C1 and its compressed form; reference and AVX2 implementations. Sets with a smaller `ETA_R` (R1, R2) sample `r` without rejection
+Discovery: Moderate
+Exploitation: Local branch trace of a pattern that depends on the decrypted message of an attacker-supplied ciphertext; no recovery demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-15
+Each party decrypts the peer's ciphertext, derives `ρ = G(m′)` and re-encrypts to check it (`ake.c:96–106`). For the parameter sets with `ETA_R` equal to 9, the re-encryption draws its randomness with `poly_sample_r` (`owpke.c:136`), which is the rejection sampler of the specification's `Ternary1/3`: each byte of the KDF output is used only `if (x < 243)` (`sample.c:87–106,198–219`).
+
+Which bytes are rejected is a function of `ρ`, hence of `m′`, and `m′` is the private-key decryption of a ciphertext the peer chose. A branch-trace observer therefore sees a fingerprint of the decrypted message before the comparison takes effect. The accepted values are not revealed, the effect on total time is small, and no oracle or recovery was built.
+
+Constant-time fix (moderate): sample without rejection, or compact a fixed surplus of bytes with masks.
+
+### Reproducing
+
+```sh
+d="kex-07/Implementations and Test_Vectors/Implementations/Reference_Implementation/NEV-AKE-C1"
+grep -n 'x < 243' "$d/sample.c"; grep -n 'poly_sample_r' "$d/owpke.c"
+grep -n 'ow_pke_enc_interal(cmp, m, pk, rho)' "$d/ake.c"
+```
+
+This is a source witness: the decrypt-and-verify path, the sampler call and the rejection test.

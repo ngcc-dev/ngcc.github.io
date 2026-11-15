@@ -152,3 +152,28 @@ The submitted `drng.c` fixes one working mapping, so this note records a Low det
 ```sh
 python3 security/rbg_protocol_dependency.py --report-id sign-12-4
 ```
+
+## sign-12-5: Reference field arithmetic branches on bits of the secret key
+
+Severity: Low
+Status: Confirmed
+Layer: Side-channel
+Affected: All eight reference implementations; the optimized implementation is a separate code base and was not checked
+Discovery: Trivial
+Exploitation: Local branch trace of secret field elements in key generation and in every signing call; not measured, no key recovery demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-15
+The reference GF(2^n) code is bit-serial and skips work on zero bits. `gf_mul` continues past each zero bit of its second operand, `gf_sqr` flips an output bit only when the input bit is set, `gf_reduce_wide` skips zero bits of the product, and `gf_inv` returns early on zero (`galas/gf2n.c:84–102,104–136,147–149`). The file is identical in all eight reference trees.
+
+`galas_owf_eval` uses these functions on the secret key `k` and on the S-box inputs derived from it (`galas/owf.c:56,61,98–100,114`). It runs in key generation and again in every `sig_sign`, which evaluates the one-way function to rebuild the witness (`ngcc/SIG_AlgorithmInstance.c:79–88,282`). The branch pattern of each call is therefore a function of secret bits, fixed per key. The code was not compiled or timed for this entry and no recovery was attempted.
+
+Constant-time fix (easy, hence Low): apply each operand bit as a mask.
+
+### Reproducing
+
+```sh
+d=sign-12/Implementations/Reference_Implementation/Galas-256F
+sed -n '104,134p' "$d/galas/gf2n.c"; grep -n 'gf_mul\|gf_sqr\|gf_inv' "$d/galas/owf.c"
+```
+
+This is a source witness.

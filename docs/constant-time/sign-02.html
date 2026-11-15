@@ -21,6 +21,7 @@
 <p>Secret: signing-key polynomials/basis, per-signature masks and sampler state. Public: verification key, algorithm parameters, message and serialized signature.</p>
 <ul>
 <li>Branch/loop trace: <code>Implementations/Reference_Implementation/BiT-128/sign.c:154</code> — <code>check_reject_sample_z0z1</code> controls retry on a masked response derived from secret polynomials.</li>
+<li>Branch/loop trace: <code>sample.c:141-171</code> and <code>197-227</code> — <code>reject_sample_coeffs</code> and <code>reject_sample_coeffs_sparse</code> branch per coefficient on <code>|z_j|</code> and on a comparison involving <code>|v_j|</code> (a coefficient of <code>s_0·c</code>, <code>e·c</code> or <code>c</code>), and squeeze the XOF only for coefficients outside the fast-accept range; <code>sample.c:246,271</code> stop at the first rejecting polynomial. <code>poly.c:26-29</code> (<code>rej_S1</code>, key generation) branches on and indexes <code>map_S1</code> with the 2-bit values that become secret coefficients.</li>
 <li>Table lookups and division/remainder: this source triage does not certify their absence or constant-time compilation. Only the explicitly traced operands above are classified. Public lengths, fixed parameters and verifier checks are not findings.</li>
 </ul>
 <p>Assessment: No new vulnerability report is promoted from this representative source triage. A compiler/architecture-specific timing and cache test is still needed before claiming constant-time behavior or exploitable leakage.</p>

@@ -219,6 +219,27 @@ python3 kex-05/reproduce_constant_identity_misbinding.py
 python3 kex-05/reproduce_lifting_prf_reuse.py
 </code></pre>
 <p>The script copies the reference sources to a temporary directory and builds them. It renames the compiled PRF symbol with <code>objcopy</code> and links a wrapper that logs every call to the unchanged PRF. It exits with 77 if gcc, objcopy or nm is missing. As a control, it first checks that for the same DRBG seed the instrumented library produces the same four messages and session key as the prebuilt <code>lib/libLoomKEX-*.so</code>. It then checks byte equality between the <code>r[i]</code> CBD inputs and the lifting streams during pass 2 at every level, with a second control showing that streams for distinct nonces share no prefix. It takes about 10 seconds. It establishes the stream reuse, not exploitability.</p>
+<h2 class="issue-heading" id="kex-05-9-public-key-lifting-rejection-samples-from-the-secret-encapsulation-coins">kex-05-9: Public-key lifting rejection-samples from the secret encapsulation coins</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>side-channel</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>LoomKEX-128, -256 and -512; reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Local branch trace of which three-bit groups of the coin-derived stream were rejected; no recovery demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-15</td></tr>
+</table></div>
+<p>Encryption lifts the rounded public key back to the larger modulus by adding a random offset inside each rounding bucket. <code>polyvec_invq</code> draws the offsets with <code>prf(seed, nonce)</code> and a rejection loop: it splits the stream into three-bit values and accepts one only <code>if (t[j] &lt; BUCKET_SZ[r[ctr]])</code> (<code>kem/poly_invq.c:53–88,97</code>). The seed is the encapsulation coins (<code>kem/indcpa.c:351</code>).</p>
+<p>The bucket sizes are not powers of two, so a sizeable share of the three-bit values is rejected, and which ones are rejected is visible as a branch pattern. The same PRF substreams are also the input of the ephemeral secret's sampler, as kex-05-8 records, so the pattern is partial information about bits that determine the ephemeral secret. The accepted values are not revealed. No oracle or recovery was built, and the consequence is unresolved.</p>
+<p>Constant-time fix (moderate): accept or discard with masks over a fixed number of draws.</p>
+<h3 id="reproducing_8">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">d=&quot;kex-05/Implementations and Test_Vectors/Implementations/Reference_Implementation/LoomKEX-256/kem&quot;
+grep -n 'BUCKET_SZ\[r\[ctr\]\]' &quot;$d/poly_invq.c&quot;; grep -n 'polyvec_invq' &quot;$d/indcpa.c&quot;
+</code></pre>
+<p>This is a source witness: the rejection test and its call with the encapsulation coins.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -32,3 +32,30 @@ python3 kem-20/reproduce_rlimit.py
 ```
 
 The first witness interposes only the identified matrix allocation. For every reference instance it confirms that key generation reports success, the zero-secret layout recovers the encapsulated key, and the returned holder secret does not. It copies the stored `H(pk)` field from the holder key while using the remaining secret-key bytes only as a negative control; `H(pk)` is publicly computable from `pk`. The second witness uses util-linux `prlimit` and scans for the host-dependent address-space window in which the same fail-open state occurs without interposition.
+
+## kem-20-2: Decapsulation branches on the sign bit of every secret coefficient
+
+Severity: Low
+Status: Confirmed
+Layer: Side-channel
+Affected: All ten MAMBA-Frost and Frost-CC parameter sets; reference, optimized and native implementations
+Discovery: Trivial
+Exploitation: Local branch trace of the secret matrix's sign pattern on every decapsulation; no key recovery demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-15
+
+Decapsulation unpacks the secret matrix `S` and sign-extends each coefficient with a branch: `if ((S[i] & (1u << (PARAMS_SECRET_COEFF_BITS - 1u))) != 0u)` (`Frost/src/kem.c:492–496`). The loop runs over all coefficients on every call. `kem.c` is the same in every tree apart from banner and assertion macros. The specification requires implementations to "avoid secret-dependent branches and secret-dependent memory accesses" (§8.3, p. 20).
+
+GCC 15.2 keeps the branch at `-O1`, `-O2`, `-O3` and `-Os`, and the harness-built libraries contain it (`test $0x4,%dl; je` in Frost-128, `test $0x2,%dl; je` in Frost-512). A branch-trace observer learns the sign bit of every coefficient. For the sets with coefficients in {−1, 0, 1} that is the exact set of −1 positions; for Frost-128 it is the set of negative coefficients. The pattern is fixed per key, so the observer is local. The resulting loss of lattice security was not quantified and no recovery was attempted.
+
+Constant-time fix (easy, hence Low): sign-extend arithmetically, for example by XOR and subtraction of the sign-bit mask.
+
+### Reproducing
+
+```sh
+make -C kem-20
+objdump -d --no-show-raw-insn kem-20/lib/libMAMBA-Frost-128.so |
+  awk '/<crypto_kem_dec[^>]*>:/{p=1} p' | grep -A1 'test   $0x4,%dl'
+```
+
+The output shows the test of the coefficient's sign bit followed by a conditional jump inside `crypto_kem_dec_Frost128`. This is a compiled-branch witness; no timing was measured.

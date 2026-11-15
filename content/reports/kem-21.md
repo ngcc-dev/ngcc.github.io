@@ -50,3 +50,57 @@ sh kem-21/reproduce_sigma_ceiling.sh
 ```
 
 The script checks that the sampler and `kem.c` are shared by all ten trees. It then builds an attacker harness from an unmodified copy of each reference tree in a temporary directory and runs key generation, encapsulation and decapsulation in the prebuilt `kem-21/lib` libraries. At Viper-384 and -512 it recomputes the library's shared key from (pk, ct, σ[0..31]) in 20/20 sessions, checks that inverting ω bytes 32 onward leaves the ciphertext unchanged, and recovers the key by a 2^16 search over the low bits of σ with the rest given as a hint. Controls: honest decapsulation matches, a one-bit-wrong σ prefix is rejected, and Viper-256 is run to show that its σ width equals its target. It takes about 55 seconds; `NGCC_LONG=1` widens the search to 2^20 (about 15 minutes).
+
+## kem-21-3: The E8 message codec is variable-time on decrypted values
+
+Severity: Low
+Status: Confirmed
+Layer: Side-channel
+Affected: All five MAMBA-Viper levels; reference and optimized implementations (all copies of `viper_e8.c` are identical)
+Discovery: Moderate
+Exploitation: Decapsulation's branch pattern and loop counts depend on the decrypted lattice point before the re-encryption check; no key recovery demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-15
+
+Decapsulation decodes `v − sᵀu` with `viper_e8_decode` before the re-encryption check. The decoder is not constant-time. `d8_candidate` repairs parity only when the rounded coordinates have an odd sum (`viper_e8.c:141`) and then searches for the cheapest coordinate with data-dependent comparisons. `e8_rank` loops `for (v = 0; v < d[pos]; v++)` over each decoded digit and returns early on an invalid vector (`:72–88`). Each step reads `e8_count_cache` at an index formed from the running digit sum (`:35–38`). Encapsulation and re-encryption run `e8_unrank` on the message with an early `break` (`:51–69`). The specification states that all implementations are "structurally constant-time" (p. 4) and that message decoding avoids branching on secret data (§8.10, p. 27).
+
+GCC 15.2 at the Makefile's `-O2` keeps conditional jumps at `viper_e8.c:141` and in the rank and unrank loops. The values that drive them derive from the private key and the ciphertext, so chosen ciphertexts change the trace before the validity decision. No oracle or recovery was built.
+
+Constant-time fix (moderate): evaluate both parity cases and all digit positions with masks, and replace the rank loops by fixed-length table scans.
+
+### Reproducing
+
+```sh
+d=kem-21/Implementations/Reference_Implementation/MAMBA-Viper-128
+gcc -O2 -g -w -I"$d" -c "$d/viper_e8.c" -o /tmp/viper_e8.o
+objdump -dl --no-show-raw-insn /tmp/viper_e8.o |
+  awk '/^\/.*:[0-9]+/{loc=$1} /\tj[a-z]+ /{if ($2!="jmp") print loc, $2}' |
+  grep -E 'viper_e8.c:(5[5-7]|7[6-9]|141)( |$)'
+```
+
+The listing shows conditional jumps attributed to the unrank loop, the rank loop and the parity test. No timing was measured.
+
+## kem-21-4: Decapsulation never checks the ciphertext's `µ` field
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: All five MAMBA-Viper levels; reference and optimized implementations
+Discovery: Moderate
+Exploitation: Ciphertexts with an arbitrary `µ` are accepted, so each message has many valid encryptions; no chosen-ciphertext attack demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-15
+
+Algorithm 8 re-encrypts the decrypted message with coins `ω′` from `G(hpk, m′)` and accepts only if the result equals the received ciphertext. In the code, the coins are a seed `σ` and a 32-byte value `µ = H(K̄)` (`kem.c:39–41`). `µ` seeds the dither and part of the secret sampling, and is sent as the last field of the ciphertext.
+
+`viper_reencrypt_check` does not recompute `µ`. It takes `µ` from the received ciphertext (`viper.c:562`), re-encrypts `u` and `v` under it, and then compares that pointer with the same ciphertext bytes (`:583`), which can never differ. Any `µ` therefore passes, provided `u` and `v` were formed with it. At every level, 50 of 50 ciphertexts built honestly except for a random `µ` returned the valid-path key.
+
+Encryption as accepted is therefore not the deterministic function of `(m, G(hpk, m))` that the transform assumes: a party who knows `m` can produce 2^256 accepted ciphertexts for it. The shared key hashes the ciphertext, and forming `u` and `v` needs `m`, so we found no way to alter an honest ciphertext. The consequence for the IND-CCA argument is unresolved.
+
+### Reproducing
+
+```sh
+sh kem-21/reproduce_mu_unchecked.sh
+```
+
+The witness checks the self-comparison in all ten trees, then builds each reference level and decapsulates 50 ciphertexts with an arbitrary `µ`. All must return the valid-path key; the same ciphertexts with one flipped bit of `u` must not.

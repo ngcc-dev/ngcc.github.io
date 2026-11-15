@@ -163,3 +163,29 @@ python3 sign-07/reproduce_message_length_overflow.py
 ```
 
 The script signs a 32-byte message at each level and verifies the long forgeries, held in anonymous `mmap` buffers, and their controls, each in a fresh process. It takes under 10 seconds and needs about 1 GiB of memory.
+
+## sign-07-6: Signing masks depend on only half of the mask seed
+
+Severity: Medium
+Status: Confirmed
+Layer: Implementation
+Affected: CS-128, CS-256 and CS-512; reference and optimized implementations
+Discovery: Moderate
+Exploitation: Two signing calls whose mask seeds agree in their first λ bits draw identical masks, which is expected after about 2^(λ/2) signatures (2^64 for CS-128); the consequence of a repeated mask is not demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-15
+Algorithm 11 derives a mask seed `ρ′` of 2λ bits (line 5, p. 20) and expands every mask component from it. `CS_Sign` computes the full `rhoprime[HBYTES]` and passes it to `ExpandMask` (`cs.c:76,95,99`), but `ExpandMask` copies only `SEEDBYTES` bytes of it before hashing (`sampling.c:668–676`). `HBYTES` is λ/4 and `SEEDBYTES` is λ/8 (`params.h:88–89`), so the masks are a function of the first λ bits of `ρ′` and the counter. The function's own comment describes a seed of length `HBYTES`.
+
+With the archived code at all three levels, changing any byte in the upper half of `ρ′` leaves every mask unchanged, while one flipped bit in the lower half changes them. The upper half reaches only the coin stream of the sampler.
+
+The mask seed therefore has λ bits of collision space where the specification provides 2λ. Among about 2^(λ/2) signatures two share all masks; for CS-128 that is 2^64 signatures. In Fiat–Shamir signatures a repeated mask with different challenges relates the two responses through the secret, and other candidates here have lost keys that way. For CS the responses also pass through a coin-driven sampling step, and we did not analyse what a repeated mask yields or run a recovery. The entropy shortfall is confirmed and its consequence is unresolved, hence Medium.
+
+### Reproducing
+
+```sh
+d=sign-07/Implementations/Reference_Implementation/CS-128
+sed -n '668,676p' "$d/sampling.c"; grep -n 'ExpandMask(y' "$d/cs.c"
+grep -n 'define HBYTES\|define SEEDBYTES' "$d/params.h"
+```
+
+This is a source witness. The unchanged masks were observed by calling the archived `ExpandMask` with seeds differing in the upper half, and are not part of the witness.

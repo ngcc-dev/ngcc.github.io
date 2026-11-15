@@ -183,6 +183,27 @@ cc -std=c99 -O2 -ffunction-sections -fdata-sections -Wl,--gc-sections \
 <pre><code class="language-sh">NGCC_ESTIMATOR_PYTHON=/path/to/python-with-numpy-scipy python3 security/reproduce_code_multi_instance.py kem-33
 </code></pre>
 <p>The witness verifies the four crossings, their previous above-target points, and the QUBE-512 control against the hash-pinned official estimator.</p>
+<h2 class="issue-heading" id="kem-33-6-optimized-qube-384-and-512-expand-keys-and-encryption-randomness-from-256-bit-seeds">kem-33-6: Optimized QUBE-384 and -512 expand keys and encryption randomness from 256-bit seeds</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Optimized QUBE-384 (<code>qube-4</code>, <code>qube-7</code>) and QUBE-512 (<code>qube-5</code>, <code>qube-8</code>); the reference implementation uses λ/8-byte seeds</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>About 2^256 key-generation trials recover a decapsulation key from its public key, and about 2^256 encryptions recover a shared secret from a ciphertext; not run</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-15</td></tr>
+</table></div>
+
+<p>The specification gives the key-generation randomness <code>ρ</code>, both derived seeds <code>ρ0</code> and <code>ρ1</code>, and the encryption randomness <code>ρc</code> λ/8 bytes each (Figs. 1 and 2, pp. 8–9). The reference tree follows it (<code>SEED_BYTES = PARAM_SECURITY_BYTES</code>). Every optimized parameter file instead fixes <code>SEED_BYTES</code> at 32, including the 384- and 512-bit sets (<code>src/x86/qube-4/parameters.h:63</code>, likewise <code>qube-5</code>, <code>-7</code>, <code>-8</code>).</p>
+<p>Key generation therefore draws a 32-byte <code>seed_pke</code> (<code>src/common/kem.c:49,56</code>), hashes it to two 32-byte seeds and stores the 32-byte <code>seed_dk</code> as the whole PKE decryption key (<code>src/x86/qube-5/qube.c:34–36,57,117</code>). The secret <code>y</code> and the vectors <code>x1</code>, <code>x2</code> are expanded from that seed, and the public key contains the matching <code>seed_ek</code> and both syndromes. An attacker can enumerate <code>seed_pke</code>, regenerate the public key and compare. Encapsulation likewise truncates the encryption randomness <code>θ</code> to 32 bytes (<code>kem.c:152</code>, <code>qube.c:165</code>), and the ciphertext part <code>u</code> is a function of <code>θ</code> and the public key. Enumerating <code>θ</code> against <code>u</code> yields <code>f1</code>, <code>f2</code>, <code>e</code> and <code>g</code>, hence the message and the shared secret. Both searches cost about 2^256, below the 384- and 512-bit targets.</p>
+<p>This is independent of the unseeded generator of kem-33-3: it holds for any source of the 32 bytes.</p>
+<h3 id="reproducing_5">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh kem-33/reproduce_optimized_seed_width.sh
+</code></pre>
+<p>The source certificate checks the specification's λ/8-byte seeds, the reference definition, the fixed 32-byte <code>SEED_BYTES</code> in the four optimized high-level parameter files, and the lines that store <code>seed_dk</code> as the decryption key and initialise the encryption XOF from <code>SEED_BYTES</code> of <code>θ</code>. The 2^256 searches are not run.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

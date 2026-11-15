@@ -144,3 +144,28 @@ Constant-time fix (moderate, hence Medium): apply the secret permutation oblivio
 ### Reproducing
 
 The source-level witness is `ref/KEM_HEP_QC.c:165-212` → `ref/PKE_HEP_QC.c:185-220` → `common/vector.c:369-408,477-503` under `Implementations/Implementations/`; the x86_64 PKE source calls the same shared routines. See `constant_time.md` for the secret/public mapping. This is not a measured timing benchmark.
+
+## kem-17-6: Every seed expansion passes through a 208-bit XOF state
+
+Severity: Critical
+Status: Confirmed
+Layer: Implementation
+Affected: HEP-QC-5 (256-bit) and HEP-QC-7 (512-bit); reference and x86_64 implementations. HEP-QC-1 and -3 have the same state but no shortfall
+Discovery: Moderate
+Exploitation: About 2^208 key-expansion trials recover a decapsulation key from its public key, and about 2^208 encryption trials recover a shared secret from a ciphertext; not run
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-15
+
+The scheme's XOF context is declared as 26 64-bit words, 208 bytes (`common/symmetric.h:42–44`). `xof_init` fills it with `pseudoXOF(CTX_LEN * 8, seed, …)` and `xof_proc` refreshes it the same way (`common/symmetric.c:43,115`). `CTX_LEN` is 26 and the first argument of `pseudoXOF` is a bit length, so both calls write 208 bits. The other 182 context bytes stay zero. Every stream the XOF produces is therefore a function of a 208-bit state, whatever the seed length.
+
+Key generation expands the whole PKE decryption key from this XOF: the vectors `y` and `x`, the mixing matrix and the permutation all come from `xof_init(&dk_xof_ctx, dk_pke, SEED_BYTES)` (`common/parsing.c:26–30`). An attacker can enumerate the 2^208 states, expand each candidate key and compare the resulting public syndrome with the public key. Encryption draws its sparse vectors from the same XOF under `θ`, so a ciphertext likewise has at most 2^208 possible randomness streams, each checkable against `u`. Both searches are below the 256-bit target of HEP-QC-5 and the 512-bit target of HEP-QC-7.
+
+The defect is in the submission's own wrapper and holds for an ideal `pseudoXOF` with the same arguments. It is separate from the 256-bit seed of kem-17-2, which concerns only HEP-QC-7, and from the generator instance of kem-17-3.
+
+### Reproducing
+
+```sh
+sh kem-17/reproduce_xof_state_width.sh
+```
+
+The witness checks the two 208-bit calls, `CTX_LEN` in all eight parameter files and the key-expansion call. For each reference parameter set it then initialises the archived XOF, requires the context to be zero beyond byte 26, and requires three 4,096-byte squeezes to be reproduced from those 26 bytes alone. The 2^208 searches are not run.

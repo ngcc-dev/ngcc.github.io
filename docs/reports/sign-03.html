@@ -68,6 +68,27 @@ sign-03/reproduce_forgery sign-03/lib/libCEDRUSC-160f.so
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">sh sign-03/reproduce_fors_accumulation.sh
 </code></pre>
+<h2 class="issue-heading" id="sign-03-3-the-wotsc-zero-bit-test-checks-bits-the-encoding-already-uses">sign-03-3: The WOTS+C zero-bit test checks bits the encoding already uses</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Seven of the eight CEDRUS+C parameter sets (384s is exact); reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Exact 1- to 4-bit reduction on the one-time-signature digest path</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-15</td></tr>
+</table></div>
+<p>WOTS+C grinds a counter until the message digest has <code>zb</code> zero bits and a fixed checksum, and encodes the remaining 8n − <code>zb</code> bits as chain lengths (Algorithms 5 and 6). The code encodes the leading 8n − <code>zb</code> bits with <code>base_w</code> (<code>wots.c:49–64</code>) but tests <code>digest[SPX_N-1] &amp; (~0U &lt;&lt; (8 - WOTS_ZERO_BITS))</code>, the high <code>zb</code> bits of the last byte (<code>wots.c:116,138</code>; <code>merkle.c:35,59</code>). Unless <code>zb</code> is 8, some of the tested bits are bits the encoding has already consumed, and the same number of low bits of the last byte are neither encoded nor tested.</p>
+<p>The untested bits number 2, 2, 2, 3, 4, 0, 3 and 1 for 160f, 160s, 256f, 256s, 384f, 384s, 512f and 512s. For 160s and 384f, flipping any of them in a digest that passes the test leaves every chain length and the checksum unchanged; 384s has none. A one-time signature therefore authenticates that many fewer digest bits than specified.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">d=sign-03/Implementations/Reference_Implementation/CEDRUSC-160s
+sed -n '49,64p' &quot;$d/wots.c&quot;; grep -n 'mask =\|&amp; (mask)' &quot;$d/wots.c&quot;
+grep -n 'define WOTS_ZERO_BITS' sign-03/Implementations/Reference_Implementation/*/params/*.h
+</code></pre>
+<p>This is a source witness: the encoder, the test and the per-set <code>zb</code>. The unchanged chain lengths were observed by calling the archived <code>chain_lengths</code> on bit-flipped digests and are not part of the witness.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

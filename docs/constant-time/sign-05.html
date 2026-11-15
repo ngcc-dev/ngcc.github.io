@@ -20,7 +20,7 @@
 <p>Scope: reference implementation, representative instance only: <code>Implementations/Reference_Implementation/sm4th_d3_128s_tight/sig_impl.c</code>. Other instances and optimized implementations have not been proven source-equivalent. This is a source-level triage, not a constant-time certification.</p>
 <p>Secret: witness/secret key and per-proof random tapes until revealed. Public: verification key, message, Fiat–Shamir challenge and opened transcript.</p>
 <ul>
-<li>Branch/loop trace: <code>Implementations/Reference_Implementation/sm4th_d3_128s_tight/sig_impl.c:476</code> — Challenge-3 grinding and opening use outcome-dependent branches; the predicate is transcript/challenge derived, so this line alone is not evidence of secret-key leakage.</li>
+<li>Branch/loop trace: <code>Implementations/Reference_Implementation/sm4th_d3_128s_tight/sig_impl.c:484–490</code> — Challenge-3 grinding and opening use outcome-dependent branches; the predicate is transcript/challenge derived, so these lines alone are not evidence of secret-key leakage.</li>
 <li>
 <p>Table lookups and division/remainder: this source triage does not certify their absence or constant-time compilation. Only the explicitly traced operands above are classified. Public lengths, fixed parameters and verifier checks are not findings.</p>
 </li>

@@ -164,3 +164,28 @@ sh sign-29/reproduce_public_tree_witness.sh
 ```
 
 The source certificate checks all nine local implementation trees. Pass `--archive /path/to/Tins.zip` to check the SHA-256-pinned submitted archive as well. The runtime witness compiles the submitted Tins256 reference sources into a temporary directory; no candidate source is patched.
+
+## sign-29-8: The grinding test reads challenge bits when the repetition count is even
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: Tins128 and Tins256; reference, optimized and additional implementations. Tins512 behaves as specified
+Discovery: Moderate
+Exploitation: The last opened leaf index is confined to 256 of 4,096 values and signing grinds 4 or 16 times longer than specified; no forgery below target follows from this alone
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-15
+Algorithm 11 expands τ 12-bit challenge indices and ω grinding bits and accepts a counter when the grinding bits are zero. `ExpandChallengePoint` computes the grinding value as `(buffer[last] >> 4) | (buffer[(TAU - 1) / 2 * 3 + 1] << 4)` (`bavc_commit.c:507` in Tins128, `:501` in Tins256, `:523` in Tins512). For odd τ the second byte holds grinding bits. For even τ it is the byte whose low half is the top four bits of the last challenge index.
+
+Tins128 (τ = 12, ω = 6) and Tins256 (τ = 24, ω = 4) therefore test eight bits, four of them belonging to the challenge. Over 200,000 counters the acceptance rate was 1 in 267 for Tins128 and 1 in 257 for Tins256, against the specified 1 in 64 and 1 in 16, and every accepted challenge had its last index below 256. Tins512 (τ = 47) accepted 1 in 65.5 with last indices up to 4,094.
+
+The challenge distribution thus differs from the specification: the last tree opens one of 256 leaves, not 4,096, and only four fresh bits are ground. For Tins128 the probability that a counter passes and matches a guessed challenge is 2^-148, where the specification gives 2^-150. Signers also grind longer than specified.
+
+### Reproducing
+
+```sh
+grep -n 'v_grinding = ' sign-29/Implementations/Reference_Implementation/Tins*/bavc_commit.c
+grep -n 'define TAU\|define Omega' sign-29/Implementations/Reference_Implementation/Tins*/params.h
+```
+
+This is a source witness: the same expression with τ = 12, 24 and 47. The acceptance rates came from calling the archived `ExpandChallengePoint` on 200,000 counters per set and are not part of the witness.

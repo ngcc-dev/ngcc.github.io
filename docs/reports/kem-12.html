@@ -71,6 +71,28 @@
 </code></pre>
 <p>The <code>kem-12-2</code> check verifies the CTL-512 output table and the corresponding
 reference constants.</p>
+<h2 class="issue-heading" id="kem-12-3-reference-ctl-512-multiplication-branches-on-every-bit-of-the-encapsulation-secret">kem-12-3: Reference CTL-512 multiplication branches on every bit of the encapsulation secret</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>side-channel</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>CTL-512 (CTL-3329-2048) reference implementation; the optimized tree multiplies by NTT and is flat. Key generation in both trees</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Secret-dependent instruction count and branch trace in encapsulation and in decapsulation's re-encryption; no shared-secret or key recovery demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-15</td></tr>
+</table></div>
+
+<p>CTL encrypts by computing <code>c1 = round(h·s / k)</code> for a binary polynomial <code>s</code> derived from the message. The reference CTL-512 code does this with a schoolbook product whose inner loop skips zero coefficients of <code>s</code>: <code>if (b[j] == 0) continue;</code> (<code>kem3329.c:145</code>, called from <code>ctl_encrypt_3329</code> at <code>:452</code>). Encapsulation reaches it with the fresh <code>s</code> (<code>api.c:690</code>), and decapsulation reaches it with the decrypted <code>s</code> during re-encryption, before the comparison (<code>api.c:764</code>).</p>
+<p>One call executes 25.5 million instructions for an all-zero <code>s</code>, 35.5 million at weight 1024 and 44.4 million at weight 2048. The optimized tree stays within 0.1% and returns the same ciphertext. The per-coefficient branch gives a local trace observer every bit of <code>s</code>, from which <code>m = c2 ⊕ Hash_m(s)</code> and the shared secret follow. Total time reveals only the weight of <code>s</code>, which is close to 1024 for honest messages. No extraction was attempted.</p>
+<p>Key generation has a related one-time leak in both trees. <code>poly_inv_xn1_mod3329</code> inverts the private <code>f</code> by a polynomial Euclidean algorithm with degree-dependent loops and an <code>if (f != 0)</code> skip (<code>kem3329.c:163–191</code>, <code>:197</code>), and <code>mod3329_inv</code> divides secret-derived values with a data-dependent loop count (<code>:70–90</code>). Its consequence is unresolved.</p>
+<p>Constant-time fix (easy, hence Low): use the NTT product of the optimized tree, or drop the skip; invert by a fixed-length exponentiation.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh kem-12/reproduce_s_branch.sh
+</code></pre>
+<p>The witness builds <code>ctl_encrypt_3329</code> from the archived reference and optimized CTL-3329-2048 trees and counts executed instructions under <code>valgrind --tool=callgrind</code> for <code>s</code> of weight 0 and 2048. It requires the reference count to grow by more than 50%, the optimized count to stay within 1%, and both trees to return the same ciphertext. It exits 77 without <code>gcc</code> or <code>valgrind</code>.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

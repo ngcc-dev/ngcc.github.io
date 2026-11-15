@@ -139,3 +139,29 @@ sh kem-15/reproduce_avx2_stack_overflow.sh
 ```
 
 The script builds the archived FLIT512 AVX2 tree with AddressSanitizer and requires out-of-bounds stack writes in both functions, while a copy with enlarged arrays runs cleanly. If an x86 clang is available, the unmodified tree must fail all 200 round trips and the enlarged copy none.
+
+## kem-15-6: Reference decoding branches on each bit of the decoded message and of the private key
+
+Severity: Low
+Status: Confirmed
+Layer: Side-channel
+Affected: Reference FLIT128, FLIT256 and FLIT512, and the FIPS202 reference variants; the AVX2 implementations pack without a branch
+Discovery: Trivial
+Exploitation: Local branch trace of the decoded message bits and of the private polynomial before the re-encryption check; no extraction demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-15
+
+`poly_decode_to_msg` thresholds the decrypted coefficients into a binary polynomial and multiplies it by the private `f1`. Both operands are first packed into machine words by `f1_pack`, which sets a bit under `if (src->coeffs[i] & 1)` (`decode.c:135–143`, called at `:259–260` and `:287–288`). Decapsulation reaches this before the re-encryption check.
+
+With the Makefile's `-O3 -march=native`, GCC 15.2 keeps the test as `testb $1` followed by a conditional jump. One decapsulation's branch trace therefore gives the decoded bits, from which the message and shared secret follow, and the bits of `f1`, which is fixed per key. No timing measurement or extraction was made.
+
+Constant-time fix (easy, hence Low): pack with a shift and OR of the masked bit.
+
+### Reproducing
+
+```sh
+d=kem-15/Implementations/Reference_Implementation/FLIT128
+gcc -O3 -march=native -w -I"$d" -S "$d/decode.c" -o - | grep -c 'testb	$1, (%r'
+```
+
+A nonzero count shows the per-bit test in the compiled decoder. No timing was measured.

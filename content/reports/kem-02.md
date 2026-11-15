@@ -46,7 +46,7 @@ The attack-only library is linked from the same submitted Amoeba-576 object file
 Severity: Low
 Status: Confirmed
 Layer: Side-channel
-Affected: Reference implementations, all five parameter sets
+Affected: Reference and optimized implementations, all five parameter sets
 Discovery: Moderate
 Exploitation: Local cache/control-flow observation; no separate extraction demonstrated
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
@@ -54,11 +54,13 @@ Date: 2026-09-23
 
 The Amoeba decapsulator decrypts under the private key and ECC-decodes the resulting codeword. Its Hamming decoder branches on each codeword bit and on the syndrome, then loads `syndrome_map[s_h_key]` (`src/backend/hamming.c:131,157-183`). Both the branch decisions and the table address derive from secret-key decryption of the ciphertext. This is a local control-flow/cache side channel independent of the incomplete ciphertext comparison elsewhere in decapsulation. The code also returns an explicit decoder-failure bit (`ccakem.c:61-62`), but neither that bit nor this trace has been turned into a separate demonstrated key-recovery oracle. A candidate-specific chosen-ciphertext recovery argument is still needed.
 
+Extended on 2026-11-15: the encoder has the same fault. `encode_ECC` tests `if (x[col] == 1)` for each of the message bits (`hamming.c:111`) and XORs a parity column only when the bit is set; GCC `-O3 -march=native` keeps the `cmpb`/`jne`. `CPAPKE_Encrypt` calls it on the encapsulation message `m` (`cpapke.c:423`, from `ccakem.c:46`) and, during decapsulation, on the decrypted message before the comparison (`ccakem.c:74`). A branch trace of one encapsulation therefore gives `m`, from which the shared secret follows. No timing measurement or extraction was made. The ten `hamming.c`, `cpapke.c` and `ccakem.c` copies in the reference and optimized trees are byte-identical, so both trees are affected.
+
 Constant-time fix (easy, hence Low): compute the syndrome with fixed XORs and correct the codeword by comparing every position with the syndrome under a mask, instead of branching and indexing `syndrome_map`. For a Hamming code this is a small fixed cost per block.
 
 ### Reproducing
 
-Follow `src/backend/ccakem.c:60-80` → `src/backend/cpapke.c:438-447` → `src/backend/hamming.c:131,157-183` under `Implementations/Reference_Implementation/Amoeba-576/`; the same decoder pattern appears in the other reference sets. This is a source-level witness, not a measured timing benchmark. See `constant_time.md` for the secret/public classification.
+Follow `src/backend/ccakem.c:60-80` → `src/backend/cpapke.c:438-447` → `src/backend/hamming.c:131,157-183` under `Implementations/Reference_Implementation/Amoeba-576/`; the files are identical in the other sets and in the optimized trees. For the encoder, follow `ccakem.c:46,74` → `cpapke.c:423` → `hamming.c:111`. This is a source-level witness, not a measured timing benchmark. See `constant_time.md` for the secret/public classification.
 
 ## kem-02-3: The decryption-failure bound omits detected two-error rejections
 

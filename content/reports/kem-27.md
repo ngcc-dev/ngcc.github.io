@@ -35,3 +35,31 @@ make -C kem-27 exploit
 ```
 
 The script builds the submitted NTRE-512 sources in a temporary directory and prints `CONFIRMED kem-27-1`. It explicitly labels the scaled seed subspace and does not present this as a full-size key recovery.
+
+## kem-27-2: The message-dependent error sampler branches on every message bit
+
+Severity: Low
+Status: Confirmed
+Layer: Side-channel
+Affected: NTRE-128, -256 and -512; reference and optimized implementations
+Discovery: Trivial
+Exploitation: Local branch trace of the encapsulated message, and of the decrypted message during re-encryption; no extraction demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-15
+
+Encryption derives its error polynomial from the message: `poly_cbd1_prime` sets each coefficient to `beta0 ? (1 - 2*beta1) : 0`, where `beta0` is a message bit (`src/poly.c:60–76` in the reference; an unrolled form of the same expression in the optimized tree). `kem_enc` calls it on the fresh message, which determines the shared secret, and `kem_dec` calls it on the decrypted message when it re-encrypts, before the validity decision takes effect (`KEM_AlgorithmInstance.c:69,151,203`).
+
+At the Makefile's `-O2`, GCC 15.2 compiles the select to a test of the message bit and a conditional jump. A branch-trace observer therefore reads the message bit by bit, and the amount of work follows its Hamming weight. No timing oracle or extraction was built.
+
+Constant-time fix (easy, hence Low): multiply by the bit or apply it as a mask.
+
+### Reproducing
+
+```sh
+d=kem-27/Implementations/Reference_Implementation/NTRE-256
+gcc -O2 -std=c99 -g -w -I"$d" -I"$d/src" -c "$d/src/poly.c" -o /tmp/ntre_poly.o
+objdump -dl --no-show-raw-insn /tmp/ntre_poly.o |
+  awk '/^\/.*:[0-9]+/{loc=$1} /\tj[a-z]+ /{if ($2!="jmp") print loc, $2}' | grep 'poly.c:72 '
+```
+
+The listing shows a conditional jump attributed to the select at `poly.c:72`. No timing was measured by this witness.

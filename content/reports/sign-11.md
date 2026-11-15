@@ -184,3 +184,25 @@ The specification also leaves a “valid counter” predicate undefined, uses no
 ```sh
 python3 security/flextree_kudinov_validation.py
 ```
+
+## sign-11-9: Allocation failure in message hashing is ignored
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: All parameter sets; reference implementation
+Discovery: Moderate
+Exploitation: Under memory pressure, signing returns success with a randomizer and digest that are not derived from the message; the result verifies for no message, and no forgery follows
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-15
+`gen_message_random` and the message-digest helper allocate a buffer of the message length plus a few hash blocks. If `malloc` fails, each returns without writing its output and without an error (`hash_sm3.c:46–49,79–82`). Both are `void`, so signing continues with unwritten values: the randomizer `R` keeps whatever the output buffer held, and the digest that selects the few-time-signature leaves and the tree address is an uninitialised local.
+
+With allocation made to fail, `sig_sign` returned 0, left the first bytes of the signature buffer as it found them, and produced a signature that did not verify for the message. The signer has nevertheless released few-time secrets for a digest and address not bound to any message, and reports success for an invalid signature. A caller needs a message large enough, or memory scarce enough, for the allocation to fail.
+
+### Reproducing
+
+```sh
+grep -n -A3 'malloc(total_bytes)' sign-11/Implementations/Reference_Implementation/Flextree-160f/hash_sm3.c
+```
+
+This is a source witness: the two allocations and their silent returns. The unwritten randomizer was observed by failing `malloc` under a driver and is not part of the witness.

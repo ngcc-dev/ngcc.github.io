@@ -50,6 +50,30 @@ scoped to NTRE-512.</p>
 <pre><code class="language-sh">make -C kem-27 exploit
 </code></pre>
 <p>The script builds the submitted NTRE-512 sources in a temporary directory and prints <code>CONFIRMED kem-27-1</code>. It explicitly labels the scaled seed subspace and does not present this as a full-size key recovery.</p>
+<h2 class="issue-heading" id="kem-27-2-the-message-dependent-error-sampler-branches-on-every-message-bit">kem-27-2: The message-dependent error sampler branches on every message bit</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>side-channel</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>NTRE-128, -256 and -512; reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Local branch trace of the encapsulated message, and of the decrypted message during re-encryption; no extraction demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-15</td></tr>
+</table></div>
+
+<p>Encryption derives its error polynomial from the message: <code>poly_cbd1_prime</code> sets each coefficient to <code>beta0 ? (1 - 2*beta1) : 0</code>, where <code>beta0</code> is a message bit (<code>src/poly.c:60–76</code> in the reference; an unrolled form of the same expression in the optimized tree). <code>kem_enc</code> calls it on the fresh message, which determines the shared secret, and <code>kem_dec</code> calls it on the decrypted message when it re-encrypts, before the validity decision takes effect (<code>KEM_AlgorithmInstance.c:69,151,203</code>).</p>
+<p>At the Makefile's <code>-O2</code>, GCC 15.2 compiles the select to a test of the message bit and a conditional jump. A branch-trace observer therefore reads the message bit by bit, and the amount of work follows its Hamming weight. No timing oracle or extraction was built.</p>
+<p>Constant-time fix (easy, hence Low): multiply by the bit or apply it as a mask.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">d=kem-27/Implementations/Reference_Implementation/NTRE-256
+gcc -O2 -std=c99 -g -w -I&quot;$d&quot; -I&quot;$d/src&quot; -c &quot;$d/src/poly.c&quot; -o /tmp/ntre_poly.o
+objdump -dl --no-show-raw-insn /tmp/ntre_poly.o |
+  awk '/^\/.*:[0-9]+/{loc=$1} /\tj[a-z]+ /{if ($2!=&quot;jmp&quot;) print loc, $2}' | grep 'poly.c:72 '
+</code></pre>
+<p>The listing shows a conditional jump attributed to the select at <code>poly.c:72</code>. No timing was measured by this witness.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

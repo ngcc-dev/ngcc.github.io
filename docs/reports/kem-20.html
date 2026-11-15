@@ -48,6 +48,29 @@ python3 kem-20/reproduce_fail_open.py
 python3 kem-20/reproduce_rlimit.py
 </code></pre>
 <p>The first witness interposes only the identified matrix allocation. For every reference instance it confirms that key generation reports success, the zero-secret layout recovers the encapsulated key, and the returned holder secret does not. It copies the stored <code>H(pk)</code> field from the holder key while using the remaining secret-key bytes only as a negative control; <code>H(pk)</code> is publicly computable from <code>pk</code>. The second witness uses util-linux <code>prlimit</code> and scans for the host-dependent address-space window in which the same fail-open state occurs without interposition.</p>
+<h2 class="issue-heading" id="kem-20-2-decapsulation-branches-on-the-sign-bit-of-every-secret-coefficient">kem-20-2: Decapsulation branches on the sign bit of every secret coefficient</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>side-channel</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All ten MAMBA-Frost and Frost-CC parameter sets; reference, optimized and native implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Local branch trace of the secret matrix's sign pattern on every decapsulation; no key recovery demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-15</td></tr>
+</table></div>
+
+<p>Decapsulation unpacks the secret matrix <code>S</code> and sign-extends each coefficient with a branch: <code>if ((S[i] &amp; (1u &lt;&lt; (PARAMS_SECRET_COEFF_BITS - 1u))) != 0u)</code> (<code>Frost/src/kem.c:492–496</code>). The loop runs over all coefficients on every call. <code>kem.c</code> is the same in every tree apart from banner and assertion macros. The specification requires implementations to "avoid secret-dependent branches and secret-dependent memory accesses" (§8.3, p. 20).</p>
+<p>GCC 15.2 keeps the branch at <code>-O1</code>, <code>-O2</code>, <code>-O3</code> and <code>-Os</code>, and the harness-built libraries contain it (<code>test $0x4,%dl; je</code> in Frost-128, <code>test $0x2,%dl; je</code> in Frost-512). A branch-trace observer learns the sign bit of every coefficient. For the sets with coefficients in {−1, 0, 1} that is the exact set of −1 positions; for Frost-128 it is the set of negative coefficients. The pattern is fixed per key, so the observer is local. The resulting loss of lattice security was not quantified and no recovery was attempted.</p>
+<p>Constant-time fix (easy, hence Low): sign-extend arithmetically, for example by XOR and subtraction of the sign-bit mask.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">make -C kem-20
+objdump -d --no-show-raw-insn kem-20/lib/libMAMBA-Frost-128.so |
+  awk '/&lt;crypto_kem_dec[^&gt;]*&gt;:/{p=1} p' | grep -A1 'test   $0x4,%dl'
+</code></pre>
+<p>The output shows the test of the coefficient's sign bit followed by a conditional jump inside <code>crypto_kem_dec_Frost128</code>. This is a compiled-branch witness; no timing was measured.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

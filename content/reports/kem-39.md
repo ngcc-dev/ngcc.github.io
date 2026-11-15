@@ -194,3 +194,33 @@ game and the fixed-message corollary in the frozen specification. Its small
 quantifier example illustrates why a bound for every predetermined offset
 does not alone imply the same bound for offsets chosen from the public matrix;
 it is not a Weaver attack.
+
+## kem-39-7: Decapsulation decodes and re-samples with secret-dependent branches and addresses
+
+Severity: Low
+Status: Confirmed
+Layer: Side-channel
+Affected: WeaverKEM-128, -256 and -512, reference and optimized implementations; the sampler loop affects -256 and -512 only
+Discovery: Moderate
+Exploitation: Local branch and address trace of decryption errors and of coin-derived values before the re-encryption check; no key recovery demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-15
+Three steps of decapsulation depend on secret values in their control flow or memory addresses.
+
+- **BCH decoding.** `poly_tomsg` decodes the noisy message with `decode_bch_low` and `decode_bch_high` before the re-encryption check (`indcpa.c:419`, `msgenc.c:176–211`). The decoder indexes logarithm tables with syndrome values, branches on `if (tmp > elp->deg)` in the error-locator loop (`bch_low.c:191`), and writes each correction at the error position, `data[errloc[i]/8]` (`:320`). The trace shows whether and where a chosen ciphertext decrypted with errors.
+- **Lifting.** The public-key lift accepts three-bit values under `t[j] < BUCKET_SZ[…]` (`poly_invq.c:76`). The values come from a PRF keyed by the encryption coins, which re-encryption derives from the decrypted message. The specification calls these inputs public (§4.3, p. 36); they are not.
+- **Noise sampling.** `popcount_u32` loops `while (x)`, so its trip count is the bit length of each secret sampler input (`cbd.c:25–31`). WeaverKEM-256 and -512 use it for the secret, the encryption randomness and its re-derivation.
+
+The specification acknowledges that the decoder relies on table lookups indexed by secret values and that a constant-time decapsulation would cost about 10% (p. 36). No oracle or recovery was built.
+
+Constant-time fix (moderate): a constant-time BCH decoder with full table scans and masked correction, masked acceptance in the lift, and a fixed-length population count.
+
+### Reproducing
+
+```sh
+d=kem-39/Implementations/Reference_Implementation/WeaverKEM-256
+sed -n '188,193p' "$d/bch_low.c"; sed -n '316,320p' "$d/bch_low.c"
+grep -n 'BUCKET_SZ\[r\[ctr\]\]' "$d/poly_invq.c"; sed -n '25,31p' "$d/cbd.c"
+```
+
+This is a source witness for the four sites.

@@ -91,6 +91,27 @@ python3 sign-24/reproduce_natural_zero.py
 <pre><code class="language-sh">python3 sign-24/reproduce_secret_branch.py
 </code></pre>
 <p>The certificate checks all three reference and all three optimized sources for the fixed-weight secret expansion, the signing-time state reconstruction, and the conditional update on <code>e_bits</code>. It does not replay the reporter's callgrind measurements.</p>
+<h2 class="issue-heading" id="sign-24-4-field-multiplication-indexes-64k-entry-tables-with-secret-operands">sign-24-4: Field multiplication indexes 64K-entry tables with secret operands</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>side-channel</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Sigurd-128, -256 and -512; reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Local cache or address trace of witness- and mask-dependent table indices during signing; no recovery demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-15</td></tr>
+</table></div>
+<p>Every GF(2^16) multiplication in the prover is a logarithm-table product: <code>mul_gf2_16</code> returns early if either operand is zero and otherwise computes <code>gf_exp_table[gf_log_table[a] + gf_log_table[b]]</code> (<code>sig_core.c:184–201</code>). The Reed–Solomon encoder has its own copy (<code>rsencode.c:116–124</code>), and the optimized trees use the same construction. Each table has 2^16 16-bit entries.</p>
+<p>Signing multiplies and encodes the embedded witness and the per-signature masks with these functions. The table addresses and the zero test therefore depend on secret operands, and with 128 KB tables a cache-line observation narrows the logarithm of an operand considerably. This is separate from the control-flow dependence of sign-24-3. No recovery was built.</p>
+<p>Constant-time fix (moderate): use carry-less multiplication, or a bit-sliced multiplier with masked reduction.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">d=sign-24/Implementations/Reference_Implementation/Sigurd-128
+sed -n '184,201p' &quot;$d/sig_core.c&quot;; sed -n '116,124p' &quot;$d/rsencode.c&quot;
+</code></pre>
+<p>This is a source witness.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

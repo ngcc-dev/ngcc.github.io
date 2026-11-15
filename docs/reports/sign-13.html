@@ -114,6 +114,29 @@ python3 sign-13/reproduce_malformed_pk_abort.py
 <pre><code class="language-sh">python3 sign-13/reproduce_ggm_multitarget.py leaf
 </code></pre>
 <p>The script checks the unindexed H0 call in all 16 <code>vector_com.c</code> files, the leaf PRG input in <code>hash.h</code>, and the text of Algorithms 4 and 14 and Section 2.3.4. It signs once with each of the eight <code>lib/*.so</code> libraries, confirms τ distinct published leaf commitments (with honest-verify and bit-flip-reject controls) and prints the costs. It then builds a temporary GreatWall128s copy whose PRG keys are truncated to 20 bits, and recovers a hidden leaf seed in 32/32 genuine openings by searching all τ commitments at once. A single-target control runs about <code>(τ+1)/2</code> times slower, a wrong-IV control recovers nothing, and every result is checked against ground truth. The default run takes about 1 minute, and <code>NGCC_LONG=1</code> extends the recovery to 128f, 192f and 256f.</p>
+<h2 class="issue-heading" id="sign-13-5-reference-field-multiplication-branches-on-bits-of-key-derived-values">sign-13-5: Reference field multiplication branches on bits of key-derived values</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>side-channel</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All eight reference implementations; the optimized implementations multiply with carry-less multiplication instructions</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Key-dependent instruction count and branch trace in every signing call; no key recovery demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-15</td></tr>
+</table></div>
+<p>Signing recomputes the Pylon witness from the secret key on every call: <code>faest_compute_witness</code> applies two field inversions, each a fixed square-and-multiply chain, to a state derived from <code>sk</code> (<code>faest.c:150–290</code>, inversions at <code>:171,184</code>). In the reference trees the field multiplication is <code>ref_gf_mul</code>, which adds a shifted copy of one operand only <code>if ((b[word] &gt;&gt; bit) &amp; 1u)</code>, and <code>ref_reduce_poly</code>, which skips every zero bit of the product (<code>block_impl.h:70–102</code>). The file is identical in all eight reference trees.</p>
+<p>The exponent is public, so the sequence of multiplications is fixed, but the work inside each depends on the bits of secret intermediate values. Three GreatWall128s keys with the same public <code>owf_iv</code> took 3,214,814, 3,316,325 and 3,216,520 instructions for one public-key computation, and the same key repeats exactly. A branch-trace observer sees the operand bits themselves. The values are fixed per key, so each signature repeats the same trace. No recovery was attempted.</p>
+<p>The reference AES also uses a table S-box (<code>aes_impl.c:6,39</code>) on secret tree seeds in the 128-, 192- and 256-bit sets.</p>
+<p>Constant-time fix (easy, hence Low): add under a mask and reduce without the skip, as a portable fallback for the carry-less code in the optimized trees.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">d=sign-13/Implementations/Reference_Implementation/GreatWall128s
+sed -n '70,95p' &quot;$d/block_impl.h&quot;; grep -n 'mersenne_inverse' &quot;$d/faest.c&quot; | head -2
+grep -c ref_gf_mul sign-13/Implementations/Optimized_Implementation/GreatWall128s/block_impl.h
+</code></pre>
+<p>This is a source witness; the last command prints 0 for the optimized tree. The instruction counts above came from a callgrind run of <code>faest_pubkey</code> on fixed keys and are not part of the witness.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -185,6 +185,33 @@ game and the fixed-message corollary in the frozen specification. Its small
 quantifier example illustrates why a bound for every predetermined offset
 does not alone imply the same bound for offsets chosen from the public matrix;
 it is not a Weaver attack.</p>
+<h2 class="issue-heading" id="kem-39-7-decapsulation-decodes-and-re-samples-with-secret-dependent-branches-and-addresses">kem-39-7: Decapsulation decodes and re-samples with secret-dependent branches and addresses</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>side-channel</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>WeaverKEM-128, -256 and -512, reference and optimized implementations; the sampler loop affects -256 and -512 only</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Local branch and address trace of decryption errors and of coin-derived values before the re-encryption check; no key recovery demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-15</td></tr>
+</table></div>
+<p>Three steps of decapsulation depend on secret values in their control flow or memory addresses.</p>
+<ul>
+<li><strong>BCH decoding.</strong> <code>poly_tomsg</code> decodes the noisy message with <code>decode_bch_low</code> and <code>decode_bch_high</code> before the re-encryption check (<code>indcpa.c:419</code>, <code>msgenc.c:176–211</code>). The decoder indexes logarithm tables with syndrome values, branches on <code>if (tmp &gt; elp-&gt;deg)</code> in the error-locator loop (<code>bch_low.c:191</code>), and writes each correction at the error position, <code>data[errloc[i]/8]</code> (<code>:320</code>). The trace shows whether and where a chosen ciphertext decrypted with errors.</li>
+<li><strong>Lifting.</strong> The public-key lift accepts three-bit values under <code>t[j] &lt; BUCKET_SZ[…]</code> (<code>poly_invq.c:76</code>). The values come from a PRF keyed by the encryption coins, which re-encryption derives from the decrypted message. The specification calls these inputs public (§4.3, p. 36); they are not.</li>
+<li><strong>Noise sampling.</strong> <code>popcount_u32</code> loops <code>while (x)</code>, so its trip count is the bit length of each secret sampler input (<code>cbd.c:25–31</code>). WeaverKEM-256 and -512 use it for the secret, the encryption randomness and its re-derivation.</li>
+</ul>
+<p>The specification acknowledges that the decoder relies on table lookups indexed by secret values and that a constant-time decapsulation would cost about 10% (p. 36). No oracle or recovery was built.</p>
+<p>Constant-time fix (moderate): a constant-time BCH decoder with full table scans and masked correction, masked acceptance in the lift, and a fixed-length population count.</p>
+<h3 id="reproducing_6">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">d=kem-39/Implementations/Reference_Implementation/WeaverKEM-256
+sed -n '188,193p' &quot;$d/bch_low.c&quot;; sed -n '316,320p' &quot;$d/bch_low.c&quot;
+grep -n 'BUCKET_SZ\[r\[ctr\]\]' &quot;$d/poly_invq.c&quot;; sed -n '25,31p' &quot;$d/cbd.c&quot;
+</code></pre>
+<p>This is a source witness for the four sites.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -17,10 +17,10 @@
 
 <!-- synchronized report: sign-15/constant_time.md -->
 <h1 id="constant-time-review-15-morning-atlas">Constant-time review — 15 MORNING-ATLAS</h1>
-<p>Scope: reference implementation, representative instance only: <code>Implementation/Reference_Implementation/lwrdsa192/SIG_lwrdsa192.c</code>. Other instances and optimized implementations have not been proven source-equivalent. This is a source-level triage, not a constant-time certification.</p>
+<p>Scope: reference implementation, representative instance only: <code>Implementation/Reference_Implementation/lwrdsa192/SIG_lwrdsa192.c</code>. <code>SIG_lwrdsa128.c</code>, <code>SIG_lwrdsa192.c</code> and <code>SIG_lwrdsa256.c</code> are byte-identical within the reference tree and within the optimized tree; the two trees differ from each other, and the <code>lwrdsa512</code> file and the per-set <code>poly.c</code> files differ. This is a source-level triage, not a constant-time certification.</p>
 <p>Secret: signing-key polynomials/basis, per-signature masks and sampler state. Public: verification key, algorithm parameters, message and serialized signature.</p>
 <ul>
-<li>Branch/loop trace: <code>Implementation/Reference_Implementation/lwrdsa192/SIG_lwrdsa192.c:365</code> — The signer retries when <code>polyvecl_chknorm(&amp;z, …)</code> rejects a secret-key-dependent response.</li>
+<li>Branch/loop trace: <code>Implementation/Reference_Implementation/lwrdsa192/SIG_lwrdsa192.c:365</code> — The signer retries when <code>polyvecl_chknorm(&amp;z, …)</code> rejects a secret-key-dependent response. Lines 399–402 leave the <code>w1</code> comparison loop with <code>goto rej</code> at the first mismatching coefficient.</li>
 <li>Table lookups and division/remainder: this source triage does not certify their absence or constant-time compilation. Only the explicitly traced operands above are classified. Public lengths, fixed parameters and verifier checks are not findings.</li>
 </ul>
 <p>Assessment: No new vulnerability report is promoted from this representative source triage. A compiler/architecture-specific timing and cache test is still needed before claiming constant-time behavior or exploitable leakage.</p>

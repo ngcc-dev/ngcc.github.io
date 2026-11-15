@@ -62,3 +62,30 @@ python3 security/design_parameter_audit.py --report-id kem-12-2
 
 The `kem-12-2` check verifies the CTL-512 output table and the corresponding
 reference constants.
+
+## kem-12-3: Reference CTL-512 multiplication branches on every bit of the encapsulation secret
+
+Severity: Low
+Status: Confirmed
+Layer: Side-channel
+Affected: CTL-512 (CTL-3329-2048) reference implementation; the optimized tree multiplies by NTT and is flat. Key generation in both trees
+Discovery: Trivial
+Exploitation: Secret-dependent instruction count and branch trace in encapsulation and in decapsulation's re-encryption; no shared-secret or key recovery demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-15
+
+CTL encrypts by computing `c1 = round(h·s / k)` for a binary polynomial `s` derived from the message. The reference CTL-512 code does this with a schoolbook product whose inner loop skips zero coefficients of `s`: `if (b[j] == 0) continue;` (`kem3329.c:145`, called from `ctl_encrypt_3329` at `:452`). Encapsulation reaches it with the fresh `s` (`api.c:690`), and decapsulation reaches it with the decrypted `s` during re-encryption, before the comparison (`api.c:764`).
+
+One call executes 25.5 million instructions for an all-zero `s`, 35.5 million at weight 1024 and 44.4 million at weight 2048. The optimized tree stays within 0.1% and returns the same ciphertext. The per-coefficient branch gives a local trace observer every bit of `s`, from which `m = c2 ⊕ Hash_m(s)` and the shared secret follow. Total time reveals only the weight of `s`, which is close to 1024 for honest messages. No extraction was attempted.
+
+Key generation has a related one-time leak in both trees. `poly_inv_xn1_mod3329` inverts the private `f` by a polynomial Euclidean algorithm with degree-dependent loops and an `if (f != 0)` skip (`kem3329.c:163–191`, `:197`), and `mod3329_inv` divides secret-derived values with a data-dependent loop count (`:70–90`). Its consequence is unresolved.
+
+Constant-time fix (easy, hence Low): use the NTT product of the optimized tree, or drop the skip; invert by a fixed-length exponentiation.
+
+### Reproducing
+
+```sh
+sh kem-12/reproduce_s_branch.sh
+```
+
+The witness builds `ctl_encrypt_3329` from the archived reference and optimized CTL-3329-2048 trees and counts executed instructions under `valgrind --tool=callgrind` for `s` of weight 0 and 2048. It requires the reference count to grow by more than 50%, the optimized count to stay within 1%, and both trees to return the same ciphertext. It exits 77 without `gcc` or `valgrind`.

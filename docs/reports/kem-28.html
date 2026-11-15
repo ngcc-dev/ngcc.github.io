@@ -42,6 +42,27 @@
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>Run <code>python3 kem-28/reproduce_noncanonical_ciphertext.py</code> against the built harness libraries. This independent witness reproduced 5/5 accepted <code>+q</code> aliases at each of the three levels (15/15 total), all with return code 0 and the honest shared secret. None of the 15 non-congruent <code>+q+1</code> controls returned that key. <a href="https://github.com/ngcc-dev/ngcc-harness/pull/17">PR #17</a> separately reports 10/10 aliases per level; its code remains unmerged. The optimized and additional decoder omissions were checked in source, not executed by this witness.</p>
+<h2 class="issue-heading" id="kem-28-2-decapsulation-returns-the-tag-difference-and-writes-the-key-before-rejecting">kem-28-2: Decapsulation returns the tag difference and writes the key before rejecting</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>OAEP-NTRU-648, -1296 and -2592; reference, optimized and additional implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>For a ciphertext body that passes the range and SOTP checks, the return value reports each tag bit plane's match separately; a rejected call also leaves the derived key in the output buffer. No tag recovery for a chosen body, key recovery or IND-CCA attack demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-15</td></tr>
+</table></div>
+
+<p>Algorithm 3 recomputes <code>(σ′, k′) = H(d‖s‖e)</code> from the decrypted pair and returns ⊥ unless <code>σ′</code> equals the received tag and the SOTP check passes (lines 14–16). The tag is what stops a chosen ciphertext body from being accepted. The submitted <code>kem_dec</code> accumulates the comparison as <code>fail |= ct[i] ^ sigma[i]</code> into an <code>int8_t</code>, copies <code>k′</code> to the caller's buffer unconditionally, and returns <code>fail</code> (<code>KEM_AlgorithmInstance.c:202–209</code> in reference OAEP-NTRU-648; the same three statements are in all nine trees).</p>
+<p>Two things follow. First, the return value is the bytewise OR of the tag difference, not a validity bit: bit <code>b</code> is clear exactly when bit <code>b</code> of every tag byte matches. Flipping tag bit 0, 1, …, 7 of one byte of an honest ciphertext returns 1, 2, …, 64 and −128. A caller that reports the return code therefore reveals more than accept or reject: on a body that passes the other checks, the tag comparison leaks per bit plane instead of all-or-nothing. Bit 0 also carries the range and SOTP checks (<code>:184,190</code>), so for a body that fails either of them bit 0 stays set whatever the tag, and planes 1–7 are the only tag information. We observed the per-plane behaviour only on honest ciphertext bodies. Second, the rejected call has already written <code>k′</code>: with a wrong tag on an honest body, the output buffer holds the honest shared secret. A caller that reads the buffer without checking the return code gets the key the specification withholds.</p>
+<p>The return value thus weakens the confirmation tag from an all-or-nothing check to one that leaks per bit plane, and the output buffer exposes a key the specification withholds. We did not show recovery of a complete tag for a chosen body, an accepted chosen ciphertext, or a key-recovery or IND-CCA attack. A caller that treats every nonzero return alike and discards the buffer is not affected. The consequence is unresolved, hence Medium.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh kem-28/reproduce_tag_return.sh
+</code></pre>
+<p>The witness checks the three statements in all nine trees, then builds each reference level and flips each bit of one tag byte of an honest ciphertext. It requires the eight return values 1, 2, …, 64, −128, the honest shared secret in the output buffer each time, and return 0 for the unmodified control. No tag search is run.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

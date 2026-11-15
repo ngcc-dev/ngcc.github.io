@@ -240,3 +240,28 @@ python3 kex-05/reproduce_lifting_prf_reuse.py
 ```
 
 The script copies the reference sources to a temporary directory and builds them. It renames the compiled PRF symbol with `objcopy` and links a wrapper that logs every call to the unchanged PRF. It exits with 77 if gcc, objcopy or nm is missing. As a control, it first checks that for the same DRBG seed the instrumented library produces the same four messages and session key as the prebuilt `lib/libLoomKEX-*.so`. It then checks byte equality between the `r[i]` CBD inputs and the lifting streams during pass 2 at every level, with a second control showing that streams for distinct nonces share no prefix. It takes about 10 seconds. It establishes the stream reuse, not exploitability.
+
+## kex-05-9: Public-key lifting rejection-samples from the secret encapsulation coins
+
+Severity: Low
+Status: Confirmed
+Layer: Side-channel
+Affected: LoomKEX-128, -256 and -512; reference and optimized implementations
+Discovery: Moderate
+Exploitation: Local branch trace of which three-bit groups of the coin-derived stream were rejected; no recovery demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-15
+Encryption lifts the rounded public key back to the larger modulus by adding a random offset inside each rounding bucket. `polyvec_invq` draws the offsets with `prf(seed, nonce)` and a rejection loop: it splits the stream into three-bit values and accepts one only `if (t[j] < BUCKET_SZ[r[ctr]])` (`kem/poly_invq.c:53–88,97`). The seed is the encapsulation coins (`kem/indcpa.c:351`).
+
+The bucket sizes are not powers of two, so a sizeable share of the three-bit values is rejected, and which ones are rejected is visible as a branch pattern. The same PRF substreams are also the input of the ephemeral secret's sampler, as kex-05-8 records, so the pattern is partial information about bits that determine the ephemeral secret. The accepted values are not revealed. No oracle or recovery was built, and the consequence is unresolved.
+
+Constant-time fix (moderate): accept or discard with masks over a fixed number of draws.
+
+### Reproducing
+
+```sh
+d="kex-05/Implementations and Test_Vectors/Implementations/Reference_Implementation/LoomKEX-256/kem"
+grep -n 'BUCKET_SZ\[r\[ctr\]\]' "$d/poly_invq.c"; grep -n 'polyvec_invq' "$d/indcpa.c"
+```
+
+This is a source witness: the rejection test and its call with the encapsulation coins.

@@ -97,6 +97,7 @@ overwrites, and requires the byte-distinct signature to verify.</p>
 <p><code>log2(binomial(128,64) * 2^64) = 188.17143</code></p>
 <p>bits, below the advertised 192-bit level. The specification instead selects <code>kappa=69</code>, which gives about 192.61 bits. This is an implementation-only parameter mismatch, not a defect in the specified parameter set.</p>
 <p>The submitted source acknowledges the mismatch directly: <code>params.h</code> comments that “KAPPA should be 69 not 64” and attributes the temporary value to an implementation limitation.</p>
+<p>Extended on 2026-11-15: the implemented challenge is also not uniform over that space. <code>challenge()</code> fills a 136-byte buffer and, when it runs out, calls <code>pseudoXOF</code> again on the same input and restarts at position 0, so the same bytes are replayed (<code>SIG_lwrdsa192.c:138–149</code>). With 64 of 128 positions to fill, the buffer ran out in 99.87% of 20,000 challenges. Late positions were nonzero up to 84% of the time and early ones about 41%, against a uniform 50%. Summing the per-position entropies estimated from those frequencies, plus the 64 sign bits, gives about 185.6 bits. This is an empirical estimate from 20,000 samples, not a proven bound; the exact 188.17-bit ceiling above does not depend on it. ATLAS-128 and ATLAS-256 did not reach the replay in the same test.</p>
 <h3 id="reproducing_2">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>Reproduce the exact cardinality and source check with:</p>
@@ -380,6 +381,26 @@ LATTICE_ESTIMATOR_PATH=../lattice-estimator python3 sign-15/reproduce_secret_ran
 <pre><code class="language-sh">sh sign-15/reproduce_rej_eta_overflow.sh
 </code></pre>
 <p>The script checks the bound in all eight trees, then runs unmodified reference key generation under AddressSanitizer for 40 seeds per set. It requires a write past <code>s1</code> in <code>rej_eta</code> for ATLAS-256 and -512. It takes about 10 seconds.</p>
+<h2 class="issue-heading" id="sign-15-18-atlas-512-expands-its-public-matrix-with-24-bit-coefficients">sign-15-18: ATLAS-512 expands its public matrix with 24-bit coefficients</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>ATLAS-512; reference and optimized implementations. ATLAS-256 expands the full 23 bits</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Every matrix coefficient lies in the lower half of the modulus; no attack demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-15</td></tr>
+</table></div>
+<p>The public matrix <code>A</code> is specified as uniform over the ring modulo <code>q</code> (§4.6.1, p. 41), and ATLAS-512 uses <code>q = 2^25</code>. Its <code>expand_mat</code> assembles each candidate from three bytes of the XOF output, masks it with <code>0x1FFFFFF</code> and accepts it if it is below <code>q</code> (<code>SIG_lwrdsa512.c:73–78</code>). Three bytes hold 24 bits, so the mask and the comparison never reject and the top bit of every coefficient is zero.</p>
+<p>Over 114,688 coefficients expanded by the archived code, the maximum was 16,777,154 and none reached <code>q/2</code>; the same test on ATLAS-256 covers the full 23-bit range. Signing and verification use the same matrix, so signatures verify. The module-LWR instance behind the public key is nevertheless defined over a matrix confined to half the range, which the parameter analysis does not consider. We did not estimate the effect.</p>
+<h3 id="reproducing_17">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sed -n '70,78p' sign-15/Implementation/Reference_Implementation/lwrdsa512/SIG_lwrdsa512.c
+grep -n 'define QBITS\|define Q ' sign-15/Implementation/Reference_Implementation/lwrdsa512/params.h
+</code></pre>
+<p>This is a source witness: three bytes per candidate against a 25-bit modulus. The coefficient ranges were observed with a driver against the archived code and are not part of the witness.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -56,3 +56,27 @@ The full attack is certificational rather than physically practical. For 160f th
 ```sh
 sh sign-03/reproduce_fors_accumulation.sh
 ```
+
+## sign-03-3: The WOTS+C zero-bit test checks bits the encoding already uses
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: Seven of the eight CEDRUS+C parameter sets (384s is exact); reference and optimized implementations
+Discovery: Moderate
+Exploitation: Exact 1- to 4-bit reduction on the one-time-signature digest path
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-15
+WOTS+C grinds a counter until the message digest has `zb` zero bits and a fixed checksum, and encodes the remaining 8n − `zb` bits as chain lengths (Algorithms 5 and 6). The code encodes the leading 8n − `zb` bits with `base_w` (`wots.c:49–64`) but tests `digest[SPX_N-1] & (~0U << (8 - WOTS_ZERO_BITS))`, the high `zb` bits of the last byte (`wots.c:116,138`; `merkle.c:35,59`). Unless `zb` is 8, some of the tested bits are bits the encoding has already consumed, and the same number of low bits of the last byte are neither encoded nor tested.
+
+The untested bits number 2, 2, 2, 3, 4, 0, 3 and 1 for 160f, 160s, 256f, 256s, 384f, 384s, 512f and 512s. For 160s and 384f, flipping any of them in a digest that passes the test leaves every chain length and the checksum unchanged; 384s has none. A one-time signature therefore authenticates that many fewer digest bits than specified.
+
+### Reproducing
+
+```sh
+d=sign-03/Implementations/Reference_Implementation/CEDRUSC-160s
+sed -n '49,64p' "$d/wots.c"; grep -n 'mask =\|& (mask)' "$d/wots.c"
+grep -n 'define WOTS_ZERO_BITS' sign-03/Implementations/Reference_Implementation/*/params/*.h
+```
+
+This is a source witness: the encoder, the test and the per-set `zb`. The unchanged chain lengths were observed by calling the archived `chain_lengths` on bit-flipped digests and are not part of the witness.

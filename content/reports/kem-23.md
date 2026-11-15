@@ -84,3 +84,26 @@ python3 kem-23/reproduce_short_ciphertext.py
 ```
 
 The script checks the original archive against the SHA-256 above, fetching it if absent, and compiles each reference and optimized tree with AddressSanitizer, this repository's unmodified API shim and a small driver in a temporary directory. For each build it requires a clean honest round trip and a heap-buffer-overflow read in `mito_c_kem_from_string` for the one-byte-short buffer. It takes about 40 seconds and exits 77 if the compiler cannot build with AddressSanitizer.
+
+## kem-23-4: The implicit-rejection key hashes uninitialised stack bytes
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: All nine Mito parameter sets; reference and optimized implementations
+Discovery: Moderate
+Exploitation: The rejection key for a fixed invalid ciphertext can change between calls, which reveals rejection to a party who can compare the keys; no confidentiality attack demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-15
+
+Decapsulation derives the implicit-rejection key with `hash_j`. That function declares its input buffer as `in[SEED_BYTES + PARAM_K_BYTES + sizeof(ciphertext_kem_t)]`, copies in the public-key hash, `σ` and the serialized ciphertext, and then hashes `sizeof(in)` bytes (`symmetric.c:117–128`). The in-memory ciphertext structure stores its vectors in 64-bit words and is larger than the serialized ciphertext, so the last 14 to 32 bytes of the buffer are never written. They are whatever the stack held.
+
+The rejection key is therefore not a deterministic function of the secret and the ciphertext. In our build, three of the nine reference sets (Mito-1-512, Mito-2-E-128, Mito-2-E-512) returned two different keys for the same invalid ciphertext when the stack held different residue. The valid path does not use `hash_j` and was stable. Implicit rejection relies on an invalid ciphertext always mapping to the same pseudorandom key; a party who can submit one ciphertext twice and compare the results can detect rejection when the keys differ. The stale bytes also enter the hash from earlier computations, but we did not find a way to recover them from the output. Whether the key varies in a given deployment depends on the compiler and call sequence.
+
+### Reproducing
+
+```sh
+sh kem-23/reproduce_reject_key_stack.sh
+```
+
+The witness checks `hash_j` in all 18 trees and, for each reference set, requires the hashed buffer to be longer than the bytes written into it. It also decapsulates one invalid ciphertext twice over different stack contents and reports how many sets returned two different keys; that count is informative, since it depends on the compiler's stack layout.

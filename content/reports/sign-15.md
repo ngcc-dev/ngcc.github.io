@@ -90,6 +90,8 @@ bits, below the advertised 192-bit level. The specification instead selects `kap
 
 The submitted source acknowledges the mismatch directly: `params.h` comments that “KAPPA should be 69 not 64” and attributes the temporary value to an implementation limitation.
 
+Extended on 2026-11-15: the implemented challenge is also not uniform over that space. `challenge()` fills a 136-byte buffer and, when it runs out, calls `pseudoXOF` again on the same input and restarts at position 0, so the same bytes are replayed (`SIG_lwrdsa192.c:138–149`). With 64 of 128 positions to fill, the buffer ran out in 99.87% of 20,000 challenges. Late positions were nonzero up to 84% of the time and early ones about 41%, against a uniform 50%. Summing the per-position entropies estimated from those frequencies, plus the 64 sign bits, gives about 185.6 bits. This is an empirical estimate from 20,000 samples, not a proven bound; the exact 188.17-bit ceiling above does not depend on it. ATLAS-128 and ATLAS-256 did not reach the replay in the same test.
+
 ### Reproducing
 
 Reproduce the exact cardinality and source check with:
@@ -420,3 +422,26 @@ sh sign-15/reproduce_rej_eta_overflow.sh
 ```
 
 The script checks the bound in all eight trees, then runs unmodified reference key generation under AddressSanitizer for 40 seeds per set. It requires a write past `s1` in `rej_eta` for ATLAS-256 and -512. It takes about 10 seconds.
+
+## sign-15-18: ATLAS-512 expands its public matrix with 24-bit coefficients
+
+Severity: Medium
+Status: Confirmed
+Layer: Implementation
+Affected: ATLAS-512; reference and optimized implementations. ATLAS-256 expands the full 23 bits
+Discovery: Moderate
+Exploitation: Every matrix coefficient lies in the lower half of the modulus; no attack demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-15
+The public matrix `A` is specified as uniform over the ring modulo `q` (§4.6.1, p. 41), and ATLAS-512 uses `q = 2^25`. Its `expand_mat` assembles each candidate from three bytes of the XOF output, masks it with `0x1FFFFFF` and accepts it if it is below `q` (`SIG_lwrdsa512.c:73–78`). Three bytes hold 24 bits, so the mask and the comparison never reject and the top bit of every coefficient is zero.
+
+Over 114,688 coefficients expanded by the archived code, the maximum was 16,777,154 and none reached `q/2`; the same test on ATLAS-256 covers the full 23-bit range. Signing and verification use the same matrix, so signatures verify. The module-LWR instance behind the public key is nevertheless defined over a matrix confined to half the range, which the parameter analysis does not consider. We did not estimate the effect.
+
+### Reproducing
+
+```sh
+sed -n '70,78p' sign-15/Implementation/Reference_Implementation/lwrdsa512/SIG_lwrdsa512.c
+grep -n 'define QBITS\|define Q ' sign-15/Implementation/Reference_Implementation/lwrdsa512/params.h
+```
+
+This is a source witness: three bytes per candidate against a 25-bit modulus. The coefficient ranges were observed with a driver against the archived code and are not part of the witness.

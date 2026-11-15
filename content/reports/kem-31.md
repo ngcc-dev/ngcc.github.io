@@ -114,3 +114,30 @@ python3 kem-31/reproduce_pairing_constraint.py
 ```
 
 The local witness checks Algorithm 9, the contradictory §8.3.1 sentence, and the shared-mask data flow in both submitted source trees. It then exhaustively demonstrates on a small composite modulus that a common mask confines the public exponent to one square coset, whereas independent masks cover the full unit group. It does not reproduce the 30-vector pairing calculation or a formal-parameter key recovery.
+
+## kem-31-5: The Lucas ladder branches on every bit of a secret exponent
+
+Severity: Low
+Status: Confirmed
+Layer: Side-channel
+Affected: NGCC-1, -2 and -3; reference and optimized implementations
+Discovery: Trivial
+Exploitation: Local branch trace of the encryption exponent, from which the message mask follows, and of the long-term decryption exponent; not measured, no recovery demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-15
+`lucas_sequence` evaluates a Lucas ladder with `if (bit == 1) { … } else { … }` for each exponent bit (`src/gf/ref/gfx/fp2.c:332–357`). Both arms cost one multiplication and one squaring, so total time is flat, but the branch taken and the operands touched follow the bit.
+
+Encryption calls it with the exponent `t1·t2 mod D` on a public pairing value and masks the message with a hash of the result (`pike_compressed.c:796`). That exponent is the per-ciphertext secret: a branch trace of one encapsulation, or of the re-encryption inside decapsulation, gives it, and the mask, the message and the shared secret follow. Decryption calls the same function with an exponent derived from the long-term secret isogeny data (`:1005`). The specification states that the field layer "runs in constant time on all secret-dependent inputs" (p. 81).
+
+The code was not instrumented or timed for this entry.
+
+Constant-time fix (easy, hence Low): compute both updates and select with the conditional swap the field layer already provides.
+
+### Reproducing
+
+```sh
+sed -n '332,357p' kem-31/Implementations/Implementations/src/gf/ref/gfx/fp2.c
+grep -rn 'lucas_sequence(' kem-31/Implementations/Implementations/src/pike/ref/pikex_compressed/pike_compressed.c
+```
+
+This is a source witness.

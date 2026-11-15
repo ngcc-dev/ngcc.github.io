@@ -157,6 +157,28 @@ LATTICE_ESTIMATOR_PATH=/path/to/lattice-estimator \
 <pre><code class="language-sh">python3 sign-07/reproduce_message_length_overflow.py
 </code></pre>
 <p>The script signs a 32-byte message at each level and verifies the long forgeries, held in anonymous <code>mmap</code> buffers, and their controls, each in a fresh process. It takes under 10 seconds and needs about 1 GiB of memory.</p>
+<h2 class="issue-heading" id="sign-07-6-signing-masks-depend-on-only-half-of-the-mask-seed">sign-07-6: Signing masks depend on only half of the mask seed</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>CS-128, CS-256 and CS-512; reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Two signing calls whose mask seeds agree in their first λ bits draw identical masks, which is expected after about 2^(λ/2) signatures (2^64 for CS-128); the consequence of a repeated mask is not demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-15</td></tr>
+</table></div>
+<p>Algorithm 11 derives a mask seed <code>ρ′</code> of 2λ bits (line 5, p. 20) and expands every mask component from it. <code>CS_Sign</code> computes the full <code>rhoprime[HBYTES]</code> and passes it to <code>ExpandMask</code> (<code>cs.c:76,95,99</code>), but <code>ExpandMask</code> copies only <code>SEEDBYTES</code> bytes of it before hashing (<code>sampling.c:668–676</code>). <code>HBYTES</code> is λ/4 and <code>SEEDBYTES</code> is λ/8 (<code>params.h:88–89</code>), so the masks are a function of the first λ bits of <code>ρ′</code> and the counter. The function's own comment describes a seed of length <code>HBYTES</code>.</p>
+<p>With the archived code at all three levels, changing any byte in the upper half of <code>ρ′</code> leaves every mask unchanged, while one flipped bit in the lower half changes them. The upper half reaches only the coin stream of the sampler.</p>
+<p>The mask seed therefore has λ bits of collision space where the specification provides 2λ. Among about 2^(λ/2) signatures two share all masks; for CS-128 that is 2^64 signatures. In Fiat–Shamir signatures a repeated mask with different challenges relates the two responses through the secret, and other candidates here have lost keys that way. For CS the responses also pass through a coin-driven sampling step, and we did not analyse what a repeated mask yields or run a recovery. The entropy shortfall is confirmed and its consequence is unresolved, hence Medium.</p>
+<h3 id="reproducing_5">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">d=sign-07/Implementations/Reference_Implementation/CS-128
+sed -n '668,676p' &quot;$d/sampling.c&quot;; grep -n 'ExpandMask(y' &quot;$d/cs.c&quot;
+grep -n 'define HBYTES\|define SEEDBYTES' &quot;$d/params.h&quot;
+</code></pre>
+<p>This is a source witness. The unchanged masks were observed by calling the archived <code>ExpandMask</code> with seeds differing in the upper half, and are not part of the witness.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

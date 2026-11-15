@@ -23,7 +23,7 @@
 <li>Source trace: <code>Implementations/Reference_Implementation/UVW-KEM-128/src/KEM_AlgorithmInstance.c:394</code> — The private-key list decoder returns early on failure; existing <code>kem-38-2</code> tracks the resulting explicit failure oracle. This is not a separate timing-only finding.</li>
 <li>Branches, indexed accesses and division/remainder: this first pass classifies only the traced operand above. Public-seed rejection and fixed-divisor arithmetic are not treated as leaks; absence of other leaks has not been proved.</li>
 </ul>
-<p>Assessment: No new side-channel report is promoted from this representative path. Lower-level decoding, sampling and compiler output remain open audit work.</p>
+<p>Assessment: The status-code and timing behaviour of this decapsulation path is recorded in <code>kem-38-2</code> and <code>kem-38-3</code>; no further side-channel report is promoted from this representative path. Lower-level decoding, sampling and compiler output remain open audit work.</p>
 <p>Reproduction is source/dataflow inspection at the cited location. A remote timing claim needs repeated same-public-input tests with changed secret state and an independent public-value control.</p>
 </main>
 <footer class="site-footer">

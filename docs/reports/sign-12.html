@@ -155,6 +155,27 @@ separate all-level submitted-implementation validation.</p>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 security/rbg_protocol_dependency.py --report-id sign-12-4
 </code></pre>
+<h2 class="issue-heading" id="sign-12-5-reference-field-arithmetic-branches-on-bits-of-the-secret-key">sign-12-5: Reference field arithmetic branches on bits of the secret key</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>side-channel</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All eight reference implementations; the optimized implementation is a separate code base and was not checked</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Local branch trace of secret field elements in key generation and in every signing call; not measured, no key recovery demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-15</td></tr>
+</table></div>
+<p>The reference GF(2^n) code is bit-serial and skips work on zero bits. <code>gf_mul</code> continues past each zero bit of its second operand, <code>gf_sqr</code> flips an output bit only when the input bit is set, <code>gf_reduce_wide</code> skips zero bits of the product, and <code>gf_inv</code> returns early on zero (<code>galas/gf2n.c:84–102,104–136,147–149</code>). The file is identical in all eight reference trees.</p>
+<p><code>galas_owf_eval</code> uses these functions on the secret key <code>k</code> and on the S-box inputs derived from it (<code>galas/owf.c:56,61,98–100,114</code>). It runs in key generation and again in every <code>sig_sign</code>, which evaluates the one-way function to rebuild the witness (<code>ngcc/SIG_AlgorithmInstance.c:79–88,282</code>). The branch pattern of each call is therefore a function of secret bits, fixed per key. The code was not compiled or timed for this entry and no recovery was attempted.</p>
+<p>Constant-time fix (easy, hence Low): apply each operand bit as a mask.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">d=sign-12/Implementations/Reference_Implementation/Galas-256F
+sed -n '104,134p' &quot;$d/galas/gf2n.c&quot;; grep -n 'gf_mul\|gf_sqr\|gf_inv' &quot;$d/galas/owf.c&quot;
+</code></pre>
+<p>This is a source witness.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

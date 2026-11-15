@@ -85,3 +85,28 @@ python3 sign-24/reproduce_secret_branch.py
 ```
 
 The certificate checks all three reference and all three optimized sources for the fixed-weight secret expansion, the signing-time state reconstruction, and the conditional update on `e_bits`. It does not replay the reporter's callgrind measurements.
+
+## sign-24-4: Field multiplication indexes 64K-entry tables with secret operands
+
+Severity: Low
+Status: Confirmed
+Layer: Side-channel
+Affected: Sigurd-128, -256 and -512; reference and optimized implementations
+Discovery: Trivial
+Exploitation: Local cache or address trace of witness- and mask-dependent table indices during signing; no recovery demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-15
+Every GF(2^16) multiplication in the prover is a logarithm-table product: `mul_gf2_16` returns early if either operand is zero and otherwise computes `gf_exp_table[gf_log_table[a] + gf_log_table[b]]` (`sig_core.c:184–201`). The Reed–Solomon encoder has its own copy (`rsencode.c:116–124`), and the optimized trees use the same construction. Each table has 2^16 16-bit entries.
+
+Signing multiplies and encodes the embedded witness and the per-signature masks with these functions. The table addresses and the zero test therefore depend on secret operands, and with 128 KB tables a cache-line observation narrows the logarithm of an operand considerably. This is separate from the control-flow dependence of sign-24-3. No recovery was built.
+
+Constant-time fix (moderate): use carry-less multiplication, or a bit-sliced multiplier with masked reduction.
+
+### Reproducing
+
+```sh
+d=sign-24/Implementations/Reference_Implementation/Sigurd-128
+sed -n '184,201p' "$d/sig_core.c"; sed -n '116,124p' "$d/rsencode.c"
+```
+
+This is a source witness.

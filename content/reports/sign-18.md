@@ -163,3 +163,26 @@ python3 sign-18/reproduce_tail_abort.py
 ```
 
 The deterministic witness pins one naturally aborting call and one successful verified control, using ordinary messages and fresh per-call salts. It does not force a singular system or patch the signer.
+
+## sign-18-7: The Origami-512 signing streams do not absorb the end of the salt
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: Origami-512; reference and optimized implementations
+Discovery: Moderate
+Exploitation: Two salts that differ only in their last bytes give the same vinegar and kernel streams with different hash targets; no key recovery or forgery demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-15
+The contest build routes Origami's SHAKE calls through a wrapper that buffers its input and stops absorbing at 208 bytes: `shake_absorb` truncates `inlen` once the buffer is full (`symmetric_iccs.c:42–51`). At the 512-bit level the signing streams exceed that. The `sign-known` stream absorbs 218 bytes and the `kernel-sample` stream 221, with the salt last (`origami_ref.c:545,678`), so the final 10 and 13 salt bytes never reach the generator. The target hash is shorter and uses the whole salt.
+
+With the archived code, two 64-byte salts that differ in their last five bytes produce identical `sign-known` streams and different targets; Origami-384, which absorbs 186 bytes, does not. The vinegar values and kernel samples of a signature are therefore not bound to the full salt, as the specification's derivation has them. At least 51 salt bytes still enter, so a repeat needs a salt-prefix collision and no attack follows; the defect is latent.
+
+### Reproducing
+
+```sh
+d="sign-18/Implementations and Test_Vectors/Implementations/Reference_Implementation/Origami-512"
+sed -n '42,51p' "$d/symmetric_iccs.c"; grep -n 'SHAKE_BUF_BYTES' "$d"/*.c "$d"/*.h | head -3
+```
+
+This is a source witness for the truncation. The equal streams were observed with a driver against the archived code and are not part of the witness.

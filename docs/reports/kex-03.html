@@ -262,6 +262,26 @@ NGCC_LONG=1 sh kex-03/reproduce_bit_oracle_recovery.sh
 <pre><code class="language-sh">python3 kex-03/reproduce_copied_key_alias.py
 </code></pre>
 <p>The script uses the prebuilt <code>kex-03/lib/libCreTAKE-*.so</code> on all 25 instances. On each one it checks three things: an honest exchange agrees, the exchange addressed to the duplicate "Eve" certificate agrees with Bob, and a control that substitutes an independently generated responder key fails to agree. It runs in under a second.</p>
+<h2 class="issue-heading" id="kex-03-11-the-k2k-plac512-rejection-key-covers-only-the-first-584-ciphertext-bytes">kex-03-11: The K2K-PLAC512 rejection key covers only the first 584 ciphertext bytes</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>CreTAKE-K2K-PLAC512 and CreTAKE-K2K-PLAC512Star; reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Different invalid ciphertexts that agree on their first 584 bytes decapsulate to the same key; no session-key or long-term-key recovery demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-15</td></tr>
+</table></div>
+
+<p>The double-key KEM derives its implicit-rejection key as <code>pseudoXOF(SS_KEY_BYTES*8, buf_rej, sizeof(buf_rej), ss_reject)</code>, where <code>buf_rej</code> holds the 64-byte rejection seed followed by the ciphertext (<code>twokem.c:131,162–164</code> in PLAC512; <code>:165</code> in PLAC512Star). The third argument of <code>pseudoXOF</code> is a bit length, but <code>sizeof(buf_rej)</code> is the byte count 5,184. Only 648 bytes are absorbed: the seed and the first 584 of the 4,608 ciphertext bytes.</p>
+<p>The rejection key is therefore not a function of the whole ciphertext. Two different invalid ciphertexts that share their first 584 bytes return the same 64-byte key, while a change in byte 583 changes it. A party who can compare keys derived from rejected ciphertexts can tell that both were rejected. The key exchange hashes the transcript into the session key, so the end-to-end consequence is unresolved; the defect is that the KEM's rejection output is not the pseudorandom function of the ciphertext that implicit rejection requires.</p>
+<h3 id="reproducing_10">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh kex-03/reproduce_reject_key_prefix.sh
+</code></pre>
+<p>The witness checks the call in the four affected trees, builds the unmodified reference K2K-PLAC512 sources, and decapsulates an honest ciphertext and three invalid ones. It requires equal rejection keys for two different ciphertexts that agree on bytes 0–583 and a different key after flipping byte 583.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -90,3 +90,27 @@ sh kem-41/reproduce_keygen_fail_open.sh
 ```
 
 The witness compiles each frozen reference tree with GCC `-O2` and no allocation interposition. It applies a 64 MiB address-space limit, retains ordinary small allocations, and checks public-only candidate selection, fresh decapsulation, a wrong-public-key control, and a normal-keygen control. It prints `CONFIRMED kem-41-2` for each level on the tested host. Stack overlap and the memory-exhaustion trigger can vary with build and host; an unsupported layout is reported as a skip.
+
+## kem-41-3: Decoding stores each bit at a secret-selected address
+
+Severity: Low
+Status: Confirmed
+Layer: Side-channel
+Affected: ZEN_128, ZEN_256 and ZEN_512; reference and AVX2 implementations
+Discovery: Moderate
+Exploitation: Local address trace of one comparison bit per coefficient group on every decapsulation; no key recovery demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-15
+`pke_dec` computes its simple decoding with masks, but uses the last comparison to choose where to write: `idx = (i & (-mask)) | ((i + ZEN_N4) & (~(-mask)))` followed by `t2[idx] = t1[i] & 1` (`pke.c:185–186` in reference ZEN_128; the other levels and the AVX2 tree have the same statements). The comparison is between distances computed from the ciphertext and the private key, so the address of each store is a secret-dependent choice between two locations a quarter of the ring apart.
+
+An address-trace observer learns one comparison bit per group for every ciphertext it submits, before the validity decision. Key generation also reads an inverse table at an index formed from secret values (`ntt.c:341`). The specification describes the implementation as constant-time and validated with a dynamic tool. No oracle or recovery was built.
+
+Constant-time fix (easy, hence Low): write both slots with masked values.
+
+### Reproducing
+
+```sh
+sed -n '183,186p' kem-41/Implementations/Reference_Implementation/ZEN_128/pke.c
+```
+
+This is a source witness.

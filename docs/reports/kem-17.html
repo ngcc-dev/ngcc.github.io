@@ -138,6 +138,27 @@ python3 kem-17/reproduce_epcp_fingerprint.py
 <h3 id="reproducing_4">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>The source-level witness is <code>ref/KEM_HEP_QC.c:165-212</code> → <code>ref/PKE_HEP_QC.c:185-220</code> → <code>common/vector.c:369-408,477-503</code> under <code>Implementations/Implementations/</code>; the x86_64 PKE source calls the same shared routines. See <code>constant_time.md</code> for the secret/public mapping. This is not a measured timing benchmark.</p>
+<h2 class="issue-heading" id="kem-17-6-every-seed-expansion-passes-through-a-208-bit-xof-state">kem-17-6: Every seed expansion passes through a 208-bit XOF state</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>HEP-QC-5 (256-bit) and HEP-QC-7 (512-bit); reference and x86_64 implementations. HEP-QC-1 and -3 have the same state but no shortfall</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>About 2^208 key-expansion trials recover a decapsulation key from its public key, and about 2^208 encryption trials recover a shared secret from a ciphertext; not run</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-15</td></tr>
+</table></div>
+
+<p>The scheme's XOF context is declared as 26 64-bit words, 208 bytes (<code>common/symmetric.h:42–44</code>). <code>xof_init</code> fills it with <code>pseudoXOF(CTX_LEN * 8, seed, …)</code> and <code>xof_proc</code> refreshes it the same way (<code>common/symmetric.c:43,115</code>). <code>CTX_LEN</code> is 26 and the first argument of <code>pseudoXOF</code> is a bit length, so both calls write 208 bits. The other 182 context bytes stay zero. Every stream the XOF produces is therefore a function of a 208-bit state, whatever the seed length.</p>
+<p>Key generation expands the whole PKE decryption key from this XOF: the vectors <code>y</code> and <code>x</code>, the mixing matrix and the permutation all come from <code>xof_init(&amp;dk_xof_ctx, dk_pke, SEED_BYTES)</code> (<code>common/parsing.c:26–30</code>). An attacker can enumerate the 2^208 states, expand each candidate key and compare the resulting public syndrome with the public key. Encryption draws its sparse vectors from the same XOF under <code>θ</code>, so a ciphertext likewise has at most 2^208 possible randomness streams, each checkable against <code>u</code>. Both searches are below the 256-bit target of HEP-QC-5 and the 512-bit target of HEP-QC-7.</p>
+<p>The defect is in the submission's own wrapper and holds for an ideal <code>pseudoXOF</code> with the same arguments. It is separate from the 256-bit seed of kem-17-2, which concerns only HEP-QC-7, and from the generator instance of kem-17-3.</p>
+<h3 id="reproducing_5">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh kem-17/reproduce_xof_state_width.sh
+</code></pre>
+<p>The witness checks the two 208-bit calls, <code>CTX_LEN</code> in all eight parameter files and the key-expansion call. For each reference parameter set it then initialises the archived XOF, requires the context to be zero beyond byte 26, and requires three 4,096-byte squeezes to be reproduced from those 26 bytes alone. The 2^208 searches are not run.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

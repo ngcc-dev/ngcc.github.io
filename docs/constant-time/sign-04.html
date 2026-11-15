@@ -17,7 +17,7 @@
 
 <!-- synchronized report: sign-04/constant_time.md -->
 <h1 id="constant-time-review-04-cedrus-alpha">Constant-time review — 04 CEDRUS-alpha</h1>
-<p>Scope: reference implementation, representative instance only: <code>Implementations/Reference_Implementation/CEDRUSALPHA-384f/sign.c</code>. Other instances and optimized implementations have not been proven source-equivalent. This is a source-level triage, not a constant-time certification.</p>
+<p>Scope: reference implementation, representative instance only: <code>Implementations/Reference_Implementation/CEDRUSALPHA-384f/sign.c</code>. The eight instances differ only in <code>params.h</code>, the <code>params/</code> header, <code>SIG_AlgorithmInstance.h</code> and the Makefile, and the optimized tree differs from the reference tree only in the Makefile (compiler flags). This is a source-level triage, not a constant-time certification.</p>
 <p>Secret: SK seed/PRF seed and unrevealed tree-node values. Public: verification key, message, indices and paths once included in the signature.</p>
 <ul>
 <li>Branch/loop trace: <code>Implementations/Reference_Implementation/CEDRUSALPHA-384f/sign.c:154</code> — The visible <code>i + 1 &lt; SPX_D</code> branch is over a fixed public tree height; no secret dependence follows from that branch.</li>

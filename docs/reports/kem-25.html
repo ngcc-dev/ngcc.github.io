@@ -126,6 +126,28 @@ parameters or an attack on the submitted KEM, hence Low.</p>
 submitted <code>k=4</code> setting, and computes the exact negacyclic matrix identity
 and the <code>2 ± √2</code> spectrum at a small dimension. It does not establish the
 repaired reduction or estimate security at the real parameters.</p>
+<h2 class="issue-heading" id="kem-25-3-the-specified-ternary-sampler-rejects-on-secret-coins">kem-25-3: The specified ternary sampler rejects on secret coins</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>side-channel</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>NEV-R3 (key generation, encapsulation and decapsulation) and the uncompressed NEV-C1, -C2 and -C3 (encapsulation and decapsulation); reference, AVX2, aarch64 and NEON implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Local branch trace of which secret coin bytes were rejected, including for the decrypted message during re-encryption; no recovery demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-15</td></tr>
+</table></div>
+<p>Algorithm 13 (<code>Ternary1/3</code>, p. 29) samples five ternary coefficients from each pseudorandom byte <code>r</code> and discards the byte unless <code>r &lt; 243</code>. The code does the same: <code>ternary3</code> tests <code>if (x &lt; 243)</code> and <code>poly_bias3_ternary</code> loops until enough coefficients exist (<code>sample.c:87–106,198–219</code>). The parameter sets with <code>ETA_R</code> equal to 9 use it for the encryption randomness <code>r</code>, and NEV-R3 also for <code>f</code> and <code>g</code>.</p>
+<p>The bytes come from a KDF of the secret coins <code>ρ</code>. In decapsulation <code>ρ′</code> is derived from the decrypted message and the sampler runs during re-encryption, before the comparison (<code>cca.c:45</code>, <code>owpke.c:136</code>). About 5% of the bytes are rejected, so the positions of the rejections form a pattern that depends on the secret coins and, for a chosen ciphertext, on the decrypted message. The specification states that execution time is independent of secret values (§9).</p>
+<p>The accepted values are not revealed and the effect on total time is small, so the observer is a local branch tracer. No oracle or recovery was built.</p>
+<p>Constant-time fix (moderate): draw a fixed surplus of bytes and compact the accepted ones with masks, or use a sampler without rejection.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">d=kem-25/Implementations/Reference_Implementation/NEV-R3
+gcc -O3 -DPARAMS=6 -DUSE_ICCS -w -I&quot;$d&quot; -S &quot;$d/sample.c&quot; -o - | grep -c 'cmpb   \$-14'
+</code></pre>
+<p>A nonzero count shows the compiled comparison of a coin byte with 242. This is a compiled-branch witness; no timing was measured.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

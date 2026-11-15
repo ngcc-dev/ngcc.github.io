@@ -111,6 +111,25 @@ sed -n '12,24p' sign-04/Implementations/Reference_Implementation/CEDRUSALPHA-160
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">sh sign-04/reproduce_forc_accumulation.sh
 </code></pre>
+<h2 class="issue-heading" id="sign-04-5-allocation-failure-in-message-hashing-is-ignored">sign-04-5: Allocation failure in message hashing is ignored</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All parameter sets; reference implementation</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Under memory pressure, signing returns success with a randomizer and digest that are not derived from the message; the result verifies for no message, and no forgery follows</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-15</td></tr>
+</table></div>
+<p><code>gen_message_random</code> and the message-digest helper allocate a buffer of the message length plus a few hash blocks. If <code>malloc</code> fails, each returns without writing its output and without an error (<code>hash_sm3.c:53–55,94–96</code>). Both are <code>void</code>, so signing continues with unwritten values: the randomizer <code>R</code> keeps whatever the output buffer held, and the digest that selects the few-time-signature leaves and the tree address is an uninitialised local.</p>
+<p>With allocation made to fail, <code>sig_sign</code> returned 0, left the first bytes of the signature buffer as it found them, and produced a signature that did not verify for the message. The signer has nevertheless released few-time secrets for a digest and address not bound to any message, and reports success for an invalid signature. A caller needs a message large enough, or memory scarce enough, for the allocation to fail.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">grep -n -A3 'malloc(total_bytes)' sign-04/Implementations/Reference_Implementation/CEDRUSALPHA-160f/hash_sm3.c
+</code></pre>
+<p>This is a source witness: the two allocations and their silent returns. The unwritten randomizer was observed by failing <code>malloc</code> under a driver and is not part of the witness.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

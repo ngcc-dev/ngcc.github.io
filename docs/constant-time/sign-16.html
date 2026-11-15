@@ -20,7 +20,7 @@
 <p>Scope: reference implementation, representative instance only: <code>Implementations/Reference_Implementation/Octarine-512/sign.c</code>. Other instances and optimized implementations have not been proven source-equivalent. This is a source-level triage, not a constant-time certification.</p>
 <p>Secret: signing-key polynomials/basis, per-signature masks and sampler state. Public: verification key, algorithm parameters, message and serialized signature.</p>
 <ul>
-<li>Branch/loop trace: <code>Implementations/Reference_Implementation/Octarine-512/sign.c:230</code> — The norm check on <code>w.x[i]</code> is secret-state-dependent; further checks on <code>y</code> and <code>t0</code> appear at lines 245–280.</li>
+<li>Branch/loop trace: <code>Implementations/Reference_Implementation/Octarine-512/sign.c:230</code> — The norm check on <code>w.x[i]</code> is secret-state-dependent; further checks on <code>y</code> and <code>t0</code> appear at lines 245–280. <code>poly_check_norm</code> (<code>sign_ring.c:135-149</code>) returns at the first coefficient that reaches the bound, and <code>poly_make_hint</code> (<code>sign_ring.c:151-168</code>, called at <code>sign.c:270</code>) branches per coefficient before the hint-weight test at <code>:280</code>.</li>
 <li>Table lookups and division/remainder: this source triage does not certify their absence or constant-time compilation. Only the explicitly traced operands above are classified. Public lengths, fixed parameters and verifier checks are not findings.</li>
 </ul>
 <p>Assessment: No new vulnerability report is promoted from this representative source triage. A compiler/architecture-specific timing and cache test is still needed before claiming constant-time behavior or exploitable leakage.</p>

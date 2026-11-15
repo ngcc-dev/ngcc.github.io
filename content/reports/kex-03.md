@@ -306,3 +306,26 @@ python3 kex-03/reproduce_copied_key_alias.py
 ```
 
 The script uses the prebuilt `kex-03/lib/libCreTAKE-*.so` on all 25 instances. On each one it checks three things: an honest exchange agrees, the exchange addressed to the duplicate "Eve" certificate agrees with Bob, and a control that substitutes an independently generated responder key fails to agree. It runs in under a second.
+
+## kex-03-11: The K2K-PLAC512 rejection key covers only the first 584 ciphertext bytes
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: CreTAKE-K2K-PLAC512 and CreTAKE-K2K-PLAC512Star; reference and optimized implementations
+Discovery: Moderate
+Exploitation: Different invalid ciphertexts that agree on their first 584 bytes decapsulate to the same key; no session-key or long-term-key recovery demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-15
+
+The double-key KEM derives its implicit-rejection key as `pseudoXOF(SS_KEY_BYTES*8, buf_rej, sizeof(buf_rej), ss_reject)`, where `buf_rej` holds the 64-byte rejection seed followed by the ciphertext (`twokem.c:131,162–164` in PLAC512; `:165` in PLAC512Star). The third argument of `pseudoXOF` is a bit length, but `sizeof(buf_rej)` is the byte count 5,184. Only 648 bytes are absorbed: the seed and the first 584 of the 4,608 ciphertext bytes.
+
+The rejection key is therefore not a function of the whole ciphertext. Two different invalid ciphertexts that share their first 584 bytes return the same 64-byte key, while a change in byte 583 changes it. A party who can compare keys derived from rejected ciphertexts can tell that both were rejected. The key exchange hashes the transcript into the session key, so the end-to-end consequence is unresolved; the defect is that the KEM's rejection output is not the pseudorandom function of the ciphertext that implicit rejection requires.
+
+### Reproducing
+
+```sh
+sh kex-03/reproduce_reject_key_prefix.sh
+```
+
+The witness checks the call in the four affected trees, builds the unmodified reference K2K-PLAC512 sources, and decapsulates an honest ciphertext and three invalid ones. It requires equal rejection keys for two different ciphertexts that agree on bytes 0–583 and a different key after flipping byte 583.

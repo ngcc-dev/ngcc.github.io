@@ -164,6 +164,27 @@ python3 sign-29/reproduce_appended_bytes.py
 sh sign-29/reproduce_public_tree_witness.sh
 </code></pre>
 <p>The source certificate checks all nine local implementation trees. Pass <code>--archive /path/to/Tins.zip</code> to check the SHA-256-pinned submitted archive as well. The runtime witness compiles the submitted Tins256 reference sources into a temporary directory; no candidate source is patched.</p>
+<h2 class="issue-heading" id="sign-29-8-the-grinding-test-reads-challenge-bits-when-the-repetition-count-is-even">sign-29-8: The grinding test reads challenge bits when the repetition count is even</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Tins128 and Tins256; reference, optimized and additional implementations. Tins512 behaves as specified</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>The last opened leaf index is confined to 256 of 4,096 values and signing grinds 4 or 16 times longer than specified; no forgery below target follows from this alone</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-15</td></tr>
+</table></div>
+<p>Algorithm 11 expands τ 12-bit challenge indices and ω grinding bits and accepts a counter when the grinding bits are zero. <code>ExpandChallengePoint</code> computes the grinding value as <code>(buffer[last] &gt;&gt; 4) | (buffer[(TAU - 1) / 2 * 3 + 1] &lt;&lt; 4)</code> (<code>bavc_commit.c:507</code> in Tins128, <code>:501</code> in Tins256, <code>:523</code> in Tins512). For odd τ the second byte holds grinding bits. For even τ it is the byte whose low half is the top four bits of the last challenge index.</p>
+<p>Tins128 (τ = 12, ω = 6) and Tins256 (τ = 24, ω = 4) therefore test eight bits, four of them belonging to the challenge. Over 200,000 counters the acceptance rate was 1 in 267 for Tins128 and 1 in 257 for Tins256, against the specified 1 in 64 and 1 in 16, and every accepted challenge had its last index below 256. Tins512 (τ = 47) accepted 1 in 65.5 with last indices up to 4,094.</p>
+<p>The challenge distribution thus differs from the specification: the last tree opens one of 256 leaves, not 4,096, and only four fresh bits are ground. For Tins128 the probability that a counter passes and matches a guessed challenge is 2^-148, where the specification gives 2^-150. Signers also grind longer than specified.</p>
+<h3 id="reproducing_7">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">grep -n 'v_grinding = ' sign-29/Implementations/Reference_Implementation/Tins*/bavc_commit.c
+grep -n 'define TAU\|define Omega' sign-29/Implementations/Reference_Implementation/Tins*/params.h
+</code></pre>
+<p>This is a source witness: the same expression with τ = 12, 24 and 47. The acceptance rates came from calling the archived <code>ExpandChallengePoint</code> on 200,000 counters per set and are not part of the witness.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

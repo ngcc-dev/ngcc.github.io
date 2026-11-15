@@ -115,3 +115,30 @@ The certificate checks the frozen lemma and theorem text, confirms the
 submitted `k=4` setting, and computes the exact negacyclic matrix identity
 and the `2 ± √2` spectrum at a small dimension. It does not establish the
 repaired reduction or estimate security at the real parameters.
+
+## kem-25-3: The specified ternary sampler rejects on secret coins
+
+Severity: Low
+Status: Confirmed
+Layer: Side-channel
+Affected: NEV-R3 (key generation, encapsulation and decapsulation) and the uncompressed NEV-C1, -C2 and -C3 (encapsulation and decapsulation); reference, AVX2, aarch64 and NEON implementations
+Discovery: Moderate
+Exploitation: Local branch trace of which secret coin bytes were rejected, including for the decrypted message during re-encryption; no recovery demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-15
+Algorithm 13 (`Ternary1/3`, p. 29) samples five ternary coefficients from each pseudorandom byte `r` and discards the byte unless `r < 243`. The code does the same: `ternary3` tests `if (x < 243)` and `poly_bias3_ternary` loops until enough coefficients exist (`sample.c:87–106,198–219`). The parameter sets with `ETA_R` equal to 9 use it for the encryption randomness `r`, and NEV-R3 also for `f` and `g`.
+
+The bytes come from a KDF of the secret coins `ρ`. In decapsulation `ρ′` is derived from the decrypted message and the sampler runs during re-encryption, before the comparison (`cca.c:45`, `owpke.c:136`). About 5% of the bytes are rejected, so the positions of the rejections form a pattern that depends on the secret coins and, for a chosen ciphertext, on the decrypted message. The specification states that execution time is independent of secret values (§9).
+
+The accepted values are not revealed and the effect on total time is small, so the observer is a local branch tracer. No oracle or recovery was built.
+
+Constant-time fix (moderate): draw a fixed surplus of bytes and compact the accepted ones with masks, or use a sampler without rejection.
+
+### Reproducing
+
+```sh
+d=kem-25/Implementations/Reference_Implementation/NEV-R3
+gcc -O3 -DPARAMS=6 -DUSE_ICCS -w -I"$d" -S "$d/sample.c" -o - | grep -c 'cmpb	\$-14'
+```
+
+A nonzero count shows the compiled comparison of a coin byte with 242. This is a compiled-branch witness; no timing was measured.

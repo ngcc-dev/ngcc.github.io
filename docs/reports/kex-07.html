@@ -76,6 +76,28 @@ a second; pass a larger trial count as the first argument.</p>
 <pre><code class="language-sh">python3 kex-07/reproduce_short_message.py
 </code></pre>
 <p>The certificate traces the length discard and fixed-size decryption in all nine submitted trees. It does not execute a malformed exchange.</p>
+<h2 class="issue-heading" id="kex-07-3-re-encryption-rejection-samples-from-coins-derived-from-the-decrypted-message">kex-07-3: Re-encryption rejection-samples from coins derived from the decrypted message</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>side-channel</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Every NEV-AKE parameter set whose <code>params.h</code> sets <code>ETA_R</code> to 9, including NEV-AKE-C1 and its compressed form; reference and AVX2 implementations. Sets with a smaller <code>ETA_R</code> (R1, R2) sample <code>r</code> without rejection</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Local branch trace of a pattern that depends on the decrypted message of an attacker-supplied ciphertext; no recovery demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-15</td></tr>
+</table></div>
+<p>Each party decrypts the peer's ciphertext, derives <code>ρ = G(m′)</code> and re-encrypts to check it (<code>ake.c:96–106</code>). For the parameter sets with <code>ETA_R</code> equal to 9, the re-encryption draws its randomness with <code>poly_sample_r</code> (<code>owpke.c:136</code>), which is the rejection sampler of the specification's <code>Ternary1/3</code>: each byte of the KDF output is used only <code>if (x &lt; 243)</code> (<code>sample.c:87–106,198–219</code>).</p>
+<p>Which bytes are rejected is a function of <code>ρ</code>, hence of <code>m′</code>, and <code>m′</code> is the private-key decryption of a ciphertext the peer chose. A branch-trace observer therefore sees a fingerprint of the decrypted message before the comparison takes effect. The accepted values are not revealed, the effect on total time is small, and no oracle or recovery was built.</p>
+<p>Constant-time fix (moderate): sample without rejection, or compact a fixed surplus of bytes with masks.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">d=&quot;kex-07/Implementations and Test_Vectors/Implementations/Reference_Implementation/NEV-AKE-C1&quot;
+grep -n 'x &lt; 243' &quot;$d/sample.c&quot;; grep -n 'poly_sample_r' &quot;$d/owpke.c&quot;
+grep -n 'ow_pke_enc_interal(cmp, m, pk, rho)' &quot;$d/ake.c&quot;
+</code></pre>
+<p>This is a source witness: the decrypt-and-verify path, the sampler call and the rejection test.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

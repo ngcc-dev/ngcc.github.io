@@ -105,3 +105,50 @@ python3 sign-08/reproduce_secret_seed_width.py
 ```
 
 The certificate checks local submitted source files when present. With `--archive DARTS.zip`, or when local files are absent, it verifies the official archive's SHA-256 before checking the same source call chain. It does not run a native stream test or enumerate the 2^256 prefixes.
+
+## sign-08-5: The sign byte of one attempt is reused as mask sign bits of the next
+
+Severity: Medium
+Status: Confirmed
+Layer: Implementation
+Affected: DARTS128, DARTS256 and DARTS512 reference implementations and AVX2 DARTS512; AVX2 DARTS128 did not show it and the NEON tree was not run
+Discovery: Non-trivial
+Exploitation: After a rejected attempt the mask is not uniform, and accepted signatures carry a measurable public bias in two response coefficients; no key recovery demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-15
+`expandY` should return a mask and two independent bits `(b, b′)` (Algorithm 7, line 5, p. 9). `polyfixveclk_sample_hyperball` samples the mask polynomials with nonces `ni++`, then derives the byte holding `b` and `b′` from `seed ‖ ni` with the next, unused nonce, and returns `ni` without advancing it (`polyfix.c:256–261,288–299`). When the attempt is rejected, `sign.c:169` calls the function again with that counter, and the first Gaussian stream of the new mask starts from the same `seed ‖ ni`. Its first output byte, which was the previous attempt's `(b, b′)` byte, now supplies the sign bits of coefficients 0–7 of the first mask polynomial.
+
+With the archived reference DARTS128, the sign of each of those eight mask coefficients equalled the corresponding bit of the previous attempt's byte in 200 of 200 trials. The rejection decision depends on `b` and `b′`, so the reuse survives into accepted signatures: over 40,000 verified signatures, response coefficient 1 of the first polynomial was negative 41.4% of the time and coefficient 0 48.5%, against 49.6–50.5% for coefficients 2–15.
+
+The mask is therefore not uniform on the hyperball after the first attempt, and the security argument's rejection-sampling step does not apply as written. Whether the bias depends on the key was not examined and no recovery was attempted.
+
+### Reproducing
+
+```sh
+d=sign-08/Implementations/Reference_Implementation/DARTS128
+sed -n '256,261p' "$d/polyfix.c"; sed -n '288,299p' "$d/polyfix.c"; sed -n '169p' "$d/sign.c"
+```
+
+This is a source witness: the nonce use, the derivation of the sign byte from the unconsumed nonce, and the retry call. The match rates and signature frequencies came from a driver against the archived code and are not part of the witness.
+
+## sign-08-6: Low-bits decoding accepts noncanonical fields, giving byte-distinct valid signatures
+
+Severity: High
+Status: Confirmed
+Layer: Implementation
+Affected: DARTS128 and DARTS256; DARTS512 packs low bits with a byte map and is not affected
+Discovery: Moderate
+Exploitation: Adding a constant to an eligible packed field of a valid signature gives a different byte string that verifies for the same message; no signing key or new message is involved
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-15
+The signature packs the low bits of the response in blocks of eight base-17 digits. `poly_unpack_lowbits` reads each fixed-width field, peels off eight digits and discards the remaining quotient without checking that it is zero (`poly.c:746–790` for DARTS128; the DARTS256 branch follows). The field is wider than eight base-17 digits need, so a field value `v` and `v + 17^8` decode to the same digits whenever the sum still fits.
+
+On one honest DARTS128 signature, 45 of the 128 blocks were eligible, and adding 17^8 to any one of them gave a byte-distinct signature that the submitted verifier accepted for the same message. A changed message was rejected. The specification adds a strong-unforgeability property (§3.3.3), which a second valid encoding of the same signature contradicts.
+
+### Reproducing
+
+```sh
+sed -n '746,790p' sign-08/Implementations/Reference_Implementation/DARTS128/poly.c
+```
+
+This is a source witness: the decoder has no range check on the discarded quotient. The accepted aliases were observed with a driver against the archived code and are not part of the witness.

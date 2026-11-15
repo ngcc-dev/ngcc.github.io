@@ -186,6 +186,31 @@ LATTICE_ESTIMATOR_PATH=/path/to/lattice-estimator \
   mamba run -n sage python kem-18/reproduce_public_key_s2_estimate.py
 </code></pre>
 <p>The first script generates each key pair with the prebuilt <code>kem-18/lib</code> library. It parses <code>pk</code> as the C code does, builds the public equations, runs the lattice reduction, and only then compares the unique candidate with the <code>s2</code> stored in <code>sk</code>. The estimate uses lattice-estimator commit <code>53da5982597709ba0fdf94ea37a84d822310fd84</code>; its model ignores the remaining <code>B2</code> equations, so its figures are not lower bounds.</p>
+<h2 class="issue-heading" id="kem-18-6-modular-reductions-branch-on-secret-dependent-values">kem-18-6: Modular reductions branch on secret-dependent values</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>side-channel</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Loong128, Loong256, Loong384 and Loong512; reference, optimized and additional implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Local branch trace of the sign and zero pattern of decryption intermediates before the re-encryption check; no key recovery demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-15</td></tr>
+</table></div>
+
+<p>Every coefficient reduction goes through <code>standard_mod</code>, which ends with <code>if (x &lt; 0 &amp;&amp; res != 0) res = Q - res;</code>, and <code>central_mod</code>, which tests <code>if (res &gt; 4095)</code> (<code>poly.c:39–50,67–75</code>). Decryption applies them to the products of the ciphertext with the secret key: <code>mat_mul(U1, S2, …)</code>, the inner product with <code>s</code>, and <code>vector_central_modulo_q</code> on the result (<code>KEM_Loong.c:205–214</code>; <code>poly.c:258,289,440</code>). These run on attacker-chosen ciphertexts before the validity decision.</p>
+<p>GCC 15.2 at <code>-O2</code> and <code>-O3</code> keeps the conditional jumps (<code>jns</code>, <code>je</code>) attributed to <code>poly.c:45–47</code> at every inlined call site. A branch-trace observer therefore sees, per coefficient, whether a secret-dependent intermediate is negative or zero. No oracle or recovery was built.</p>
+<p>Constant-time fix (easy, hence Low): reduce with masks, as the samplers and message decoder in the same file already do.</p>
+<h3 id="reproducing_5">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">d=kem-18/Implementations/Reference_Implementation/Loong128
+gcc -O2 -g -w -I&quot;$d&quot; -c &quot;$d/poly.c&quot; -o /tmp/loong_poly.o
+objdump -dl --no-show-raw-insn /tmp/loong_poly.o |
+  awk '/^\/.*:[0-9]+/{loc=$1} /\tj[a-z]+ /{if ($2!=&quot;jmp&quot;) print loc, $2}' |
+  grep -E 'poly.c:4[57]( |$)' | sort | uniq -c
+</code></pre>
+<p>The listing shows the conditional jumps of <code>standard_mod</code>. No timing was measured.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

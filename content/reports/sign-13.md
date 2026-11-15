@@ -113,3 +113,31 @@ python3 sign-13/reproduce_ggm_multitarget.py leaf
 ```
 
 The script checks the unindexed H0 call in all 16 `vector_com.c` files, the leaf PRG input in `hash.h`, and the text of Algorithms 4 and 14 and Section 2.3.4. It signs once with each of the eight `lib/*.so` libraries, confirms τ distinct published leaf commitments (with honest-verify and bit-flip-reject controls) and prints the costs. It then builds a temporary GreatWall128s copy whose PRG keys are truncated to 20 bits, and recovers a hidden leaf seed in 32/32 genuine openings by searching all τ commitments at once. A single-target control runs about `(τ+1)/2` times slower, a wrong-IV control recovers nothing, and every result is checked against ground truth. The default run takes about 1 minute, and `NGCC_LONG=1` extends the recovery to 128f, 192f and 256f.
+
+## sign-13-5: Reference field multiplication branches on bits of key-derived values
+
+Severity: Low
+Status: Confirmed
+Layer: Side-channel
+Affected: All eight reference implementations; the optimized implementations multiply with carry-less multiplication instructions
+Discovery: Moderate
+Exploitation: Key-dependent instruction count and branch trace in every signing call; no key recovery demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-15
+Signing recomputes the Pylon witness from the secret key on every call: `faest_compute_witness` applies two field inversions, each a fixed square-and-multiply chain, to a state derived from `sk` (`faest.c:150–290`, inversions at `:171,184`). In the reference trees the field multiplication is `ref_gf_mul`, which adds a shifted copy of one operand only `if ((b[word] >> bit) & 1u)`, and `ref_reduce_poly`, which skips every zero bit of the product (`block_impl.h:70–102`). The file is identical in all eight reference trees.
+
+The exponent is public, so the sequence of multiplications is fixed, but the work inside each depends on the bits of secret intermediate values. Three GreatWall128s keys with the same public `owf_iv` took 3,214,814, 3,316,325 and 3,216,520 instructions for one public-key computation, and the same key repeats exactly. A branch-trace observer sees the operand bits themselves. The values are fixed per key, so each signature repeats the same trace. No recovery was attempted.
+
+The reference AES also uses a table S-box (`aes_impl.c:6,39`) on secret tree seeds in the 128-, 192- and 256-bit sets.
+
+Constant-time fix (easy, hence Low): add under a mask and reduce without the skip, as a portable fallback for the carry-less code in the optimized trees.
+
+### Reproducing
+
+```sh
+d=sign-13/Implementations/Reference_Implementation/GreatWall128s
+sed -n '70,95p' "$d/block_impl.h"; grep -n 'mersenne_inverse' "$d/faest.c" | head -2
+grep -c ref_gf_mul sign-13/Implementations/Optimized_Implementation/GreatWall128s/block_impl.h
+```
+
+This is a source witness; the last command prints 0 for the optimized tree. The instruction counts above came from a callgrind run of `faest_pubkey` on fixed keys and are not part of the witness.
