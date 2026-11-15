@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: MQOM-5</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="../style.css?v=a38b7088">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="../index.html">Home</a><a href="../on-ramp.html">Security Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">Official NIST On-Ramp Round 3</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../on-ramp.html">NIST Signature On-Ramp (Round 3)</a> › <code>MQOM-5</code></p>
+
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>Theorem 5.1 for all 18 parameter sets; at Category 1 the boundary lies below the 2^143 gate comparison</td></tr><tr><th>Discovery</th><td>Moderate</td></tr><tr><th>Exploitation</th><td>Concrete proof-bound boundary in public random-oracle and ideal-cipher queries; no forgery or key recovery</td></tr><tr><th>Remediation</th><td>Moderate</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-11-15">2026-11-15</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py MQOM-5</code><br><small>source: <code>nist/MQOM/reproduce_mqom_5.py</code> · SHA-256 <code class="digest">a19c2813<wbr>cc23b4f8<wbr>51dc1fd0<wbr>23a535a3<wbr>681fcc6d<wbr>b700d5f1<wbr>0385a2b2<wbr>0979a647</code></small><br><small>exact-rational evaluation of the printed Theorem 5.1 bound with parameters read from the 18 submitted headers</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/MQOM_specifications.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/mqom3_submission_package.zip">submission ZIP</a></td></tr></table>
+
+<h1 id="mqom-5-low-theorem-51s-concrete-euf-ko-bound-reaches-one-5-to-75-bits-below-2lambda-oracle-queries">MQOM-5 — Low: Theorem 5.1's concrete EUF-KO bound reaches one 5 to 7.5 bits below 2^lambda oracle queries</h1>
+<h2 id="bound">Bound</h2>
+<p>Theorem 5.1 (physical p.74) bounds the EUF-KO advantage by a sum that
+includes <code>(4N+1) Q_RO Q_IC / 2^(2 lambda)</code>, derived in Eq. (15)-(16)
+(physical p.76) and Eq. (19) (physical p.77). Its hypotheses are
+<code>Q_RO &lt;= 2^lambda</code> and <code>Q_IC &lt;= 2^(lambda-1)</code>. With <code>Q_RO = Q_IC = Q</code> the
+whole bound reaches one at:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: right;">N</th>
+<th style="text-align: right;">Q where the bound reaches one</th>
+<th style="text-align: right;">Category 1 queries</th>
+<th style="text-align: right;">Category 1 gates (2^15 per query)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">8192</td>
+<td style="text-align: right;">2^(lambda−7.51)</td>
+<td style="text-align: right;">2^120.49</td>
+<td style="text-align: right;">2^135.49</td>
+</tr>
+<tr>
+<td style="text-align: right;">4096</td>
+<td style="text-align: right;">2^(lambda−7.01)</td>
+<td style="text-align: right;">2^120.99</td>
+<td style="text-align: right;">2^135.99</td>
+</tr>
+<tr>
+<td style="text-align: right;">2048</td>
+<td style="text-align: right;">2^(lambda−6.52)</td>
+<td style="text-align: right;">2^121.48</td>
+<td style="text-align: right;">2^136.48</td>
+</tr>
+<tr>
+<td style="text-align: right;">256</td>
+<td style="text-align: right;">2^(lambda−5.06)</td>
+<td style="text-align: right;">2^122.94</td>
+<td style="text-align: right;">2^137.94</td>
+</tr>
+</tbody>
+</table></div>
+<p>The <code>(4N+1)</code> term contributes 93% to 99% of the bound at those points. All
+Category 1 boundaries lie below the 2^143 gate comparison. Categories 3 and 5
+reach one at about 2^200–2^202 and 2^265–2^267 gates against 2^207 and 2^272.</p>
+<h2 id="classification-and-limits">Classification and limits</h2>
+<p>Low / Proof gap: a candidate-specific concrete boundary of the submitted
+theorem inside the category target, with no attack. The queries are public
+random-oracle and ideal-cipher queries of a key-only adversary, not signing
+queries. The comparison assumes <code>Q_RO = Q_IC</code>, omits <code>epsilon_mq</code>, and prices
+a query like one AES call (2^15 gates at Categories 1 and 3, 2^16 at
+Category 5; the specification gives "2^15 or 2^16" without assigning levels).
+Without this term the bound still reaches one at <code>2^(lambda−1.71)</code> queries,
+about 2^141.3 gates at Category 1, and the hypothesis on <code>Q_IC</code> alone caps the
+theorem below 2^143; the term adds 3.3 to 5.8 bits of loss. The theorem is
+EUF-KO only; <a href="MQOM-3.html">MQOM-3</a> covers the separate PGOW-MQ gap.</p>
+<h2 id="reproduction">Reproduction</h2>
+<pre><code class="language-sh">python3 MQOM/reproduce_mqom_5.py
+</code></pre>
+<h2 id="harness-reproduction">Harness reproduction</h2>
+<p>From the <code>ngcc-harness</code> checkout, run the pinned source script through the harness-side dispatcher:</p>
+<pre><code class="language-sh">python3 nist/reproduce.py MQOM-5
+</code></pre>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+</footer>
+</body>
+</html>

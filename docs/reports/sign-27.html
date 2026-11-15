@@ -152,6 +152,30 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <pre><code class="language-sh">python3 sign-27/reproduce_coefficient_high_bits.py
 </code></pre>
 <p>The script signs once per level and verifies every single unused-bit flip, the all-bits and random-multiple variants, and the used-bit and message controls. Each verification is the first library call in its own fresh process. It takes about 20 seconds.</p>
+<h2 class="issue-heading" id="sign-27-7-the-implemented-challenge-lies-outside-the-challenge-space-of-the-security-proof">sign-27-7: The implemented challenge lies outside the challenge space of the security proof</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr>
+<tr><th>Affected</th><td>All four SQIsignTriangle parameter sets; the challenge routine is byte-identical in the eight reference and optimized trees</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>The proof's simulation, extraction and challenge-guessing steps do not cover the submitted challenge distribution; no additional forgery demonstrated</td></tr>
+<tr><th>Credit</th><td>Xifeng Jin (CertiK), with OpenAI Codex assistance</td></tr>
+<tr><th>Date</th><td>2026-11-15</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/GDCD26OKJ46624KA5WRRFTQE3ARN5ORY/">Jin's PKC Forum post</a></p>
+<p>The security analysis samples both challenge components from <code>{2^(λ/2), …, 2^(λ/2+1)}</code> (Experiment 1, §6.1, physical p. 49) and takes the square of that interval as the challenge space, so that <code>|C| ≥ 2^λ</code> and the challenge-guessing term is <code>2^-λ</code> (Theorem 4, §6.4, physical pp. 54–55). Lemma 2's extraction bound counts collisions using <code>c1′ ≥ 2^(λ/2)</code> (physical pp. 51–52).</p>
+<p>The submitted routine cannot output such a challenge. <code>hash_to_challenge_prime_with_pk_j</code> imports <code>SECURITY_BITS/16</code> bytes for each component, so both are below <code>2^(λ/2)</code>, and it accepts <code>c1</code> only if it is a prime congruent to 3 modulo 4 (<code>src/verification/ref/lvlx/common.c:40–69</code>). The specification's own description of the routine says the same (§7.2, physical p. 57). The two ranges are disjoint at every level. The congruence alone limits the implemented space to <code>2^(λ−2)</code> pairs, and primality brings it to about <code>2^121.5</code> at λ = 128 by the prime number theorem.</p>
+<p>Three steps of the proof therefore do not apply to the scheme as submitted. Theorem 2's simulator draws its hints from Experiment 1, and a distinguisher separates them from real transcripts by the size of <code>c1</code>. Lemma 2's counting argument needs <code>c1′ ≥ 2^(λ/2)</code>, and the implemented <code>c1′</code> is always smaller. Theorem 4's substitution <code>1/|C| ≤ 2^-λ</code> overstates the implemented space. This is a statement about what the proof covers; it is not a new forgery or a cost estimate for the implemented scheme.</p>
+<h3 id="reproducing_6">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">d=sign-27/Implementations/Reference_Implementation/SQIsignTriangle_lvl1/sqisigntriangle
+sed -n '40,69p' &quot;$d/src/verification/ref/lvlx/common.c&quot;
+pdftotext -f 49 -l 49 -layout sign-27/sign-27-spec.pdf - | grep -A6 'Experiment 1'
+pdftotext -f 55 -l 55 -layout sign-27/sign-27-spec.pdf - | grep -B1 'guessing term'
+</code></pre>
+<p>This is a source and specification witness: the routine's <code>byte_len = SECURITY_BITS / 16</code>, the proof's sampling interval and its challenge-space statement.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

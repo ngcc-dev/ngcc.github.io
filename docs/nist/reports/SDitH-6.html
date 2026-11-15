@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: SDitH-6</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="../style.css?v=a38b7088">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="../index.html">Home</a><a href="../on-ramp.html">Security Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">Official NIST On-Ramp Round 3</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../on-ramp.html">NIST Signature On-Ramp (Round 3)</a> › <code>SDitH-6</code></p>
+
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-info">Info</span></td></tr><tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>Specification of the six cipher-grinding (cipherpow) parameter sets; the hash-grinding sets and the submitted code are consistent</td></tr><tr><th>Discovery</th><td>Moderate</td></tr><tr><th>Exploitation</th><td>Specification inconsistency only; both readings need at least 2^lambda cipher calls, so no reduction in forgery work and no interoperability consequence was shown</td></tr><tr><th>Remediation</th><td>Local</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-11-15">2026-11-15</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py SDitH-6</code><br><small>source: <code>nist/SDitH/reproduce_sdith_6.py</code> · SHA-256 <code class="digest">c72c675d<wbr>959e611e<wbr>72109455<wbr>0bf0dc15<wbr>aec2f233<wbr>f9afc89a<wbr>54055840<wbr>8e930f47</code></small><br><small>specification-text and source check with the grinding accounting for all twelve parameter sets</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/SDitH_specifications.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/sdith3_submission_package.zip">submission ZIP</a></td></tr></table>
+
+<h1 id="sdith-6-informational-cipher-grinding-pseudocode-contradicts-its-own-remark-and-the-code">SDitH-6 — Informational: Cipher-grinding pseudocode contradicts its own remark and the code</h1>
+<h2 id="inconsistency">Inconsistency</h2>
+<p>In the cipher variant of ExpandEvaluationChallenge (physical p.21, printed
+p.19), line 1 is <code>xof &lt;- XOF.Init(h_piop, ctr)</code> and line 2 reads <code>p0, p1, k0,
+k1</code> from it, so the cipher keys depend on the counter. The remark on physical
+p.22 (printed p.20) says that lines 1-4 and the key schedule do not depend on
+the counter. The code follows the remark: the cipher initialisation absorbs a
+prefix byte and <code>h_piop</code> only and runs the key schedule once
+(<code>sdith_prng.c:323-347</code> (<code>SDitH/submission/submission_package/Reference_Implementation/cat1_short_cipherpow/src/sdith_prng.c#L323</code>)), and each counter then
+costs two cipher calls and tests <code>w_pow − 1</code> bits.</p>
+<p>The parameters satisfy <code>tau kappa + w_pow − log2 d = lambda</code> exactly in all
+twelve sets (the zero margin of the design survey's DS-SDitH-4), and only
+<code>w_pow − 1</code> bits are tested, so a forger needs <code>2^(lambda−1)</code> counter values.
+Under either reading each counter value costs two cipher calls, so a forger
+needs <code>2^lambda</code> cipher calls; the literal line 1 adds one XOF call and two key
+schedules per counter value. The inconsistency therefore does not reduce the
+forgery work. It does leave the unit in which a future proof would count the
+grinding undetermined.</p>
+<p>Further text defects: line 2 calls <code>GetBytes(4 lambda)</code>, but only <code>GetByte()</code>
+is defined, and the code draws <code>4 lambda</code> bits at Categories 1 and 5 but 128
+bytes at Category 3, where the pseudocode implies 96; <code>Extract_(w_pow−1)</code> is
+used with one index although only a two-index form is defined.</p>
+<h2 id="evidence">Evidence</h2>
+<p>The reproducer checks each quoted line on its page of the pinned
+specification, the code facts in all 24 parameter-set directories, and the
+accounting from the submitted parameter table (cross-checked against
+specification Tables 4 and 5). Control: for the six hash-grinding sets the
+pseudocode and code agree, at <code>2^lambda</code> XOF calls.</p>
+<h2 id="classification-and-limits">Classification and limits</h2>
+<p>Informational / Confirmed / Design: a specification inconsistency with no
+demonstrated cost or interoperability consequence. An earlier version of this
+report compared <code>2^(lambda−1)</code> XOF calls with <code>2^lambda</code> cipher calls and
+called the difference one bit; in like units both readings need at least
+<code>2^lambda</code> cipher calls. SDitH has no EUF-CMA proof yet (physical p.46). Whether signatures from a signer written
+from the literal line 1 would verify against the code was not tested. Gate
+costs were not compared. <a href="SDitH-5.html">SDitH-5</a> records five other
+specification/code differences.</p>
+<h2 id="reproduction">Reproduction</h2>
+<pre><code class="language-sh">python3 SDitH/reproduce_sdith_6.py
+</code></pre>
+<h2 id="harness-reproduction">Harness reproduction</h2>
+<p>From the <code>ngcc-harness</code> checkout, run the pinned source script through the harness-side dispatcher:</p>
+<pre><code class="language-sh">python3 nist/reproduce.py SDitH-6
+</code></pre>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: MAYO-5</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="../style.css?v=a38b7088">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="../index.html">Home</a><a href="../on-ramp.html">Security Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">Official NIST On-Ramp Round 3</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../on-ramp.html">NIST Signature On-Ramp (Round 3)</a> › <code>MAYO-5</code></p>
+
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>Theorem 1 (via Lemma 2) for MAYO1, MAYO2, MAYO3 and MAYO5; shown on a reduced toy instance</td></tr><tr><th>Discovery</th><td>Non-trivial</td></tr><tr><th>Exploitation</th><td>Invalid proof step shown by exact enumeration on a toy instance; the final inequality was not shown to fail and no attack follows</td></tr><tr><th>Remediation</th><td>Moderate</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-11-15">2026-11-15</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py MAYO-5</code><br><small>source: <code>nist/MAYO/reproduce_mayo_5.py</code> · SHA-256 <code class="digest">95475eef<wbr>20d16e7a<wbr>9cf989e8<wbr>83fe2b68<wbr>1094cbeb<wbr>d3909e52<wbr>8551ea9f<wbr>e4d6498b</code></small><br><small>specification-text check and exact enumeration of the good-vinegar fraction on a toy instance meeting the parameter rules except q</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/mayo_specification.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/MAYO.zip">submission ZIP</a></td></tr></table>
+
+<h1 id="mayo-5-low-lemma-2-treats-an-average-case-restart-bound-as-if-it-held-for-every-key">MAYO-5 — Low: Lemma 2 treats an average-case restart bound as if it held for every key</h1>
+<h2 id="proof-step">Proof step</h2>
+<p>Lemma 2, step 6 (physical p.30) says that Game 5, "conditioned on Good v
+happening, is identical to Game 4", and concludes
+<code>Pr[Game5] &gt;= Pr[Game4] Pr[Good v] &gt;= PrGame4 (</code>MAYO/1 − Qs B<code>)</code>. Here <code>B</code> comes
+from Lemma 1 (physical p.28), which bounds the probability that
+<code>P*(v + ·) + L(Lambda, ·)</code> lacks full rank <strong>on average</strong> over the oil space,
+the public map and the vinegar.</p>
+<p>The identity needs the fraction of good vinegar to be the same for every key
+and every <code>Lambda</code>. Conditioning on Good v otherwise reweights keys and
+<code>Lambda</code> values by their good-vinegar fraction, and Game 5 conditioned on
+Good v is then not Game 4. With only an average-case bound, the step gives an
+additive loss <code>Qs B</code>, not the multiplicative factor stated.</p>
+<h2 id="evidence">Evidence</h2>
+<p>The reproducer checks the quoted step and Lemma 1's average-case wording on
+their pages of the pinned specification, then enumerates every vinegar tuple
+for 56,000 (key, <code>Lambda</code>) pairs of a toy instance over GF(2) (m = 4, o = 3,
+k = 2, n − o = 5) that meets the parameter rules of §2.1.1 except q.</p>
+<ul>
+<li>The bad-vinegar fraction ranges from 0.148 to 0.336 (mean 0.2165,
+  standard deviation 0.0128). It varies with <code>Lambda</code> for 13,984 of 14,000
+  keys, and its exact average over all <code>Lambda</code> still varies between keys.</li>
+<li>So conditioning on Good v reweights the pairs, and Game 5 given Good v is
+  not Game 4 on the toy.</li>
+<li>Control: the exact average-case bad probability, 0.21655, is below
+  <code>B = 3/8</code>, as Lemma 1 states, and the sample mean matches it.</li>
+</ul>
+<h2 id="classification-and-limits">Classification and limits</h2>
+<p>Low / Proof gap: a candidate-specific proof step that is invalid as written.
+No sampled pair exceeds <code>B</code>, so the final inequality was not shown to fail;
+for typical keys the good-vinegar fraction probably concentrates, and the
+step is likely repairable with an extra term for atypical keys. Nothing was
+computed at the submitted parameters (q = 16). The step is inherited from
+Beullens's 2022 MAYO proof. <a href="MAYO-2.html">MAYO-2</a> is the separate limit of the
+same theorem to few signing queries.</p>
+<h2 id="reproduction">Reproduction</h2>
+<pre><code class="language-sh">python3 MAYO/reproduce_mayo_5.py
+</code></pre>
+<h2 id="harness-reproduction">Harness reproduction</h2>
+<p>From the <code>ngcc-harness</code> checkout, run the pinned source script through the harness-side dispatcher:</p>
+<pre><code class="language-sh">python3 nist/reproduce.py MAYO-5
+</code></pre>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+</footer>
+</body>
+</html>

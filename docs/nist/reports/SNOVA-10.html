@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: SNOVA-10</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="../style.css?v=a38b7088">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="../index.html">Home</a><a href="../on-ramp.html">Security Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">Official NIST On-Ramp Round 3</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../on-ramp.html">NIST Signature On-Ramp (Round 3)</a> › <code>SNOVA-10</code></p>
+
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr><tr><th>Layer</th><td>implementation</td></tr><tr><th>Affected</th><td>Optimized tree, all 18 parameter sets by shared source, when built with -DUSE_OPENSSL (not the submitted default; SNOVA_I_K run)</td></tr><tr><th>Discovery</th><td>Trivial</td></tr><tr><th>Exploitation</th><td>Resource leak of 4 digest contexts per signature and a fail-stop crash under an injected allocation failure; no wrong output or secret exposure</td></tr><tr><th>Remediation</th><td>Local</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-11-15">2026-11-15</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py SNOVA-10</code><br><small>source: <code>nist/SNOVA/reproduce_snova_10.py</code> · SHA-256 <code class="digest">dac48f1e<wbr>e11f136e<wbr>87f2c590<wbr>90507ed7<wbr>a2325d81<wbr>46e9e3f8<wbr>41c92ab7<wbr>62941aae</code></small><br><small>clean-checkout builds with counting wrappers around the OpenSSL context functions, an injected NULL allocation, and patched-copy controls</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/SNOVA_specifications.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/SNOVA_Round3.zip">submission ZIP</a></td></tr></table>
+
+<h1 id="snova-10-low-optional-openssl-build-leaks-every-digest-context-and-crashes-on-allocation-failure">SNOVA-10 — Low: Optional OpenSSL build leaks every digest context and crashes on allocation failure</h1>
+<h2 id="defect">Defect</h2>
+<p>With <code>-DUSE_OPENSSL</code>, the optimized tree's SHAKE wrapper allocates an OpenSSL
+digest context with <code>EVP_MD_CTX_new</code> and passes it on without a NULL check
+(<code>symmetric.c:24-32</code> (<code>SNOVA/submission/SNOVA_Round3/Optimized_Implementation/SNOVA_I_K/symmetric.c#L24</code>)). Only <code>shake_release</code>
+(<code>symmetric.c:50-54</code> (<code>SNOVA/submission/SNOVA_Round3/Optimized_Implementation/SNOVA_I_K/symmetric.c#L50</code>)) frees a context, and no file in
+the 18 optimized directories calls it: not <code>shake256</code>
+(<code>symmetric.c:87-95</code> (<code>SNOVA/submission/SNOVA_Round3/Optimized_Implementation/SNOVA_I_K/symmetric.c#L87</code>)), and not the two signer hashes
+at <code>snova_opt_16.c:364-374</code> (<code>SNOVA/submission/SNOVA_Round3/Optimized_Implementation/SNOVA_I_K/snova_opt_16.c#L364</code>) and
+<code>snova_opt_16.c:780-788</code> (<code>SNOVA/submission/SNOVA_Round3/Optimized_Implementation/SNOVA_I_K/snova_opt_16.c#L780</code>). The submitted Makefile
+does not enable this build.</p>
+<h2 id="evidence">Evidence</h2>
+<p>The reproducer builds SNOVA_I_K with and without <code>-DUSE_OPENSSL</code>, wraps the
+OpenSSL context functions with counters, and signs and verifies 20 messages.</p>
+<ul>
+<li>The OpenSSL build allocates 4 contexts per signature (5 when signing
+  retries) and frees none: 145 of 145 contexts leak over the run, about
+  2.1 kB per signature. Key generation and <code>crypto_sign_open</code> leak 3 each.</li>
+<li>With <code>EVP_MD_CTX_new</code> forced to return NULL at any of a signature's four
+  allocations, the NULL context reaches <code>EVP_DigestInit_ex</code> and the process is
+  killed by SIGSEGV; <code>crypto_sign</code> does not return.</li>
+<li>Controls: the default build never calls <code>EVP_MD_CTX_new</code> and signs normally
+  under the same forced failure; a temporary copy that calls <code>shake_release</code>
+  at all three hashing sites frees every context, while one that patches
+  <code>shake256</code> alone still leaks two per signature. All builds give the same
+  keys and signatures.</li>
+</ul>
+<h2 id="classification-and-limits">Classification and limits</h2>
+<p>Low / Confirmed / Implementation: a resource leak and an unchecked allocation
+in an optional build, with the consequences demonstrated. The allocation
+failure is injected, no wrong signature is produced, and no secret is exposed.
+Only SNOVA_I_K was built; the crash behaviour depends on the OpenSSL version
+recorded by the reproducer.</p>
+<p>Check the result of <code>EVP_MD_CTX_new</code> and call <code>shake_release</code> after each of
+the three hashing sites.</p>
+<h2 id="reproduction">Reproduction</h2>
+<pre><code class="language-sh">python3 SNOVA/reproduce_snova_10.py
+</code></pre>
+<h2 id="harness-reproduction">Harness reproduction</h2>
+<p>From the <code>ngcc-harness</code> checkout, run the pinned source script through the harness-side dispatcher:</p>
+<pre><code class="language-sh">python3 nist/reproduce.py SNOVA-10
+</code></pre>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+</footer>
+</body>
+</html>

@@ -219,3 +219,57 @@ NGCC_ESTIMATOR_PYTHON=/path/to/python-with-cryptographic-estimators-2.1.1 python
 ```
 
 The witness pins the estimator version, checks all four costs and memory values, and bounds unrelated fixed-weight solutions. It does not carry out the exponential decoding search.
+
+## kem-26-8: The failure-rate bound treats capped erasures as independent blocks
+
+Severity: Medium
+Status: Proof gap
+Layer: Design
+Affected: All four NSS-HQC parameter sets; Theorem 9 and the failure term of Theorem 18
+Discovery: Moderate
+Exploitation: A three-block counterexample shows the stated bound is not an upper bound in general; no excess failure rate at the submitted parameters demonstrated
+Credit: Hao Yan, Yuhang Cao, Yao Tong and Qiaosheng Zhang, Shanghai AI Laboratory, with GLM 5.3, Kimi 3.1 Pro and in-house model assistance
+Date: 2026-11-15
+Original source: [Cao et al.'s PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/ZDQP4TGG6SWXRTLSSUIQBGPSGSFXO7J5/)
+
+Decryption erases the least reliable inner blocks, but at most `ε_max = ⌊(δ1 − 1)/2⌋` of them: when more blocks fall below the reliability threshold, only the `ε_max` least reliable are erased. Theorem 9 then bounds the failure rate by a multinomial over the `n1` blocks, with per-block probabilities `P_err` and `P_era` taken after the cap (Eq. 67). A multinomial treats the blocks as independent. The cap selects blocks jointly, so they are not.
+
+The forum post gives a counterexample with the same structure: a [3, 1, 3] Reed–Solomon code with redundancy 2 and cap 1, in which every inner block is an erasure candidate and is wrong with probability 1/2. Exactly one block is erased, decoding fails whenever either remaining block is wrong, and the failure probability is 3/4. Each block has `P_err = P_era = 1/3`, for which Eq. (67) evaluates to 17/27. We recomputed both values exactly. The formula is therefore not an upper bound for capped erasures in general, and the specification gives no argument that it is one at the submitted parameters.
+
+Theorem 18 inherits the gap. Its Game 2 charges `Q_D · DFR_NSS` for decapsulation queries (Eq. 84), applying Theorem 9's honest-average rate to adaptively chosen queries. The post adds that the proof cites Theorem 3.4 of Hofheinz, Hövelmanns and Kiltz, which it describes as a classical random-oracle result from OW-PCA security, for a quantum random-oracle reduction from IND-CPA security, and that their correctness notion takes the worst message averaged over keys. We did not check the cited theorem.
+
+No excess failure rate is shown for NSS-HQC itself; the stated bound is unsupported.
+
+### Reproducing
+
+```sh
+python3 kem-26/reproduce_rs_spec_claims.py --report-id kem-26-8
+```
+
+The witness checks the specification's wording for the cap, Theorem 9 and Eq. (84), then enumerates the three-block example exactly and requires 3/4 for the capped decoder and 17/27 for Eq. (67) with the same per-block marginals.
+
+## kem-26-9: The specified Reed–Solomon syndromes do not vanish on codewords
+
+Severity: Low
+Status: Confirmed
+Layer: Design
+Affected: The written specification of the outer decoder (§2.6.2–2.6.3), all four parameter sets; the submitted implementations decode by a different method and are unaffected
+Discovery: Moderate
+Exploitation: A decoder written from the specification would treat error-free words as erroneous; no security consequence
+Credit: Hao Yan, Yuhang Cao, Yao Tong and Qiaosheng Zhang, Shanghai AI Laboratory, with GLM 5.3, Kimi 3.1 Pro and in-house model assistance
+Date: 2026-11-15
+Original source: [Cao et al.'s PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/ZDQP4TGG6SWXRTLSSUIQBGPSGSFXO7J5/)
+
+The specification defines the outer code in evaluation form: the codeword of a message polynomial `M` of degree below `k1` is `(M(α^0), …, M(α^(n1−1)))` (Eq. 15). It then defines the syndromes `S_j = Σ r_i·α^(ij)` for `j = 1, …, n1 − k1`, states that all of them are zero on a valid codeword, and specifies a Berlekamp–Massey and Forney decoder that starts from them (Eqs. 16 and 19).
+
+The statement holds for the full-length code with 255 evaluation points. It fails for the shortened codes that NSS-HQC uses, because the points `α^0, …, α^(n1−1)` are not closed under multiplication. The forum post's example is `M(X) = 1` at NSS-HQC-128: the codeword is all ones and `S_j = (1 − α^(46j))/(1 − α^j)`, which is nonzero for every `j` from 1 to 30. We computed the syndromes at all four levels. For that codeword 30 of 30, 38 of 38, 51 of 52 and 65 of 66 are nonzero, and a random message gives the same picture. For the length-255 code they all vanish.
+
+The submitted code does not use this decoder. It encodes by evaluation and decodes by solving a linear system for each admissible error count (`code_layer.c:98–105,355–514`), so the test vectors are unaffected. The defect is that the normative decoder description contradicts the normative code: an implementation written from §2.6.3 would see nonzero syndromes on error-free words.
+
+### Reproducing
+
+```sh
+python3 kem-26/reproduce_rs_spec_claims.py --report-id kem-26-9
+```
+
+The witness checks the specification's two statements, the four `(n1, k1)` pairs and the absence of a syndrome decoder in the code. It then encodes `M(X) = 1` and a random message over GF(256) at each level and counts the nonzero syndromes, with the length-255 evaluation code as the control.

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: FAEST-5</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="../style.css?v=a38b7088">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="../index.html">Home</a><a href="../on-ramp.html">Security Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">Official NIST On-Ramp Round 3</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../on-ramp.html">NIST Signature On-Ramp (Round 3)</a> › <code>FAEST-5</code></p>
+
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr><tr><th>Layer</th><td>implementation</td></tr><tr><th>Affected</th><td>All twelve parameter sets of the reference and AVX2 trees (AArch64 by identical source) in builds that use the operating-system randomness path; KAT builds are not affected</td></tr><tr><th>Discovery</th><td>Trivial</td></tr><tr><th>Exploitation</th><td>Environment-fault witness: with getrandom failing, key generation returns success and the secret key is the caller's buffer contents</td></tr><tr><th>Remediation</th><td>Local</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-11-15">2026-11-15</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py FAEST-5</code><br><small>source: <code>nist/FAEST/reproduce_faest_5.py</code> · SHA-256 <code class="digest">b45708bb<wbr>e457e0a3<wbr>32f622f6<wbr>3cfb4ec8<wbr>5ee5f746<wbr>423cd586<wbr>dc5328fb<wbr>aeced928</code></small><br><small>clean-checkout builds run with an LD_PRELOAD getrandom that fails with EAGAIN, and without it as control</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/FAEST_specifications.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/FAEST_round3.zip">submission ZIP</a></td></tr></table>
+
+<h1 id="faest-5-low-a-getrandom-failure-is-ignored-so-key-generation-returns-a-predictable-key">FAEST-5 — Low: A getrandom failure is ignored, so key generation returns a predictable key</h1>
+<h2 id="defect">Defect</h2>
+<p><code>rand_bytes</code> calls <code>getrandom(..., GRND_NONBLOCK)</code> and returns −1 when it
+fails (<code>randomness.c:38-44</code> (<code>FAEST/submission/nist_submission_round3/Reference_Implementation/faest_128f/randomness.c#L38</code>);
+the AVX2 <code>randomness_os.c</code> is the same). Every caller ignores the result: key
+generation and signing in
+<code>faest_128f.c:40,44,112,123</code> (<code>FAEST/submission/nist_submission_round3/Reference_Implementation/faest_128f/faest_128f.c#L40</code>)
+and the AVX2 <code>api.hpp:32,34,46,59</code>. With <code>GRND_NONBLOCK</code>, <code>getrandom</code> fails
+with <code>EAGAIN</code> before the kernel entropy pool is initialised, for example early
+in boot.</p>
+<h2 id="evidence">Evidence</h2>
+<p>The reproducer builds reference faest_128f and faest_em_256s and AVX2
+faest_128f with their operating-system randomness files, and runs them with a
+preloaded <code>getrandom</code> that fails with <code>EAGAIN</code>.</p>
+<ul>
+<li><code>rand_bytes</code> returns −1, and <code>crypto_sign_keypair</code> still returns 0.</li>
+<li>The secret OWF key is whatever the caller's buffer held, for a zero and a
+  non-zero prefill. With a zeroed buffer, the faest_128f public key is the
+  AES-128 encryption of the zero block under the zero key.</li>
+<li>The reference tree leaves the whole secret key as the caller's buffer; the
+  AVX2 tree first zeroes the public OWF-input half.</li>
+<li>Control: without the failing <code>getrandom</code>, two runs give different, fresh
+  keys and the signatures verify.</li>
+<li>Recorded, not required: under the fault, two signatures of one message were
+  identical (the signing randomness <code>rho</code> is an uninitialised stack array),
+  and a prefill with both low key bits set made key generation loop without
+  end.</li>
+</ul>
+<h2 id="classification-and-limits">Classification and limits</h2>
+<p>Low / Confirmed / Implementation: an ignored randomness failure with a
+demonstrated consequence through the submitted API in the default build. The
+trigger is an operating-system condition, not attacker input. The AArch64 tree
+and the other parameter sets were not run; KAT builds use a deterministic
+<code>randombytes</code> and do not take this path.</p>
+<p>Propagate the <code>rand_bytes</code> result and fail key generation and signing, or use
+a blocking <code>getrandom</code> call.</p>
+<h2 id="reproduction">Reproduction</h2>
+<pre><code class="language-sh">python3 FAEST/reproduce_faest_5.py
+</code></pre>
+<h2 id="harness-reproduction">Harness reproduction</h2>
+<p>From the <code>ngcc-harness</code> checkout, run the pinned source script through the harness-side dispatcher:</p>
+<pre><code class="language-sh">python3 nist/reproduce.py FAEST-5
+</code></pre>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+</footer>
+</body>
+</html>

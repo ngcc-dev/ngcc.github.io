@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: FAEST-3</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="../style.css?v=a38b7088">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="../index.html">Home</a><a href="../on-ramp.html">Security Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">Official NIST On-Ramp Round 3</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../on-ramp.html">NIST Signature On-Ramp (Round 3)</a> › <code>FAEST-3</code></p>
+
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr><tr><th>Layer</th><td>implementation</td></tr><tr><th>Affected</th><td>All twelve parameter sets of the reference tree when built with OpenSSL support and run without the AES-NI path; the AVX2 and AArch64 trees are not affected</td></tr><tr><th>Discovery</th><td>Moderate</td></tr><tr><th>Exploitation</th><td>Environment-fault witness: crypto_sign returns success and emits a non-verifying signature; key bytes appeared in it only because unwritten buffers were zero-filled</td></tr><tr><th>Remediation</th><td>Local</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-11-15">2026-11-15</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py FAEST-3</code><br><small>source: <code>nist/FAEST/reproduce_faest_3.py</code> · SHA-256 <code class="digest">4aa55551<wbr>a21fab34<wbr>f79245cb<wbr>ae55c59c<wbr>18b3ea89<wbr>3afd71e7<wbr>f56414a0<wbr>615097c5</code></small><br><small>clean-checkout build and run of the reference signer with OpenSSL providing no AES, with a working-OpenSSL control</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/FAEST_specifications.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/FAEST_round3.zip">submission ZIP</a></td></tr></table>
+
+<h1 id="faest-3-low-reference-prg-ignores-an-openssl-aes-failure-and-signs-with-unwritten-buffers">FAEST-3 — Low: Reference PRG ignores an OpenSSL AES failure and signs with unwritten buffers</h1>
+<h2 id="defect">Defect</h2>
+<p>The reference PRG takes its OpenSSL path when the build defines
+<code>HAVE_OPENSSL</code> and the AES-NI path is unavailable: a build without AES-NI
+intrinsics, or an x86 CPU without AES-NI at run time. On that path the result
+of <code>EVP_EncryptInit_ex</code> is discarded
+(<code>aes.c:1027</code> (<code>FAEST/submission/nist_submission_round3/Reference_Implementation/faest_128f/aes.c#L1027</code>)), and
+<code>generic_prg</code> checks the cipher calls only with <code>assert</code>
+(<code>aes.c:726-749</code> (<code>FAEST/submission/nist_submission_round3/Reference_Implementation/faest_128f/aes.c#L726</code>)).
+The submitted
+<code>Makefile:4</code> (<code>FAEST/submission/nist_submission_round3/Reference_Implementation/faest_128f/Makefile#L4</code>) sets
+<code>-DNDEBUG</code>, which removes those asserts. When OpenSSL cannot provide AES, the
+PRG output buffers are never written, and signing carries on.</p>
+<h2 id="evidence">Evidence</h2>
+<p>The reproducer builds faest_128f and faest_em_256s with the submitted
+Makefile's preprocessor flags and a build-time <code>config.h</code> that leaves
+<code>HAVE_AESNI</code> undefined. It generates a key pair with working OpenSSL, then
+signs once with working OpenSSL and once under an OpenSSL configuration that
+activates only the null provider. Both outputs are checked by the same binary
+with working OpenSSL.</p>
+<ul>
+<li>With the AES backend failing, <code>crypto_sign</code> returns 0 with the full
+  signed-message length, and <code>crypto_sign_open</code> rejects the output (−1).</li>
+<li>Control: the same binary with working OpenSSL signs, and its output
+  verifies. The default AES-NI build under the same failing configuration
+  also signs and verifies.</li>
+<li>Recorded, not required: in every run, the first λ bits of the signature's
+  <code>d</code> field equalled the secret OWF key, and every <code>c_i</code> byte was zero. This
+  happens because the unwritten PRG buffers came from zero-filled heap pages;
+  with other memory contents the key need not appear in this form.</li>
+</ul>
+<h2 id="classification-and-limits">Classification and limits</h2>
+<p>Low / Confirmed / Implementation. The trigger is an environment fault (an
+OpenSSL build or configuration without AES), not attacker input, and the
+emitted signature does not verify. A caller that trusts the success return
+may nonetheless publish secret-derived bytes. The no-AES-NI configuration was
+emulated on x86 with <code>config.h</code>; no non-x86 build was run. Only two of the
+twelve parameter sets were run; the others share the source.</p>
+<p>Check every OpenSSL return value and propagate PRG failure out of
+<code>crypto_sign</code>, rather than relying on <code>assert</code> in an <code>-DNDEBUG</code> build.</p>
+<h2 id="reproduction">Reproduction</h2>
+<pre><code class="language-sh">python3 FAEST/reproduce_faest_3.py
+</code></pre>
+<h2 id="harness-reproduction">Harness reproduction</h2>
+<p>From the <code>ngcc-harness</code> checkout, run the pinned source script through the harness-side dispatcher:</p>
+<pre><code class="language-sh">python3 nist/reproduce.py FAEST-3
+</code></pre>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+</footer>
+</body>
+</html>

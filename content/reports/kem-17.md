@@ -169,3 +169,29 @@ sh kem-17/reproduce_xof_state_width.sh
 ```
 
 The witness checks the two 208-bit calls, `CTX_LEN` in all eight parameter files and the key-expansion call. For each reference parameter set it then initialises the archived XOF, requires the context to be zero beyond byte 26, and requires three 4,096-byte squeezes to be reproduced from those 26 bytes alone. The 2^208 searches are not run.
+
+## kem-17-7: The 3-DQCSD-P assumption leaves the second syndrome's fixed parity unrestricted
+
+Severity: Medium
+Status: Confirmed
+Layer: Design
+Affected: All four HEP-QC parameter sets; the second IND-CPA bound of Theorem 6.3.1
+Discovery: Trivial
+Exploitation: One parity computation distinguishes the assumed distribution with advantage 1/2; no message or key recovery demonstrated
+Credit: Xifeng Jin (CertiK), with AI assistance
+Date: 2026-11-15
+Original source: [Jin's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/V4VYISIADVABD2AD5J274FIEKTTQE6RC/)
+
+Definition 2.3.14 (physical p. 9) samples a matrix with circulant blocks `h1` and `h2` of parities `b1` and `b2` and three vectors of weight ω, and outputs the syndromes `y1 = x1 + h1·x3` and `y2 = x2 + h2·x3`. Definition 2.3.15 asks to distinguish these from the uniform distribution over `F^n_{2,b3} × F^n_2`. The first syndrome is restricted to its parity `b3 = ω + b1·ω`. The second is not restricted at all.
+
+In `F_2[x]/(x^n − 1)` parity is evaluation at `x = 1` and is multiplicative, so every real sample has `parity(y2) = ω + b2·ω (mod 2)`. A uniform `y2` has that parity with probability one half. Checking one bit therefore solves the problem with advantage 1/2. In the reduction that uses the assumption (physical p. 26) the second syndrome is `e + s·r2`, with parity `ω_e + b2·ω_r`, again fixed and public: `1 + b2` for HEP-QC-1, -5 and -7 and 0 for HEP-QC-3.
+
+The assumption is false as defined, so the bound `Adv_2-DQCSD-P + Adv_3-DQCSD-P` of Theorem 6.3.1 (physical p. 23) says nothing. The specification's remark that zero-padding this component costs no security (physical p. 30) does not address parity. This invalidates the stated proof route. It does not by itself distinguish encrypted messages or recover a key: a ciphertext adds a codeword to this component, and the submitted code transmits only its first `n1·n2` bits. Hence Medium.
+
+### Reproducing
+
+```sh
+python3 kem-17/reproduce_second_syndrome_parity.py
+```
+
+The witness checks the wording of Definition 2.3.15 and the four parameter files, then samples the real second syndrome in `F_2[x]/(x^n − 1)` 24 times for each parity of `s` and each parameter set. It requires the predicted constant parity in every sample, and both parities in a uniform control.

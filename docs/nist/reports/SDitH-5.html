@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: SDitH-5</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="../style.css?v=a38b7088">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="../index.html">Home</a><a href="../on-ramp.html">Security Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">Official NIST On-Ramp Round 3</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../on-ramp.html">NIST Signature On-Ramp (Round 3)</a> › <code>SDitH-5</code></p>
+
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>Specification text for all 12 parameter sets; the submitted code and KATs are internally consistent</td></tr><tr><th>Discovery</th><td>Moderate</td></tr><tr><th>Exploitation</th><td>Literal-specification interoperability failures; no forgery or key-recovery consequence shown</td></tr><tr><th>Remediation</th><td>Local</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-11-15">2026-11-15</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py SDitH-5</code><br><small>source: <code>nist/SDitH/reproduce_sdith_5.py</code> · SHA-256 <code class="digest">0410adf0<wbr>1c1735f2<wbr>1d3b90f9<wbr>a7e1c157<wbr>84320cf9<wbr>15eb7ee1<wbr>ae6f9672<wbr>1f7322dc</code></small><br><small>clean-checkout reference builds testing each item against its cited specification page, with the code&#x27;s own layout as control</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/SDitH_specifications.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/sdith3_submission_package.zip">submission ZIP</a></td></tr></table>
+
+<h1 id="sdith-5-low-five-further-places-where-the-code-and-kats-depart-from-the-literal-specification">SDitH-5 — Low: Five further places where the code and KATs depart from the literal specification</h1>
+<h2 id="inconsistencies">Inconsistencies</h2>
+<p>Each item compares the v3.0 specification text (printed pages) with the
+submitted reference code. <a href="SDitH-2.html">SDitH-2</a> is a separate verifier hash
+omission.</p>
+<ol>
+<li><strong>Witness encoding.</strong> Algorithm 1 lines 10-11 (p.11) drop the last
+   coordinate of each chunk, but the mux circuit (§3.2.6, p.34) reads an
+   all-zero digit as position 0. A secret key re-encoded as Algorithm 1 writes
+   it is rejected (0 of 24 keys accepted).</li>
+<li><strong>Gray map.</strong> Algorithms 11 and 12 line 4 (pp.29-30) print
+   <code>Delta_inv = psi(istar)</code>, while Algorithm 12 lines 14 and 21 need
+   <code>psi(phi_Gray(istar))</code>. A build without the Gray map rejects its own
+   signatures (0 of 3).</li>
+<li><strong>ExpandH.</strong> The specification (pp.17-18) describes one sequential PRG
+   stream; the code places column i at blocks 4i to 4i+3. Only column 0 of the
+   tested columns matches the sequential stream; all 12 match the code layout.</li>
+<li><strong>Challenge and grinding layout.</strong> ExpandEvaluationChallenge (p.19) places
+   bits differently from the code: with the specification's layout the
+   grinding condition holds in 32 of 400 honest signatures, about chance.</li>
+<li><strong>Signature field order.</strong> Algorithm 3 line 9 (p.13) orders the fields
+   differently from <code>map_signature</code>: with <code>hpiop</code> read from the position
+   Algorithm 3 gives, grinding holds in 20 of 400 signatures, about chance.</li>
+</ol>
+<p>Each check has a control that uses the code's own convention and succeeds in
+every case.</p>
+<h2 id="classification-and-limits">Classification and limits</h2>
+<p>Low / Confirmed / Design: specification/code mismatches that break
+interoperability for an implementation written from the text. No security
+consequence is shown. Items 2 to 5 were run on cat1_fast only; the sources
+are identical across the 12 sets. The cipher-grinding half of item 4 is a
+source check. The design survey's DS-SDitH-3 counts eleven inconsistencies
+and names three; the overlap with the other eight could not be checked.</p>
+<h2 id="reproduction">Reproduction</h2>
+<pre><code class="language-sh">python3 SDitH/reproduce_sdith_5.py
+</code></pre>
+<h2 id="harness-reproduction">Harness reproduction</h2>
+<p>From the <code>ngcc-harness</code> checkout, run the pinned source script through the harness-side dispatcher:</p>
+<pre><code class="language-sh">python3 nist/reproduce.py SDitH-5
+</code></pre>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: SDitH-4</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="../style.css?v=a38b7088">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="../index.html">Home</a><a href="../on-ramp.html">Security Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">Official NIST On-Ramp Round 3</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../on-ramp.html">NIST Signature On-Ramp (Round 3)</a> › <code>SDitH-4</code></p>
+
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr><tr><th>Layer</th><td>side-channel</td></tr><tr><th>Affected</th><td>All 12 parameter sets; the reference tree, and the optimized tree whenever its run-time dispatch does not select AVX2</td></tr><tr><th>Discovery</th><td>Moderate</td></tr><tr><th>Exploitation</th><td>Emulated ideal branch trace of honest key generation plus the public key recovers the witness for 9 of 9 keys; no measured channel</td></tr><tr><th>Remediation</th><td>Local</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-11-15">2026-11-15</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py SDitH-4</code><br><small>source: <code>nist/SDitH/reproduce_sdith_4.py</code> · SHA-256 <code class="digest">8560d83f<wbr>c2f955de<wbr>db040c98<wbr>006bd7c0<wbr>b29f3ecc<wbr>f9a6fcfd<wbr>2f1f3378<wbr>3013ec88</code></small><br><small>clean-checkout reference builds with an instrumented copy of the division helper, and a GF(2) solve in Python</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/SDitH_specifications.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/sdith3_submission_package.zip">submission ZIP</a></td></tr></table>
+
+<h1 id="sdith-4-low-division-branch-on-witness-positions-determines-the-witness-under-an-ideal-branch-trace">SDitH-4 — Low: Division branch on witness positions determines the witness under an ideal branch trace</h1>
+<h2 id="defect">Defect</h2>
+<p><a href="SDitH-1.html">SDitH-1</a> records that the reference helper
+<code>div_rem_u32_ct_ref</code> branches on <code>rem &gt;= public_d</code>
+(<code>ct_utils.c:33</code> (<code>SDitH/submission/submission_package/Reference_Implementation/cat1_fast/src/ct_utils.c#L33</code>)) and cites its use while sampling
+witness positions (<code>rsd.c:46-64</code>). There the branch outcomes are the quotient
+of a random draw. Key generation also calls the helper on the secret witness
+positions themselves while encoding the solution
+(<code>rsd.c:264</code> (<code>SDitH/submission/submission_package/Reference_Implementation/cat1_fast/src/rsd.c#L264</code>)). At that call site the first-level outcomes
+equal <code>pos // mu_1</code> for each secret position.</p>
+<h2 id="evidence">Evidence</h2>
+<p>The reproducer builds cat1_fast, cat3_fast and cat5_fast from the reference
+sources, with a temporary copy of <code>ct_utils.c</code> whose helper logs its branch
+outcomes, and runs honest key generation for three seeds per category.</p>
+<ul>
+<li>At <code>rsd.c:264</code> the logged outcomes are exactly <code>pos // mu_1</code> and match an
+  emulation of the helper; at <code>rsd.c:63</code> they are the draw quotient.</li>
+<li>From those outcomes, the public matrix and <code>y = Hx</code>, a GF(2) linear solve
+  recovers the secret witness for 9 of 9 keys (224 to 416 unknowns, 488 to 904
+  equations, kernel dimension 0).</li>
+<li>Control: without the trace the same system has kernel dimension 9,872 to
+  18,960.</li>
+</ul>
+<h2 id="classification-and-limits">Classification and limits</h2>
+<p>Low / Confirmed / Side-channel. This strengthens SDitH-1 with a second call
+site and a candidate-specific map from an ideal trace to the key, but the
+trace is emulated in software and no timing, cache or power channel was
+measured. The logging changes the compiled code, so the result says nothing
+about a particular compiler's output. The AVX2 helper uses masks and has no
+such branch (source check). Only the <code>*_fast</code> sets were run.</p>
+<p>Use a constant-time division for the witness encoding, as the AVX2 helper
+does.</p>
+<h2 id="reproduction">Reproduction</h2>
+<pre><code class="language-sh">python3 SDitH/reproduce_sdith_4.py
+</code></pre>
+<h2 id="harness-reproduction">Harness reproduction</h2>
+<p>From the <code>ngcc-harness</code> checkout, run the pinned source script through the harness-side dispatcher:</p>
+<pre><code class="language-sh">python3 nist/reproduce.py SDitH-4
+</code></pre>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+</footer>
+</body>
+</html>

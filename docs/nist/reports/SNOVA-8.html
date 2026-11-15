@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: SNOVA-8</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="../style.css?v=a38b7088">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="../index.html">Home</a><a href="../on-ramp.html">Security Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">Official NIST On-Ramp Round 3</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../on-ramp.html">NIST Signature On-Ramp (Round 3)</a> › <code>SNOVA-8</code></p>
+
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr><tr><th>Layer</th><td>side-channel</td></tr><tr><th>Affected</th><td>Optimized tree when built with clang: observed with clang 21 at -O3 and -Os on SNOVA_I_K and at -O3 on SNOVA_V_S, the two source files shared by all 18 optimized sets; gcc 15.2 -O3 and -Os builds showed no such branch, and the submitted Makefile uses gcc</td></tr><tr><th>Discovery</th><td>Moderate</td></tr><tr><th>Exploitation</th><td>Compiled-code taint witness of a branch on the secret Gaussian-elimination pivot; no timing measurement or key recovery</td></tr><tr><th>Remediation</th><td>Local</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-11-15">2026-11-15</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py SNOVA-8</code><br><small>source: <code>nist/SNOVA/reproduce_snova_8.py</code> · SHA-256 <code class="digest">89ce83a8<wbr>c3424a4c<wbr>a941c9a0<wbr>5dd4e65f<wbr>33597d23<wbr>514add94<wbr>6f42b5ec<wbr>730d76d5</code></small><br><small>clean-checkout clang and gcc builds of the optimized signer under Valgrind memcheck taint tracking</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/SNOVA_specifications.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/SNOVA_Round3.zip">submission ZIP</a></td></tr></table>
+
+<h1 id="snova-8-low-clang-compiles-the-optimized-signers-pivot-mask-into-a-branch-on-secret-data">SNOVA-8 — Low: clang compiles the optimized signer's pivot mask into a branch on secret data</h1>
+<h2 id="defect">Defect</h2>
+<p>The optimized signer builds its pivot mask from <code>ct_is_not_zero</code>, which is
+<code>return val != 0;</code>
+(<code>snova_opt_16.c:69-72</code> (<code>SNOVA/submission/SNOVA_Round3/Optimized_Implementation/SNOVA_I_K/snova_opt_16.c#L69</code>),
+used at
+<code>snova_opt_16.c:1184-1189</code> (<code>SNOVA/submission/SNOVA_Round3/Optimized_Implementation/SNOVA_I_K/snova_opt_16.c#L1184</code>);
+<code>snova_opt_16_5.c</code> for l=5). clang 21 turns the mask into a conditional jump
+that skips the row addition (<code>test %r15b,%r15b; jne</code>). The gcc 15.2 builds
+tested emit a mask.
+Specification §5.4 (p.53) says the optimized implementation is constant time
+apart from rejection sampling. <a href="SNOVA-5.html">SNOVA-5</a> covers the reference
+signer.</p>
+<h2 id="evidence">Evidence</h2>
+<p>The reproducer builds the optimized signer for SNOVA_I_K and SNOVA_V_S and
+runs signing under Valgrind memcheck with the secret key and randomness
+marked undefined.</p>
+<ul>
+<li>clang 21 <code>-O3</code>, I_K: a conditional jump on undefined data at
+  <code>snova_opt_16.c:1185</code>, exactly 4,560 times per signing attempt (one per row
+  pair), unchanged when only the 32-byte private seed is tainted. clang <code>-Os</code>
+  branches at line 1187, inside the row loop; V_S branches at
+  <code>snova_opt_16_5.c:1207</code>.</li>
+<li>Control: gcc <code>-O3</code> builds of the same sources report nothing at the pivot,
+  only the retry outcome, with the same number of attempts; a clang build with
+  nothing tainted reports nothing.</li>
+<li>Recorded: the commented-out bitwise body of <code>ct_is_not_zero</code> gives the same
+  branch under clang, so the cause is the compiler's treatment of the mask,
+  not the <code>!=</code> comparison alone.</li>
+</ul>
+<h2 id="classification-and-limits">Classification and limits</h2>
+<p>Low / Confirmed / Side-channel: a secret-dependent branch in compiled code with
+no measured channel and a local repair. The repair (for example a value
+barrier on the mask) has to be checked in the compiled code. Other clang
+versions, architectures and the additional tree's <code>ARCH=ref</code> backend were not
+tested.</p>
+<h2 id="reproduction">Reproduction</h2>
+<pre><code class="language-sh">python3 SNOVA/reproduce_snova_8.py
+</code></pre>
+<h2 id="harness-reproduction">Harness reproduction</h2>
+<p>From the <code>ngcc-harness</code> checkout, run the pinned source script through the harness-side dispatcher:</p>
+<pre><code class="language-sh">python3 nist/reproduce.py SNOVA-8
+</code></pre>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+</footer>
+</body>
+</html>

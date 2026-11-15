@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: UOV-7</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="../style.css?v=a38b7088">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="../index.html">Home</a><a href="../on-ramp.html">Security Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">Official NIST On-Ramp Round 3</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../on-ramp.html">NIST Signature On-Ramp (Round 3)</a> › <code>UOV-7</code></p>
+
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr><tr><th>Layer</th><td>implementation</td></tr><tr><th>Affected</th><td>crypto_sign_open in all 60 reference and optimized directories (identical sign.c; reference uov-Ip run)</td></tr><tr><th>Discovery</th><td>Trivial</td></tr><tr><th>Exploitation</th><td>Denial of service through the submitted API: a rejected input of 2^32 bytes, or a valid signed message of 2^32 message bytes, makes the call run without end; no memory corruption</td></tr><tr><th>Remediation</th><td>Local</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-11-15">2026-11-15</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py UOV-7</code><br><small>source: <code>nist/UOV/reproduce_uov_7.py</code> · SHA-256 <code class="digest">935e9f1c<wbr>d97816d8<wbr>78a8dca1<wbr>d1803c2e<wbr>8d89030b<wbr>ac0418f6<wbr>9ea9899b<wbr>74683c2f</code></small><br><small>clean-checkout reference build with each call in a child process: 2^32 − 1 byte controls, 2^32 byte tests with a timeout, and a patched-index control</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/UOV_Specification_R3.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/UOV-R3.zip">submission ZIP</a></td></tr></table>
+
+<h1 id="uov-7-low-crypto_sign_open-loops-forever-on-a-rejected-input-or-a-message-of-232-bytes-or-more">UOV-7 — Low: crypto_sign_open loops forever on a rejected input or a message of 2^32 bytes or more</h1>
+<h2 id="defect">Defect</h2>
+<p><code>crypto_sign_open</code> copies and clears the message with loops whose index is a
+32-bit <code>unsigned</code>, compared against the 64-bit lengths <code>mlen</code> and <code>smlen</code>
+(<code>sign.c:137</code> (<code>UOV/submission/UOV-R3/Reference_Implementation/Ip/sign.c#L137</code>), with the loops at lines 147 and 157). When a
+length reaches <code>2^32</code> the index wraps to 0 before the comparison fails, so
+the loop never ends. The same <code>sign.c</code> is in all 60 reference and optimized
+directories.</p>
+<h2 id="evidence">Evidence</h2>
+<p>The reproducer builds reference uov-Ip with gcc <code>-O3</code> and runs each call in a
+child process with a timeout of at least 60 s and four times the matching
+control's time.</p>
+<ul>
+<li>Reject path: an all-zero input of <code>2^32 − 1</code> bytes is rejected in about
+  15 s, while the same call on <code>2^32</code> bytes had not returned after 60 s and
+  kept rewriting the first output byte.</li>
+<li>Accept path: a valid signed message of <code>2^32 − 1</code> message bytes opens
+  correctly in about 14 s; one of <code>2^32</code> message bytes had not returned after
+  60 s. A valid input hangs only when its message part reaches <code>2^32</code> bytes,
+  because that loop runs to the message length; a rejected input hangs when
+  the whole input does.</li>
+<li>Controls: <code>crypto_sign_verify</code> alone rejects the <code>2^32</code> byte input, and a
+  temporary copy with a 64-bit index rejects it in about 14 s.</li>
+</ul>
+<h2 id="classification-and-limits">Classification and limits</h2>
+<p>Low / Confirmed / Implementation: denial of service through the submitted API
+for a rejected input of <code>2^32</code> bytes or more, or a valid signed message whose
+message part is <code>2^32</code> bytes or more. There is no out-of-bounds access, because
+the index stays below <code>2^32</code>. "Never returns" is observed up to the 60 s
+timeout and supported by the repeated rewrites. Only reference uov-Ip with
+gcc was built.</p>
+<p>Declare the index as <code>unsigned long long</code> or <code>size_t</code>.</p>
+<h2 id="reproduction">Reproduction</h2>
+<pre><code class="language-sh">python3 UOV/reproduce_uov_7.py
+</code></pre>
+<p>The reproducer needs about 8 GiB of free memory and runs for about
+3.5 minutes.</p>
+<h2 id="harness-reproduction">Harness reproduction</h2>
+<p>From the <code>ngcc-harness</code> checkout, run the pinned source script through the harness-side dispatcher:</p>
+<pre><code class="language-sh">python3 nist/reproduce.py UOV-7
+</code></pre>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+</footer>
+</body>
+</html>

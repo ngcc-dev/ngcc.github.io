@@ -54,16 +54,17 @@ The specification makes this choice itself: under the default NGCC mode its unif
 python3 security/rbg_protocol_dependency.py --report-id sign-23-2
 ```
 
-## sign-23-3: A 128-bit masking seed exposes the Shuttle-128 signing key within the query budget
+## sign-23-3: A λ-bit masking seed exposes Shuttle signing keys below every claimed level
 
 Severity: Critical
 Status: Probable
 Layer: Design
-Affected: SHUTTLE-128 specification and the Reference, Optimized and Additional implementations; SHUTTLE-256 and SHUTTLE-512 use 256- and 512-bit masking seeds and are not affected within the query budget
+Affected: SHUTTLE-128, -256 and -512 specifications and the Reference, Optimized and Additional implementations. The collision route is within the query budget for SHUTTLE-128 only; the multi-target route is below target at all three levels
 Discovery: Moderate
-Exploitation: Exact `s1` recovery, public key completion and an accepted fresh-message forgery from publicly detected seed collisions and from a multi-target seed enumeration, both in a reduced-width (20- and 24-bit) seed build of the submitted code; the full 128-bit searches were not run
-Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Exploitation: Exact `s1` recovery, public key completion and an accepted fresh-message forgery from publicly detected seed collisions and from a multi-target seed enumeration, both in a reduced-width (20- and 24-bit) seed build of the submitted SHUTTLE-128 code; for SHUTTLE-256 and -512 the multi-target search costs about 2^192 and 2^448 seed trials after 2^64 signatures, shown on those trees at 16 bits. No full-width search was run
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance; SHUTTLE-256 and -512 multi-target extension by Xifeng Jin (CertiK), with AI assistance
 Date: 2026-10-17
+Follow-up source: [Jin's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/X2BARL4ZPJCZUHYWUIELNTNA52YPLBRR/)
 
 Algorithm 2 line 10 (physical p. 17) derives the masking seed as `seed_y ← ExpandSigningSeeds(K || rnd || µ || IntegerToBytes(κ, 4), λ/8)`, which is 128 bits for SHUTTLE-128. All three SHUTTLE-128 trees squeeze `SEEDBYTES = LAMBDA/8 = 16` bytes (`params.h:125`, `polyvec.c:116–137`). `seed_y` alone determines the mask `y = SampleY(seed_y)` (`sign.c:461–468`) and the whole rejection-sampling coin stream `0x09 || seed_y` (`sign.c:516–526`). The rejection sampler adds `±s̃ · X^j` for each `j` in the challenge support (`irs.c:301–399`), so every transmitted response component is exactly `z_i = y′_i + s_i · e`, where `y′ = CompressY(y)`, `e` is a ±1 polynomial on the challenge support and `s_0 = 1`. The specification sizes the transcript hashes at 2λ bits for up to `2^{λ/2}` signing queries (p. 13) and allows `q_s < 2^80` signing queries (p. 70), but leaves the masking seed at λ bits.
 
@@ -73,6 +74,12 @@ Among Q signatures there are about `Q²/2^129` seed collisions, and a conservati
 
 The experiments change only the width of `seed_y`. With 20 bits kept, 4,096 ordinary signatures gave 9 public commitment matches, and all 9 completed keys whose `s1` equalled the oracle key. A fresh-message signature made with the equivalent key was accepted by the unmodified verifier. Enumerating the 20-bit seed space against 256 signatures hit a signature after 2,623 guesses (about 4,096 expected) and recovered the exact `s1`, which also completed and forged. At the shipped 128-bit width, the true seed of each signature, regenerated with `K`, hits its own table entry, a seed with one bit changed misses every entry, and `s1` is recovered exactly. The shipped-width build gives no commitment match on the same key and DRBG stream, a non-matching pair fails completion, and the changed-message controls reject. The `2^64`-scale searches were not run, so the status is Probable.
 
+Extended on 2026-11-15, following Xifeng Jin's forum post: the multi-target route also puts SHUTTLE-256 and SHUTTLE-512 below their levels. The seed is λ bits at every level (`SEEDBYTES = LAMBDA/8`, 32 and 64 bytes), and one evaluation of `T(pk, seed)` tests a guess against every collected signature. With Q distinct seeds the search needs about `2^λ/Q` evaluations: `2^192` and `2^448` after the mandatory `2^64` signatures, and about `2^176` and `2^432` near the `2^80` cap, against 256- and 512-bit targets. The table holds Q commitments. These are analytic bounds for infeasible searches. The collision route stays out of reach at these levels, because it needs about `2^(λ/2)` signatures. On the archived SHUTTLE-256 and SHUTTLE-512 reference trees with a 16-bit seed, enumeration against 256 signatures hit a signature after 819 and 64 guesses, recovered the exact `s1` and produced an accepted fresh-message forgery. At the shipped 256- and 512-bit widths the true seed of each signature hits its table entry and a seed with one bit changed misses.
+
+### Proposed fixes
+
+Jin's post reports that the team's revised branch at commit `5169f62` still squeezes λ/8 bytes for `seed_y` and that the same route applies there. We checked only that `ref/params.h` and `ref/polyvec.c` at that commit keep `SEEDBYTES = LAMBDA/8`. The revised code is not evaluated here.
+
 ### Reproducing
 
 ```sh
@@ -80,4 +87,4 @@ sh sign-23/reproduce_seed_collision.sh
 NGCC_LONG=1 sh sign-23/reproduce_seed_collision.sh
 ```
 
-The script copies the SHUTTLE-128 reference tree to a temporary directory, inserts the seed truncation directly after `seed_y` is squeezed, and builds a 20-bit and an unmodified variant. It runs the collision route on 4,096 signatures, the multi-target enumeration on 256 signatures and the full-width table identity, with the full-width, non-matching-pair, flipped-seed and changed-message controls (about 30 seconds). `NGCC_LONG=1` uses 24 bits and 16,384 signatures.
+The script copies the SHUTTLE-128 reference tree to a temporary directory, inserts the seed truncation directly after `seed_y` is squeezed, and builds a 20-bit and an unmodified variant. It runs the collision route on 4,096 signatures, the multi-target enumeration on 256 signatures and the full-width table identity, with the full-width, non-matching-pair, flipped-seed and changed-message controls (about 30 seconds). `NGCC_LONG=1` uses 24 bits and 16,384 signatures. It then builds the SHUTTLE-256 and SHUTTLE-512 reference trees with the same patch and runs the multi-target enumeration at 16 bits on 256 signatures, and the table identity at their shipped widths.

@@ -156,3 +156,32 @@ python3 sign-27/reproduce_coefficient_high_bits.py
 ```
 
 The script signs once per level and verifies every single unused-bit flip, the all-bits and random-multiple variants, and the used-bit and message controls. Each verification is the first library call in its own fresh process. It takes about 20 seconds.
+
+## sign-27-7: The implemented challenge lies outside the challenge space of the security proof
+
+Severity: Medium
+Status: Proof gap
+Layer: Design
+Affected: All four SQIsignTriangle parameter sets; the challenge routine is byte-identical in the eight reference and optimized trees
+Discovery: Moderate
+Exploitation: The proof's simulation, extraction and challenge-guessing steps do not cover the submitted challenge distribution; no additional forgery demonstrated
+Credit: Xifeng Jin (CertiK), with OpenAI Codex assistance
+Date: 2026-11-15
+Original source: [Jin's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/GDCD26OKJ46624KA5WRRFTQE3ARN5ORY/)
+
+The security analysis samples both challenge components from `{2^(λ/2), …, 2^(λ/2+1)}` (Experiment 1, §6.1, physical p. 49) and takes the square of that interval as the challenge space, so that `|C| ≥ 2^λ` and the challenge-guessing term is `2^-λ` (Theorem 4, §6.4, physical pp. 54–55). Lemma 2's extraction bound counts collisions using `c1′ ≥ 2^(λ/2)` (physical pp. 51–52).
+
+The submitted routine cannot output such a challenge. `hash_to_challenge_prime_with_pk_j` imports `SECURITY_BITS/16` bytes for each component, so both are below `2^(λ/2)`, and it accepts `c1` only if it is a prime congruent to 3 modulo 4 (`src/verification/ref/lvlx/common.c:40–69`). The specification's own description of the routine says the same (§7.2, physical p. 57). The two ranges are disjoint at every level. The congruence alone limits the implemented space to `2^(λ−2)` pairs, and primality brings it to about `2^121.5` at λ = 128 by the prime number theorem.
+
+Three steps of the proof therefore do not apply to the scheme as submitted. Theorem 2's simulator draws its hints from Experiment 1, and a distinguisher separates them from real transcripts by the size of `c1`. Lemma 2's counting argument needs `c1′ ≥ 2^(λ/2)`, and the implemented `c1′` is always smaller. Theorem 4's substitution `1/|C| ≤ 2^-λ` overstates the implemented space. This is a statement about what the proof covers; it is not a new forgery or a cost estimate for the implemented scheme.
+
+### Reproducing
+
+```sh
+d=sign-27/Implementations/Reference_Implementation/SQIsignTriangle_lvl1/sqisigntriangle
+sed -n '40,69p' "$d/src/verification/ref/lvlx/common.c"
+pdftotext -f 49 -l 49 -layout sign-27/sign-27-spec.pdf - | grep -A6 'Experiment 1'
+pdftotext -f 55 -l 55 -layout sign-27/sign-27-spec.pdf - | grep -B1 'guessing term'
+```
+
+This is a source and specification witness: the routine's `byte_len = SECURITY_BITS / 16`, the proof's sampling interval and its challenge-space statement.

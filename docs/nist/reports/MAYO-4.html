@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: MAYO-4</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="../style.css?v=a38b7088">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="../index.html">Home</a><a href="../on-ramp.html">Security Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">Official NIST On-Ramp Round 3</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../on-ramp.html">NIST Signature On-Ramp (Round 3)</a> › <code>MAYO-4</code></p>
+
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr><tr><th>Layer</th><td>side-channel</td></tr><tr><th>Affected</th><td>MAYO1, MAYO2, MAYO3 and MAYO5; a property of the On-Ramp Round 3 Algorithm 7 shared by all submitted trees (reference build run)</td></tr><tr><th>Discovery</th><td>Moderate</td></tr><tr><th>Exploitation</th><td>Software-simulated fault: valid signatures from a vinegar-zeroing fault give the secret oil space from one to three signatures; no physical fault was performed</td></tr><tr><th>Remediation</th><td>Moderate</td></tr><tr><th>Credit</th><td>Vinegar fault model and the partial-zero case: Thomas Aulbach, Fabio Campos and Juliane Krämer; vinegar-seed faults: Sönke Jendral and Elena Dubrova; Round 3 all-zero evaluation: Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-11-15">2026-11-15</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py MAYO-4</code><br><small>source: <code>nist/MAYO/reproduce_mayo_4.py</code> · SHA-256 <code class="digest">9b0f6739<wbr>69b84bb1<wbr>8c00e1b5<wbr>60a99574<wbr>a7b88620<wbr>33cfd6ea<wbr>63b97c28<wbr>9527b9f7</code></small><br><small>clean-checkout build of the reference signer with a one-line fault patch made in a temporary copy, unmodified verifier, and a Round 2 control</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/mayo_specification.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/MAYO.zip">submission ZIP</a></td></tr></table>
+
+<h1 id="mayo-4-low-round-3-linear-term-turns-an-all-zero-vinegar-fault-into-valid-signatures-in-the-oil-space">MAYO-4 — Low: Round 3 linear term turns an all-zero-vinegar fault into valid signatures in the oil space</h1>
+<h2 id="prior-work">Prior work</h2>
+<p>Vinegar faults on MAYO are known. Aulbach, Campos and Krämer
+(<a href="https://eprint.iacr.org/2024/1818">SoK: On the Physical Security of UOV-based Signature Schemes</a>,
+PQCrypto 2025, §3.3) note that a fault leaving "one or more (but not all)"
+vinegar vectors zero still gives a solvable system, so the corresponding oil
+vectors appear in the signature. Jendral and Dubrova
+(<a href="https://eprint.iacr.org/2024/1550">MAYO Key Recovery by Fixing Vinegar Seeds</a>,
+CIC 2025) make the vinegar seed predictable by voltage glitching and recover
+the key from a faulty signature; Sayari et al. and Aulbach et al. describe
+loop-abort and skipped-sampling variants. These attacks target earlier MAYO
+versions without the linear term.</p>
+<p>This report covers the remaining case: all vinegar vectors zero. Before
+Round 3 that attempt gives a zero system and fails, so the signer retries; in
+Round 3 it succeeds.</p>
+<h2 id="mechanism">Mechanism</h2>
+<p>Round 3 adds the linear term <code>L(Lambda, s)</code> to the verification equation
+(Algorithm 7, physical p.15). If every vinegar vector of a signing attempt is
+zero, all quadratic contributions vanish and the attempt's linear system is
+<code>sum_i E_i0 (Lambda_v O + Lambda_o) x_i = t</code>. That system is full rank about
+as often as an honest one, so the attempt succeeds, and each signature block
+<code>s_i</code> then lies in the secret oil space. The signature verifies, so verifying
+after signing does not detect the fault. In the Round 2 design, without the
+linear term, the same system is zero and the attempt fails.</p>
+<p>The vinegar is derived at
+<code>mayo.c:496-497</code> (<code>MAYO/submission/MAYO/Reference_Implementation/src/mayo.c#L496</code>) and folded into the system through
+<code>m_calculate_M_and_VPV</code> (<code>arithmetic.h:262</code> (<code>MAYO/submission/MAYO/Reference_Implementation/src/arithmetic.h#L262</code>)).</p>
+<h2 id="evidence">Evidence</h2>
+<p>The reproducer builds MAYO1, 2, 3 and 5 from the reference sources, with a
+temporary copy of <code>mayo.c</code> that adds one switchable <code>memset</code> zeroing the
+vinegar after the SHAKE call. The fault is simulated in software.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Set</th>
+<th style="text-align: right;">Faulty signer succeeded</th>
+<th style="text-align: right;">Verified by unmodified open</th>
+<th>Signatures for exact recovery of O</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MAYO1</td>
+<td style="text-align: right;">276/300</td>
+<td style="text-align: right;">276/276</td>
+<td>1 in every run</td>
+</tr>
+<tr>
+<td>MAYO2</td>
+<td style="text-align: right;">300/300</td>
+<td style="text-align: right;">300/300</td>
+<td>3 (k = 5 &lt; o = 13)</td>
+</tr>
+<tr>
+<td>MAYO3</td>
+<td style="text-align: right;">300/300</td>
+<td style="text-align: right;">300/300</td>
+<td>1 in 296 of 298 runs, otherwise 2</td>
+</tr>
+<tr>
+<td>MAYO5</td>
+<td style="text-align: right;">300/300</td>
+<td style="text-align: right;">300/300</td>
+<td>1 in 256 of 278 runs, otherwise 2</td>
+</tr>
+</tbody>
+</table></div>
+<p>Every signature block lies in the oil space of the key, and row reduction of
+the blocks reproduces O exactly. Controls: with <code>Lambda</code> also zeroed on the
+signer side (Round 2 behaviour) every faulty call fails; unfaulted signatures
+verify and are not in the oil space; with both switches off the patched build
+is byte-identical to the unmodified one.</p>
+<h2 id="classification-and-limits">Classification and limits</h2>
+<p>Low / Confirmed / Side-channel (fault model). It extends the known
+vinegar-fault attacks to the all-zero case that earlier MAYO versions handled
+safely. Fault attacks are outside EUF-CMA; the specification says the salt "brings some protection" against
+fault attacks (physical p.31). No physical fault was attempted, and partial
+faults (some vinegar vectors zero, or known non-zero vinegar) were not
+re-tested here; they are covered by the prior work above.</p>
+<p>A local check that rejects an attempt whose vinegar is zero addresses this
+exact fault; general fault resistance needs the usual countermeasures, such as
+re-deriving the vinegar or checking that a signature does not lie in the oil
+space.</p>
+<h2 id="reproduction">Reproduction</h2>
+<pre><code class="language-sh">python3 MAYO/reproduce_mayo_4.py
+</code></pre>
+<h2 id="harness-reproduction">Harness reproduction</h2>
+<p>From the <code>ngcc-harness</code> checkout, run the pinned source script through the harness-side dispatcher:</p>
+<pre><code class="language-sh">python3 nist/reproduce.py MAYO-4
+</code></pre>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+</footer>
+</body>
+</html>

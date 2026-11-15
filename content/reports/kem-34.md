@@ -122,3 +122,29 @@ LATTICE_ESTIMATOR_PATH=../lattice-estimator sage -python kem-34/reproduce_dual_h
 ```
 
 The script requires lattice-estimator commit `53da598` and prints the best attack for each Rudraksh2-I set in both cost models. It takes about nine minutes.
+
+## kem-34-6: Decryption decodes unreduced coefficients, unlike the decoder in the failure analysis
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: Rudraksh2-128 and -256 (q = 3329), reference and optimized implementations; Rudraksh2-512 (q = 7681) has no differing input
+Discovery: Moderate
+Exploitation: The submitted decoder and the analysed one disagree on 987 reachable coefficient pairs, all at least 429.1 from every codeword where the unique-decoding radius is 430.3; the effect on the failure-rate estimate is unresolved and no attack is demonstrated
+Credit: Xifeng Jin (CertiK), with AI assistance
+Date: 2026-11-15
+Original source: [Jin's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/FEJ5GKNJBHHOE534A66QWT3E7TVPF6XZ/)
+
+The submitted DFR program decodes with a copy of the Minal decoder that first reduces both coordinates modulo `q` (`dfr_analysis/minal.c:159–166`). The reference and optimized decoders have no such step and assume inputs below `q` (`lwekem128/minal.c:122–146`). Decryption does not supply that: `poly_sub` computes `barrett_reduce(a + 3q − b)` and hands the result straight to `poly_tomsg` (`poly.c:354`, `indcpa.c:426–429`). For q = 3329 this Barrett step returns values up to 3,689, and about 10.5% of subtraction results are at or above `q`.
+
+The forum post gives the pair (2914, 3443), which the submitted decoder maps to symbol 10 and the analysis decoder to 0. It reports 26 and 64 differing messages among 10,000 random well-formed ciphertexts at the two levels, and none among 1,000 honest ones. We reproduced the pair and enumerated every reachable case. Of the 2,359,857 reachable pairs with a coordinate at or above `q`, 987 decode to a different symbol than their reduced form. None of them is closer than 429.1 to any codeword, and half the code's minimum distance is 430.3, so the disagreement sits in a thin band at the edge of the unique-decoding radius and beyond it. Fifty of the pairs lie just inside that radius; there the shipped decoder returns the nearest codeword and the reduced decoder does not. Over all 987 pairs the shipped decoder returns the nearest codeword 779 times and the reduced decoder 207 times. At q = 7681 no reachable pair differs.
+
+The failure analysis thus does not model the shipped decryption exactly. The mismatch is confined to points at least 429.1 from every codeword. Its effect on the submitted failure-rate estimate remains unresolved; no revised failure rate was computed.
+
+### Reproducing
+
+```sh
+sh kem-34/reproduce_decoder_representatives.sh
+```
+
+The witness checks the two decoders and `poly_sub` in source, then builds the archived reference decoder at each level and compares it on every reachable non-canonical pair with the same decoder on reduced inputs. It requires 987 differing pairs at q = 3329, none nearer than 429.1 to any codeword against a half minimum distance of 430.3, 50 of them inside that distance, the nearest-codeword counts 779 and 207, the pair (2914, 3443) decoding to 10 and 0, and no differing pair at q = 7681.

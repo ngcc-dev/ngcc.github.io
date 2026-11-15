@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: SQIsign-6</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="../style.css?v=a38b7088">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="../index.html">Home</a><a href="../on-ramp.html">Security Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">Official NIST On-Ramp Round 3</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../on-ramp.html">NIST Signature On-Ramp (Round 3)</a> › <code>SQIsign-6</code></p>
+
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>Theorem 8.1.7 for p324_3, p500_27 and p664_17</td></tr><tr><th>Discovery</th><td>Non-trivial</td></tr><tr><th>Exploitation</th><td>False proof premise under a degree model, with a boundary of 2^13 to 2^16 hints; no forgery</td></tr><tr><th>Remediation</th><td>Local</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-11-15">2026-11-15</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py SQIsign-6</code><br><small>source: <code>nist/SQIsign/reproduce_sqisign_6.py</code> · SHA-256 <code class="digest">0cab7b5f<wbr>acbe59c0<wbr>09d21772<wbr>ed509ead<wbr>0fddaf9e<wbr>152e1685<wbr>ec0c015f<wbr>a5f6d924</code></small><br><small>specification-text check, sieve and limiting values of the two degree laws, and exact counts on toy supersingular graphs</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/sqisign_specification.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/sqisign.zip">submission ZIP</a></td></tr></table>
+
+<h1 id="sqisign-6-low-hint-distinguishing-premise-of-theorem-817-is-false-as-printed">SQIsign-6 — Low: Hint-distinguishing premise of Theorem 8.1.7 is false as printed</h1>
+<h2 id="premise">Premise</h2>
+<p>Theorem 8.1.7 (physical p.106) bounds forgery by terms that include the
+advantage against Problem 8.1.5, distinguishing hints from <code>H^sim</code> and
+<code>H^unif</code> (Fig. 4, physical p.105). Each hint reveals the degree <code>d</code> of the
+response isogeny.</p>
+<ul>
+<li><code>H^sim</code> line 4 samples <code>phi_2</code> uniformly among all isogenies of odd degree
+  below <code>D_rsp</code>, with no cyclicity condition, matching the signer, which
+  samples lattice elements with no primitivity test (Algorithm 4.83,
+  physical p.52). The degree law is then proportional to <code>sigma(n)</code>, the
+  number of subgroups of order <code>n</code>.</li>
+<li><code>H^unif</code> line 2 draws the degree with weight
+  <code>prod (p_i + 1) p_i^(e_i − 1)</code>, which is <code>psi(n)</code>, the number of cyclic
+  subgroups, and line 3 then samples a possibly non-cyclic isogeny of that
+  degree.</li>
+</ul>
+<p><code>sigma(n) = psi(n)</code> only for squarefree <code>n</code>; for example <code>sigma(9) = 13</code> and
+<code>psi(9) = 12</code>.</p>
+<h2 id="evidence">Evidence</h2>
+<p>The reproducer confirms these lines on their pages of the pinned
+specification and computes the two degree laws over odd <code>n</code>:</p>
+<ul>
+<li>Total variation 0.01158; <code>Pr[9 | d]</code> is 0.1440 under <code>H^sim</code> and 0.1333
+  under <code>H^unif</code> (limits 35/243 and 2/15).</li>
+<li>Counting hints with <code>9 | d</code> distinguishes the laws at 3 sigma with about
+  2^13.1 hints and at 8 sigma with about 2^16.0; a Hellinger bound gives
+  distinguishing advantage at least 1/2 from 5,305 hints. The theorem's bound
+  therefore exceeds one far below NIST's 2^64 signing queries.</li>
+<li>On toy supersingular graphs (p = 191, 383) the exact <code>H^sim</code> degree law is
+  within 2·10^-5 of the <code>sigma</code> law and 0.0116 from the printed <code>psi</code> law.</li>
+<li>Controls: the laws agree on squarefree degrees, and a cyclic-only <code>H^sim</code>
+  would match <code>psi</code>.</li>
+</ul>
+<h2 id="classification-and-limits">Classification and limits</h2>
+<p>Low / Proof gap: a candidate-specific false premise with a concrete boundary
+inside NIST's budget. No forgery follows, since real signatures follow
+<code>H^sim</code>. The exact distance at the submitted primes and <code>D_rsp</code> was not
+computed; only the degree model, its limit and toy graphs. Only the degree of
+<code>phi_2</code> is compared. If <code>H^sim</code> was meant to draw cyclic isogenies only, the
+gap moves to Lemma 8.1.3, where the simulator would no longer match the
+signer. Weighting the <code>H^unif</code> degree by <code>sigma(n)</code> would repair the premise.
+<a href="SQIsign-5.html">SQIsign-5</a> is the separate statistical loss of the same
+theorem.</p>
+<h2 id="reproduction">Reproduction</h2>
+<pre><code class="language-sh">python3 SQIsign/reproduce_sqisign_6.py
+</code></pre>
+<h2 id="harness-reproduction">Harness reproduction</h2>
+<p>From the <code>ngcc-harness</code> checkout, run the pinned source script through the harness-side dispatcher:</p>
+<pre><code class="language-sh">python3 nist/reproduce.py SQIsign-6
+</code></pre>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+</footer>
+</body>
+</html>

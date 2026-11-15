@@ -16,9 +16,9 @@
 <main>
 <p class="crumb"><a href="../on-ramp.html">NIST Signature On-Ramp (Round 3)</a> › <code>FAEST-2</code></p>
 
-<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>QROM security claim for all twelve On-Ramp Round 3 FAEST and FAEST-EM parameter sets</td></tr><tr><th>Discovery</th><td>Moderate</td></tr><tr><th>Exploitation</th><td>Cost/model gap in the concrete reduction; no forgery or key-recovery attack</td></tr><tr><th>Remediation</th><td>Moderate</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py FAEST-2</code><br><small>source: <code>nist/FAEST/reproduce_faest_2.py</code> · SHA-256 <code class="digest">432b627f<wbr>1ea49e6b<wbr>59f4ccc6<wbr>60a00714<wbr>f70b0298<wbr>48a27317<wbr>47ed8668<wbr>8928cb02</code></small><br><small>deterministic cost/model check of the pinned QROM bound</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/FAEST_specifications.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/FAEST_round3.zip">submission ZIP</a></td></tr></table>
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>ROM and QROM security claims for all twelve On-Ramp Round 3 FAEST and FAEST-EM parameter sets</td></tr><tr><th>Discovery</th><td>Moderate</td></tr><tr><th>Exploitation</th><td>Cost/model gap in the concrete reduction; no forgery or key-recovery attack</td></tr><tr><th>Remediation</th><td>Moderate</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py FAEST-2</code><br><small>source: <code>nist/FAEST/reproduce_faest_2.py</code> · SHA-256 <code class="digest">d8fb8ffb<wbr>5dab3a33<wbr>946e8e35<wbr>cef17365<wbr>87237d4c<wbr>8f95cf7c<wbr>4d465074<wbr>c67c9f00</code></small><br><small>deterministic cost/model check of the pinned ROM and QROM bounds</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/FAEST_specifications.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/FAEST_round3.zip">submission ZIP</a></td></tr></table>
 
-<h1 id="faest-2-low-qrom-reduction-misses-claimed-category-guarantees-at-the-nist-signing-query-baseline">FAEST-2 — Low: QROM reduction misses claimed-category guarantees at the NIST signing-query baseline</h1>
+<h1 id="faest-2-low-rom-and-qrom-reductions-miss-claimed-category-guarantees-at-the-nist-signing-query-baseline">FAEST-2 — Low: ROM and QROM reductions miss claimed-category guarantees at the NIST signing-query baseline</h1>
 <h2 id="bound-and-concrete-substitution">Bound and concrete substitution</h2>
 <p>Corollary 10.54 (physical p. 139) permits up to <code>Q_sig = 2^64</code>
 signing-oracle queries and includes the nonnegative additive term</p>
@@ -38,6 +38,15 @@ the four <code>lambda=128</code> parameter sets.  The right-hand side of the red
 therefore already greater than one under the one-key-guess substitution and
 provides no concrete upper bound on forgery probability for those four sets at
 NIST's signing-query baseline.</p>
+<p>The <code>lambda=128</code> conclusion does not depend on the primitive substitution.
+Keeping only the statistical summand <code>3 sqrt(Q1) 2^-lambda</code> inside the same
+square root gives <code>6 sqrt(3) Q1^(1/4) &gt;= 2^3.38</code> for any adversary making at
+least one <code>H1</code> query. Independently, the corollary's EUF-KO bound contains
+<code>10 Q^2 (tau + dzk) 2^-lambda</code> (FAEST) or <code>10 Q^2 tau 2^-lambda</code> (FAEST-EM),
+multiplied by <code>(1 - dom/cod)^-1 = 4</code> at <code>lambda=128</code>, with
+<code>Q &gt;= (tau+4) Qsig</code>. At <code>Qsig = 2^64</code> and no adversarial hash queries, twice
+that term is between <code>2^17.6</code> and <code>2^19.7</code> for the four <code>lambda=128</code> sets, and
+it stays below one only for <code>Qsig</code> below about <code>2^54.2</code> to <code>2^55.2</code>.</p>
 <p>For the higher categories, use the ordinary Grover key-search model
 <code>AdvPRP(t) = t^2 / 2^lambda</code> for both primitive terms.  The same additive term
 reaches one at only the following quantum-work exponents:</p>
@@ -74,26 +83,43 @@ query loss on physical p. 140. “Vacuous” here applies directly to the
 <code>lambda=128</code> bounds at <code>Q_sig = 2^64</code>; for <code>lambda=192</code> and <code>lambda=256</code>, the
 calculation instead shows that the reduction reaches one at quantum work far
 below the claimed-category target.</p>
+<h2 id="classical-rom-bound">Classical ROM bound</h2>
+<p>The classical-ROM Theorem 10.42 (physical p. 115) has the same per-signature
+hybrid structure without the square root. Substituting the generic one-key
+advantage <code>t/2^lambda</code> for each of its <code>3 + (tau+1) ceil(log2 L)</code> single-key
+PRF/PRP terms, the bound reaches one at <code>t = 2^55.2</code> to <code>2^55.5</code>,
+<code>2^118.6</code> to <code>2^118.9</code> and <code>2^182.2</code> to <code>2^182.5</code> for the 128-, 192- and
+256-bit sets at <code>Qsig = 2^64</code>. This is NIST's primary model (classical
+signing queries), and the shortfall is about 73 bits at every level. The
+design survey recorded this as DS-FAEST-2 (Informational); it has the same
+root cause and is folded into this report. The submission's per-signature IVs
+and per-node tweaks argue against multi-target key search (§10.1.2, physical
+p. 72), so the loss is presumably a proof artifact that an ideal-cipher
+treatment of the PRG would remove.</p>
 <h2 id="classification-and-limits">Classification and limits</h2>
-<p>This is a Low / Proof gap because it is a candidate-specific shortfall in an
-explicit concrete QROM claim.  It is <strong>not an attack</strong>.  The calculation does
+<p>This is a Low / Proof gap because it is a candidate-specific shortfall in
+explicit concrete ROM and QROM claims.  It is <strong>not an attack</strong>.  The calculation does
 not construct a FAEST forgery, recover a key, or show that the parameter sets
 have the displayed work factors in practice.  It only shows that the stated
-reduction cannot establish their claimed quantum security at <code>2^64</code> signing
+reductions cannot establish their claimed ROM and QROM category guarantees at <code>2^64</code> signing
 queries under the standard primitive substitutions.</p>
-<p>The substitution reads <code>AdvPRP[1]</code> as the usual best one-query advantage.  If
-those symbols are instead restricted to only the particular reduction
-adversaries constructed in the proof, Corollary 10.54 supplies no concrete
-upper bounds for those advantages; a claimed-category concrete guarantee still
-does not follow from the displayed corollary.  Closing the gap requires a
-tighter QROM reduction, additional concrete bounds for the reduction
+<p>The substitution reads <code>AdvPRP[1]</code> as the usual best one-query advantage.  For
+<code>lambda=192</code> and <code>lambda=256</code>, if those symbols are instead restricted to only
+the particular reduction adversaries constructed in the proof, Corollary 10.54
+supplies no concrete upper bounds for those advantages; a claimed-category
+concrete guarantee still does not follow from the displayed corollary. For
+<code>lambda=128</code> the bound exceeds one from its statistical terms alone. The
+submission's QROM summary on physical p. 127 (§10.11.4) describes the loss as
+a multiplicative factor of about 8 and omits the <code>Qsig</code> factor.  Closing the gap requires
+tighter ROM and QROM reductions, additional concrete bounds for the reduction
 adversaries, or an explicit usage limit included in the security claim.</p>
 <h2 id="reproduction">Reproduction</h2>
 <pre><code class="language-sh">python3 FAEST/reproduce_faest_2.py
 </code></pre>
 <p>The deterministic script checks the pinned specification hash and repository
 NIST baseline, reads all twelve extracted <code>L</code> values, and recomputes the
-one-key-guess and Grover substitutions above.  This is a cost/model check of
+one-key-guess and Grover substitutions, the <code>lambda=128</code> statistical and
+EUF-KO terms, and the classical-ROM thresholds above.  This is a cost/model check of
 the stated reduction, not a cryptanalytic attack.</p>
 <h2 id="harness-reproduction">Harness reproduction</h2>
 <p>From the <code>ngcc-harness</code> checkout, run the pinned source script through the harness-side dispatcher:</p>

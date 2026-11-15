@@ -57,7 +57,7 @@ NGCC rating is evidence, not a rating that automatically transfers here.</p>
 </tr>
 <tr>
 <td><span class="sev sev-info">Info</span></td>
-<td>Historical context, a withdrawn claim, or an observation without an established attack on the evaluated submission version.</td>
+<td>Historical context, a withdrawn claim, a loss generic to a proof technique, or an observation without an established attack and with no candidate-specific security consequence on the evaluated submission version.</td>
 </tr>
 </tbody>
 </table></div>
@@ -76,6 +76,21 @@ makes the submitted reduction ineffective within NIST's stated evaluation
 budget is Low even when the submission acknowledges the loss and no attack
 follows. High requires a supported recovery or forgery path with a material
 remaining gap; failure of a proof alone is not High.</p>
+<p>A live, candidate-specific security-relevant defect is normally Low or above,
+following the NGCC classification policy, when its consequence is
+demonstrated in a submitted or supported build or through the submitted API.
+In particular, an ignored randomness, allocation or primitive failure, a
+crash or hang reachable through the submitted API, a canonicality or
+key-validation gap, and a specification/code mismatch that breaks
+interoperability are Low when that consequence is shown and no stronger one
+is. A behaviour shown to have no effect, a condition of negligible
+probability for honest use, or a property that needs inputs an honest party
+never produces stays Informational until such a consequence is demonstrated.
+A candidate-specific false premise or invalid proof step is Low / Proof gap
+even without a numeric boundary; the absence of a formal proof for a claimed
+property is not by itself Low. Informational remains for losses generic to a
+proof technique, historical or withdrawn records, and the misuse cases rated
+Informational by the randomness-reuse rule below.</p>
 <p>The <code>2^64</code> chosen-message figure is an estimation assumption, not a hard
 boundary on relevant attacks. NIST's call §4.B.2 (physical p.14) says that
 attacks using more messages may also be considered and that NIST is primarily

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: UOV-6</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="../style.css?v=a38b7088">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="../index.html">Home</a><a href="../on-ramp.html">Security Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">Official NIST On-Ramp Round 3</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../on-ramp.html">NIST Signature On-Ramp (Round 3)</a> › <code>UOV-6</code></p>
+
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr><tr><th>Layer</th><td>side-channel</td></tr><tr><th>Affected</th><td>Reference and amd64 trees, all parameter sets, when built with clang at -O2 or -O3 (clang 21 tested; Ip and Is run); gcc builds, clang -O1 and the AVX2 tree are not affected</td></tr><tr><th>Discovery</th><td>Moderate</td></tr><tr><th>Exploitation</th><td>Compiled-code and taint witness of branches on secret vinegar and elimination multipliers; no timing measurement or key recovery</td></tr><tr><th>Remediation</th><td>Local</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-11-15">2026-11-15</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py UOV-6</code><br><small>source: <code>nist/UOV/reproduce_uov_6.py</code> · SHA-256 <code class="digest">b624c732<wbr>68858615<wbr>2bf2325f<wbr>47eabcad<wbr>dec44456<wbr>89ba8610<wbr>d2c3ab6c<wbr>453d00e6</code></small><br><small>clean-checkout clang and gcc builds: object inspection with objdump and Valgrind memcheck taint runs of signing</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/UOV_Specification_R3.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/UOV-R3.zip">submission ZIP</a></td></tr></table>
+
+<h1 id="uov-6-low-clang-compiles-the-reference-field-multiplication-into-branches-on-secret-multiplier-bits">UOV-6 — Low: clang compiles the reference field multiplication into branches on secret multiplier bits</h1>
+<h2 id="defect">Defect</h2>
+<p><code>gf256v_mul_u32</code> and <code>gf16v_mul_u32</code> are branch-free C of the form
+<code>r32 ^= a32 * ((b32 &gt;&gt; k) &amp; 1)</code>
+(<code>gf16.h:255-285</code> (<code>UOV/submission/UOV-R3/Reference_Implementation/Ip/gf16.h#L255</code>),
+<code>gf16.h:187-197</code> (<code>UOV/submission/UOV-R3/Reference_Implementation/Ip/gf16.h#L187</code>); the amd64
+tree's <code>gf16_u64.h</code> forms are the same). clang 21 at <code>-O2</code> and <code>-O3</code> compiles
+them into conditional jumps on single bits of the multiplier <code>b</code>: bits 0 to 6
+of a GF(256) multiplier and 0 to 2 of a GF(16) one, the top bit going through
+a vector multiply. During signing <code>b</code> is a vinegar element or an elimination
+multiplier, both secret.</p>
+<h2 id="evidence">Evidence</h2>
+<ul>
+<li>Object code of <code>blas_matrix_ref.c</code> for Ip: clang <code>-O2</code>/<code>-O3</code> has 28
+  single-bit test-and-branch pairs in the multiplication; gcc <code>-O2</code>/<code>-O3</code> and
+  clang <code>-O1</code> have none.</li>
+<li>Taint run of one Ip signature, clang <code>-O3</code>: 84 contexts in the
+  multiplication, 63 of them with a secret multiplier (<code>ov.c:138,141,146</code>).
+  They remain when only the 32-byte secret seed is tainted. Is and the amd64
+  tree behave the same way.</li>
+<li>Controls: gcc <code>-O2</code>/<code>-O3</code>, clang <code>-O1</code> and the AVX2 tree under clang report
+  only the known retry branch (<a href="UOV-1.html">UOV-1</a>), with the same number of
+  attempts.</li>
+</ul>
+<p>The submitted Makefiles write <code>CC ?= clang</code>, which does not override GNU
+make's built-in <code>CC = cc</code>, so whether clang is used depends on the system's
+<code>cc</code>. The NEON Makefile sets <code>CC = clang</code> unconditionally.</p>
+<h2 id="classification-and-limits">Classification and limits</h2>
+<p>Low / Confirmed / Side-channel: a compiler-introduced secret-dependent branch
+with no measured channel and a local repair (a mask instead of the 0/1
+multiplication, checked per compiler). Key generation (where entries of O are
+multipliers), III, V, the compressed key formats, GFNI and NEON were not run,
+and only the host's clang 21 was tested.</p>
+<h2 id="reproduction">Reproduction</h2>
+<pre><code class="language-sh">python3 UOV/reproduce_uov_6.py
+</code></pre>
+<h2 id="harness-reproduction">Harness reproduction</h2>
+<p>From the <code>ngcc-harness</code> checkout, run the pinned source script through the harness-side dispatcher:</p>
+<pre><code class="language-sh">python3 nist/reproduce.py UOV-6
+</code></pre>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+</footer>
+</body>
+</html>

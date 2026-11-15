@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: QR-UOV-5</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="../style.css?v=a38b7088">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="../index.html">Home</a><a href="../on-ramp.html">Security Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">Official NIST On-Ramp Round 3</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../on-ramp.html">NIST Signature On-Ramp (Round 3)</a> › <code>QR-UOV-5</code></p>
+
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr><tr><th>Layer</th><td>implementation</td></tr><tr><th>Affected</th><td>Optimized_Implementation/opt key generation, all 30 instances by shared source (1q127L3 SHAKE run); the ref and avx2 trees wipe the corresponding arrays</td></tr><tr><th>Discovery</th><td>Moderate</td></tr><tr><th>Exploitation</th><td>Residue witness: after key generation the dead stack holds S^T*P1 of the last equation, from which all of S was recomputed; reading it needs an in-process memory-disclosure primitive, and the residue was located using the known key</td></tr><tr><th>Remediation</th><td>Local</td></tr><tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-11-15">2026-11-15</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py QR-UOV-5</code><br><small>source: <code>nist/QR-UOV/reproduce_qruov_5.py</code> · SHA-256 <code class="digest">d1102495<wbr>7a530918<wbr>e6af081c<wbr>58c8307b<wbr>cc81ae2e<wbr>2210cb33<wbr>5904b4ef<wbr>d357b7a0</code></small><br><small>clean-checkout opt and ref builds with a driver-owned stack scan, recovery of S in Python, and scrub, ref and wipes-added controls</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/qruov_specifications.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/QR_UOV%20-%20Round3.zip">submission ZIP</a></td></tr></table>
+
+<h1 id="qr-uov-5-low-optimized-key-generation-leaves-a-matrix-that-determines-s-on-the-stack">QR-UOV-5 — Low: Optimized key generation leaves a matrix that determines S on the stack</h1>
+<h2 id="defect">Defect</h2>
+<p>Optimized key generation declares four secret-derived arrays
+(<code>qruov.c:149-152</code> (<code>QR-UOV/submission/QR_UOV - Round3/Optimized_Implementation/opt/qruov.c#L149</code>)) but
+wipes only <code>sdt</code> and <code>sdt_eval</code>
+(<code>qruov.c:184-185</code> (<code>QR-UOV/submission/QR_UOV - Round3/Optimized_Implementation/opt/qruov.c#L184</code>)). The
+reference tree wipes <code>sdt</code>, <code>sdt_pi1</code> and <code>sdt_pi2</code>
+(<code>qruov.c:74-76</code> (<code>QR-UOV/submission/QR_UOV - Round3/Reference_Implementation/ref/qruov.c#L74</code>)) and the
+AVX2 tree its corresponding arrays (<code>qruov.c:212-218</code>).</p>
+<h2 id="evidence">Evidence</h2>
+<p>The reproducer runs <code>crypto_sign_keypair</code> for 1q127L3 (SHAKE) on a stack the
+driver owns, then scans that stack after the call returns, at gcc <code>-O2</code> and
+<code>-O3</code>.</p>
+<ul>
+<li><code>sdt_pi1_eval</code> of the last equation (S^T·P1, 4,680 bytes) is fully present,
+  as are the three other unwiped arrays; the two wiped arrays are absent.</li>
+<li>From those bytes and the public seed, interpolation and solving
+  <code>P1 S = X^T</code> over F_(127^3) give all 936 entries of the secret matrix S.</li>
+<li>Controls: overwriting the stack first removes every match; the reference
+  build shows no match for its corresponding arrays while its scan still
+  finds a public array; a temporary copy of <code>opt/qruov.c</code> with the four
+  missing wipes added shows no match.</li>
+</ul>
+<h2 id="classification-and-limits">Classification and limits</h2>
+<p>Low / Confirmed / Implementation: a zeroization gap whose residue determines
+the key. Reading it needs a separate in-process memory-disclosure primitive,
+which is not shown. The scan locates the residue by recomputing it from the
+known secret key; finding it in a memory dump from public data alone was not
+shown. Only 1q127L3 SHAKE was built; the AVX2 tree was checked in source only.</p>
+<p>Wipe all four arrays before returning, as the other two trees do.</p>
+<h2 id="reproduction">Reproduction</h2>
+<pre><code class="language-sh">python3 QR-UOV/reproduce_qruov_5.py
+</code></pre>
+<h2 id="harness-reproduction">Harness reproduction</h2>
+<p>From the <code>ngcc-harness</code> checkout, run the pinned source script through the harness-side dispatcher:</p>
+<pre><code class="language-sh">python3 nist/reproduce.py QR-UOV-5
+</code></pre>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+</footer>
+</body>
+</html>
