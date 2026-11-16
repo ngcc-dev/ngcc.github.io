@@ -146,6 +146,27 @@ python3 kem-34/reproduce_parameters.py
 <pre><code class="language-sh">sh kem-34/reproduce_decoder_representatives.sh
 </code></pre>
 <p>The witness checks the two decoders and <code>poly_sub</code> in source, then builds the archived reference decoder at each level and compares it on every reachable non-canonical pair with the same decoder on reduced inputs. It requires 987 differing pairs at q = 3329, none nearer than 429.1 to any codeword against a half minimum distance of 430.3, 50 of them inside that distance, the nearest-codeword counts 779 and 207, the pair (2914, 3443) decoding to 10 and 0, and no differing pair at q = 7681.</p>
+<h2 class="issue-heading" id="kem-34-7-a-failed-hash-leaves-the-previous-session-key-in-encapsulation">kem-34-7: A failed hash leaves the previous session key in encapsulation</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Rudraksh2 128, 256 and 512, reference and optimized implementations (Cortex-M4 identical by source)</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>If one hash allocation fails, encapsulation returns success with the previous call's shared secret, which an earlier recipient already holds; no remote way to force the failure is shown</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool; stale-key consequence and witness by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-16</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/B7H75R23EOSR65ZDPQHAZ6WWVXK4NFYR/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p><code>kem_enc</code> keeps the key and coins in an uninitialised stack array <code>kr</code> (<code>KEM_lwekem128.c:80</code>) and fills it with <code>hash_g</code> (<code>:87</code>), a macro for the contest's <code>pseudoXOF</code> whose status is not checked (<code>symmetric.h:12–15</code>). When the helper's internal allocation fails it returns without writing <code>kr</code>. Encapsulation then encrypts under, and returns as the shared secret (<code>:97</code>), whatever the stack held, and returns 0.</p>
+<p>In the witness one process encapsulates to Mallory and then to Bob with that allocation failing. The stale <code>kr</code> is the previous call's, so the key returned for Bob equals the key Mallory decapsulated, in all six x86 builds. Without the fault, and when the stack is overwritten between the two calls, Mallory's key does not match. The reused value depends on the call sequence and on the compiler's stack layout.</p>
+<p>The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success. A demonstrated session-key exposure under these preconditions is High.</p>
+<h3 id="reproducing_6">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh kem-34/reproduce_stale_encaps_key.sh
+</code></pre>
+<p>The witness wraps <code>malloc</code> to fail the third allocation of the encapsulation and requires Mallory to predict the Alice–Bob key in that run only.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

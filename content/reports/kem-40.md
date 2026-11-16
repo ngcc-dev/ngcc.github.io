@@ -114,3 +114,49 @@ python3 kem-40/reproduce_truncated_encryption_seed.py
 ```
 
 The source certificate verifies the seed cap, 55-byte DRBG state, first-output dependency, ciphertext tail and final key derivation. It checks the 512/1024 sets as unaffected controls; it does not enumerate 2^440 states.
+
+## kem-40-6: A failed hash makes the encryption coins public
+
+Severity: High
+Status: Confirmed
+Layer: Implementation
+Affected: yuanyang-512, -1024 and -2048, reference and optimized implementations
+Discovery: Moderate
+Exploitation: If one hash allocation fails, encapsulation returns success under coins derived from the public key; the attacker recovers the message and the shared secret from the public key and ciphertext; no remote way to force the failure is shown
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool; recovery witness by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-16
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/R2OTAXCPHOWKSG4O4FCJGYFFQXXSEP5S/)
+
+`yy_encapsulate_API` builds `tmphash = msg ‖ Hash(pk) ‖ 42` and overwrites it in place with `pseudohash(1024, tmphash, ..., tmphash)` to obtain `K ‖ seed` (`kem.c:160–163`). It discards the helper's status. When the helper's internal allocation fails it returns without writing, so `tmphash` keeps `msg ‖ Hash(pk)`. The coins passed to encryption at `tmphash + YY_SEC/8` (`:165`) are then `Hash(pk)` followed by a constant, and the final key is derived from `msg` instead of `K`. The function returns 0.
+
+In all six trees the witness fails that allocation once. An attacker holding only the public key and the ciphertext derives the coins from the public key, strips the encryption mask to recover `msg`, re-encrypts to reproduce the ciphertext byte for byte, and computes the returned shared secret. The receiver's decapsulation disagrees. Unfaulted controls fail the attacker's check.
+
+The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success. A demonstrated session-key exposure under these preconditions is High.
+
+### Reproducing
+
+```sh
+sh kem-40/reproduce_public_coins.sh
+```
+
+The witness wraps `malloc` to fail the fourth allocation of the encapsulation and runs the attacker with the scheme's own encoder.
+
+## kem-40-7: Encapsulation ignores the declared public-key length
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: yuanyang-512, -1024 and -2048, reference and optimized implementations
+Discovery: Trivial
+Exploitation: Out-of-bounds read from a caller-supplied short public key; no disclosure shown
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
+Date: 2026-11-16
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/R2OTAXCPHOWKSG4O4FCJGYFFQXXSEP5S/)
+
+`yy_encapsulate_API` decodes the public key at its fixed length (`kem.c:156`) without checking `pk_len_bytes`, although decapsulation checks its inputs. A public key one byte short, in a heap buffer of exactly the declared length, produces an AddressSanitizer heap-buffer-overflow read in `yuanyang_decode_uniform` (`codec.c:80`) in all six trees; the full-length control is clean. Callers that always pass the advertised public-key size are unaffected.
+
+### Reproducing
+
+```sh
+sh kem-40/reproduce_short_pk.sh
+```

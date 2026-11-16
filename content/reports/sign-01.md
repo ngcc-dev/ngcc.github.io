@@ -281,3 +281,57 @@ python3 sign-01/reproduce_kdf_length_overflow.py
 ```
 
 The script tests the three prebuilt reference libraries and, when gcc and an AVX2/BMI2 CPU are present, builds the three unmodified AVX2 trees with `-DUSE_ICCS` in a temporary directory and tests them too (otherwise it skips that part). Long messages are anonymous `mmap` buffers, each verification runs in a fresh process, and controls are included. It takes about 80 seconds and needs about 1.5 GiB of memory.
+
+## sign-01-10: A failed DRBG allocation in challenge expansion leaks the signing key and accepts forgeries
+
+Severity: High
+Status: Confirmed
+Layer: Implementation
+Affected: Aigis-Sig+ I, II and III in the ICCS build, reference and AVX2 (NEON and AArch64 identical by source)
+Discovery: Moderate
+Exploitation: If one DRBG allocation fails, signing returns a valid-format signature under a fixed public challenge, from which and one honest signature s1 is solved; the same fault in the verifier accepts a signature built from the public key alone; no remote way to force the failure is shown
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool; key-recovery and forgery consequences and witness by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-16
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/G5YWWTVFQMQVWYFTBWZXYZEROUW3R25A/)
+
+`unpack_c` expands the challenge seed through `kdf_init`, a `void` wrapper that drops the status of `init_random_number` (`polyvec.c:61` at I and II, `:131` at III; `hashkdf.c:82–84`). The ICCS DRBG zeroes its context before its first `malloc` and returns if that allocation fails (`drng.c:243–249`). The squeeze then runs from an all-zero state, so the challenge becomes a fixed public polynomial `c0` whatever the seed.
+
+- Signing is deterministic. A faulted call keeps the honest mask `y` and challenge seed and returns 0 with `z' = y + c0·s1`. With the honest `z = y + c·s1` on the same message, `z − z' = (c − c0)·s1` gives `s1` exactly.
+- In verification (`sign.c:184`) the same fault makes the verifier use `c0`, and a signature constructed from the public key alone for `c0` is accepted for a fresh message.
+- In key generation the same fault in the secret sampler (`poly.c:431,492`) returns a working key pair in which one secret polynomial is the fixed zero-state value.
+
+The witness shows all three effects in the reference and AVX2 builds at all three levels, with unfaulted controls. Forging from the recovered `s1` was not run.
+
+The failing allocation is the DRBG's fixed 55-byte buffer, not sized by the attacker; memory pressure or a resource limit is needed, and no remote method is shown. The candidate's defect is discarding the helper's status and returning success. Demonstrated key recovery and verifier acceptance under these preconditions are High.
+
+### Reproducing
+
+```sh
+sh sign-01/reproduce_challenge_fault.sh
+```
+
+The witness builds each tree with `-DUSE_ICCS` and `malloc` wrapped to fail the DRBG's first allocation once per targeted call.
+
+## sign-01-11: Verification leaks memory on rejection and reads past a short signature
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: Aigis-Sig+ I, II and III, all twelve trees by source; runtime witness on the reference implementation
+Discovery: Trivial
+Exploitation: Unbounded memory growth in a long-running verifier fed invalid signatures, and an out-of-bounds read from a caller-supplied short signature; no disclosure shown
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
+Date: 2026-11-16
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/G5YWWTVFQMQVWYFTBWZXYZEROUW3R25A/)
+
+`msig_verf` allocates `buf = malloc(CRHBYTES + mlen)` (`sign.c:167`) and frees it only on the accepting path (`:203`). The rejecting returns at `:194` and `:201` leak it, so each rejected signature leaks the message length plus 48 or 96 bytes. At all three levels, 200 rejected verifications left 200 blocks allocated, while 200 accepted ones left none.
+
+The verifier checks only that the declared signature length lies between the minimum and maximum packed sizes (`sign.c:159`), and `unpack_sig` then reads the fixed layout (`:163`). A valid signature in a heap buffer one byte shorter than its length, declared at that length, produces an AddressSanitizer heap-buffer-overflow read in `unpack_h` (`packing.c:262,325`) at all three levels. Callers that pass complete signatures are unaffected.
+
+### Reproducing
+
+```sh
+sh sign-01/reproduce_verify_memory.sh
+```
+
+The leak count wraps `malloc` and `free`; the short-buffer case runs verification only, under AddressSanitizer.

@@ -199,3 +199,50 @@ python3 sign-06/reproduce_trivial_msis.py
 ```
 
 The certificate checks the frozen specification's parameter rows and theorem premises, then computes the uniform-matrix probabilities and the verification-bound equality. It does not find two valid signatures or attack the implemented signer.
+
+## sign-06-8: Ignored XOF failures give public-derived signing keys and key-leaking signatures
+
+Severity: High
+Status: Confirmed
+Layer: Implementation
+Affected: COMPASS-SIG-128, -256, -384 and -512 (all eight trees identical)
+Discovery: Moderate
+Exploitation: If one helper allocation fails, key generation returns a working key pair whose secret key is rebuilt from public data, and signing returns a signature that, with one honest signature on the same message, gives s1; both lead to forgeries; no remote way to force the failure is shown
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool; key-recovery consequences and witness by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-16
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/IUSA5C4WLUETSKLKDRV2DE2KUMTOHRJQ/)
+
+The contest's `pseudoXOF` returns before writing its output when an internal allocation fails (`auxfunc.c:486–498`). `symmetric-shake.c` never checks its status (`:26,69,104,162,191,262,284`), and key generation and signing return 0 (`sign.c:69,235`).
+
+- In key generation, `shake256(seedbuf, 128, seed, 32)` (`sign.c:37`) then leaves `seedbuf`, which holds `rho`, `rho′` and `key`, with the previous contents of the reallocated squeeze buffer. In a fresh process these are zero, and after an earlier key generation they are that key's public XOF output. At all four levels, different seeds gave the same public key under the fault, and the attacker rebuilt the secret key byte for byte and forged.
+- In signing, a failure during matrix expansion (`sign.c:131`) produces a wrong challenge with the same deterministic mask. One faulted and one honest signature on the same message give `s1` exactly, and a forgery from `s1` verified at all four levels.
+
+Predicting the stale contents relies on the glibc allocator's reuse of the freed buffer. The failing allocations are fixed-size buffers inside the helper; memory pressure or a resource limit is needed, and no remote method is shown. Demonstrated key recovery under these preconditions is High.
+
+### Reproducing
+
+```sh
+sh sign-06/reproduce_fault_key_recovery.sh
+```
+
+The witness wraps `malloc` to fail exactly the targeted helper allocation and checks each recovered key with a forgery on a fresh message.
+
+## sign-06-9: The signature API ignores declared key lengths
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: COMPASS-SIG-128, -256, -384 and -512 (all eight trees identical)
+Discovery: Trivial
+Exploitation: Out-of-bounds read from a caller-supplied short public or secret key; no disclosure shown
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
+Date: 2026-11-16
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/IUSA5C4WLUETSKLKDRV2DE2KUMTOHRJQ/)
+
+`sig_verify` and `sig_sign` drop `pk_len_bytes` and `sk_len_bytes` (`SIG_AlgorithmInstance.c:39,50`), and `unpack_pk` and `unpack_sk` read the keys at their compile-time sizes. A public or secret key one byte short, in a heap buffer of exactly the declared length, produces an AddressSanitizer heap-buffer-overflow read in `polyt1_unpack` or `polyt0_unpack` at all four levels; full-length controls are clean. The signature length is checked exactly. Callers that always pass the advertised key sizes are unaffected.
+
+### Reproducing
+
+```sh
+sh sign-06/reproduce_short_key_read.sh
+```

@@ -113,3 +113,76 @@ python3 kem-01/reproduce_mdkem_overflow.py
 ```
 
 The wrapper builds the frozen level-I reference source with `-DUSE_SHA3`, the submitted speed-test configuration, in a temporary directory. It requires an ASan write failure and checks deterministic mismatch with a normal-path agreement control. The KAT build uses `-DUSE_NICCS_API`; the undersized allocation is independent of that hash backend. The other levels and the aarch64/avx2/neon allocations were source-inspected, not run.
+
+## kem-01-5: A failed hash leaves the previous session key in encapsulation
+
+Severity: High
+Status: Confirmed
+Layer: Implementation
+Affected: Aigis-Enc+ II and III, reference and AVX2 (NEON and AArch64 identical by source); set I is not affected
+Discovery: Moderate
+Exploitation: If one hash allocation fails, encapsulation returns success with the previous call's shared secret, which an earlier recipient already holds; no remote way to force the failure is shown
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool; stale-key consequence and witness by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-16
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/L4BNXVJ4NEK5YNUHLRIRWTJEMUQJ5BPX/)
+
+`mkem_enc` keeps the shared secret and the encryption coins in an uninitialised stack array `kr` and fills it with `Hash2(kr, buf, 2*SEED_BYTES)` (`kem.c:25,32,35`). At levels II and III `Hash2` reaches the contest's `pseudohash` through a `void` wrapper. When the helper's internal allocation fails it returns an error without writing `kr`, and `mkem_enc` encrypts under, and returns as the shared secret, whatever the stack held. At level I `Hash2` is SM3 directly and does not allocate.
+
+In the witness one process encapsulates to Mallory and then to Bob with that allocation failing. The stale `kr` is the previous call's, so the key returned for Bob equals the key Mallory decapsulated, at II and III in the reference and AVX2 builds. Without the fault, and when the stack is overwritten between the two calls, Mallory's key does not match. The reused value depends on the call sequence and on the compiler's stack layout.
+
+The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success. A demonstrated session-key exposure under these preconditions is High.
+
+### Reproducing
+
+```sh
+sh kem-01/reproduce_stale_encaps_key.sh
+```
+
+The witness builds each affected tree with `malloc` wrapped so that the hash's allocation fails once, and requires Mallory to predict the Alice–Bob key in that run only.
+
+## kem-01-6: Decapsulation ignores the declared ciphertext length
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: Aigis-Enc+ I, II and III reference implementation
+Discovery: Trivial
+Exploitation: Out-of-bounds read from a caller-supplied short ciphertext; no disclosure shown
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
+Date: 2026-11-16
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/L4BNXVJ4NEK5YNUHLRIRWTJEMUQJ5BPX/)
+
+`kem_dec` leaves `ct_len_bytes` unused (`kat_test/KEM_AlgorithmInstance.c:61–68`), and `mkem_dec` parses the ciphertext at its compile-time length (`kem.c:55`). A ciphertext one byte short, in a heap buffer of exactly the declared length, produces an AddressSanitizer heap-buffer-overflow read in `poly_decompress` at all three reference levels; the full-length control is clean. Callers that always pass the advertised ciphertext size are unaffected.
+
+### Reproducing
+
+```sh
+sh kem-01/reproduce_short_ct.sh
+```
+
+The same script also checks `kem-01-7`. It places the secret key inside its heap block so that the separately recorded pre-key read does not fire first.
+
+## kem-01-7: AVX2 decapsulation reads past a correctly sized ciphertext
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: Aigis-Enc+ I, II and III AVX2 implementation
+Discovery: Moderate
+Exploitation: Every decapsulation reads 8–10 bytes beyond the ciphertext buffer; a fault is possible when the ciphertext ends at a page boundary; no disclosure shown
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-16
+
+The last compressed polynomial ends the ciphertext. The AVX2 `poly_decompress` decodes it with 16-byte loads: `_mm_loadu_si128(&a[i*8])` at levels I and III (`poly.c:348`) and `*(__m128i *)&a[i*6]` at level II (`poly.c:334`). The final iteration reads 8 bytes past the end at I and III and 10 bytes at II. The extra bytes do not change the output.
+
+Under AddressSanitizer, decapsulating an honest ciphertext held in a heap buffer of exactly the ciphertext size reports a heap-buffer-overflow in `poly_decompress` called from `kem_dec` at all three levels. The same ciphertext with 16 bytes of padding is clean, and so are encapsulation and key generation, which decode the public key with a different routine. This affects ordinary callers that pass correctly sized buffers.
+
+Fix: decode the last block from a padded local copy, or use loads no wider than the remaining input.
+
+### Reproducing
+
+```sh
+sh kem-01/reproduce_short_ct.sh
+```
+
+The AVX2 part is skipped with a message on a CPU without AVX2.

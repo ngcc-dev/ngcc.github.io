@@ -163,6 +163,31 @@ control flow, not a measured remote timing exploit.</p>
 <pre><code class="language-sh">python3 sign-31/certify_salt_bound.py
 </code></pre>
 <p>The certificate checks the source salt width, locates the stated proof terms in the submitted PDF and evaluates the bound at <code>2^64</code> trials.</p>
+<h2 class="issue-heading" id="sign-31-8-ignored-xof-failures-give-public-derived-oil-matrices-and-vinegars">sign-31-8: Ignored XOF failures give public-derived oil matrices and vinegars</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>TSUOV-128, -256 and -512, reference implementation (Performance_Optimized identical; the six optimized <code>tsuov.c</code> files have the same pattern by source)</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>If one helper allocation fails, key generation returns a key whose oil matrix is computable from public data, and signing returns a signature whose vinegars are public-derived, revealing the oil matrix; both give forgeries; no remote way to force the failure is shown</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool; key-recovery consequences and witnesses by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-16</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/2DM6N6LO35DZQZCXGJFJXLUZ4AABJPDC/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p><code>RejSampPRG_sm3</code> calls the contest's <code>pseudoXOF</code> without checking its status (<code>tsuov_core.c:409–411</code>); <code>TSUOV_KeyGen</code> is <code>void</code> (<code>:840</code>), and <code>sig_keygen</code> and <code>sig_sign</code> return 0 (<code>SIG_AlgorithmInstance.c:64,97</code>). When the helper's internal allocation fails it returns before writing, and the sampler's stack buffer keeps its previous contents.</p>
+<ul>
+<li>In key generation, <code>Expand_S</code> decodes the secret oil matrix from that buffer (<code>:493–514</code>). The stale bytes are the previous key's public <code>P1</code> expansion, or zero in a fresh process at 256 and 512. An attacker holding only public keys forged under the new key at all three levels after a previous key generation, and at 256 and 512 in a fresh process.</li>
+<li>In signing, <code>Expand_V</code> draws the vinegar values the same way (<code>:628–636</code>). They become zeros followed by public expansion data, and the call returns a valid signature. From that one signature the attacker solved the oil matrix and forged a fresh message at 128 and 256. At 512 the all-zero vinegars make signing loop without returning a signature.</li>
+</ul>
+<p>The stale contents depend on the compiler's stack layout and on call history. The failing allocations are fixed-size buffers inside the helper; memory pressure or a resource limit is needed, and no remote method is shown. The candidate's defect is discarding the helper's status and returning success. Demonstrated forgeries under these preconditions are High.</p>
+<h3 id="reproducing_7">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh sign-31/reproduce_stale_keygen.sh
+sh sign-31/reproduce_stale_vinegar.sh
+</code></pre>
+<p>Each witness wraps <code>malloc</code> to fail exactly the targeted allocation, with unfaulted controls.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -160,3 +160,31 @@ python3 sign-31/certify_salt_bound.py
 ```
 
 The certificate checks the source salt width, locates the stated proof terms in the submitted PDF and evaluates the bound at `2^64` trials.
+
+## sign-31-8: Ignored XOF failures give public-derived oil matrices and vinegars
+
+Severity: High
+Status: Confirmed
+Layer: Implementation
+Affected: TSUOV-128, -256 and -512, reference implementation (Performance_Optimized identical; the six optimized `tsuov.c` files have the same pattern by source)
+Discovery: Moderate
+Exploitation: If one helper allocation fails, key generation returns a key whose oil matrix is computable from public data, and signing returns a signature whose vinegars are public-derived, revealing the oil matrix; both give forgeries; no remote way to force the failure is shown
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool; key-recovery consequences and witnesses by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-16
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/2DM6N6LO35DZQZCXGJFJXLUZ4AABJPDC/)
+
+`RejSampPRG_sm3` calls the contest's `pseudoXOF` without checking its status (`tsuov_core.c:409–411`); `TSUOV_KeyGen` is `void` (`:840`), and `sig_keygen` and `sig_sign` return 0 (`SIG_AlgorithmInstance.c:64,97`). When the helper's internal allocation fails it returns before writing, and the sampler's stack buffer keeps its previous contents.
+
+- In key generation, `Expand_S` decodes the secret oil matrix from that buffer (`:493–514`). The stale bytes are the previous key's public `P1` expansion, or zero in a fresh process at 256 and 512. An attacker holding only public keys forged under the new key at all three levels after a previous key generation, and at 256 and 512 in a fresh process.
+- In signing, `Expand_V` draws the vinegar values the same way (`:628–636`). They become zeros followed by public expansion data, and the call returns a valid signature. From that one signature the attacker solved the oil matrix and forged a fresh message at 128 and 256. At 512 the all-zero vinegars make signing loop without returning a signature.
+
+The stale contents depend on the compiler's stack layout and on call history. The failing allocations are fixed-size buffers inside the helper; memory pressure or a resource limit is needed, and no remote method is shown. The candidate's defect is discarding the helper's status and returning success. Demonstrated forgeries under these preconditions are High.
+
+### Reproducing
+
+```sh
+sh sign-31/reproduce_stale_keygen.sh
+sh sign-31/reproduce_stale_vinegar.sh
+```
+
+Each witness wraps `malloc` to fail exactly the targeted allocation, with unfaulted controls.

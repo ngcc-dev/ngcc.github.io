@@ -147,3 +147,29 @@ python3 kem-06/reproduce_short_ciphertext.py
 ```
 
 This source certificate checks the missing length guard and fixed-offset reads. The sanitizer observation is attributed to the forum post, not rerun by this command.
+
+## kem-06-7: Failed hash or seeding allocations give zero coins and public-derived keys
+
+Severity: High
+Status: Confirmed
+Layer: Implementation
+Affected: All three BRA parameter sets, reference and optimized implementations
+Discovery: Moderate
+Exploitation: If one helper allocation fails, encapsulation returns success under coins an attacker can compute, or key generation returns a key whose secret is computable from public data; the shared secret follows from the public key and ciphertext; no remote way to force the failure is shown
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool; zero-state consequences and witness by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-16
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/5QU7CXJYH4SUXPNMRIM2LQ6Z3LMAXICB/)
+
+Encapsulation zero-initialises `theta` and derives it with `pseudohash` without checking the status (`src/kem.c:95,126`). The coin expander is then seeded through `random_source_seed_with_len`, which drops the status of `init_random_number` (`lib/random_source/random_source.c:30`, called at `src/bra.c:171`). Key generation seeds its secret-key expander through the same function (`src/bra.c:63`). The contest helpers return an error without writing their output when an internal allocation fails. `theta` then stays zero, or the expander runs from its all-zero initial state, and `kem_enc` or `kem_keygen` returns 0.
+
+In all six trees the witness fails one of these allocations. With the theta hash or the coin seeding failing, an attacker who holds only the public key and the ciphertext runs the public encryptor with the zero-state coins, confirms the result against the ciphertext, decodes the message and computes the returned shared secret. With the secret-key seeding failing, the attacker reproduces the zero-state secret, checks it against the public key and decrypts honest encapsulations. Unfaulted controls fail every check.
+
+The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success. A demonstrated session-key exposure under these preconditions is High.
+
+### Reproducing
+
+```sh
+sh kem-06/reproduce_zero_coins.sh
+```
+
+The witness wraps `malloc` to fail exactly the targeted allocation and runs each case with an unfaulted control.

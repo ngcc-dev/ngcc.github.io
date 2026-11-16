@@ -148,3 +148,29 @@ sh kem-34/reproduce_decoder_representatives.sh
 ```
 
 The witness checks the two decoders and `poly_sub` in source, then builds the archived reference decoder at each level and compares it on every reachable non-canonical pair with the same decoder on reduced inputs. It requires 987 differing pairs at q = 3329, none nearer than 429.1 to any codeword against a half minimum distance of 430.3, 50 of them inside that distance, the nearest-codeword counts 779 and 207, the pair (2914, 3443) decoding to 10 and 0, and no differing pair at q = 7681.
+
+## kem-34-7: A failed hash leaves the previous session key in encapsulation
+
+Severity: High
+Status: Confirmed
+Layer: Implementation
+Affected: Rudraksh2 128, 256 and 512, reference and optimized implementations (Cortex-M4 identical by source)
+Discovery: Moderate
+Exploitation: If one hash allocation fails, encapsulation returns success with the previous call's shared secret, which an earlier recipient already holds; no remote way to force the failure is shown
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool; stale-key consequence and witness by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-16
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/B7H75R23EOSR65ZDPQHAZ6WWVXK4NFYR/)
+
+`kem_enc` keeps the key and coins in an uninitialised stack array `kr` (`KEM_lwekem128.c:80`) and fills it with `hash_g` (`:87`), a macro for the contest's `pseudoXOF` whose status is not checked (`symmetric.h:12–15`). When the helper's internal allocation fails it returns without writing `kr`. Encapsulation then encrypts under, and returns as the shared secret (`:97`), whatever the stack held, and returns 0.
+
+In the witness one process encapsulates to Mallory and then to Bob with that allocation failing. The stale `kr` is the previous call's, so the key returned for Bob equals the key Mallory decapsulated, in all six x86 builds. Without the fault, and when the stack is overwritten between the two calls, Mallory's key does not match. The reused value depends on the call sequence and on the compiler's stack layout.
+
+The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success. A demonstrated session-key exposure under these preconditions is High.
+
+### Reproducing
+
+```sh
+sh kem-34/reproduce_stale_encaps_key.sh
+```
+
+The witness wraps `malloc` to fail the third allocation of the encapsulation and requires Mallory to predict the Alice–Bob key in that run only.

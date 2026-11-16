@@ -132,3 +132,27 @@ The team's [fix commit](https://github.com/dkemdkex/dkem-dkex/commit/c6c2faa) pr
 ```sh
 make -C kem-13 reproduce-truncated
 ```
+
+## kem-13-5: DKEM-512 returns an unwritten key buffer when its KDF fails
+
+Severity: Medium
+Status: Confirmed
+Layer: Implementation
+Affected: DKEM-512, reference implementation (optimized, AArch64 and Cortex-M4 trees identical by source); DKEM-128 and DKEM-256 are not affected
+Discovery: Moderate
+Exploitation: If the KDF's allocation fails, encapsulation returns success without writing the shared secret, and decapsulation of an invalid ciphertext returns the caller's buffer instead of the rejection key; the value returned is whatever the caller's buffer held
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool; DKEM-512 consequence and witness by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-16
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/LZTZZMTHFMSIZEDJ63DMV2PP2F7AK4OK/)
+
+At DKEM-512 the 64-byte key-derivation function `dke_kem_kdf` calls the contest's `pseudohash` through a `void` path (`dkecca.c:31–38`). When the helper's internal allocation fails, it returns without writing the output. Encapsulation then returns 0 with the shared-secret buffer untouched. Decapsulation writes the rejection key with the same KDF (`dkecca.c:111`) and then substitutes the real key only for a valid ciphertext. If that KDF fails on an invalid ciphertext, the caller receives its own unwritten buffer in place of the pseudorandom rejection key. DKEM-128 and DKEM-256 use a 256-bit SM3 call that does not allocate.
+
+With a zero-filled caller buffer, the witness observed an all-zero shared secret from encapsulation and from decapsulation of an invalid ciphertext, both with return code 0; unfaulted controls returned nonzero keys. The returned value is not produced by the candidate: it is the caller's prior buffer contents, which are predictable only when the caller clears or reuses that buffer. That extra caller dependence is why this is Medium rather than High.
+
+### Reproducing
+
+```sh
+sh kem-13/reproduce_unwritten_kdf.sh
+```
+
+The witness builds reference DKEM-512 with `malloc` wrapped to fail the KDF's allocation once and checks the encapsulation and invalid-ciphertext decapsulation paths against unfaulted controls.

@@ -189,6 +189,48 @@ python3 sign-06/reproduce_challenge_image.py
 <pre><code class="language-sh">python3 sign-06/reproduce_trivial_msis.py
 </code></pre>
 <p>The certificate checks the frozen specification's parameter rows and theorem premises, then computes the uniform-matrix probabilities and the verification-bound equality. It does not find two valid signatures or attack the implemented signer.</p>
+<h2 class="issue-heading" id="sign-06-8-ignored-xof-failures-give-public-derived-signing-keys-and-key-leaking-signatures">sign-06-8: Ignored XOF failures give public-derived signing keys and key-leaking signatures</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>COMPASS-SIG-128, -256, -384 and -512 (all eight trees identical)</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>If one helper allocation fails, key generation returns a working key pair whose secret key is rebuilt from public data, and signing returns a signature that, with one honest signature on the same message, gives s1; both lead to forgeries; no remote way to force the failure is shown</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool; key-recovery consequences and witness by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-16</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/IUSA5C4WLUETSKLKDRV2DE2KUMTOHRJQ/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p>The contest's <code>pseudoXOF</code> returns before writing its output when an internal allocation fails (<code>auxfunc.c:486–498</code>). <code>symmetric-shake.c</code> never checks its status (<code>:26,69,104,162,191,262,284</code>), and key generation and signing return 0 (<code>sign.c:69,235</code>).</p>
+<ul>
+<li>In key generation, <code>shake256(seedbuf, 128, seed, 32)</code> (<code>sign.c:37</code>) then leaves <code>seedbuf</code>, which holds <code>rho</code>, <code>rho′</code> and <code>key</code>, with the previous contents of the reallocated squeeze buffer. In a fresh process these are zero, and after an earlier key generation they are that key's public XOF output. At all four levels, different seeds gave the same public key under the fault, and the attacker rebuilt the secret key byte for byte and forged.</li>
+<li>In signing, a failure during matrix expansion (<code>sign.c:131</code>) produces a wrong challenge with the same deterministic mask. One faulted and one honest signature on the same message give <code>s1</code> exactly, and a forgery from <code>s1</code> verified at all four levels.</li>
+</ul>
+<p>Predicting the stale contents relies on the glibc allocator's reuse of the freed buffer. The failing allocations are fixed-size buffers inside the helper; memory pressure or a resource limit is needed, and no remote method is shown. Demonstrated key recovery under these preconditions is High.</p>
+<h3 id="reproducing_7">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh sign-06/reproduce_fault_key_recovery.sh
+</code></pre>
+<p>The witness wraps <code>malloc</code> to fail exactly the targeted helper allocation and checks each recovered key with a forgery on a fresh message.</p>
+<h2 class="issue-heading" id="sign-06-9-the-signature-api-ignores-declared-key-lengths">sign-06-9: The signature API ignores declared key lengths</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>COMPASS-SIG-128, -256, -384 and -512 (all eight trees identical)</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Out-of-bounds read from a caller-supplied short public or secret key; no disclosure shown</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
+<tr><th>Date</th><td>2026-11-16</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/IUSA5C4WLUETSKLKDRV2DE2KUMTOHRJQ/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p><code>sig_verify</code> and <code>sig_sign</code> drop <code>pk_len_bytes</code> and <code>sk_len_bytes</code> (<code>SIG_AlgorithmInstance.c:39,50</code>), and <code>unpack_pk</code> and <code>unpack_sk</code> read the keys at their compile-time sizes. A public or secret key one byte short, in a heap buffer of exactly the declared length, produces an AddressSanitizer heap-buffer-overflow read in <code>polyt1_unpack</code> or <code>polyt0_unpack</code> at all four levels; full-length controls are clean. The signature length is checked exactly. Callers that always pass the advertised key sizes are unaffected.</p>
+<h3 id="reproducing_8">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh sign-06/reproduce_short_key_read.sh
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

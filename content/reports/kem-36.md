@@ -248,3 +248,54 @@ NGCC_ESTIMATOR_PYTHON=/path/to/python-with-numpy-scipy python3 security/reproduc
 ```
 
 The witness checks all three first crossings, preceding controls and the TRIKE-2 control against the hash-pinned estimator.
+
+## kem-36-10: Failed helper allocations give zero or public-derived keys
+
+Severity: High
+Status: Confirmed
+Layer: Implementation
+Affected: TRIKE-2, -5, -7 and -9, reference and optimized implementations
+Discovery: Moderate
+Exploitation: If one helper allocation fails, key generation returns a working key pair whose secret is computable from public data, encapsulation returns a zero or public-derived shared secret, and decapsulation returns an all-zero key for any ciphertext; no remote way to force the failure is shown
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool; key-exposure consequences and witness by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-16
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/GBQBTMDRJMECPVAGR77HYNZNATRZWREA/)
+
+TRIKE ignores the status of every contest helper and returns 0 from `kem_keygen`, `kem_enc` and `kem_dec` (`src/KEM_AlgorithmInstance.c:212,290,380`). The helpers return an error without writing their output when an internal allocation fails. Several such failures leave secrets at public values:
+
+- `generate_secret_key` seeds its expander with `init_random_number` without checking it (`src/sample.c:184`). On failure the secret parity checks come from the all-zero DRBG state. The key pair still works for its owner, and an attacker rebuilds the same secret key from the public key and decrypts all traffic to it.
+- `hash_length_m` copies its zero-initialised buffer when `pseudohash` fails (`KEM_AlgorithmInstance.c:137–142`), so the shared secret is zero.
+- If the error vector's `calloc` fails, `generate_error_vector` returns with `e = 0` (`src/sample.c:232–233`). If its seeding fails (`:239`), `e` comes from the zero state. If the hash of `e` fails, the message is sent unmasked. In each case the attacker recovers the message, and with it the key, from the ciphertext.
+- If the final hash in decapsulation fails, the returned key is zero for any ciphertext.
+
+The witness confirms each case in all eight trees against unfaulted controls.
+
+The failing allocations are fixed-size buffers inside the helpers or the error-vector `calloc`, and no remote way to force them is shown. The key-generation case persists for the key's lifetime. A demonstrated key exposure under these preconditions is High.
+
+### Reproducing
+
+```sh
+sh kem-36/reproduce_fail_open.sh
+```
+
+The witness wraps `malloc` and `calloc` to fail exactly the targeted allocation and checks the attacker's key against the honest parties' in each case.
+
+## kem-36-11: Decapsulation ignores the declared ciphertext length
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: TRIKE-2, -5, -7 and -9, reference and optimized implementations
+Discovery: Trivial
+Exploitation: Out-of-bounds read from a caller-supplied short ciphertext; no disclosure shown
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
+Date: 2026-11-16
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/GBQBTMDRJMECPVAGR77HYNZNATRZWREA/)
+
+`kem_dec` casts the input to the fixed-size `ciphertext_t` without comparing `ct_len_bytes` with the ciphertext size (`src/KEM_AlgorithmInstance.c:294–300`). A ciphertext one byte short, in a heap buffer of exactly the declared length, produces an AddressSanitizer heap-buffer-overflow read of 32 bytes (64 at TRIKE-7 and -9) at `:341` in all eight trees; the full-length control is clean. Callers that always pass the advertised ciphertext size are unaffected.
+
+### Reproducing
+
+```sh
+sh kem-36/reproduce_short_ciphertext.sh
+```

@@ -107,3 +107,29 @@ sh kem-23/reproduce_reject_key_stack.sh
 ```
 
 The witness checks `hash_j` in all 18 trees and, for each reference set, requires the hashed buffer to be longer than the bytes written into it. It also decapsulates one invalid ciphertext twice over different stack contents and reports how many sets returned two different keys; that count is informative, since it depends on the compiler's stack layout.
+
+## kem-23-5: A failed hash gives an all-zero encapsulated key
+
+Severity: High
+Status: Confirmed
+Layer: Implementation
+Affected: All nine Mito parameter sets, reference and optimized implementations
+Discovery: Moderate
+Exploitation: If one hash allocation fails, encapsulation returns success with an all-zero shared secret and all-zero encryption coins; no remote way to force the failure is shown
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool; witness by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-16
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/LEER3FLCOUBX4KTTDL73CCQPAZDYHIGI/)
+
+`crypto_kem_enc` zero-initialises `K_theta` (`mito_kem.c:81`) and fills it with `hash_g` (`:89`), a `void` wrapper around the contest's `pseudohash` (`symmetric.c:106`). The helper returns an error without writing its output when its internal allocation fails. Encapsulation then encrypts with `theta = 0` (`:90–91`), copies the zero key into `ss` (`:94`) and returns 0 (`:96`).
+
+In all 18 trees, failing that allocation once made encapsulation return 0 with a shared secret equal to the 64 zero bytes an attacker predicts. The receiver's decapsulation disagrees, so the exposure is limited to the encapsulator's copy of the key and anything it protects. A failure of the same hash during decapsulation leads to re-encryption mismatch and implicit rejection, and does not expose a key.
+
+The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success. A demonstrated session-key exposure under these preconditions is High.
+
+### Reproducing
+
+```sh
+sh kem-23/reproduce_zero_encaps_key.sh
+```
+
+The witness wraps `malloc` to fail exactly the allocation of the size `hash_g` requests and runs an unfaulted control for each set.

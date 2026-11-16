@@ -18,15 +18,32 @@
 <h1 id="dragon-hash-family-hash-07">Dragon Hash Family (hash-07)</h1>
 <div class="table-wrap"><table class="meta">
 <tr><th>Candidate</th><td>Dragon Hash Family</td></tr>
-<tr><th>Family</th><td>Symmetric (permutation-based)</td></tr>
-<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/Dragon.zip">Official submission archive</a></td></tr>
+<tr><th>Family</th><td>Symmetric (feed-forward sponge, ARX permutation)</td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/Dragon.zip">Dragon.zip</a> (SHA-256: <code>088759817e3193e0ca02c3a3669fd05ac70e833b0447f336666268b61846b26c</code>)</td></tr>
 <tr><th>Specification</th><td><a href="https://github.com/ngcc-dev/ngcc-harness/raw/dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/hash-07/hash-07-spec.pdf" title="Download hash-07-spec.pdf from GitHub">hash-07-spec.pdf</a>&nbsp;<a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/hash-07/hash-07-spec.pdf" title="Open the hash-07 specification PDF">PDF</a></td></tr>
 <tr><th>Performance</th><td><a href="../performance/x86_1/hash-07.html">x86_1</a> · <a href="../performance/arm_1/hash-07.html">arm_1</a></td></tr>
 </table></div>
 
-<h3 id="review-status">Review status</h3>
-<p>No vulnerability finding is currently published for this candidate. This is not a security endorsement: it records only the present state of the public finding inventory, and the candidate remains under review.</p>
-<p>See the <a href="../constant-time/hash-07.html">constant-time review</a> and the performance reports (<a href="../performance/x86_1/hash-07.html">x86_1</a> · <a href="../performance/arm_1/hash-07.html">arm_1</a>). See the <a href="https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101539781751689216.html">official submission page</a>.</p>
+<h2 class="issue-heading issue-heading-first" id="hash-07-1-clang-compiles-the-xof-output-copy-to-a-branch-on-each-output-bit">hash-07-1: Clang compiles the XOF output copy to a branch on each output bit</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>side-channel</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Reference Dragon-XOF-256, -384 and -512, x86 and ARM trees, when built with Clang; GCC builds inspected so far are not affected</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Side-channel dependent; no timing extraction demonstrated</td></tr>
+<tr><th>Credit</th><td>aimir (GitHub @aimir)</td></tr>
+<tr><th>Date</th><td>2026-11-16</td></tr>
+</table></div>
+<p>Original source: <a href="https://github.com/ngcc-dev/ngcc-harness/issues/40">GitHub issue #40</a></p>
+<p>The XOF squeezes each block into a buffer and copies it bit by bit into the output with <code>copy_bits_msb</code> (<code>CryptHash_AlgorithmInstance.c:94–107</code>, called at <code>:228</code>). The helper writes each bit with <code>if (src_bit) dst |= mask; else dst &amp;= ~mask;</code> (<code>:101</code>), so the control flow follows the value of every output bit. The specification lists key derivation among the family's uses, where the XOF output is secret.</p>
+<p>GCC 15 at <code>-O2</code> turns the conditional into <code>cmov</code> on x86-64. Ubuntu Clang 21.1.8 at <code>-O2</code> does not: in the full x86 Dragon-XOF-256 and -512 translation units it keeps a <code>bt</code> on the output bit followed by <code>jae</code> inside the inlined copy loop, and the same helper compiled for AArch64 keeps a <code>tbz</code> on that bit. The issue reports the same behaviour for Apple Clang 17 on ARM64 and x86-64 at <code>-O0</code>, <code>-O2</code> and <code>-Os</code>. All twelve archived copies of the helper, including the self-assessment trees, have the same source line.</p>
+<p>Each output bit therefore selects one of two short instruction paths. A local branch-predictor or instruction-trace observer could learn the bits; no timing extraction was attempted.</p>
+<p>Constant-time fix (easy, hence Low): insert the bit arithmetically, for example <code>dst[i] = (dst[i] &amp; ~mask) | (mask &amp; -src_bit)</code>, or copy whole bytes when the offset is byte-aligned.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>Compile <code>Dragon-x86/Implementations/Reference_Implementation/Dragon-XOF-256/CryptHash_AlgorithmInstance.c</code> with <code>clang -O2 -S</code> for x86-64 and search the copy loop for <code>bt</code> followed by <code>jae</code>; with <code>gcc -O2 -S</code> the same loop has <code>cmov</code>. The issue's attachment gives the Apple Clang matrix and a branch-free patch.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

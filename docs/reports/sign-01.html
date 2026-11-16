@@ -250,6 +250,52 @@ the corresponding reference source constants and message-hash data flow.</p>
 <pre><code class="language-sh">python3 sign-01/reproduce_kdf_length_overflow.py
 </code></pre>
 <p>The script tests the three prebuilt reference libraries and, when gcc and an AVX2/BMI2 CPU are present, builds the three unmodified AVX2 trees with <code>-DUSE_ICCS</code> in a temporary directory and tests them too (otherwise it skips that part). Long messages are anonymous <code>mmap</code> buffers, each verification runs in a fresh process, and controls are included. It takes about 80 seconds and needs about 1.5 GiB of memory.</p>
+<h2 class="issue-heading" id="sign-01-10-a-failed-drbg-allocation-in-challenge-expansion-leaks-the-signing-key-and-accepts-forgeries">sign-01-10: A failed DRBG allocation in challenge expansion leaks the signing key and accepts forgeries</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Aigis-Sig+ I, II and III in the ICCS build, reference and AVX2 (NEON and AArch64 identical by source)</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>If one DRBG allocation fails, signing returns a valid-format signature under a fixed public challenge, from which and one honest signature s1 is solved; the same fault in the verifier accepts a signature built from the public key alone; no remote way to force the failure is shown</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool; key-recovery and forgery consequences and witness by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-16</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/G5YWWTVFQMQVWYFTBWZXYZEROUW3R25A/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p><code>unpack_c</code> expands the challenge seed through <code>kdf_init</code>, a <code>void</code> wrapper that drops the status of <code>init_random_number</code> (<code>polyvec.c:61</code> at I and II, <code>:131</code> at III; <code>hashkdf.c:82–84</code>). The ICCS DRBG zeroes its context before its first <code>malloc</code> and returns if that allocation fails (<code>drng.c:243–249</code>). The squeeze then runs from an all-zero state, so the challenge becomes a fixed public polynomial <code>c0</code> whatever the seed.</p>
+<ul>
+<li>Signing is deterministic. A faulted call keeps the honest mask <code>y</code> and challenge seed and returns 0 with <code>z' = y + c0·s1</code>. With the honest <code>z = y + c·s1</code> on the same message, <code>z − z' = (c − c0)·s1</code> gives <code>s1</code> exactly.</li>
+<li>In verification (<code>sign.c:184</code>) the same fault makes the verifier use <code>c0</code>, and a signature constructed from the public key alone for <code>c0</code> is accepted for a fresh message.</li>
+<li>In key generation the same fault in the secret sampler (<code>poly.c:431,492</code>) returns a working key pair in which one secret polynomial is the fixed zero-state value.</li>
+</ul>
+<p>The witness shows all three effects in the reference and AVX2 builds at all three levels, with unfaulted controls. Forging from the recovered <code>s1</code> was not run.</p>
+<p>The failing allocation is the DRBG's fixed 55-byte buffer, not sized by the attacker; memory pressure or a resource limit is needed, and no remote method is shown. The candidate's defect is discarding the helper's status and returning success. Demonstrated key recovery and verifier acceptance under these preconditions are High.</p>
+<h3 id="reproducing_9">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh sign-01/reproduce_challenge_fault.sh
+</code></pre>
+<p>The witness builds each tree with <code>-DUSE_ICCS</code> and <code>malloc</code> wrapped to fail the DRBG's first allocation once per targeted call.</p>
+<h2 class="issue-heading" id="sign-01-11-verification-leaks-memory-on-rejection-and-reads-past-a-short-signature">sign-01-11: Verification leaks memory on rejection and reads past a short signature</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Aigis-Sig+ I, II and III, all twelve trees by source; runtime witness on the reference implementation</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Unbounded memory growth in a long-running verifier fed invalid signatures, and an out-of-bounds read from a caller-supplied short signature; no disclosure shown</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
+<tr><th>Date</th><td>2026-11-16</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/G5YWWTVFQMQVWYFTBWZXYZEROUW3R25A/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p><code>msig_verf</code> allocates <code>buf = malloc(CRHBYTES + mlen)</code> (<code>sign.c:167</code>) and frees it only on the accepting path (<code>:203</code>). The rejecting returns at <code>:194</code> and <code>:201</code> leak it, so each rejected signature leaks the message length plus 48 or 96 bytes. At all three levels, 200 rejected verifications left 200 blocks allocated, while 200 accepted ones left none.</p>
+<p>The verifier checks only that the declared signature length lies between the minimum and maximum packed sizes (<code>sign.c:159</code>), and <code>unpack_sig</code> then reads the fixed layout (<code>:163</code>). A valid signature in a heap buffer one byte shorter than its length, declared at that length, produces an AddressSanitizer heap-buffer-overflow read in <code>unpack_h</code> (<code>packing.c:262,325</code>) at all three levels. Callers that pass complete signatures are unaffected.</p>
+<h3 id="reproducing_10">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh sign-01/reproduce_verify_memory.sh
+</code></pre>
+<p>The leak count wraps <code>malloc</code> and <code>free</code>; the short-buffer case runs verification only, under AddressSanitizer.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

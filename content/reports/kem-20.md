@@ -59,3 +59,33 @@ objdump -d --no-show-raw-insn kem-20/lib/libMAMBA-Frost-128.so |
 ```
 
 The output shows the test of the coefficient's sign bit followed by a conditional jump inside `crypto_kem_dec_Frost128`. This is a compiled-branch witness; no timing was measured.
+
+## kem-20-3: A failed XOF makes the encapsulated key computable from the ciphertext
+
+Severity: High
+Status: Confirmed
+Layer: Implementation
+Affected: All ten MAMBA-Frost and MAMBA-Frost-CC instances, reference and optimized implementations; the native SHAKE implementation is not affected
+Discovery: Moderate
+Exploitation: If one XOF allocation fails, encapsulation or decapsulation returns success with a shared secret computed from the ciphertext alone, or with an all-zero shared secret; no remote way to force the failure is shown
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool; recovery witness by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-16
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/M65AQWRSK3S2AKWWKTNCLROB5XTWQG5U/)
+
+`api_pseudo_xof` zeroes its output when the contest's `pseudoXOF` fails, but it returns `void` (`common/sha3/fips202.c:24–37`), so `shake` callers cannot see the failure. Three such calls in `Frost/src/kem.c` matter:
+
+- `shake(G2out, ...)` at `:354` derives the noise seed `seedSE` and the key `k`. If it fails both are zero, the noise is expanded from a fixed seed, and the shared secret is `shake(ct ‖ 0)`.
+- The final `shake(ss, ...)` in encapsulation at `:413` returns an all-zero shared secret.
+- The final `shake(ss, ...)` in decapsulation at `:573` does the same for an honest ciphertext.
+
+In every case the function returns 0. In all 20 trees, failing each of these allocations once gave a shared secret that the attacker recomputed from the ciphertext alone, while the honest party's key disagreed. Unfaulted controls round-trip.
+
+These paths are separate from the key-generation `calloc` in this report and also affect the optimized trees. The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success. A demonstrated session-key exposure under these preconditions is High.
+
+### Reproducing
+
+```sh
+sh kem-20/reproduce_xof_zero_secret.sh
+```
+
+The witness wraps `malloc` to fail exactly the targeted allocation by its size and order and compares the returned key with the attacker's value.

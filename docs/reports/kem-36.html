@@ -252,6 +252,51 @@ python3 kem-36/reproduce_multitarget_bounds.py
 <pre><code class="language-sh">NGCC_ESTIMATOR_PYTHON=/path/to/python-with-numpy-scipy python3 security/reproduce_code_multi_instance.py kem-36
 </code></pre>
 <p>The witness checks all three first crossings, preceding controls and the TRIKE-2 control against the hash-pinned estimator.</p>
+<h2 class="issue-heading" id="kem-36-10-failed-helper-allocations-give-zero-or-public-derived-keys">kem-36-10: Failed helper allocations give zero or public-derived keys</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>TRIKE-2, -5, -7 and -9, reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>If one helper allocation fails, key generation returns a working key pair whose secret is computable from public data, encapsulation returns a zero or public-derived shared secret, and decapsulation returns an all-zero key for any ciphertext; no remote way to force the failure is shown</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool; key-exposure consequences and witness by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-16</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/GBQBTMDRJMECPVAGR77HYNZNATRZWREA/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p>TRIKE ignores the status of every contest helper and returns 0 from <code>kem_keygen</code>, <code>kem_enc</code> and <code>kem_dec</code> (<code>src/KEM_AlgorithmInstance.c:212,290,380</code>). The helpers return an error without writing their output when an internal allocation fails. Several such failures leave secrets at public values:</p>
+<ul>
+<li><code>generate_secret_key</code> seeds its expander with <code>init_random_number</code> without checking it (<code>src/sample.c:184</code>). On failure the secret parity checks come from the all-zero DRBG state. The key pair still works for its owner, and an attacker rebuilds the same secret key from the public key and decrypts all traffic to it.</li>
+<li><code>hash_length_m</code> copies its zero-initialised buffer when <code>pseudohash</code> fails (<code>KEM_AlgorithmInstance.c:137–142</code>), so the shared secret is zero.</li>
+<li>If the error vector's <code>calloc</code> fails, <code>generate_error_vector</code> returns with <code>e = 0</code> (<code>src/sample.c:232–233</code>). If its seeding fails (<code>:239</code>), <code>e</code> comes from the zero state. If the hash of <code>e</code> fails, the message is sent unmasked. In each case the attacker recovers the message, and with it the key, from the ciphertext.</li>
+<li>If the final hash in decapsulation fails, the returned key is zero for any ciphertext.</li>
+</ul>
+<p>The witness confirms each case in all eight trees against unfaulted controls.</p>
+<p>The failing allocations are fixed-size buffers inside the helpers or the error-vector <code>calloc</code>, and no remote way to force them is shown. The key-generation case persists for the key's lifetime. A demonstrated key exposure under these preconditions is High.</p>
+<h3 id="reproducing_9">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh kem-36/reproduce_fail_open.sh
+</code></pre>
+<p>The witness wraps <code>malloc</code> and <code>calloc</code> to fail exactly the targeted allocation and checks the attacker's key against the honest parties' in each case.</p>
+<h2 class="issue-heading" id="kem-36-11-decapsulation-ignores-the-declared-ciphertext-length">kem-36-11: Decapsulation ignores the declared ciphertext length</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>TRIKE-2, -5, -7 and -9, reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Out-of-bounds read from a caller-supplied short ciphertext; no disclosure shown</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
+<tr><th>Date</th><td>2026-11-16</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/GBQBTMDRJMECPVAGR77HYNZNATRZWREA/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p><code>kem_dec</code> casts the input to the fixed-size <code>ciphertext_t</code> without comparing <code>ct_len_bytes</code> with the ciphertext size (<code>src/KEM_AlgorithmInstance.c:294–300</code>). A ciphertext one byte short, in a heap buffer of exactly the declared length, produces an AddressSanitizer heap-buffer-overflow read of 32 bytes (64 at TRIKE-7 and -9) at <code>:341</code> in all eight trees; the full-length control is clean. Callers that always pass the advertised ciphertext size are unaffected.</p>
+<h3 id="reproducing_10">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh kem-36/reproduce_short_ciphertext.sh
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

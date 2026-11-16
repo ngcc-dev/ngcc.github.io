@@ -107,6 +107,27 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <pre><code class="language-sh">python3 kem-07/reproduce_short_ciphertext.py
 </code></pre>
 <p>This source certificate checks the missing length guard and fixed-offset reads; it does not rerun the forum's sanitizer test.</p>
+<h2 class="issue-heading" id="kem-07-5-failed-hash-or-seeding-allocations-give-zero-coins-and-public-derived-keys">kem-07-5: Failed hash or seeding allocations give zero coins and public-derived keys</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All three BRQC parameter sets, reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>If one helper allocation fails, encapsulation returns success under coins an attacker can compute, or key generation returns a key whose secret is computable from public data; the shared secret follows from the public key and ciphertext; no remote way to force the failure is shown</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool; zero-state consequences and witness by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-16</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/H7VP2CMOT5FZWWUUHU62HGUOT53676NL/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p>Encapsulation zero-initialises <code>theta</code> and derives it with <code>pseudohash</code> without checking the status (<code>src/kem.c:95,126</code>). The coin expander is then seeded through <code>random_source_seed_with_len</code>, which drops the status of <code>init_random_number</code> (<code>lib/random_source/random_source.c:30</code>, called at <code>src/brqc.c:171</code>). Key generation seeds its secret-key expander through the same function (<code>src/brqc.c:63</code>). The contest helpers return an error without writing their output when an internal allocation fails. <code>theta</code> then stays zero, or the expander runs from its all-zero initial state, and <code>kem_enc</code> or <code>kem_keygen</code> returns 0.</p>
+<p>In all six trees the witness fails one of these allocations. With the theta hash or the coin seeding failing, an attacker who holds only the public key and the ciphertext runs the public encryptor with the zero-state coins, confirms the result against the ciphertext, decodes the message and computes the returned shared secret. With the secret-key seeding failing, the attacker reproduces the zero-state secret, checks it against the public key and decrypts honest encapsulations. Unfaulted controls fail every check.</p>
+<p>The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success. A demonstrated session-key exposure under these preconditions is High.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh kem-07/reproduce_zero_coins.sh
+</code></pre>
+<p>The witness wraps <code>malloc</code> to fail exactly the targeted allocation and runs each case with an unfaulted control.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
