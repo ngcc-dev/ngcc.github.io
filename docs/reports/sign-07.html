@@ -179,6 +179,47 @@ sed -n '668,676p' &quot;$d/sampling.c&quot;; grep -n 'ExpandMask(y' &quot;$d/cs.
 grep -n 'define HBYTES\|define SEEDBYTES' &quot;$d/params.h&quot;
 </code></pre>
 <p>This is a source witness. The unchanged masks were observed by calling the archived <code>ExpandMask</code> with seeds differing in the upper half, and are not part of the witness.</p>
+<h2 class="issue-heading" id="sign-07-7-the-zero-knowledge-simulator-uses-part-of-the-secret-key">sign-07-7: The zero-knowledge simulator uses part of the secret key</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr>
+<tr><th>Affected</th><td>All three CS parameter sets; Lemma 4.3 and the reduction to Theorem 4.1</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>The paHVZK step of the security proof is not established as written; no forgery or key recovery follows</td></tr>
+<tr><th>Credit</th><td>Xifeng Jin (CertiK), with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-16</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/SHC42EUTFQL7IQWFX4JAJKQAZLU5S34Q/">Jin's PKC Forum post</a></p>
+<p>Definition 4.4 (physical p. 26) requires a simulator <code>Sim(x)</code> that is given only the public instance. Key generation splits <code>b = A′s1 + s2</code> into <code>b1 = HighBits(b, β)</code> and <code>b0 = LowBits(b, β)</code>, puts <code>b1</code> in the public key and keeps <code>b0</code> in the secret key (Algorithm 10, physical p. 19). The simulator in the proof of Lemma 4.3 starts "with only the public key, <code>b0</code>, and the ability to control the hash function". It computes <code>w = Az − qcj − 2c_r b0 mod 2q</code> in step 4 and uses <code>b0</code> again for the hint in step 6 (physical pp. 29–30).</p>
+<p>No way of obtaining <code>b0</code> from the public key is given, so the displayed simulator does not satisfy Definition 4.4. Lemma 4.3 feeds the reduction behind Theorem 4.1, which therefore does not establish paHVZK as stated. A simulator using only the public key may exist; the proof does not supply one.</p>
+<h3 id="reproducing_6">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">pdftotext -f 19 -l 19 -layout sign-07/sign-07-spec.pdf - | grep 'pk = (ρ0\|sk = ('
+pdftotext -f 29 -l 30 -layout sign-07/sign-07-spec.pdf - | grep -B1 -A1 'b0'
+</code></pre>
+<p>This is a specification witness: <code>pk = (ρ0, b1)</code>, <code>sk = (…, b0)</code>, and the simulator's use of <code>b0</code>.</p>
+<h2 class="issue-heading" id="sign-07-8-the-specified-rans-coder-does-not-round-trip-its-input">sign-07-8: The specified rANS coder does not round-trip its input</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>The written rANS algorithms (§2.6) and their use in Algorithm 12, all three parameter sets; the submitted C code uses a different coder and is not shown to be affected</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>A verifier written from the specification decodes some encodings to the wrong sequence; no forgery demonstrated</td></tr>
+<tr><th>Credit</th><td>Xifeng Jin (CertiK), with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-16</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/SHC42EUTFQL7IQWFX4JAJKQAZLU5S34Q/">Jin's PKC Forum post</a></p>
+<p>Section 2.6 states that rANS decoding recovers the original symbol sequence. Algorithm 2 starts the encoder at <code>x0 = 0</code>, and Algorithm 3 decodes while its state is positive and then sets <code>m = i − 1</code> (physical p. 12). The forum post's example uses <code>t = 2</code>, four symbols with <code>g(s) = 1</code> and <code>CDF(s) = s</code>. Encoding <code>[1]</code> gives <code>x1 = 1</code>. Decoding takes one step to state 0 and then returns the empty sequence, since <code>m = 0</code>. Encoding <code>[0, 1]</code> also gives 1, so changing <code>m = i − 1</code> to <code>m = i</code> would still leave the encoding ambiguous: a leading zero-valued symbol leaves the state at 0. We checked the arithmetic.</p>
+<p>Algorithm 12 decodes the response components <code>z0</code> and <code>z1</code> with <code>rANS.Decode</code>, and the correctness argument of Theorem 3.1 assumes they come back unchanged. The written algorithms do not justify that. The submitted C code starts from a nonzero normalized state and decodes a fixed number of coefficients, so this concerns the specification only.</p>
+<h3 id="reproducing_7">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">pdftotext -f 12 -l 12 -layout sign-07/sign-07-spec.pdf - | grep -A20 'Algorithm 2 rANS encoding'
+</code></pre>
+<p>This is a specification witness for Algorithms 2 and 3; the counterexample follows by hand from lines 2, 4 and 8.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

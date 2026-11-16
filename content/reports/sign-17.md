@@ -66,3 +66,29 @@ make -C sign-17 reproduce-spec-findings
 ```
 
 The wrapper transcribes the specified rounding into the otherwise submitted verifier, checks the three deterministic failure counts above, and requires zero failures from the submitted-code controls. It prints `ATTACK sign-17-2 ... CONFIRMED`.
+
+## sign-17-3: A failed message digest leaves the previous digest in the verifier
+
+Severity: High
+Status: Confirmed
+Layer: Implementation
+Affected: OPSsig-128, -256 and -512; reference and AVX2 implementations
+Discovery: Moderate
+Exploitation: If the digest helper fails after an earlier verification in the same process, a signature on the earlier message verifies for a new message; the trigger is an allocation failure inside the contest's hash helper
+Credit: Hao Yan, Yuhang Cao, Yao Tong and Qiaosheng Zhang, Shanghai AI Laboratory, with GLM 5.3, Kimi 3.1 Pro and in-house model assistance
+Date: 2026-11-16
+Original source: [Cao et al.'s PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/EEK7CDO5YWQBFH3HF3WV3QUSKH4YNXVY/)
+
+The verifier computes the message representative `µ` with `crh(mu, CRHBYTES, tmp, inlen)` into a stack buffer and later hashes `µ` with the reconstructed commitment to recompute the challenge (`sign.c:188,215,239–246` in OPSsig-256). `crh` is a `void` wrapper around the contest's `pseudohash` and discards its status (`sign.c:23–26`). `pseudohash` can fail before writing its output: its 1024-bit path allocates a copy of the input and returns `MEMORY_ALLOCATION_FAILED` if that allocation fails, or `HASH_FAILED` if its HMAC step fails (`auxfunc.c:358–370`), and it writes the caller's buffer only at the end (`:436–439`). The verifier then carries on with whatever `mu` held. The AVX2 trees have the same wrapper.
+
+With the archived reference code at all three levels, a signature on message A was accepted for a different message B when the digest's internal allocation failed during the verification of B, immediately after verifying A in the same process. Without the failure, and with the failure after the stack had been overwritten, B was rejected. The reused value is the previous digest left in the same stack slot, so the outcome depends on the call sequence and the compiler.
+
+The allocation that fails holds a copy of the message, so a long attacker-chosen message can cause it under a memory limit; the outer copy of the same length is checked, and both must be live at once. The candidate's defect is discarding the helper's error. The failure point itself is inside the contest's provisional hash helper, which a replacement may not share. The demonstrated forgery path with these preconditions is High.
+
+### Reproducing
+
+```sh
+sh sign-17/reproduce_stale_digest.sh
+```
+
+The witness checks the `void` wrapper in all six trees, then builds each reference level with `malloc` wrapped so that one allocation of the size the digest helper requests can be made to fail. It requires the signature on A to verify for B in that case only, and to be rejected for B without the failure and after the stack is scrubbed.

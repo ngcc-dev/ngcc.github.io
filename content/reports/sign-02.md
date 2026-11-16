@@ -93,3 +93,29 @@ NGCC_LONG=1 sh sign-02/reproduce_seed_collision.sh
 ```
 
 The script copies the BiT-128 reference tree to a temporary directory, inserts the seed truncation directly after `seed_y` is squeezed, builds a 16-bit and an unmodified variant, and runs the public collision search, completion and forgery on 8,192 signatures each (about 25 seconds). It requires every match to complete an equivalent key, the forgery to verify, the changed message and a non-matching pair to reject, and the full-width control to find no match. `NGCC_LONG=1` uses 24 bits and 65,536 signatures (about 2.5 minutes).
+
+## sign-02-4: BiT-512 hint bytes have several accepted encodings
+
+Severity: High
+Status: Confirmed
+Layer: Implementation
+Affected: BiT-512 reference and AVX2 implementations; BiT-128 and BiT-256 pack hints differently and were not checked for this
+Discovery: Moderate
+Exploitation: From one signature, byte-distinct signatures on the same message that the verifier accepts; no new message is signed and no key is recovered
+Credit: Xifeng Jin (CertiK), with AI assistance
+Date: 2026-11-16
+Original source: [Jin's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/F4GNQLORBJWXMMKZWFGTLOT7GRTRKXYI/)
+
+Each BiT-512 hint polynomial has 1,024 ternary coefficients, packed five per byte as a base-3 number (`packing.c:104–125`, `params.h:53–58`). 1,024 is not a multiple of five, so the last of the 205 bytes holds four coefficients and an unused fifth digit, which the packer sets to 1. The unpacker stops at coefficient 1,024 without examining that digit (`packing.c:127–162`), and the verifier does not compare the decoded signature with a canonical re-encoding (`sign.c:234–269`). Any of the three values of the unused digit therefore gives the same signature. Complete groups have a second alias: a byte holds five base-3 digits, values up to 242, and the unpacker discards the quotient left after five divisions, so bytes 243–255 decode like 0–12.
+
+With the archived reference code, we rewrote the last hint byte of each of the three hint polynomials with each value of its unused digit. All nine verified for the signed message, and six differ from the original signature. Adding 243 to a complete-group byte of value at most 12 also verified. Every variant was rejected for a different message. The AVX2 source has the same packer and unpacker.
+
+The specification claims strong unforgeability (SUF-CMA, §5.1, Theorem 2, p. 23), which a second accepted encoding of a queried signature contradicts.
+
+### Reproducing
+
+```sh
+sh sign-02/reproduce_hint_aliases.sh
+```
+
+The witness checks the packer and unpacker in the reference and AVX2 trees, signs one message with the reference build, and requires the nine final-byte variants and one complete-group alias to verify for that message, six of them byte-distinct, and every variant to be rejected for another message.

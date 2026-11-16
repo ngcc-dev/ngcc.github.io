@@ -189,3 +189,52 @@ grep -n 'define HBYTES\|define SEEDBYTES' "$d/params.h"
 ```
 
 This is a source witness. The unchanged masks were observed by calling the archived `ExpandMask` with seeds differing in the upper half, and are not part of the witness.
+
+## sign-07-7: The zero-knowledge simulator uses part of the secret key
+
+Severity: Medium
+Status: Proof gap
+Layer: Design
+Affected: All three CS parameter sets; Lemma 4.3 and the reduction to Theorem 4.1
+Discovery: Moderate
+Exploitation: The paHVZK step of the security proof is not established as written; no forgery or key recovery follows
+Credit: Xifeng Jin (CertiK), with AI assistance
+Date: 2026-11-16
+Original source: [Jin's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/SHC42EUTFQL7IQWFX4JAJKQAZLU5S34Q/)
+
+Definition 4.4 (physical p. 26) requires a simulator `Sim(x)` that is given only the public instance. Key generation splits `b = A′s1 + s2` into `b1 = HighBits(b, β)` and `b0 = LowBits(b, β)`, puts `b1` in the public key and keeps `b0` in the secret key (Algorithm 10, physical p. 19). The simulator in the proof of Lemma 4.3 starts "with only the public key, `b0`, and the ability to control the hash function". It computes `w = Az − qcj − 2c_r b0 mod 2q` in step 4 and uses `b0` again for the hint in step 6 (physical pp. 29–30).
+
+No way of obtaining `b0` from the public key is given, so the displayed simulator does not satisfy Definition 4.4. Lemma 4.3 feeds the reduction behind Theorem 4.1, which therefore does not establish paHVZK as stated. A simulator using only the public key may exist; the proof does not supply one.
+
+### Reproducing
+
+```sh
+pdftotext -f 19 -l 19 -layout sign-07/sign-07-spec.pdf - | grep 'pk = (ρ0\|sk = ('
+pdftotext -f 29 -l 30 -layout sign-07/sign-07-spec.pdf - | grep -B1 -A1 'b0'
+```
+
+This is a specification witness: `pk = (ρ0, b1)`, `sk = (…, b0)`, and the simulator's use of `b0`.
+
+## sign-07-8: The specified rANS coder does not round-trip its input
+
+Severity: Low
+Status: Confirmed
+Layer: Design
+Affected: The written rANS algorithms (§2.6) and their use in Algorithm 12, all three parameter sets; the submitted C code uses a different coder and is not shown to be affected
+Discovery: Moderate
+Exploitation: A verifier written from the specification decodes some encodings to the wrong sequence; no forgery demonstrated
+Credit: Xifeng Jin (CertiK), with AI assistance
+Date: 2026-11-16
+Original source: [Jin's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/SHC42EUTFQL7IQWFX4JAJKQAZLU5S34Q/)
+
+Section 2.6 states that rANS decoding recovers the original symbol sequence. Algorithm 2 starts the encoder at `x0 = 0`, and Algorithm 3 decodes while its state is positive and then sets `m = i − 1` (physical p. 12). The forum post's example uses `t = 2`, four symbols with `g(s) = 1` and `CDF(s) = s`. Encoding `[1]` gives `x1 = 1`. Decoding takes one step to state 0 and then returns the empty sequence, since `m = 0`. Encoding `[0, 1]` also gives 1, so changing `m = i − 1` to `m = i` would still leave the encoding ambiguous: a leading zero-valued symbol leaves the state at 0. We checked the arithmetic.
+
+Algorithm 12 decodes the response components `z0` and `z1` with `rANS.Decode`, and the correctness argument of Theorem 3.1 assumes they come back unchanged. The written algorithms do not justify that. The submitted C code starts from a nonzero normalized state and decodes a fixed number of coefficients, so this concerns the specification only.
+
+### Reproducing
+
+```sh
+pdftotext -f 12 -l 12 -layout sign-07/sign-07-spec.pdf - | grep -A20 'Algorithm 2 rANS encoding'
+```
+
+This is a specification witness for Algorithms 2 and 3; the counterexample follows by hand from lines 2, 4 and 8.

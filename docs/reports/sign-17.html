@@ -73,6 +73,27 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <pre><code class="language-sh">make -C sign-17 reproduce-spec-findings
 </code></pre>
 <p>The wrapper transcribes the specified rounding into the otherwise submitted verifier, checks the three deterministic failure counts above, and requires zero failures from the submitted-code controls. It prints <code>ATTACK sign-17-2 ... CONFIRMED</code>.</p>
+<h2 class="issue-heading" id="sign-17-3-a-failed-message-digest-leaves-the-previous-digest-in-the-verifier">sign-17-3: A failed message digest leaves the previous digest in the verifier</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>OPSsig-128, -256 and -512; reference and AVX2 implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>If the digest helper fails after an earlier verification in the same process, a signature on the earlier message verifies for a new message; the trigger is an allocation failure inside the contest's hash helper</td></tr>
+<tr><th>Credit</th><td>Hao Yan, Yuhang Cao, Yao Tong and Qiaosheng Zhang, Shanghai AI Laboratory, with GLM 5.3, Kimi 3.1 Pro and in-house model assistance</td></tr>
+<tr><th>Date</th><td>2026-11-16</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/EEK7CDO5YWQBFH3HF3WV3QUSKH4YNXVY/">Cao et al.'s PKC Forum post</a></p>
+<p>The verifier computes the message representative <code>µ</code> with <code>crh(mu, CRHBYTES, tmp, inlen)</code> into a stack buffer and later hashes <code>µ</code> with the reconstructed commitment to recompute the challenge (<code>sign.c:188,215,239–246</code> in OPSsig-256). <code>crh</code> is a <code>void</code> wrapper around the contest's <code>pseudohash</code> and discards its status (<code>sign.c:23–26</code>). <code>pseudohash</code> can fail before writing its output: its 1024-bit path allocates a copy of the input and returns <code>MEMORY_ALLOCATION_FAILED</code> if that allocation fails, or <code>HASH_FAILED</code> if its HMAC step fails (<code>auxfunc.c:358–370</code>), and it writes the caller's buffer only at the end (<code>:436–439</code>). The verifier then carries on with whatever <code>mu</code> held. The AVX2 trees have the same wrapper.</p>
+<p>With the archived reference code at all three levels, a signature on message A was accepted for a different message B when the digest's internal allocation failed during the verification of B, immediately after verifying A in the same process. Without the failure, and with the failure after the stack had been overwritten, B was rejected. The reused value is the previous digest left in the same stack slot, so the outcome depends on the call sequence and the compiler.</p>
+<p>The allocation that fails holds a copy of the message, so a long attacker-chosen message can cause it under a memory limit; the outer copy of the same length is checked, and both must be live at once. The candidate's defect is discarding the helper's error. The failure point itself is inside the contest's provisional hash helper, which a replacement may not share. The demonstrated forgery path with these preconditions is High.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh sign-17/reproduce_stale_digest.sh
+</code></pre>
+<p>The witness checks the <code>void</code> wrapper in all six trees, then builds each reference level with <code>malloc</code> wrapped so that one allocation of the size the digest helper requests can be made to fail. It requires the signature on A to verify for B in that case only, and to be rejected for B without the failure and after the stack is scrubbed.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
