@@ -26,24 +26,30 @@ make -C hash-02 exploit
 
 The Linux witness preallocates the input, caps process virtual memory at its current use plus 4 MiB, checks two distinct messages, and enforces a short timeout if allocation unexpectedly succeeds.
 
-## hash-02-2: Partial-bit AXIS update branches on secret state
+## hash-02-2: Partial-bit AXIS update branches on secret state, with a measurable timing dependence
 
-Severity: Low
+Severity: Medium
 Status: Confirmed
 Layer: Side-channel
 Affected: Reference and optimized AXIS-512/768/1024 on non-byte-aligned messages
 Discovery: Moderate
-Exploitation: Branch side-channel dependent
+Exploitation: Running time depends on the secret message at a fixed length, measured locally; no message or state recovery demonstrated
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-09-23
 
-For non-byte-aligned input, `axis_core_hash_bits` leaves the bit-sliced byte-aligned fast path (`axis_core.c:1698-1704`). The scalar nonlinear update calls `axis_flip_bit` on state-derived bits (`:160,633-638,685-690`); its generic and finalization paths retain conditional jumps under GCC `-O2`. Equal-length secret bitstrings can therefore change the branch trace. This does not apply to the ordinary byte-aligned fast path, and no timing extraction was demonstrated. See [constant_time.md](../constant-time/hash-02.md).
+For non-byte-aligned input, `axis_core_hash_bits` leaves the bit-sliced byte-aligned fast path (`axis_core.c:1698-1704`). The scalar nonlinear update calls `axis_flip_bit` on state-derived bits (`:160,633-638,685-690`), and the digest is written bit by bit with a branch on each output bit (`axis_write_digest_bit`, `:1152-1158`). GCC `-O2` retains conditional jumps in these paths. This does not apply to the ordinary byte-aligned fast path.
 
-Constant-time fix (easy, hence Low): apply each flip as a masked XOR, `reg[w] ^= (uint64_t)(-(bit & 1)) & mask`; the byte-aligned bitsliced path is already branch-free.
+The channel is measurable in the reference AXIS-512 built with the submission's own flags. For 501-bit messages the instruction count of a call varied between 2,332,745 and 2,334,747 over six random messages, and an all-zero message ran about 12,900 cycles faster than random ones (Welch t of 84 over 10,000 calls). A 504-bit control had a constant instruction count and no timing difference. The optimized tree showed the same branch and a larger difference. The figures vary with the host, and no message or state was recovered. See [constant_time.md](../constant-time/hash-02.md).
+
+Constant-time fix (easy): apply each flip as a masked XOR, `reg[w] ^= (uint64_t)(-(bit & 1)) & mask`; the byte-aligned bitsliced path is already branch-free. The repair is local; the rating is Medium because the channel is measured.
 
 ### Reproducing
 
-Compile `AXIS-768/axis_core.c` with `gcc -O2 -g -c`; `objdump -dSl` shows conditional jumps at `axis_flip_bit` in `axis_step_generic`.
+```sh
+sh hash-02/reproduce_secret_branch_timing.sh
+```
+
+The witness requires the taint result and a message-dependent instruction count, with a byte-aligned control, and prints the timing figures as information. It needs Valgrind.
 
 ## hash-02-3: The invertible AXIS state caps AXIS-1024 second-preimage security at 768 bits
 
@@ -92,3 +98,24 @@ bash hash-02/reproduce_preimage_alignment.sh
 ```
 
 The wrapper compiles the unmodified reference core into a temporary library, checks the independent model against 60 full hashes and 300 state steps, then verifies the digest-bit control and inversion. It leaves no build files behind.
+
+## hash-02-5: Optimized message packing indexes tables with message bytes
+
+Severity: Low
+Status: Confirmed
+Layer: Side-channel
+Affected: Optimized AXIS-512/768/1024 when built without BMI2, including the Makefile's portable and AVX2 targets
+Discovery: Moderate
+Exploitation: Cache side-channel dependent; no timing difference measured and no message recovery demonstrated
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-17
+
+The optimized byte-aligned path packs each message block into two bit sequences. With BMI2 it uses `pext`. Otherwise it looks up every message byte in 256-entry tables: `axis_pack_even_lsb_table[block[i]]` and its companion table (`axis_core.c:1246-1274` in AXIS-512). `AXIS_HAS_BMI2` requires `AXIS_OPT_LEVEL` 3 and a compiler targeting BMI2 (`:24-28`), and the Makefile's portable and AVX2 targets pass `-mno-bmi2`, so both use the tables. Each table spans four cache lines, and the index is a secret message byte.
+
+With the message marked as undefined under Valgrind's memcheck, a build without BMI2 reports the table reads in `axis_pack_message64_reverse_block` for a byte-aligned message. No running-time difference between an all-zero and random messages was found over 20,000 calls, so this remains a cache-line channel without a measurement.
+
+Constant-time fix (easy, hence Low): compute the even- and odd-bit extraction with shifts and masks, as a portable replacement for `pext`.
+
+### Reproducing
+
+Build the optimized AXIS-512 with `-mno-bmi2` and inspect `axis_pack_message64_reverse_block`; the non-BMI2 branch reads `axis_pack_even_lsb_table` at an index taken from the message.

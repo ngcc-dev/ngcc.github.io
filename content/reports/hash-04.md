@@ -89,12 +89,12 @@ make -C hash-04 reproduce-full
 
 ## hash-04-4: Unsupported digest lengths cause full-size writes
 
-Severity: High
+Severity: Low
 Status: Confirmed
 Layer: Implementation
 Affected: Reference and optimized CHAMP-512 and CHAMP-1024 implementations
 Discovery: Trivial
-Exploitation: Out-of-bounds write when a caller sizes the output for the requested length; no end-to-end corruption chain demonstrated
+Exploitation: A caller that sizes the output buffer from a shorter requested length receives a write beyond it; no secret disclosure or cryptographic break shown
 Credit: Mounir IDRASSI <mounir@amcrypto.jp>
 Date: 2026-09-22
 Original source: [GitHub issue #8](https://github.com/ngcc-dev/ngcc-harness/issues/8)

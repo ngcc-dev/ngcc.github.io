@@ -18,15 +18,51 @@
 <h1 id="duet-hash-08">Duet (hash-08)</h1>
 <div class="table-wrap"><table class="meta">
 <tr><th>Candidate</th><td>Duet</td></tr>
-<tr><th>Family</th><td>Symmetric (sponge)</td></tr>
-<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/Duet.zip">Official submission archive</a></td></tr>
+<tr><th>Family</th><td>Symmetric (dual-branch sponge with capacity feed-forward)</td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/Duet.zip">Duet.zip</a> (SHA-256: <code>989978bcefbe20124943b2003908226c48e0f05b5ec8db510e7cdb89c2299f1e</code>)</td></tr>
 <tr><th>Specification</th><td><a href="https://github.com/ngcc-dev/ngcc-harness/raw/dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/hash-08/hash-08-spec.pdf" title="Download hash-08-spec.pdf from GitHub">hash-08-spec.pdf</a>&nbsp;<a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/hash-08/hash-08-spec.pdf" title="Open the hash-08 specification PDF">PDF</a></td></tr>
 <tr><th>Performance</th><td><a href="../performance/x86_1/hash-08.html">x86_1</a> · <a href="../performance/arm_1/hash-08.html">arm_1</a></td></tr>
 </table></div>
 
-<h3 id="review-status">Review status</h3>
-<p>No vulnerability finding is currently published for this candidate. This is not a security endorsement: it records only the present state of the public finding inventory, and the candidate remains under review.</p>
-<p>See the <a href="../constant-time/hash-08.html">constant-time review</a> and the performance reports (<a href="../performance/x86_1/hash-08.html">x86_1</a> · <a href="../performance/arm_1/hash-08.html">arm_1</a>). See the <a href="https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101539583977672704.html">official submission page</a>.</p>
+<h2 class="issue-heading issue-heading-first" id="hash-08-1-duet-768-reference-reads-one-word-past-a-stack-array">hash-08-1: Duet-768 reference reads one word past a stack array</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Duet-768 reference implementation</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Out-of-bounds stack read of 8 bytes on every absorbed block; the value is unused and the digest is unaffected</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-17</td></tr>
+</table></div>
+
+<p><code>sigma_permutation</code> copies the block into locals and reads <code>block[17]</code> (<code>CryptHash_Duet-768.c:288</code>), but its argument is the 17-word array <code>SigmaMi[WORDS_r]</code> (<code>:377,385</code>), whose last valid index is 16. The value <code>w17</code> is never used. An unoptimized build under AddressSanitizer stops with a stack-buffer-overflow read of size 8 at that line for any message; UndefinedBehaviorSanitizer reports it at <code>-O1</code> and <code>-O2</code>, where the dead load is otherwise removed. The digest and the known-answer tests are unaffected.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh hash-08/reproduce_sigma_oob.sh
+</code></pre>
+<h2 class="issue-heading" id="hash-08-2-output-beyond-the-digest-length-does-not-follow-the-specified-xof">hash-08-2: Output beyond the digest length does not follow the specified XOF</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Duet-512, -768 and -1024; reference, AVX2, AVX-512 and NEON implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>A request for more than h bits returns output that differs from the specified function from bit h onward and includes capacity bits the specification keeps hidden; fixed-length digests are unaffected</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-17</td></tr>
+</table></div>
+
+<p>The specification's extendable output squeezes h bits per step (§2.1, §2.5 and Algorithm 1, pp. 3–7). <code>CryptHash</code> accepts any <code>digest_len_bits</code> from 1 to 8192 (<code>CryptHash_Duet-512.c:397</code>), but its squeeze step copies up to c bits of the capacity per step (<code>:372</code>; <code>-768.c:407</code>, <code>-1024.c:396</code>; the optimized trees do the same). The capacity is 64 bits wider than the digest for Duet-512 and Duet-768 and 128 bits wider for Duet-1024.</p>
+<p>Against an independent model written from the specification, all 129 tested outputs of at most h bits match. Outputs longer than h bits differ from bit h onward, and bits h to c−1 equal the capacity tail that the specified squeeze does not output. All such outputs match a model that squeezes c bits per step instead.</p>
+<p>The submission's <code>README.md</code> says <code>digest_len_bits</code> must equal the digest length, no known-answer test covers longer outputs, and the call does not require an XOF. The defect is that the code accepts longer requests and returns something other than the specified function. Its effect on the claimed properties is unresolved: releasing the capacity tail lowers the hidden state during squeezing from r + c − h to r bits.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh hash-08/reproduce_xof_rate.sh
+</code></pre>
+<p>The witness compares reference and AVX2 builds of all three instances with a Python model of Algorithm 1. It needs Python 3.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

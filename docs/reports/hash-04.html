@@ -95,12 +95,12 @@ make -C hash-04 reproduce-full
 <h2 class="issue-heading" id="hash-04-4-unsupported-digest-lengths-cause-full-size-writes">hash-04-4: Unsupported digest lengths cause full-size writes</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
 <tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Reference and optimized CHAMP-512 and CHAMP-1024 implementations</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
-<tr><th>Exploitation</th><td>Out-of-bounds write when a caller sizes the output for the requested length; no end-to-end corruption chain demonstrated</td></tr>
+<tr><th>Exploitation</th><td>A caller that sizes the output buffer from a shorter requested length receives a write beyond it; no secret disclosure or cryptographic break shown</td></tr>
 <tr><th>Credit</th><td>Mounir IDRASSI <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#111;&#117;&#110;&#105;&#114;&#64;&#97;&#109;&#99;&#114;&#121;&#112;&#116;&#111;&#46;&#106;&#112;">&#109;&#111;&#117;&#110;&#105;&#114;&#64;&#97;&#109;&#99;&#114;&#121;&#112;&#116;&#111;&#46;&#106;&#112;</a></td></tr>
 <tr><th>Date</th><td>2026-09-22</td></tr>
 </table></div>

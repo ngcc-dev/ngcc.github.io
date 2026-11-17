@@ -97,3 +97,26 @@ python3 hash-05/reproduce_final_counter_extension.py
 ```
 
 For each submitted reference library, the script first checks a pure-Python transcription of uBlock-1024 and the uHash mode against the library on six message lengths. It then hides a random one- or two-chunk prefix behind a query interface, recovers the chaining value from `b` queries, and predicts two unqueried continuations, one ending in a short tail and one with an extra full chunk. Controls run the same attack against an ideal random function and with a non-cancelling final byte `80`, and both must mispredict. The run takes under one second. The optimized trees were inspected but not built or run.
+
+## hash-05-5: `CryptHash` returns success without writing a digest for unsupported lengths
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: uHash-512, -768 and -1024; reference and optimized implementations
+Discovery: Trivial
+Exploitation: A caller that requests any length other than 512, 768 or 1024 bits gets a success code and an untouched output buffer; no memory error
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-17
+
+`CryptHash` is three `if` statements, one for each of 512, 768 and 1024 bits, followed by `return 0` (`CryptHash_AlgorithmInstance.c:1057-1067` in the reference, `:6713-6723` in the optimized source). Any other `digest_len_bits`, including 0 and negative values, falls through: the function returns 0 and writes nothing. The caller then holds whatever its buffer contained and has no indication that no digest was computed; a reused buffer yields the same bytes for every message.
+
+The source is identical in the three instance directories, so each instance also computes the other two lengths. The witness builds the three reference directories and checks that 256- and 8-bit requests return 0 and leave a sentinel-filled buffer unchanged, while a 512-bit request writes 64 bytes.
+
+Fix: return an error for any unsupported length.
+
+### Reproducing
+
+```sh
+sh hash-05/reproduce_digest_length.sh
+```

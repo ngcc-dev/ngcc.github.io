@@ -18,15 +18,34 @@
 <h1 id="llh-hash-16">LLH (hash-16)</h1>
 <div class="table-wrap"><table class="meta">
 <tr><th>Candidate</th><td>LLH</td></tr>
-<tr><th>Family</th><td>Symmetric (sponge)</td></tr>
-<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/LLH.zip">Official submission archive</a></td></tr>
+<tr><th>Family</th><td>Symmetric (bitsliced sponge with capacity feed-forward)</td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/LLH.zip">LLH.zip</a> (SHA-256: <code>e79ca6ef17bcf0485ae2462cfe338e904f05551d7a8859271354d469072b3c2d</code>)</td></tr>
 <tr><th>Specification</th><td><a href="https://github.com/ngcc-dev/ngcc-harness/raw/dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/hash-16/hash-16-spec.pdf" title="Download hash-16-spec.pdf from GitHub">hash-16-spec.pdf</a>&nbsp;<a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/hash-16/hash-16-spec.pdf" title="Open the hash-16 specification PDF">PDF</a></td></tr>
 <tr><th>Performance</th><td><a href="../performance/x86_1/hash-16.html">x86_1</a> · <a href="../performance/arm_1/hash-16.html">arm_1</a></td></tr>
 </table></div>
 
-<h3 id="review-status">Review status</h3>
-<p>No vulnerability finding is currently published for this candidate. This is not a security endorsement: it records only the present state of the public finding inventory, and the candidate remains under review.</p>
-<p>See the <a href="../constant-time/hash-16.html">constant-time review</a> and the performance reports (<a href="../performance/x86_1/hash-16.html">x86_1</a> · <a href="../performance/arm_1/hash-16.html">arm_1</a>). See the <a href="https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101537750001471488.html">official submission page</a>.</p>
+<h2 class="issue-heading issue-heading-first" id="hash-16-1-the-hardware-rtl-implementation-discards-a-short-final-block-giving-immediate-collisions-in-that-implementation">hash-16-1: The hardware (RTL) implementation discards a short final block, giving immediate collisions in that implementation</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>The submitted Verilog hardware implementation only (Basic, HighPerformance and LowSize RTL), all four word sizes; the LLH algorithm, its specification and the reference and optimized C implementations are not affected</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Immediate collisions in the hardware implementation between messages of equal length that agree on their full blocks; no search required; software digests are correct</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-17</td></tr>
+</table></div>
+
+<p>This finding concerns the submitted hardware implementation, not the LLH algorithm: the specification and the C implementations handle these messages correctly. The RTL padder <code>msg_padder</code> receives the message as 128-bit bus words and shifts each word into a fixed slot of its buffer (<code>llh_padding.v:196,210</code>). A full block of r bits needs r/128 words, which fills the top r bits of the buffer. For the final partial block the padder accepts only as many words as the remaining L mod r bits need, and then keeps the top L mod r bits of the buffer (<code>:237-239</code>). Unless every word of the block was supplied, those bits are still zero, and the message bits sit lower in the buffer and are dropped. This does not depend on what the host sends, because the padder stops accepting words.</p>
+<p>The affected lengths are those with 0 &lt; L mod r ≤ r − 128: one half, three quarters, five sixths and seven eighths of all residues for the 256-, 512-, 768- and 1024-bit instances. In simulation of each of the three RTL variants at the 256-bit instance, the one-byte messages <code>00</code>, <code>5a</code> and <code>ff</code> all gave the digest <code>e7d61be6…f1a4</code>, which is the reference digest of <code>00</code>; the reference digest of <code>5a</code> is <code>fd6935ba…</code>. Any two messages of the same length that agree on their full blocks collide in the same way.</p>
+<p>Two further defects appear in the same module. A 251-bit message gives a digest different from the reference, because the partial last byte is placed in the opposite bit order to the specification and the C code. An empty message never raises the completion signal. The permutation datapath itself matched the reference in all core-level cases, as did full blocks.</p>
+<p>The host protocol was inferred from the RTL, since the test vectors and design document named in the package's <code>README.txt</code> are not in the archive. The reference and optimized C implementations compute these lengths correctly.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh hash-16/reproduce_asic_padder.sh
+</code></pre>
+<p>The witness simulates the three RTL variants with Icarus Verilog and compares them with the reference C build. It needs <code>iverilog</code> and <code>vvp</code>.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

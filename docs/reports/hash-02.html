@@ -44,24 +44,27 @@
 <pre><code class="language-sh">make -C hash-02 exploit
 </code></pre>
 <p>The Linux witness preallocates the input, caps process virtual memory at its current use plus 4 MiB, checks two distinct messages, and enforces a short timeout if allocation unexpectedly succeeds.</p>
-<h2 class="issue-heading" id="hash-02-2-partial-bit-axis-update-branches-on-secret-state">hash-02-2: Partial-bit AXIS update branches on secret state</h2>
+<h2 class="issue-heading" id="hash-02-2-partial-bit-axis-update-branches-on-secret-state-with-a-measurable-timing-dependence">hash-02-2: Partial-bit AXIS update branches on secret state, with a measurable timing dependence</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
 <tr><th>Scope</th><td>side-channel</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Reference and optimized AXIS-512/768/1024 on non-byte-aligned messages</td></tr>
 <tr><th>Discovery</th><td>Moderate</td></tr>
-<tr><th>Exploitation</th><td>Branch side-channel dependent</td></tr>
+<tr><th>Exploitation</th><td>Running time depends on the secret message at a fixed length, measured locally; no message or state recovery demonstrated</td></tr>
 <tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
 <tr><th>Date</th><td>2026-09-23</td></tr>
 </table></div>
 
-<p>For non-byte-aligned input, <code>axis_core_hash_bits</code> leaves the bit-sliced byte-aligned fast path (<code>axis_core.c:1698-1704</code>). The scalar nonlinear update calls <code>axis_flip_bit</code> on state-derived bits (<code>:160,633-638,685-690</code>); its generic and finalization paths retain conditional jumps under GCC <code>-O2</code>. Equal-length secret bitstrings can therefore change the branch trace. This does not apply to the ordinary byte-aligned fast path, and no timing extraction was demonstrated. See <a href="../constant-time/hash-02.html">constant_time.md</a>.</p>
-<p>Constant-time fix (easy, hence Low): apply each flip as a masked XOR, <code>reg[w] ^= (uint64_t)(-(bit &amp; 1)) &amp; mask</code>; the byte-aligned bitsliced path is already branch-free.</p>
+<p>For non-byte-aligned input, <code>axis_core_hash_bits</code> leaves the bit-sliced byte-aligned fast path (<code>axis_core.c:1698-1704</code>). The scalar nonlinear update calls <code>axis_flip_bit</code> on state-derived bits (<code>:160,633-638,685-690</code>), and the digest is written bit by bit with a branch on each output bit (<code>axis_write_digest_bit</code>, <code>:1152-1158</code>). GCC <code>-O2</code> retains conditional jumps in these paths. This does not apply to the ordinary byte-aligned fast path.</p>
+<p>The channel is measurable in the reference AXIS-512 built with the submission's own flags. For 501-bit messages the instruction count of a call varied between 2,332,745 and 2,334,747 over six random messages, and an all-zero message ran about 12,900 cycles faster than random ones (Welch t of 84 over 10,000 calls). A 504-bit control had a constant instruction count and no timing difference. The optimized tree showed the same branch and a larger difference. The figures vary with the host, and no message or state was recovered. See <a href="../constant-time/hash-02.html">constant_time.md</a>.</p>
+<p>Constant-time fix (easy): apply each flip as a masked XOR, <code>reg[w] ^= (uint64_t)(-(bit &amp; 1)) &amp; mask</code>; the byte-aligned bitsliced path is already branch-free. The repair is local; the rating is Medium because the channel is measured.</p>
 <h3 id="reproducing_1">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
-<p>Compile <code>AXIS-768/axis_core.c</code> with <code>gcc -O2 -g -c</code>; <code>objdump -dSl</code> shows conditional jumps at <code>axis_flip_bit</code> in <code>axis_step_generic</code>.</p>
+<pre><code class="language-sh">sh hash-02/reproduce_secret_branch_timing.sh
+</code></pre>
+<p>The witness requires the taint result and a message-dependent instruction count, with a byte-aligned control, and prints the timing figures as information. It needs Valgrind.</p>
 <h2 class="issue-heading" id="hash-02-3-the-invertible-axis-state-caps-axis-1024-second-preimage-security-at-768-bits">hash-02-3: The invertible AXIS state caps AXIS-1024 second-preimage security at 768 bits</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
@@ -103,6 +106,25 @@
 <pre><code class="language-sh">bash hash-02/reproduce_preimage_alignment.sh
 </code></pre>
 <p>The wrapper compiles the unmodified reference core into a temporary library, checks the independent model against 60 full hashes and 300 state steps, then verifies the digest-bit control and inversion. It leaves no build files behind.</p>
+<h2 class="issue-heading" id="hash-02-5-optimized-message-packing-indexes-tables-with-message-bytes">hash-02-5: Optimized message packing indexes tables with message bytes</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>side-channel</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Optimized AXIS-512/768/1024 when built without BMI2, including the Makefile's portable and AVX2 targets</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Cache side-channel dependent; no timing difference measured and no message recovery demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-17</td></tr>
+</table></div>
+
+<p>The optimized byte-aligned path packs each message block into two bit sequences. With BMI2 it uses <code>pext</code>. Otherwise it looks up every message byte in 256-entry tables: <code>axis_pack_even_lsb_table[block[i]]</code> and its companion table (<code>axis_core.c:1246-1274</code> in AXIS-512). <code>AXIS_HAS_BMI2</code> requires <code>AXIS_OPT_LEVEL</code> 3 and a compiler targeting BMI2 (<code>:24-28</code>), and the Makefile's portable and AVX2 targets pass <code>-mno-bmi2</code>, so both use the tables. Each table spans four cache lines, and the index is a secret message byte.</p>
+<p>With the message marked as undefined under Valgrind's memcheck, a build without BMI2 reports the table reads in <code>axis_pack_message64_reverse_block</code> for a byte-aligned message. No running-time difference between an all-zero and random messages was found over 20,000 calls, so this remains a cache-line channel without a measurement.</p>
+<p>Constant-time fix (easy, hence Low): compute the even- and odd-bit extraction with shifts and masks, as a portable replacement for <code>pext</code>.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<p>Build the optimized AXIS-512 with <code>-mno-bmi2</code> and inspect <code>axis_pack_message64_reverse_block</code>; the non-BMI2 branch reads <code>axis_pack_even_lsb_table</code> at an index taken from the message.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

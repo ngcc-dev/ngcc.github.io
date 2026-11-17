@@ -24,24 +24,27 @@
 <tr><th>Performance</th><td><a href="../performance/x86_1/hash-22.html">x86_1</a> · <a href="../performance/arm_1/hash-22.html">arm_1</a></td></tr>
 </table></div>
 
-<h2 class="issue-heading issue-heading-first" id="hash-22-1-secret-state-indexes-the-aes-s-box-and-tail-bits-control-a-branch">hash-22-1: Secret state indexes the AES S-box and tail bits control a branch</h2>
+<h2 class="issue-heading issue-heading-first" id="hash-22-1-secret-state-indexes-the-aes-s-box-and-message-bits-control-a-branch-with-a-measurable-timing-dependence">hash-22-1: Secret state indexes the AES S-box and message bits control a branch, with a measurable timing dependence</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
 <tr><th>Scope</th><td>side-channel</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
-<tr><th>Affected</th><td>Reference Pavelor-512/768/1024</td></tr>
+<tr><th>Affected</th><td>Reference Pavelor-512/768/1024; the optimized implementation uses AES instructions and is not affected</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
-<tr><th>Exploitation</th><td>Cache or branch side-channel dependent</td></tr>
+<tr><th>Exploitation</th><td>Running time depends on the Hamming weight of the final partial block of a secret message, measured locally; the table lookups add a cache channel that was not measured; no message recovery demonstrated</td></tr>
 <tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
 <tr><th>Date</th><td>2026-09-23</td></tr>
 </table></div>
 
-<p>The round function reads <code>AES_SBOX[in[i]]</code> for each secret-dependent state byte (<code>CryptHash_AlgorithmInstance.c:77</code>). The 256-byte table spans cache lines. Additionally, <code>xor_bit</code> branches on each message bit in the final partial block (<code>:177,199-200</code>); GCC <code>-O2</code> retains a conditional jump. No complete message-recovery experiment was run. See <a href="../constant-time/hash-22.html">constant_time.md</a>.</p>
-<p>Constant-time fix (easy, hence Low): the specification defines the round as <code>AESENC</code>, so use the AES instruction, with a <code>pshufb</code> or bitsliced AES fallback; the tail-bit branch becomes a masked XOR.</p>
+<p>The round function reads <code>AES_SBOX[in[i]]</code> for each secret-dependent state byte (<code>CryptHash_AlgorithmInstance.c:77</code>). The 256-byte table spans cache lines. Separately, the final partial block is absorbed bit by bit, and <code>xor_bit</code> branches on each message bit (<code>:177,199-200</code>); GCC <code>-O2</code> retains the conditional jump. This applies to every message whose length is not a multiple of the rate, byte-aligned or not.</p>
+<p>The branch is measurable in the reference Pavelor-512. For 504-bit messages the instruction count of a call is exactly a constant plus 7 per message 1-bit. Over 60,000 messages the running time rose by about 0.7 cycles per message 1-bit (9 standard deviations), and an all-zero message ran 216 cycles faster than random ones. The optimized build is clean under the same test. The figures vary with the host; they expose the Hamming weight of the final partial block, not individual bits, and no message was recovered. See <a href="../constant-time/hash-22.html">constant_time.md</a>.</p>
+<p>Constant-time fix (easy): the specification defines the round as <code>AESENC</code>, so use the AES instruction, with a <code>pshufb</code> or bitsliced AES fallback; the tail-bit branch becomes a masked XOR. The repair is local; the rating is Medium because the channel is measured.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
-<p>Inspect the cited S-box access and compile the reference file with <code>gcc -O2 -g -c</code>; <code>objdump -dSl</code> shows <code>bt</code>/<code>jae</code> at <code>xor_bit</code>.</p>
+<pre><code class="language-sh">sh hash-22/reproduce_secret_branch_timing.sh
+</code></pre>
+<p>The witness requires the taint result and the exact instruction-count relation, and prints the timing figures as information. It needs Valgrind.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -64,3 +64,26 @@ python3 hash-19/reproduce_768_1024_relation.py
 ```
 
 The script checks the identity through the submitted libraries for every length from 0 to 1151 bits on random and all-zero messages. It requires zero hits from 1152 to 1399 bits and no relation for the MoFang-768-XOF control, and checks the four cited domain constants in the source. It runs in under one second.
+
+## hash-19-3: Fixed-output wrappers ignore the requested digest length
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: MoFang-256, -512, -768 and -1024; reference and optimized implementations
+Discovery: Trivial
+Exploitation: A caller that sizes the output buffer from a shorter requested length receives a write beyond it; no secret disclosure or cryptographic break shown
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-17
+
+`hash_MDP` and `hash_MDPH` take the requested output length but never read it (reference signatures at `:201`, `:237` and `:236` for the 256/512, 768 and 1024 sources), so `CryptHash` returns 0 and always writes the full 32-, 64-, 96- or 128-byte digest. All eight fixed-output builds do this for 8- and 256-bit requests. The XOF builds honour the requested length.
+
+Fix: return an error unless `digest_len_bits` equals the instance's digest length.
+
+### Reproducing
+
+```sh
+sh hash-19/reproduce_digest_length.sh
+```
+
+The driver never writes out of bounds itself; it measures the write extent inside a larger buffer.

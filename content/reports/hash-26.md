@@ -37,3 +37,26 @@ The local checks reproduce the reporters' 126-byte CHIME-512 invariant-state wit
 make -C hash-26 reproduce
 python3 hash-26/reproduce_capacity_match.py
 ```
+
+## hash-26-2: Fixed-output wrappers ignore the requested digest length
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: CHIME-512 and CHIME-1024 reference implementation; the optimized implementation rejects other lengths
+Discovery: Trivial
+Exploitation: A caller that sizes the output buffer from a shorter requested length receives a write beyond it; no secret disclosure or cryptographic break shown
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-17
+
+The reference wrapper never reads `digest_len_bits` (`CryptHash_AlgorithmInstance.c:15-22`), returns 0 and always writes the full 64- or 128-byte digest. Both reference builds do this for 8- and 256-bit requests. The optimized C++ implementation returns −1 and writes nothing for the same requests, so the two trees disagree.
+
+Fix: return an error unless `digest_len_bits` equals the instance's digest length.
+
+### Reproducing
+
+```sh
+sh hash-26/reproduce_digest_length.sh
+```
+
+The driver never writes out of bounds itself; it measures the write extent inside a larger buffer.

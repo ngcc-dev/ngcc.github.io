@@ -3,24 +3,30 @@ Candidate: AFS-TrEDM
 Family: Symmetric (sponge hash)
 Archive: [AFS-TrEDM.zip](https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/AFS-TrEDM.zip) (SHA-256: `6a4b3d3ca5c225ad7d8714878e12f10cbf92aa6e081a8b85f504b6eeb2f4188b`)
 
-## hash-01-1: Partial-message bits control a machine branch
+## hash-01-1: Partial-message bits control a branch, with a measurable timing dependence
 
-Severity: Low
+Severity: Medium
 Status: Confirmed
 Layer: Side-channel
-Affected: Reference AFS-TrEDM-512/768/1024 on non-byte-aligned messages
+Affected: Reference and optimized AFS-TrEDM-512/768/1024 on non-byte-aligned messages
 Discovery: Trivial
-Exploitation: Side-channel dependent
+Exploitation: Running time depends on the Hamming weight of the final partial block of a secret message, measured locally; no message recovery demonstrated
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-09-23
 
-The final-bit framing loop passes each remaining message bit to `set_lane_bit_msb` (`afs_tredm.c:215`), which branches on that bit (`:99`). On x86-64, GCC `-O2` retains a `bt` followed by a conditional jump. Thus equal-length secret bitstrings can take different instruction paths. Byte-aligned inputs use a separate copy path; no timing extraction was demonstrated. See [constant_time.md](../constant-time/hash-01.md).
+For a message that is not byte-aligned, the final-block framing loop passes each remaining message bit to `set_lane_bit_msb` (`afs_tredm.c:215`), which branches on that bit (`:99`). The loop covers the whole partial block, up to one bit short of the rate. On x86-64, GCC `-O2` retains a `bt` followed by a conditional jump. Byte-aligned inputs use a separate copy path.
 
-Constant-time fix (easy, hence Low): set each bit arithmetically, e.g. `lane ^= (uint64_t)bit << pos`, instead of branching on it.
+The channel is measurable in the reference AFS-TrEDM-512 built with the submission's own flags. For 501-bit messages the instruction count of a call is exactly a constant plus 11 per message 1-bit. Over 60,000 messages the running time rose by 2.3 cycles per message 1-bit (46 standard deviations), and an all-zero message ran 882 cycles faster than random ones. A 504-bit control showed no dependence. The optimized tree has the same function and a similar timing difference. The figures vary with the host; they expose the Hamming weight of the final partial block, not individual bits, and no message was recovered. See [constant_time.md](../constant-time/hash-01.md).
+
+Constant-time fix (easy): set each bit arithmetically, e.g. `lane |= (uint64_t)bit << pos`, instead of branching on it. The repair is local; the rating is Medium because the channel is measured.
 
 ### Reproducing
 
-Compile `afs_tredm.c` with `gcc -O2 -g -fPIC -c` and inspect `objdump -dSl` around `set_lane_bit_msb`; the message-bit path contains `bt`/`jae`.
+```sh
+sh hash-01/reproduce_secret_branch_timing.sh
+```
+
+The witness requires the taint result and the exact instruction-count relation, with a byte-aligned control, and prints the timing figures as information. It needs Valgrind.
 
 ## hash-01-2: Missing final-block separation gives a 2^64-query distinguisher
 

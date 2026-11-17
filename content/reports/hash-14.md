@@ -44,12 +44,12 @@ python3 hash-14/reproduce_named_xof_prefix.py
 
 It tests every length from 0 to 3199 bits on three random streams and the all-zero stream. It requires equality for exactly the 1537-2560-bit lengths and none outside that window, and it checks the two named wrappers in the source (`laurus_512.c:260`, `laurus_xof.c:261`). It runs in under one second.
 
-## hash-14-2: Laurus-XOF ignores the requested output length and overruns shorter digest buffers
+## hash-14-2: Laurus wrappers ignore the requested output length and overrun shorter digest buffers
 
 Severity: Low
 Status: Confirmed
 Layer: Implementation
-Affected: Submitted Laurus-XOF reference `CryptHash` wrapper
+Affected: Submitted Laurus-XOF and fixed-output Laurus-512, -768 and -1024 reference `CryptHash` wrappers
 Discovery: Trivial
 Exploitation: A caller providing a 512- or 1024-bit output buffer receives a write beyond it; no secret disclosure or cryptographic break shown
 Credit: fa1c4 (University of Science and Technology of China)
@@ -57,6 +57,8 @@ Date: 2026-10-20
 Original source: [NGCC harness issue 30](https://github.com/ngcc-dev/ngcc-harness/issues/30)
 
 The XOF wrapper accepts `digest_len_bits`, but passes its fixed `DIGEST_BIT_LENGTH = 2048` to `laurus_xof` instead (`Laurus-XOF/CryptHash_AlgorithmInstance.c:14–18` and its header). A caller requesting 512 bits and allocating the corresponding 64 bytes is therefore written 256 bytes. The output-size argument is not checked or honored. The XOF core can take a variable output length; this is a wrapper error, not an attack on the hash construction.
+
+The fixed-output wrappers behave the same way. `Laurus-512`, `-768` and `-1024` never read `digest_len_bits` (`CryptHash_AlgorithmInstance.c:14–18` in each directory), return 0 and write their full 64, 96 or 128 bytes for 8- and 256-bit requests. This was added on 2026-11-17 after a survey of all hash wrappers.
 
 ### Reproducing
 
@@ -66,3 +68,9 @@ python3 hash-14/reproduce_xof_output_length.py
 ```
 
 The native call requests 512 bits in a larger sentinel-backed buffer, confirms that bytes past the requested 64 change, and compares the entire result with a 2048-bit control request. It does not make an out-of-bounds allocation or infer exploitability from the overwrite.
+
+For the fixed-output instances:
+
+```sh
+sh hash-14/reproduce_digest_length.sh
+```

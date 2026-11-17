@@ -105,6 +105,26 @@
 <pre><code class="language-sh">python3 hash-05/reproduce_final_counter_extension.py
 </code></pre>
 <p>For each submitted reference library, the script first checks a pure-Python transcription of uBlock-1024 and the uHash mode against the library on six message lengths. It then hides a random one- or two-chunk prefix behind a query interface, recovers the chaining value from <code>b</code> queries, and predicts two unqueried continuations, one ending in a short tail and one with an extra full chunk. Controls run the same attack against an ideal random function and with a non-cancelling final byte <code>80</code>, and both must mispredict. The run takes under one second. The optimized trees were inspected but not built or run.</p>
+<h2 class="issue-heading" id="hash-05-5-crypthash-returns-success-without-writing-a-digest-for-unsupported-lengths">hash-05-5: `CryptHash` returns success without writing a digest for unsupported lengths</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>uHash-512, -768 and -1024; reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>A caller that requests any length other than 512, 768 or 1024 bits gets a success code and an untouched output buffer; no memory error</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-17</td></tr>
+</table></div>
+
+<p><code>CryptHash</code> is three <code>if</code> statements, one for each of 512, 768 and 1024 bits, followed by <code>return 0</code> (<code>CryptHash_AlgorithmInstance.c:1057-1067</code> in the reference, <code>:6713-6723</code> in the optimized source). Any other <code>digest_len_bits</code>, including 0 and negative values, falls through: the function returns 0 and writes nothing. The caller then holds whatever its buffer contained and has no indication that no digest was computed; a reused buffer yields the same bytes for every message.</p>
+<p>The source is identical in the three instance directories, so each instance also computes the other two lengths. The witness builds the three reference directories and checks that 256- and 8-bit requests return 0 and leave a sentinel-filled buffer unchanged, while a 512-bit request writes 64 bytes.</p>
+<p>Fix: return an error for any unsupported length.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh hash-05/reproduce_digest_length.sh
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

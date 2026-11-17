@@ -20,7 +20,8 @@
 <p>Scope: archived reference implementation, fixed digest parameters and fixed message length. Message contents and intermediate state are secret; length-dependent block count is documented but not treated as a candidate-specific vulnerability. Alternate optimized implementations and microarchitectural measurements remain outside this pass.</p>
 <p>Reference entry: <code>AFS-TrEDM/Implementations/Reference_Implementation/AFS-TrEDM-1024/CryptHash_AlgorithmInstance.c:13</code>.</p>
 <p>The partial-bit framing path calls <code>set_frame_bit</code> with each remaining message bit (<code>afs_tredm.c:215</code>); <code>set_lane_bit_msb</code> branches on that bit (<code>afs_tredm.c:99</code>). GCC <code>-O2</code> retains a <code>bt</code>/<code>jae</code> branch. Byte-aligned messages use the separate byte-copy path (<code>afs_tredm.c:245</code>). Finding: hash-01-1.</p>
-<p>Status: source-confirmed issue. See the cited source lines; do not infer a full key-recovery or forgery attack from this result alone.</p>
+<p>Measured on 2026-11-17 with the reference AFS-TrEDM-512 and the submission's flags: for 501-bit messages the instruction count is exactly a constant plus 11 per message 1-bit, the running time rises by about 2.3 cycles per message 1-bit, and an all-zero message runs about 880 cycles faster than random ones. A 504-bit control shows no dependence. The optimized tree has the same branch. With a measured channel hash-01-1 is rated Medium.</p>
+<p>Status: measured issue. See the cited source lines; do not infer a full key-recovery or forgery attack from this result alone.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -42,6 +42,47 @@
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>Inspect <code>wish.c:86-99</code> in either reference variant. With multiplier <code>b=1</code>, <code>GF_Mul</code> executes one iteration; with <code>b=128</code>, it executes eight.</p>
+<h2 class="issue-heading" id="hash-35-2-unsupported-digest-lengths-corrupt-heap-memory-in-the-reference-implementation">hash-35-2: Unsupported digest lengths corrupt heap memory in the reference implementation</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Reference Wish512 and Wish1024</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>A request for an unsupported digest length writes past a heap allocation, or reads and writes far outside it; the bytes written are zeros, counters and constants, not message data; no control-flow hijack demonstrated</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-17</td></tr>
+</table></div>
+
+<p>The reference <code>CryptHash</code> passes <code>digest_len_bits</code> and twice that value to <code>Wish_hash</code> without any check (<code>CryptHash_AlgorithmInstance.c:18-24</code>). <code>Wish_hash</code> allocates a state of ⌊2d/128⌋ 16-byte lanes and then clears ⌊2d/8⌋ bytes (<code>wish.c:168-169</code>). Whenever d is not a multiple of 64 the <code>memset</code> runs past the allocation: 66 bytes into a 64-byte block for 264 bits, 125 into 112 for 500, 250 into 240 for 1000.</p>
+<p>Other lengths fail differently. Below 64 bits the lane count is zero, so the round constants and block counter are XORed into a zero-byte allocation and one bit is written at <code>state[num_lanes-1]</code>, far outside it; an 8-bit request aborts or faults. Lengths below 1024 other than 512 also read the mixing table past the state, so a 256-bit request returns 32 bytes that differ from call to call. A 2048-bit request reads past the table and faults, a zero request divides by zero, and a negative one starts a memset of hundreds of megabytes.</p>
+<p>Under AddressSanitizer both reference builds report the heap overflow for 264-, 500- and 1000-bit requests. The supported lengths are unaffected.</p>
+<p>Fix: reject every length other than the instance's own before allocating.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh hash-35/reproduce_digest_length.sh
+</code></pre>
+<p>The witness needs AddressSanitizer for this part. It also checks <code>hash-35-3</code>.</p>
+<h2 class="issue-heading" id="hash-35-3-optimized-wrappers-ignore-the-requested-digest-length">hash-35-3: Optimized wrappers ignore the requested digest length</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Wish512 and Wish1024, x86 performance- and resource-optimized implementations; the ARM wrappers are identical by source</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>A caller that sizes the output buffer from a shorter requested length receives a write beyond it; no secret disclosure or cryptographic break shown</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-17</td></tr>
+</table></div>
+
+<p>The optimized wrappers discard the parameter with <code>(void)digest_len_bits;</code> (<code>CryptHash_AlgorithmInstance.c:17</code>), return 0 and always write the full 64- or 128-byte digest. All four x86 builds do this for 8- and 256-bit requests.</p>
+<p>Fix: return an error unless <code>digest_len_bits</code> equals the instance's digest length.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh hash-35/reproduce_digest_length.sh
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

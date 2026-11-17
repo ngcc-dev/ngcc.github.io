@@ -18,15 +18,34 @@
 <h1 id="cuishen-hash-06">Cuishen (hash-06)</h1>
 <div class="table-wrap"><table class="meta">
 <tr><th>Candidate</th><td>Cuishen</td></tr>
-<tr><th>Family</th><td>Symmetric (block-cipher-based)</td></tr>
-<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/Cuishen.zip">Official submission archive</a></td></tr>
+<tr><th>Family</th><td>Symmetric (double-block-length Merkle–Damgård, ARX block cipher)</td></tr>
+<tr><th>Archive</th><td><a href="https://www.niccs.org.cn/niccs/Proposal/Cryptographic%20Hash%20Algorithms/Round%201%20candidates/Cuishen.zip">Cuishen.zip</a> (SHA-256: <code>b9192c8a4046d8af48ea19ddefd538f11dd456766b2daf3597762c76a2cc0d6d</code>)</td></tr>
 <tr><th>Specification</th><td><a href="https://github.com/ngcc-dev/ngcc-harness/raw/dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/hash-06/hash-06-spec.pdf" title="Download hash-06-spec.pdf from GitHub">hash-06-spec.pdf</a>&nbsp;<a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/hash-06/hash-06-spec.pdf" title="Open the hash-06 specification PDF">PDF</a></td></tr>
 <tr><th>Performance</th><td><a href="../performance/x86_1/hash-06.html">x86_1</a> · <a href="../performance/arm_1/hash-06.html">arm_1</a></td></tr>
 </table></div>
 
-<h3 id="review-status">Review status</h3>
-<p>No vulnerability finding is currently published for this candidate. This is not a security endorsement: it records only the present state of the public finding inventory, and the candidate remains under review.</p>
-<p>See the <a href="../constant-time/hash-06.html">constant-time review</a> and the performance reports (<a href="../performance/x86_1/hash-06.html">x86_1</a> · <a href="../performance/arm_1/hash-06.html">arm_1</a>). See the <a href="https://www.niccs.org.cn/niccs/Round1Submissions4/pc/content/content_2101539989910802432.html">official submission page</a>.</p>
+<h2 class="issue-heading issue-heading-first" id="hash-06-1-reduced-round-differential-figures-are-contradicted-by-probability-1-trails">hash-06-1: Reduced-round differential figures are contradicted by probability-1 trails</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Specification §5.2.1, Cases 1, 2 and 4; all three instances</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Collisions for every message pair of a fixed difference when Octarx is cut to 6 rounds (Cuishen-512) or 5 rounds (Cuishen-768, -1024); no effect on the full 64 rounds shown</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-17</td></tr>
+</table></div>
+
+<p>Section 5.2.1 (pp. 16–17) reports the best differential probabilities found for reduced-round Octarx and argues from their decay that 64 rounds are safe. For Case 1, a message-block difference with zero chaining difference before and after, it gives 2^-2, 2^-5 and 2^-13 for 4, 5 and 6 rounds of Octarx-256, and 2^-6 and 2^-16 for 4 and 5 rounds of Octarx-512.</p>
+<p>Trails of probability 1 exist for those round counts. Each new word of the message register reaches a round key once, three rounds after it is made (<code>CryptHash_Cuishen-512.c:178-198</code>), and two round-key words feed the two addends of one addition (<code>:226</code>). Two message words that differ only in the top bit after rotation therefore cancel inside one round, and the difference stays out of the round keys for the next rounds. For Octarx-256 the differences 2^56 in word 12 and 2^43 in word 5 give zero state difference through 6 rounds; for Octarx-512 a four-word difference does the same through 5 rounds.</p>
+<p>With the reference code's round loops cut to 6 rounds, Cuishen-512 gave full-digest collisions for 1,000 of 1,000 random message pairs with that difference; Cuishen-768 and Cuishen-1024 did the same at 5 rounds. A variant on bit 40 held for 497 of 1,000 pairs. One round more gave no collision, and neither did the full 64 rounds. Monte Carlo runs also contradict the Case 2 and Case 4 figures: 2^-3.2 at 6 rounds of Octarx-512 and 2^-3.0 at 7 rounds of Octarx-256, against stated bounds of 2^-14 and 2^-10.</p>
+<p>The published figures understate what an attacker gets for free in the first 5 to 6 rounds, which is about 9% of the rounds. The decay argument was not re-derived from the corrected starting point, and no attack on more rounds was found.</p>
+<h3 id="reproducing">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh hash-06/reproduce_reduced_round_rk.sh
+</code></pre>
+<p>The witness builds the reference source with only the round count changed, first checks that 64 rounds reproduce the unmodified function, and then counts collisions at each reduced round count.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

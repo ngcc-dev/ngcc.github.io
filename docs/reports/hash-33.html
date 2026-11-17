@@ -24,26 +24,33 @@
 <tr><th>Performance</th><td><a href="../performance/x86_1/hash-33.html">x86_1</a> · <a href="../performance/arm_1/hash-33.html">arm_1</a></td></tr>
 </table></div>
 
-<h2 class="issue-heading issue-heading-first" id="hash-33-1-clang-compiles-the-xof-output-copy-to-a-branch-on-each-output-bit">hash-33-1: Clang compiles the XOF output copy to a branch on each output bit</h2>
+<h2 class="issue-heading issue-heading-first" id="hash-33-1-the-reference-xof-implementation-branches-on-each-output-bit-with-a-measurable-timing-dependence">hash-33-1: The reference XOF implementation branches on each output bit, with a measurable timing dependence</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
 <tr><th>Scope</th><td>side-channel</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Reference Thunder-XOF-256, -384 and -512, x86 and ARM trees, when built with Clang, or with GCC without optimization; GCC at <code>-O2</code> is not affected</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
-<tr><th>Exploitation</th><td>Side-channel dependent; no timing extraction demonstrated</td></tr>
-<tr><th>Credit</th><td>aimir (GitHub @aimir)</td></tr>
+<tr><th>Exploitation</th><td>Running time depends on the Hamming weight of the secret output, measured locally; an observer of branch directions sees each output bit; no output recovery demonstrated</td></tr>
+<tr><th>Credit</th><td>aimir (GitHub @aimir); timing measurement by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
 <tr><th>Date</th><td>2026-11-16</td></tr>
 </table></div>
 <p>Original source: <a href="https://github.com/ngcc-dev/ngcc-harness/issues/40">GitHub issue #40</a></p>
 <p>The XOF copies each squeezed block into the output bit by bit with <code>copy_bits_msb</code>, which writes each bit with <code>if (src_bit) dst |= mask; else dst &amp;= ~mask;</code> (<code>CryptHash_AlgorithmInstance.c:187</code>). The control flow therefore follows the value of every output bit, and XOF output is secret whenever it is used as key material.</p>
-<p>GCC 15 at <code>-O2</code> turns the conditional into <code>cmov</code> on x86-64, but keeps the branch at <code>-O0</code>. Ubuntu Clang 21.1.8 keeps it at <code>-O0</code> and at <code>-O2</code>: in the full x86 Thunder-XOF-256 and -512 and ARM Thunder-XOF-384 translation units compiled for x86-64 it keeps a <code>bt</code> on the output bit followed by <code>jae</code> inside the inlined copy loop, and the same helper compiled for AArch64 keeps a <code>tbz</code> on that bit. The issue reports the branch for Apple Clang 17 on ARM64 at <code>-O2</code> and <code>-Os</code> for all three sets, and on x86-64 for Thunder-XOF-256. All twelve archived copies of the helper, including the self-assessment trees, have the same source line.</p>
-<p>Each output bit therefore selects one of two short instruction paths. A local branch-predictor or instruction-trace observer could learn the bits; no timing extraction was attempted. With the message marked as undefined under Valgrind's memcheck, the only secret-dependent branch reported in any tree is this one; the fixed-output reference and optimized builds are clean with both compilers.</p>
-<p>Constant-time fix (easy, hence Low): insert the bit arithmetically, for example <code>dst[i] = (dst[i] &amp; ~mask) | (mask &amp; -src_bit)</code>, or copy whole bytes when the offset is byte-aligned.</p>
+<p>GCC 15 at <code>-O2</code> turns the conditional into <code>cmov</code> on x86-64, but keeps the branch at <code>-O0</code>. Ubuntu Clang 21.1.8 keeps it at <code>-O0</code> and at <code>-O2</code>: in the full x86 Thunder-XOF-256 and -512 and ARM Thunder-XOF-384 translation units compiled for x86-64 it leaves a <code>bt</code> on the output bit followed by <code>jae</code> inside the inlined copy loop, and the same helper compiled for AArch64 has a <code>tbz</code> on that bit. The issue reports the branch for Apple Clang 17 on ARM64 at <code>-O2</code> and <code>-Os</code> for all three sets, and on x86-64 for Thunder-XOF-256. All twelve archived copies of the helper, including the self-assessment trees, have the same source line. With the message marked as undefined under Valgrind's memcheck, this is the only secret-dependent branch reported in any tree; the fixed-output reference and optimized builds are clean with both compilers.</p>
+<p>The channel is measurable. On reference Thunder-XOF-256 with one 1280-bit output block:</p>
+<ul>
+<li>With GCC <code>-O0</code> the two paths differ by two instructions, and the instruction count of a call is exactly a constant minus twice the output's Hamming weight.</li>
+<li>Over 300,000 random messages, the running time fell by 0.22 cycles per output 1-bit with GCC <code>-O0</code> (a correlation 18.5 standard deviations from zero) and by 0.24 cycles with Clang <code>-O2</code> (24.8), where the instruction count is constant. GCC <code>-O2</code> showed no dependence (0.0).</li>
+</ul>
+<p>The timing figures vary with the host and the code layout. They expose the Hamming weight of each output block, not individual bits; an observer of branch directions would see the bits themselves. No output was recovered.</p>
+<p>Constant-time fix (easy): insert the bit arithmetically, for example <code>dst[i] = (dst[i] &amp; ~mask) | (mask &amp; -src_bit)</code>, or copy whole bytes when the offset is byte-aligned. The repair is local; the rating is Medium because the channel is measured.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
-<p>Compile <code>Thunder-X86/Implementations/Reference_Implementation/Thunder-XOF-256/CryptHash_AlgorithmInstance.c</code> with <code>clang -O2 -S</code> for x86-64 and search the copy loop for <code>bt</code> followed by <code>jae</code>; with <code>gcc -O2 -S</code> the same loop has <code>cmov</code>. The issue's attachment gives the Apple Clang matrix and a branch-free patch.</p>
+<pre><code class="language-sh">sh hash-33/reproduce_xof_output_timing.sh
+</code></pre>
+<p>The witness requires the taint result and the exact instruction-count relation, and prints the timing regression for each build as information. It needs Valgrind. The issue's attachment gives the Apple Clang matrix and a branch-free patch.</p>
 <h2 class="issue-heading" id="hash-33-2-fixed-output-wrappers-ignore-the-requested-digest-length">hash-33-2: Fixed-output wrappers ignore the requested digest length</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
