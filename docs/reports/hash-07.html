@@ -30,7 +30,7 @@
 <tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
 <tr><th>Scope</th><td>side-channel</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
-<tr><th>Affected</th><td>Reference Dragon-XOF-256, -384 and -512, x86 and ARM trees, when built with Clang; GCC builds inspected so far are not affected</td></tr>
+<tr><th>Affected</th><td>Reference Dragon-XOF-256, -384 and -512, x86 and ARM trees, when built with Clang, or with GCC without optimization; GCC at <code>-O2</code> is not affected</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
 <tr><th>Exploitation</th><td>Side-channel dependent; no timing extraction demonstrated</td></tr>
 <tr><th>Credit</th><td>aimir (GitHub @aimir)</td></tr>
@@ -38,12 +38,33 @@
 </table></div>
 <p>Original source: <a href="https://github.com/ngcc-dev/ngcc-harness/issues/40">GitHub issue #40</a></p>
 <p>The XOF squeezes each block into a buffer and copies it bit by bit into the output with <code>copy_bits_msb</code> (<code>CryptHash_AlgorithmInstance.c:94–107</code>, called at <code>:228</code>). The helper writes each bit with <code>if (src_bit) dst |= mask; else dst &amp;= ~mask;</code> (<code>:101</code>), so the control flow follows the value of every output bit. The specification lists key derivation among the family's uses, where the XOF output is secret.</p>
-<p>GCC 15 at <code>-O2</code> turns the conditional into <code>cmov</code> on x86-64. Ubuntu Clang 21.1.8 at <code>-O2</code> does not: in the full x86 Dragon-XOF-256 and -512 translation units it keeps a <code>bt</code> on the output bit followed by <code>jae</code> inside the inlined copy loop, and the same helper compiled for AArch64 keeps a <code>tbz</code> on that bit. The issue reports the same behaviour for Apple Clang 17 on ARM64 and x86-64 at <code>-O0</code>, <code>-O2</code> and <code>-Os</code>. All twelve archived copies of the helper, including the self-assessment trees, have the same source line.</p>
-<p>Each output bit therefore selects one of two short instruction paths. A local branch-predictor or instruction-trace observer could learn the bits; no timing extraction was attempted.</p>
+<p>GCC 15 at <code>-O2</code> turns the conditional into <code>cmov</code> on x86-64, but keeps the branch at <code>-O0</code>. Ubuntu Clang 21.1.8 keeps it at <code>-O0</code> and at <code>-O2</code>: in the full x86 Dragon-XOF-256 and -512 translation units it keeps a <code>bt</code> on the output bit followed by <code>jae</code> inside the inlined copy loop, and the same helper compiled for AArch64 keeps a <code>tbz</code> on that bit. The issue reports the same behaviour for Apple Clang 17 on ARM64 and x86-64 at <code>-O0</code>, <code>-O2</code> and <code>-Os</code>. All twelve archived copies of the helper, including the self-assessment trees, have the same source line.</p>
+<p>Each output bit therefore selects one of two short instruction paths. A local branch-predictor or instruction-trace observer could learn the bits; no timing extraction was attempted. With the message marked as undefined under Valgrind's memcheck, the only secret-dependent branch reported in any tree is this one; the fixed-output reference and optimized builds are clean with both compilers.</p>
 <p>Constant-time fix (easy, hence Low): insert the bit arithmetically, for example <code>dst[i] = (dst[i] &amp; ~mask) | (mask &amp; -src_bit)</code>, or copy whole bytes when the offset is byte-aligned.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>Compile <code>Dragon-x86/Implementations/Reference_Implementation/Dragon-XOF-256/CryptHash_AlgorithmInstance.c</code> with <code>clang -O2 -S</code> for x86-64 and search the copy loop for <code>bt</code> followed by <code>jae</code>; with <code>gcc -O2 -S</code> the same loop has <code>cmov</code>. The issue's attachment gives the Apple Clang matrix and a branch-free patch.</p>
+<h2 class="issue-heading" id="hash-07-2-fixed-output-wrappers-ignore-the-requested-digest-length">hash-07-2: Fixed-output wrappers ignore the requested digest length</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Dragon-512, -768 and -1024; reference, optimized and additional implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>A caller that sizes the output buffer from a shorter requested length receives a write beyond it; no secret disclosure or cryptographic break shown</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-17</td></tr>
+</table></div>
+
+<p><code>CryptHash</code> takes <code>digest_len_bits</code>, but the fixed-output implementations never read it. They return 0 and always write the instance's full 64-, 96- or 128-byte digest. A request for 256 bits from Dragon-512, with a 32-byte buffer, is therefore written 64 bytes. The three XOF instances honour the requested length, so the behaviour differs within the same submission.</p>
+<p>The witness builds all 18 fixed-output trees and calls each with requests for 256 bits and for 8 bits, in a large sentinel-filled buffer. Every call returns 0, writes the full digest, and the bytes equal those of a full-length request. The XOF builds write exactly the 32 requested bytes.</p>
+<p>Fix: return an error unless <code>digest_len_bits</code> equals <code>DIGEST_BIT_LENGTH</code>.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh hash-07/reproduce_digest_length.sh
+</code></pre>
+<p>The driver never writes out of bounds itself; it measures the write extent inside a larger buffer.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

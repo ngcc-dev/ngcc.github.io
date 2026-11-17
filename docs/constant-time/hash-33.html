@@ -17,10 +17,11 @@
 
 <!-- synchronized report: hash-33/constant_time.md -->
 <h1 id="constant-time-audit-hash-33">Constant-time audit — hash-33</h1>
-<p>Scope: archived reference implementation, fixed digest parameters and fixed message length. Message contents and intermediate state are secret; length-dependent block count is documented but not treated as a candidate-specific vulnerability. Alternate optimized implementations and microarchitectural measurements remain outside this pass.</p>
+<p>Scope: archived reference implementation, fixed digest parameters and fixed message length. Message contents and intermediate state are secret; length-dependent block count is documented but not treated as a candidate-specific vulnerability. Microarchitectural measurements remain outside this pass. The optimized and additional implementations were added on 2026-11-17: they are straight-line 64-bit word operations with no tables.</p>
 <p>Reference entry: <code>Thunder/Implementations and Test_vector/Thunder-ARM/Implementations/Reference_Implementation/Thunder-1024/CryptHash_AlgorithmInstance.c:175</code>.</p>
 <p>The XOF output-bit copy has <code>if (src_bit)</code> (<code>Thunder-X86/Implementations/Reference_Implementation/Thunder-XOF-256/CryptHash_AlgorithmInstance.c:187</code>). GCC <code>-O2</code> compiles this to a <code>cmovne</code> with fixed-address accesses, so that source branch is not a compiled branch in the GCC build. Clang 21 at <code>-O2</code> keeps <code>bt</code>/<code>jae</code> on x86-64 and <code>tbz</code> on AArch64, and the GitHub issue reports the same for Apple Clang 17. Filed as <code>hash-33-1</code> (Low, Side-channel).</p>
-<p>Status: <code>hash-33-1</code> for Clang builds. See the cited source lines; do not infer a full preimage attack from this result alone.</p>
+<p>A taint run on 2026-11-17 marked the message as undefined under Valgrind memcheck and hashed 17 lengths from 0 to 3,000 bits. The fixed-output reference and optimized builds reported no secret-dependent branch or address with GCC 15 and Clang 21 at <code>-O0</code> and <code>-O2</code>. The XOF builds reported exactly one, in <code>copy_bits_msb</code>, with Clang at both levels and with GCC at <code>-O0</code>; GCC <code>-O2</code> was clean.</p>
+<p>Status: <code>hash-33-1</code> for Clang builds and unoptimized GCC builds; no other issue. See the cited source lines; do not infer a full preimage attack from this result alone.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
