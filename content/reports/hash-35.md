@@ -30,8 +30,9 @@ Layer: Implementation
 Affected: Reference Wish512 and Wish1024
 Discovery: Trivial
 Exploitation: A request for an unsupported digest length writes past a heap allocation, or reads and writes far outside it; the bytes written are zeros, counters and constants, not message data; no control-flow hijack demonstrated
-Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance; independently reported by LK-PQC-Hunter (NGCC CryptHash Forum sender), using the LKQ PQC Hunter automated tool
 Date: 2026-11-17
+Follow-up source: [LK-PQC-Hunter's CryptHash Forum post](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/3ML3M6J66GFEZSKRHVY2S4C2J3X23S7K/), posted after this entry was published
 
 The reference `CryptHash` passes `digest_len_bits` and twice that value to `Wish_hash` without any check (`CryptHash_AlgorithmInstance.c:18-24`). `Wish_hash` allocates a state of ⌊2d/128⌋ 16-byte lanes and then clears ⌊2d/8⌋ bytes (`wish.c:168-169`). Whenever d is not a multiple of 64 the `memset` runs past the allocation: 66 bytes into a 64-byte block for 264 bits, 125 into 112 for 500, 250 into 240 for 1000.
 
@@ -57,8 +58,9 @@ Layer: Implementation
 Affected: Wish512 and Wish1024, x86 performance- and resource-optimized implementations; the ARM wrappers are identical by source
 Discovery: Trivial
 Exploitation: A caller that sizes the output buffer from a shorter requested length receives a write beyond it; no secret disclosure or cryptographic break shown
-Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance; independently reported by LK-PQC-Hunter (NGCC CryptHash Forum sender), using the LKQ PQC Hunter automated tool
 Date: 2026-11-17
+Follow-up source: [LK-PQC-Hunter's CryptHash Forum post](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/3ML3M6J66GFEZSKRHVY2S4C2J3X23S7K/), posted after this entry was published
 
 The optimized wrappers discard the parameter with `(void)digest_len_bits;` (`CryptHash_AlgorithmInstance.c:17`), return 0 and always write the full 64- or 128-byte digest. All four x86 builds do this for 8- and 256-bit requests.
 

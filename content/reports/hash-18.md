@@ -83,3 +83,25 @@ python3 hash-18/validate_listing3.py
 ```
 
 The complete-message collision above was independently evaluated in Python and scalar C by the reporters; no native AVX-512 execution is required or claimed.
+
+## hash-18-3: Every reference Megascon instance leaks its padded message buffer on every call
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: All six Megascon reference instances (384, 512, 768, 1024, 384-XOF and 512-XOF); the optimized implementations stream the message and are not affected
+Discovery: Trivial
+Exploitation: Unbounded memory growth in a long-running process that hashes repeatedly; no disclosure or corruption
+Credit: LK-PQC-Hunter (NGCC CryptHash Forum sender), using the LKQ PQC Hunter automated tool
+Date: 2026-11-17
+Original source: [LK-PQC-Hunter's CryptHash Forum post](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/U4J2DZ433DEVFAAQTETX4FV7UDRBCKIW/)
+
+The sponge functions allocate the padded message with `padded_input = malloc(padded_input_len)` (`MEGASCON-512/CryptHash_AlgorithmInstance.c:148`, returning at `:173`, and the same pattern in the other five) and return 0 without freeing it, so every call leaks a block the size of the padded message. The result of `malloc` is also used without a check, so an allocation failure dereferences a null pointer. With `malloc` and `free` wrapped, 100 calls left 100 live blocks in each of the six reference instances.
+
+Fix: free the buffer before returning.
+
+### Reproducing
+
+```sh
+sh hash-18/reproduce_leak.sh
+```

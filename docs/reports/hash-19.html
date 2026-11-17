@@ -81,10 +81,10 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/crypthashforu
 <tr><th>Affected</th><td>MoFang-256, -512, -768 and -1024; reference and optimized implementations</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
 <tr><th>Exploitation</th><td>A caller that sizes the output buffer from a shorter requested length receives a write beyond it; no secret disclosure or cryptographic break shown</td></tr>
-<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance; independently reported by LK-PQC-Hunter (NGCC CryptHash Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
 <tr><th>Date</th><td>2026-11-17</td></tr>
 </table></div>
-
+<p>Follow-up source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/5TTUBC7JEUGTBRABYD53LMM7SHGF664T/">LK-PQC-Hunter's CryptHash Forum post</a>, posted after this entry was published</p>
 <p><code>hash_MDP</code> and <code>hash_MDPH</code> take the requested output length but never read it (reference signatures at <code>:201</code>, <code>:237</code> and <code>:236</code> for the 256/512, 768 and 1024 sources), so <code>CryptHash</code> returns 0 and always writes the full 32-, 64-, 96- or 128-byte digest. All eight fixed-output builds do this for 8- and 256-bit requests. The XOF builds honour the requested length.</p>
 <p>Fix: return an error unless <code>digest_len_bits</code> equals the instance's digest length.</p>
 <h3 id="reproducing_2">Reproducing</h3>

@@ -25,3 +25,25 @@ make -C hash-25 exploit
 ```
 
 The Linux witness preallocates the input, caps process virtual memory at its current use plus 4 MiB, and checks that two calls leave the same sentinel buffer unchanged while reporting success.
+
+## hash-25-2: The reference TaiChi-1024 leaks its padded message buffer on every call
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: TaiChi-1024 reference implementation; TaiChi-512, TaiChi-768 and the optimized implementation are not affected
+Discovery: Trivial
+Exploitation: Unbounded memory growth in a long-running process that hashes repeatedly; no disclosure or corruption
+Credit: LK-PQC-Hunter (NGCC CryptHash Forum sender), using the LKQ PQC Hunter automated tool
+Date: 2026-11-17
+Original source: [LK-PQC-Hunter's CryptHash Forum post](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/MXN3J7WZ5SVY7QY5YU2BOABMREACB6L2/)
+
+`TaiChi_Hash` allocates the padded message with `buf = malloc(padded_len)` (`CryptHash_AlgorithmInstance.c:246`). The 512- and 768-bit references free it after copying the digest (`:272`). The 1024-bit reference squeezes twice and returns without freeing it, so every call leaks one block the size of the padded message. With `malloc` and `free` wrapped, 100 calls left 100 live blocks for TaiChi-1024 and none for TaiChi-512 or TaiChi-768.
+
+Fix: free the buffer before returning.
+
+### Reproducing
+
+```sh
+sh hash-25/reproduce_leak.sh
+```

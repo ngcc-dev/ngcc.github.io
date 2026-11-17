@@ -44,8 +44,9 @@ Layer: Implementation
 Affected: Dragon-512, -768 and -1024; reference, optimized and additional implementations
 Discovery: Trivial
 Exploitation: A caller that sizes the output buffer from a shorter requested length receives a write beyond it; no secret disclosure or cryptographic break shown
-Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance; independently reported by LK-PQC-Hunter (NGCC CryptHash Forum sender), using the LKQ PQC Hunter automated tool
 Date: 2026-11-17
+Follow-up source: [LK-PQC-Hunter's CryptHash Forum post](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/IMWDGRNB2DU7SUEW75S4AJTJILCGQFFW/), posted after this entry was published
 
 `CryptHash` takes `digest_len_bits`, but the fixed-output implementations never read it. They return 0 and always write the instance's full 64-, 96- or 128-byte digest. A request for 256 bits from Dragon-512, with a 32-byte buffer, is therefore written 64 bytes. The three XOF instances honour the requested length, so the behaviour differs within the same submission.
 

@@ -60,10 +60,10 @@
 <tr><th>Affected</th><td>Dragon-512, -768 and -1024; reference, optimized and additional implementations</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
 <tr><th>Exploitation</th><td>A caller that sizes the output buffer from a shorter requested length receives a write beyond it; no secret disclosure or cryptographic break shown</td></tr>
-<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance; independently reported by LK-PQC-Hunter (NGCC CryptHash Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
 <tr><th>Date</th><td>2026-11-17</td></tr>
 </table></div>
-
+<p>Follow-up source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/IMWDGRNB2DU7SUEW75S4AJTJILCGQFFW/">LK-PQC-Hunter's CryptHash Forum post</a>, posted after this entry was published</p>
 <p><code>CryptHash</code> takes <code>digest_len_bits</code>, but the fixed-output implementations never read it. They return 0 and always write the instance's full 64-, 96- or 128-byte digest. A request for 256 bits from Dragon-512, with a 32-byte buffer, is therefore written 64 bytes. The three XOF instances honour the requested length, so the behaviour differs within the same submission.</p>
 <p>The witness builds all 18 fixed-output trees and calls each with requests for 256 bits and for 8 bits, in a large sentinel-filled buffer. Every call returns 0, writes the full digest, and the bytes equal those of a full-length request. The XOF builds write exactly the 32 requested bytes.</p>
 <p>Fix: return an error unless <code>digest_len_bits</code> equals <code>DIGEST_BIT_LENGTH</code>.</p>

@@ -106,8 +106,9 @@ Layer: Implementation
 Affected: uHash-512, -768 and -1024; reference and optimized implementations
 Discovery: Trivial
 Exploitation: A caller that requests any length other than 512, 768 or 1024 bits gets a success code and an untouched output buffer; no memory error
-Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance; independently reported by LK-PQC-Hunter (NGCC CryptHash Forum sender), using the LKQ PQC Hunter automated tool
 Date: 2026-11-17
+Follow-up source: [LK-PQC-Hunter's CryptHash Forum post](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/I2PMPUCQDTRE4BOXJFJXI6UY2ZEILOKI/), posted after this entry was published
 
 `CryptHash` is three `if` statements, one for each of 512, 768 and 1024 bits, followed by `return 0` (`CryptHash_AlgorithmInstance.c:1057-1067` in the reference, `:6713-6723` in the optimized source). Any other `digest_len_bits`, including 0 and negative values, falls through: the function returns 0 and writes nothing. The caller then holds whatever its buffer contained and has no indication that no digest was computed; a reused buffer yields the same bytes for every message.
 

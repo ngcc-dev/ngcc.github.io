@@ -48,6 +48,27 @@
 <pre><code class="language-sh">make -C hash-12 lib/libIphe-512.so lib/libIphe-1024.so
 python3 hash-12/reproduce_cross_domain.py
 </code></pre>
+<h2 class="issue-heading" id="hash-12-2-final-block-message-bits-control-a-branch-with-a-measurable-timing-dependence">hash-12-2: Final-block message bits control a branch, with a measurable timing dependence</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>side-channel</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Iphe-512, -768 and -1024; reference, optimized and additional implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Running time depends on the Hamming weight of the final block of a secret message, measured locally; no message recovery demonstrated</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC CryptHash Forum sender), using the LKQ PQC Hunter automated tool; timing measurement by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-17</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/4VZ5ASH4KKC5LNVK6LDPOEJDEAESROUW/">LK-PQC-Hunter's CryptHash Forum post</a></p>
+<p><code>load_final_word</code> assembles each 64-bit word of the final block one bit at a time and branches on each message bit with <code>if ((local_pos &lt; remaining_bits &amp;&amp; get_message_bit(...)) || ...)</code> (<code>CryptHash_AlgorithmInstance.c:110-126</code> in the reference; the optimized and additional sources have the same loop). The final block is always assembled this way, so every message, byte-aligned or not, takes a path that depends on the bits of its last block.</p>
+<p>With the message marked as undefined under Valgrind's memcheck, all three trees report the branch. In the reference Iphe-512 at GCC <code>-O2</code>, the instruction count of a call on a 256-bit message is exactly a constant plus 3 per message 1-bit. Over 60,000 messages an all-zero message ran about 50 cycles faster than random ones for 256-bit messages and about 180 for 504-bit messages; with Clang <code>-O2</code> the running time fell by about 1.5 cycles per message 1-bit (64 standard deviations at 504 bits). The figures vary with the host; they expose the Hamming weight of the final block, not individual bits, and no message was recovered.</p>
+<p>Constant-time fix (easy): compute each bit as a masked value and OR it in unconditionally. The repair is local; the rating is Medium because the channel is measured.</p>
+<h3 id="reproducing_1">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh hash-12/reproduce_secret_branch_timing.sh
+</code></pre>
+<p>The witness requires the taint result and the exact instruction-count relation, and prints the timing figures as information. It needs Valgrind.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

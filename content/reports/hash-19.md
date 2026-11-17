@@ -73,8 +73,9 @@ Layer: Implementation
 Affected: MoFang-256, -512, -768 and -1024; reference and optimized implementations
 Discovery: Trivial
 Exploitation: A caller that sizes the output buffer from a shorter requested length receives a write beyond it; no secret disclosure or cryptographic break shown
-Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance; independently reported by LK-PQC-Hunter (NGCC CryptHash Forum sender), using the LKQ PQC Hunter automated tool
 Date: 2026-11-17
+Follow-up source: [LK-PQC-Hunter's CryptHash Forum post](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/5TTUBC7JEUGTBRABYD53LMM7SHGF664T/), posted after this entry was published
 
 `hash_MDP` and `hash_MDPH` take the requested output length but never read it (reference signatures at `:201`, `:237` and `:236` for the 256/512, 768 and 1024 sources), so `CryptHash` returns 0 and always writes the full 32-, 64-, 96- or 128-byte digest. All eight fixed-output builds do this for 8- and 256-bit requests. The XOF builds honour the requested length.
 

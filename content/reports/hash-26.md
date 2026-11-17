@@ -46,8 +46,9 @@ Layer: Implementation
 Affected: CHIME-512 and CHIME-1024 reference implementation; the optimized implementation rejects other lengths
 Discovery: Trivial
 Exploitation: A caller that sizes the output buffer from a shorter requested length receives a write beyond it; no secret disclosure or cryptographic break shown
-Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance; independently reported by LK-PQC-Hunter (NGCC CryptHash Forum sender), using the LKQ PQC Hunter automated tool
 Date: 2026-11-17
+Follow-up source: [LK-PQC-Hunter's CryptHash Forum post](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/2GZZAVWULBN2VOP6BXJ4SJGP3TKHIORR/), posted after this entry was published
 
 The reference wrapper never reads `digest_len_bits` (`CryptHash_AlgorithmInstance.c:15-22`), returns 0 and always writes the full 64- or 128-byte digest. Both reference builds do this for 8- and 256-bit requests. The optimized C++ implementation returns −1 and writes nothing for the same requests, so the two trees disagree.
 

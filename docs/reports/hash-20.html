@@ -79,6 +79,25 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/crypthashforu
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">make -C hash-20 reproduce-forum
 </code></pre>
+<h2 class="issue-heading" id="hash-20-3-every-reference-mozi-instance-leaks-its-padded-message-buffer-on-every-call">hash-20-3: Every reference Mozi instance leaks its padded message buffer on every call</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All six Mozi reference instances (384, 512, 768, 1024, 384-XOF and 512-XOF); the optimized implementations stream the message and are not affected</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Unbounded memory growth in a long-running process that hashes repeatedly; no disclosure or corruption</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC CryptHash Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
+<tr><th>Date</th><td>2026-11-17</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/LRPFLS5ERJWJALDYWIA4UHE5SDPQEVRU/">LK-PQC-Hunter's CryptHash Forum post</a></p>
+<p>The sponge functions allocate the padded message with <code>padded_input = malloc(padded_input_len)</code> (<code>MOZI-512/CryptHash_AlgorithmInstance.c:161</code>, returning at <code>:186</code>, and the same pattern in the other five) and return 0 without freeing it, so every call leaks a block the size of the padded message. The result of <code>malloc</code> is also used without a check, so an allocation failure dereferences a null pointer. With <code>malloc</code> and <code>free</code> wrapped, 100 calls left 100 live blocks in each of the six reference instances.</p>
+<p>Fix: free the buffer before returning.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh hash-20/reproduce_leak.sh
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
