@@ -88,3 +88,27 @@ sh hash-19/reproduce_digest_length.sh
 ```
 
 The driver never writes out of bounds itself; it measures the write extent inside a larger buffer.
+
+## hash-19-4: The key expansion applies the specified block transpositions in exchanged positions
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: MoFang-256, -512, -768 and -1024 and the two XOFs; reference implementation (run on MoFang-256 and -768)
+Discovery: Moderate
+Exploitation: An implementation that follows the printed key expansion computes a different function and reproduces none of the KATs; no security consequence identified
+Credit: Zhiqiang Yang, Lin Ao, Yue Li, Xin Yi, Ling Song and Lei Wang, using the CryptVerify tool (Cryptol and SAW)
+Date: 2026-11-19
+Original source: [Yang et al.'s formal verification report, finding 1](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/7RGEIZ5TI5BTESVHWRVJMTQHX5CMYUB5/attachment/4/FormalVerificationReportonNGCCHashCandidates.pdf)
+
+Figure 5 (§2.4, physical p. 9) numbers each message word (x, y) with x the column and y the row, the convention under which the code's rotation tables equal Tables 3 and 6. In that convention Algorithm 3 (§2.4.4, p. 14) transposes the first block with C[x,y] = B[y, 2x+y] (line 7) and the second with C[x,y] = B[x+2y, x] (line 18). The reference `MessageExpansion1`, which stores word (x, y) as `key[y][x]`, does the opposite: the first block uses `key0[j][(j+2*i)%3]` (`CryptHash_AlgorithmInstance.c:138`, B[x+2y, x]) and the second `key1[(i+2*j)%3][i]` (`:150`, B[y, 2x+y]). Algorithm 4 (p. 15, lines 4, 12 and 23) for MoFang-768 and -1024 is exchanged the same way on all three blocks. The two maps are inverse permutations, and the code's choice fits the printed formulas only if B[x,y] is read as row x, column y, contrary to Figure 5; Table 5 (p. 13) fits either reading.
+
+The shipped MoFang-256 and -768 reproduce all 4,097 KAT_2_12 vectors. With only the transposition expressions changed to the printed formulas in the Figure 5 convention, they reproduce none.
+
+### Reproducing
+
+```sh
+sh hash-19/reproduce_spec_mismatch.sh
+```
+
+The witness regenerates each KAT_2_12 file with the shipped NGCC generator and uses it only if its canonical SHA-256 equals the official file's entry in `hash-19/kat.sha256`.

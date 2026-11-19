@@ -188,3 +188,68 @@ python3 sign-22/certify_smoothing_budget.py
 ```
 
 The certificate checks all 16 `params_tables.h` copies against Table 3, confirms that each `X'` CDT has the stated standard deviation, evaluates `eps` and the `(1+4eps)^{Q_S}` multiplier at `2^34`, `2^64` and `2^80` queries, and checks the theorem wording in the PDF when `pdftotext` is installed. As controls, it requires the exact `eps` not to exceed the Lemma 2.2 bound and requires an `eps <= 2^-80` width to keep the multiplier below 2 at `2^64` queries. It runs in under a second and makes no statistical measurement of signatures.
+
+## sign-22-8: Rhyme-SM3 uses smaller challenge weights than specified, leaving every challenge space below its level
+
+Severity: Critical
+Status: Confirmed
+Layer: Implementation
+Affected: Rhyme-SM3-128, -256, -384 and -512; reference and optimized implementations; Rhyme-SHAKE uses the specified weights
+Discovery: Trivial
+Exploitation: Generic challenge-guessing forgery from the public key costs about 2^108.1, 2^212.5, 2^308.4 and 2^425.0 trials; executed end to end at a toy weight
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
+Date: 2026-11-19
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/AMCVNVCBAMYAOWTK23BPEA5Y45V4GRA2/)
+
+The specification uses binary challenges, `c_i ∈ {0,1}` of weight τ, so the challenge space has `binomial(n,τ)` elements (physical p. 18), and its single parameter table gives τ = 30, 58, 113 and 115 (Table 3, p. 53). The security proofs carry a `1/|C|` term (Theorem 4.2, p. 38; Corollary 2, p. 40; Theorem 4.6, p. 46). All sixteen trees share one binary `SampleChallenge` (`src/sampler.c:195–220`) that sets τ positions to 1, and the verifier recomputes `c` from the transmitted `c_tilde` with it (`sign.c:514`). Rhyme-SHAKE sets `RHYME_TAU` to the Table 3 values, but all eight Rhyme-SM3 trees set 23, 44, 77 and 87 (`include/params_tables.h:18,177,386,600`). These are the smallest weights with `log2 binomial(n,τ) + τ ≥ λ`, the sizing for signed challenges, and give challenge spaces of 2^108.08, 2^212.46, 2^308.40 and 2^425.00. The archive's own history shows the SHAKE tables raised from these values in its final commit while the SM3 tables were left unchanged, and the submitted Rhyme-SM3 KAT signatures have binary challenges of exactly these weights.
+
+Verification accepts `(c_tilde, z)` when `z` meets the norm bounds and `H(w, µ) = c_tilde` with `w = A·z − q·j·c mod 2q` (`sign.c:517–527`). A forger fixes `z` within the bounds and a target `c*`, computes `w*` from the public key, and hashes fresh messages until `SampleChallenge(H(w*, µ)) = c*`. Each trial succeeds with probability `1/binomial(n,τ)` and costs two hash calls and one sampler call.
+
+A copy of the reference Rhyme-SM3-128 sources with only `RHYME_TAU` changed to 2 (2^14.99 challenges) gave a forgery after 35,367 trials without the signing key; the unmodified verifier accepted it and rejected it for another message. Weight 3 (2^21.40) took 3,450,601 trials.
+
+### Reproducing
+
+```sh
+sh sign-22/reproduce_challenge_space.sh
+```
+
+The witness checks the sampler and τ in all sixteen trees, requires 20,000 sampled challenges per tree to be binary of weight exactly τ, and runs the toy forgery with an unmodified τ = 23 control.
+
+## sign-22-9: Verification ignores the public-key length and over-reads a short key
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: Rhyme-SM3 and Rhyme-SHAKE at all four levels; reference and optimized implementations
+Discovery: Trivial
+Exploitation: A caller-supplied public key shorter than its declared length is read out of bounds; no disclosure shown
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
+Date: 2026-11-19
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/AMCVNVCBAMYAOWTK23BPEA5Y45V4GRA2/)
+
+`sig_verify` discards `pk_len_bytes` (`SIG_AlgorithmInstance.c:62`, identical in all sixteen trees). Once the signature decodes and passes the norm checks (`sign.c:491–502`), `crypto_sign_verify` unpacks the public key (`:504`), copying 32 bytes (`packing.c:40`) and bit-reading the rest of `CRYPTO_PUBLICKEYBYTES` (`:44`), and later absorbs the full length again (`sign.c:509`). Under AddressSanitizer, with a well-formed signature that needs no key, a 16-byte heap public key gave a 32-byte read past its end at `packing.c:40`, and a key one byte short gave a heap-buffer-overflow at `packing.c:44`, in every tree. Full-length keys ran cleanly. Callers that pass complete keys are unaffected.
+
+### Reproducing
+
+```sh
+sh sign-22/reproduce_short_pk.sh
+```
+
+## sign-22-10: Rhyme-SM3 leaks its XOF buffers on every verification
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: Rhyme-SM3-128, -256, -384 and -512; reference and optimized implementations (same XOF state handling by source; the witness runs the reference); Rhyme-SHAKE is not affected
+Discovery: Trivial
+Exploitation: Unbounded memory growth in a long-running verifier; no disclosure or corruption
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-19
+
+The SM3 backend maps the streaming `rhyme_shake256_*` and `rhyme_shake128_*` calls onto `sm3_xof` states (`rhyme_xof.c:8–21`), whose squeeze grows a cache with `realloc` (`sm3_xof.c:77`). The streaming interface has no release call, and only the one-shot helper clears its state (`sm3_xof.c:175`), so every streaming XOF instance loses its cache. Under LeakSanitizer one verification leaked 2,944, 7,712, 14,272 and 15,488 bytes in 7 to 12 blocks at the four levels; the Rhyme-SHAKE builds leaked nothing. Signing uses the same wrappers but was not measured.
+
+### Reproducing
+
+```sh
+sh sign-22/reproduce_verify_leak.sh
+```

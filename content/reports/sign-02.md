@@ -119,3 +119,54 @@ sh sign-02/reproduce_hint_aliases.sh
 ```
 
 The witness checks the packer and unpacker in the reference and AVX2 trees, signs one message with the reference build, and requires the nine final-byte variants and one complete-group alias to verify for that message, six of them byte-distinct, and every variant to be rejected for another message.
+
+## sign-02-5: A failed digest allocation leaves the previous digest in the verifier
+
+Severity: High
+Status: Confirmed
+Layer: Implementation
+Affected: BiT-128, -256 and -512; reference and AVX2 implementations (identical by source; the witness runs the reference)
+Discovery: Moderate
+Exploitation: If a digest allocation fails after an earlier verification in the same process, a signature on the earlier message verifies for a new message; at BiT-128 only messages longer than 4,064 bytes allocate
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool; challenge-hash route by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-19
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/5V3E3JF4EVSU3KCFBH6HKUBRXNDSQI6O/)
+
+Verification hashes `tr ‖ m` into a message digest and later recomputes the challenge from it (Fig. 5, physical p. 19, Verify lines 4 and 8). In BiT-128, `crypto_sign_verify` declares `message_hash` on the stack without initialising it (`sign.c:223`) and fills it with the `void` helper `bit_h256_2` (`:250`). Inputs over 4,096 bytes are copied into `malloc(total)`, and the helper returns without writing when that allocation fails (`symmetric.c:50–51`). BiT-256 and -512 use `bit_h512_2`, which returns the same way (`symmetric.c:88–89`) and also casts the `pseudohash` status to `void` on both paths (`:92,97`); `pseudohash` returns before writing when its own copies fail. The recomputed challenge, `bit_h512(c_prime, …)` (`sign.c:265`), discards the same status.
+
+With the reference code at all three levels, a signature on message A was accepted for a different message B when the targeted allocation failed during the verification of B, immediately after verifying A in the same process. Without the failure, or with the stack scrubbed between the calls, B was rejected. The failing allocation can be the long-message copy (5,032 or 5,064 bytes for a 5,000-byte message) at every level, and at BiT-256 and -512 also the short-path copy (130 bytes for a 64-byte message) or the challenge hash's fixed 1,026- or 1,986-byte copy. BiT-128 hashes short messages with `sm3hash`, which does not allocate.
+
+The long-message copy is sized by the message, so a long attacker-chosen message can make it fail under a memory limit. The candidate's defect is discarding the helpers' status and returning success. Demonstrated acceptance of a signature for a different message is High.
+
+### Reproducing
+
+```sh
+sh sign-02/reproduce_stale_digest.sh
+```
+
+The witness checks the `void` helpers in all six trees, then builds each reference level with `malloc` wrapped so that exactly one allocation of the targeted size fails, and requires the signature on A to verify for B only in that case.
+
+## sign-02-6: A failed mask-seed allocation makes signing reuse a stale seed and leaks the signing key
+
+Severity: High
+Status: Confirmed
+Layer: Implementation
+Affected: BiT-128, -256 and -512; reference and AVX2 implementations (identical by source; the witness runs the reference)
+Discovery: Moderate
+Exploitation: If one fixed-size allocation fails during signing, the call returns a valid signature whose masks come from a stale seed; s0 was recovered from public data, from one such signature at BiT-128 and -256 and from two at every level; no remote way to force the failure is shown
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-19
+
+Signing derives the mask seed `seed_y` from the secret seed, fresh randomness and the message digest (Fig. 5, physical p. 19, Sign line 7). In BiT-128 this is the `void` helper `bit_xof256_3` (`sign.c:99–100`), which casts the `pseudoXOF` status to `void` (`symmetric.c:127`); the other levels are the same. When `pseudoXOF`'s copy of its input fails (68, 132 or 196 bytes at the three levels), `temp_seed_y` keeps whatever its stack slot holds. A completed signing call ends with `secure_zero(temp_seed_y)` (`sign.c:200`), so the next faulty call at the same depth expands its masks from the all-zero seed.
+
+With the reference code at all three levels, sixteen rounds of one ordinary signature followed by one faulty signature gave faulty signatures that verify. From the public key and the faulty signatures alone, s0 was recovered: from a single signature whose mask is the expansion of the all-zero seed (10 of 16 at BiT-128, 13 of 16 at BiT-256), and from pairs of faulty signatures with the same commitment at all three levels. Ordinary signatures gave neither.
+
+The failing allocation has a fixed size and is not chosen by the attacker; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning a signature. Demonstrated key recovery is High.
+
+### Reproducing
+
+```sh
+sh sign-02/reproduce_stale_mask.sh
+```
+
+The witness checks the `void` seed derivation in all six trees, wraps `malloc` to fail the derivation's copy once per faulty call, and requires the recovered s0 to equal the key's.

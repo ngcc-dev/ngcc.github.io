@@ -80,3 +80,27 @@ python3 security/zc1280_issue37.py
 ```
 
 The hash-pinned attachment verifier checks the entire three-round affine family and the reduced-round collision. The wrapper compares both saved messages' full twelve-round digests against the submitted native C hash. These checks establish the opening and reduced example, not the remaining-round probability or a full-round collision.
+
+## hash-30-4: Six round constants are applied in a different order from Table 1.1
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: All six ZC-DM instances (ZC-1280 and ZC-1536 at 512, 768 and 1024 bits); reference implementation and the shared permutation headers
+Discovery: Moderate
+Exploitation: An implementation that follows the specification computes a different function and reproduces none of the KATs; the twelve constants stay distinct, and no security consequence was identified
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance, in this candidate's specification notes of 2026-09-21; independently reported by Zhiqiang Yang, Lin Ao, Yue Li, Xin Yi, Ling Song and Lei Wang, using the CryptVerify tool (Cryptol and SAW)
+Date: 2026-11-19
+Follow-up source: [Yang et al.'s formal verification report, finding 4](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/7RGEIZ5TI5BTESVHWRVJMTQHX5CMYUB5/attachment/4/FormalVerificationReportonNGCCHashCandidates.pdf)
+
+Table 1.1 (§1.1.1, physical p. 7) lists the twelve round constants, and ι XORs c_i into A0[0] in round i = −11, …, 0 (Algorithms 1 and 2, Figure 1.3). The shared permutation headers (`lib/low/ZuD-1280/ZuD1280.h:25–36`, `ZuD-1536/ZuD1536.h:25–36`) define `rc8, rc7, rc6` = 0x120, 0x14, 0x60 and `rc4, rc3, rc2` = 0x380, 0xF0, 0x1A0, and the permutation applies `rc12` down to `rc1`. So c_−7, c_−6, c_−5 and c_−3, c_−2, c_−1 are each rotated by one position against the table's 0x60, 0x120, 0x14 and 0xF0, 0x1A0, 0x380; the other six constants agree.
+
+As shipped, every instance reproduces all 4,097 KAT_2_12 vectors. With only those six definitions put in the Table 1.1 order, every instance reproduces none.
+
+### Reproducing
+
+```sh
+sh hash-30/reproduce_spec_mismatch.sh
+```
+
+The witness regenerates each KAT_2_12 file with the shipped NGCC generator and uses it only if its canonical SHA-256 equals the official file's entry in `hash-30/kat.sha256`.

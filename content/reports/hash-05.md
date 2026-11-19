@@ -121,3 +121,27 @@ Fix: return an error for any unsupported length.
 ```sh
 sh hash-05/reproduce_digest_length.sh
 ```
+
+## hash-05-6: 32-bit length arithmetic gives collisions between 4 GiB messages
+
+Severity: Critical
+Status: Confirmed
+Layer: Implementation
+Affected: uHash-512, -768 and -1024; reference and optimized implementations
+Discovery: Trivial
+Exploitation: Two different messages of 2^35 + 128 bits (3·2^35 + 128 at uHash-512) that agree in their first 16 bytes have the same digest, which is also the digest of the 16-byte prefix; 2 GiB messages crash
+Credit: LK-PQC-Hunter (NGCC CryptHash Forum sender), using the LKQ PQC Hunter automated tool
+Date: 2026-11-19
+Original source: [LK-PQC-Hunter's CryptHash Forum post](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/Z4T3YCNF4QQAQDNLC3IJWFMJVU3OI6EY/)
+
+The specification accepts message lengths up to 2^64 − 1 bits (p. 3). `Padding` and the three `uHash512/768/1024` functions compute the padded row count and the byte counts through `(int)` casts (`CryptHash_AlgorithmInstance.c:450–453,492–494,652–654,847–849` in the reference; `:6242–6245,6378–6383,6545–6548` in the optimized source). At the lengths above every count wraps to its value for a 128-bit message, so only bytes 0 to 15 are read: two messages of that length that differ after byte 15 collide, and also collide with their 16-byte prefix. Each call returns in under 0.01 s. At 2^34 bits (2 GiB) a count turns negative and every instance crashes.
+
+In both trees, at all three instances, two messages differing in bytes 16–79, a middle byte and the last byte gave the same digest as their 16-byte prefix, while 1 KiB controls differed. The optimized source is written for Windows and was built with stand-in `windows.h` and `intrin.h` headers; built that way it reproduces the reference and the KATs.
+
+### Reproducing
+
+```sh
+sh hash-05/reproduce_long_message_collision.sh
+```
+
+The long messages are sparse `MAP_NORESERVE` mappings; the witness takes a few seconds.

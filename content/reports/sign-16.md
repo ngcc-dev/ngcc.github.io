@@ -50,3 +50,79 @@ mamba run -n sage python sign-16/reproduce_relaxed_sis.py
 ```
 
 The command uses this host's NumPy-equipped Sage environment; elsewhere, any Python with NumPy installed can run the script.
+
+## sign-16-3: A failed hash allocation leaves the previous digest in the verifier
+
+Severity: High
+Status: Confirmed
+Layer: Implementation
+Affected: Octarine-128, -256 and -512 SM3 reference and optimized implementations; the SHAKE additional implementations do not allocate there
+Discovery: Moderate
+Exploitation: If a hash allocation fails after an earlier verification in the same process, a signature on the earlier message verifies for a new message
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
+Date: 2026-11-19
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XLA3HRWS6XUK4IH2N6ZXU6YQIYOQD65W/)
+
+Verification hashes the message representative µ and then the challenge seed (Algorithm 3, p. 26, Verify lines 5 and 9). `RRLWR_SIGN_HASH_MU` checks its own `malloc` (`hash_domain.h:200–203`) but ignores the status of the `pseudoXOF` call it makes (`:213`), and `RRLWR_SIGN_HASH_CH` does the same (`:255`). The outputs `mu_w1` and `ctildep` are uninitialised stack buffers (`sign.c:308,312`), and `pseudoXOF` returns before writing when its internal copy fails.
+
+With the reference code at all three levels, a signature on message A was accepted for a different message B when `pseudoXOF`'s copy of the µ input (for 64- and 5,000-byte messages) or of the challenge input (947, 1,459 or 2,099 bytes) failed during the verification of B, immediately after verifying A. Without the failure, or with the stack scrubbed between the calls, B was rejected. The optimized trees behave the same.
+
+The µ copy is sized by the message; the checked outer copy of nearly the same size is live at the same time, so only the inner one must fail. The candidate's defect is discarding the hash status and returning success. Demonstrated acceptance of a signature for a different message is High.
+
+### Reproducing
+
+```sh
+sh sign-16/reproduce_stale_digest.sh
+```
+
+The witness checks the unchecked calls in the six SM3 trees, then builds each reference level with `malloc` wrapped so that exactly one allocation of the targeted size fails, and requires the signature on A to verify for B only in that case.
+
+## sign-16-4: A failed mask-seed allocation makes signing reuse the previous mask and leaks the signing key
+
+Severity: High
+Status: Confirmed
+Layer: Implementation
+Affected: Octarine-128, -256 and -512 SM3 reference and optimized implementations
+Discovery: Moderate
+Exploitation: If one fixed 318-byte allocation fails during signing, the call returns a valid signature made with the previous call's ρ″; s1 follows from it and the previous signature, and the rebuilt key signed a fresh message; no remote way to force the failure is shown
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-19
+
+Signing derives the mask seed ρ″ from K, fresh randomness and µ (Algorithm 3, p. 26, Sign line 4) with `RRLWR_SIGN_HASH_RHOPP` (`sign.c:186`), which drops the `pseudoXOF` status (`hash_domain.h:237`) and returns nothing to check. When `pseudoXOF`'s 318-byte copy fails, `rhopp` keeps the previous call's value, so the masks y repeat under a different message and challenge.
+
+With the reference code at all three levels, eight rounds of one ordinary signature followed by one faulty signature gave faulty signatures that verify. Solving z₂ − z₁ = (c₂ − c₁)·s1 from each pair, using public data only, gave the key's s1 in 6, 8 and 8 of 8 pairs. A key rebuilt from the public key and s1 signed a fresh message that the unmodified verifier accepted, and rejected for a changed message. Pairs of ordinary signatures gave no solution. The same relation holds in the optimized trees.
+
+The failing allocation has a fixed size and is not chosen by the attacker; memory pressure or a resource limit is needed. Demonstrated key recovery is High.
+
+### Reproducing
+
+```sh
+sh sign-16/reproduce_stale_mask.sh
+```
+
+The witness checks the unchecked hash in the six SM3 trees and wraps `malloc` to fail that copy once per faulty call.
+
+## sign-16-5: A failed key-derivation allocation makes key generation return the previous key pair
+
+Severity: High
+Status: Confirmed
+Layer: Implementation
+Affected: Octarine-128, -256 and -512 SM3 reference and optimized implementations; the SHAKE additional implementations do not allocate there
+Discovery: Moderate
+Exploitation: If one fixed 108-byte allocation fails during key generation, the call returns success with the previous call's key pair, whose secret key an earlier key holder already has; no remote way to force the failure is shown
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-19
+
+Key generation derives (ρ, ρ′, K) from the fresh seed ξ (Algorithm 3, p. 26, KeyGen line 2) with `RRLWR_SIGN_HASH_KDF` (`sign.c:65`), which drops the `pseudoXOF` status (`hash_domain.h:168`) and returns nothing to check. Its output `rho_rhoprime_K` is an uninitialised stack array (`sign.c:54`). When `pseudoXOF`'s 108-byte copy of the encoded seed fails, the array keeps the previous call's (ρ, ρ′, K), and `sig_keygen` rebuilds the same key pair from it and returns 0 (`:114`).
+
+With the reference code at all three levels, a key generation with that allocation failing, immediately after an ordinary one, returned 0 with public and secret keys byte-identical to the previous ones. A signature made with the first secret key verified under the second public key, and was rejected for a changed message. An ordinary key generation gave a different key pair, and the same failure after the stack had been overwritten gave a key pair equal to neither. The optimized trees, built with their AVX2 flags, gave the same results.
+
+The failing allocation has a fixed size and is not chosen by the attacker; memory pressure or a resource limit is needed. A key pair returned as new whose secret key an earlier caller already holds is High.
+
+### Reproducing
+
+```sh
+sh sign-16/reproduce_stale_keygen.sh
+```
+
+The witness checks the unchecked derivation in the six SM3 trees and wraps `malloc` to fail that copy once.

@@ -238,3 +238,25 @@ pdftotext -f 12 -l 12 -layout sign-07/sign-07-spec.pdf - | grep -A20 'Algorithm 
 ```
 
 This is a specification witness for Algorithms 2 and 3; the counterexample follows by hand from lines 2, 4 and 8.
+
+## sign-07-9: Rejected verifications leak the message buffer, and verification reads past a short signature
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: CS-128, -256 and -512; all six trees by source for the leak, the reference API wrapper for the signature length (the optimized tree has no wrapper)
+Discovery: Trivial
+Exploitation: Unbounded memory growth in a long-running verifier fed invalid signatures, and an out-of-bounds read of a caller-supplied signature shorter than its encoded fields; no disclosure shown
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
+Date: 2026-11-19
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/GJYAU25KUS55A23YWEK6BP6HGH4XI76I/)
+
+`CS_Verify` allocates `buf = malloc(len + HBYTES)` (`cs.c:157`) and frees it only on the accepting path; its four `return false` exits (decoding failure, the two norm bounds and the challenge mismatch) leak it. At all three levels, 100 rejected verifications of a 28-byte message, by challenge mismatch or by a decoding failure, left 100 blocks of 60, 92 or 156 bytes; 100 accepted ones left none.
+
+The reference `sig_verify` passes the signature to `CS_Verify` without its length. Honest signatures end in unused padding (11, 17 and 23 bytes in the run), so a buffer one byte short of the full length is not over-read, but a buffer one byte shorter than the bytes the rANS fields occupy, declared at that length, is read past its end in `sigDecode` under AddressSanitizer. Callers that pass complete signatures are unaffected by this part.
+
+### Reproducing
+
+```sh
+sh sign-07/reproduce_verify_memory.sh
+```

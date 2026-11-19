@@ -195,3 +195,23 @@ python3 kem-17/reproduce_second_syndrome_parity.py
 ```
 
 The witness checks the wording of Definition 2.3.15 and the four parameter files, then samples the real second syndrome in `F_2[x]/(x^n − 1)` 24 times for each parity of `s` and each parameter set. It requires the predicted constant parity in every sample, and both parities in a uniform control.
+
+## kem-17-8: Every encapsulation and decapsulation leaks the mask matrix, and decapsulation reads past a short ciphertext
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: HEP-QC-1, -3, -5 and -7; reference and x86-64 implementations (identical by source; the witness runs the reference)
+Discovery: Trivial
+Exploitation: Unbounded memory growth of 0.28 to 12.6 MB per call in a long-running process, and an out-of-bounds read of a caller-supplied short ciphertext; no disclosure shown
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
+Date: 2026-11-19
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/MHS6ZVBLYEEPUJGGCDSDZ42MPVTCCMMM/)
+
+`hep_qc_pke_encrypt` allocates `G_mask` with `calloc` (`PKE_HEP_QC.c:120`) and never frees it. Encapsulation encrypts once and decapsulation re-encrypts, so every `kem_enc` and every `kem_dec`, honest or tampered, leaks one block of 283,648, 861,696, 1,845,248 or 12,619,776 bytes at the four sets; key generation leaks nothing. `kem_dec` also discards `ct_len_bytes`: an honest HEP-QC-1 ciphertext in a heap buffer one byte short, declared at that length, is read past its end in `hep_qc_c_kem_from_string` (`parsing.c:79`) under AddressSanitizer, while the full-length buffer is clean.
+
+### Reproducing
+
+```sh
+sh kem-17/reproduce_leak_short_ct.sh
+```

@@ -220,6 +220,25 @@ pdftotext -f 29 -l 30 -layout sign-07/sign-07-spec.pdf - | grep -B1 -A1 'b0'
 <pre><code class="language-sh">pdftotext -f 12 -l 12 -layout sign-07/sign-07-spec.pdf - | grep -A20 'Algorithm 2 rANS encoding'
 </code></pre>
 <p>This is a specification witness for Algorithms 2 and 3; the counterexample follows by hand from lines 2, 4 and 8.</p>
+<h2 class="issue-heading" id="sign-07-9-rejected-verifications-leak-the-message-buffer-and-verification-reads-past-a-short-signature">sign-07-9: Rejected verifications leak the message buffer, and verification reads past a short signature</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>CS-128, -256 and -512; all six trees by source for the leak, the reference API wrapper for the signature length (the optimized tree has no wrapper)</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Unbounded memory growth in a long-running verifier fed invalid signatures, and an out-of-bounds read of a caller-supplied signature shorter than its encoded fields; no disclosure shown</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
+<tr><th>Date</th><td>2026-11-19</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/GJYAU25KUS55A23YWEK6BP6HGH4XI76I/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p><code>CS_Verify</code> allocates <code>buf = malloc(len + HBYTES)</code> (<code>cs.c:157</code>) and frees it only on the accepting path; its four <code>return false</code> exits (decoding failure, the two norm bounds and the challenge mismatch) leak it. At all three levels, 100 rejected verifications of a 28-byte message, by challenge mismatch or by a decoding failure, left 100 blocks of 60, 92 or 156 bytes; 100 accepted ones left none.</p>
+<p>The reference <code>sig_verify</code> passes the signature to <code>CS_Verify</code> without its length. Honest signatures end in unused padding (11, 17 and 23 bytes in the run), so a buffer one byte short of the full length is not over-read, but a buffer one byte shorter than the bytes the rANS fields occupy, declared at that length, is read past its end in <code>sigDecode</code> under AddressSanitizer. Callers that pass complete signatures are unaffected by this part.</p>
+<h3 id="reproducing_8">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh sign-07/reproduce_verify_memory.sh
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

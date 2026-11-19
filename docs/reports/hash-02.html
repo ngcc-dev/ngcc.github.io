@@ -125,6 +125,65 @@
 <h3 id="reproducing_4">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>Build the optimized AXIS-512 with <code>-mno-bmi2</code> and inspect <code>axis_pack_message64_reverse_block</code>; the non-BMI2 branch reads <code>axis_pack_even_lsb_table</code> at an index taken from the message.</p>
+<h2 class="issue-heading" id="hash-02-6-byte-aligned-lengths-just-below-264-give-a-constant-digest">hash-02-6: Byte-aligned lengths just below 2^64 give a constant digest</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>AXIS-512, -768 and -1024; reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>For eight declared lengths below 2^64 the digest does not depend on the message; such a message needs 2^61 bytes, so the case is not reachable in practice</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC CryptHash Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
+<tr><th>Date</th><td>2026-11-19</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/IXFTGQW4PFWDX4ZQPPGW3ICQQKJJW55L/">LK-PQC-Hunter's CryptHash Forum post</a></p>
+<p>The byte-aligned path computes <code>padded_bits = message_bits + 2 + zero_count + 64</code> in 64-bit arithmetic (<code>axis_core.c:1306–1307</code> in the reference, <code>:1966–1967</code> in the optimized source, with the same expression in the 768- and 1024-bit paths). For the byte-aligned lengths 2^64 − 128 to 2^64 − 72 it wraps to 0, nothing is absorbed and the message is never read; the call returns success with the squeeze of the initial state. The witness passes an inaccessible page as the message and obtains one digest for all eight lengths, different from the empty-message digest, in all six instance directories.</p>
+<h3 id="reproducing_5">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh hash-02/reproduce_length_wrap.sh
+</code></pre>
+<h2 class="issue-heading" id="hash-02-7-a-shift-by-32-in-the-avx2-squeeze-gives-wrong-colliding-digests-in-clang-builds">hash-02-7: A shift by 32 in the AVX2 squeeze gives wrong, colliding digests in Clang builds</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>AXIS-512, -768 and -1024 optimized implementation built for AVX2 with Clang, or with GCC without optimization; GCC builds with the Makefile flags are not affected</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>In Clang AVX2 builds AXIS-768 and -1024 return one constant digest for every byte-aligned message and AXIS-512 returns run-dependent output; the submitted Makefile selects GCC</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC CryptHash Forum sender), using the LKQ PQC Hunter automated tool; Clang builds by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-19</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/IXFTGQW4PFWDX4ZQPPGW3ICQQKJJW55L/">LK-PQC-Hunter's CryptHash Forum post</a></p>
+<p><code>axis_soa32_extract_w0_seq32</code> returns <code>(w0l &gt;&gt; start_bit) | (w0h &lt;&lt; (32 − start_bit))</code> for <code>start_bit &lt; 32</code> (<code>Optimized_Implementation/AXIS-*/axis_core.c:1874–1879</code>), and every caller passes <code>start_bit = 0</code>: a 32-bit word is shifted by 32, which is undefined. The helper is compiled whenever AVX2 is enabled and produces the digest of every byte-aligned message.</p>
+<p>GCC 15 at <code>-O1</code> and above, including the Makefile's <code>portable</code>, <code>avx2</code> and <code>best</code> flag sets, gives the reference digests; at <code>-O0</code> with AVX2 it gives wrong but distinct digests. Clang 21 with AVX2 at <code>-O0</code>, <code>-O2</code> and <code>-O3</code>, including the Makefile's <code>avx2</code> and <code>best</code> flags, gave wrong digests for all byte-aligned messages: AXIS-768 and -1024 returned the same digest whatever the message, and AXIS-512 returned what appears to be uninitialised stack data that changed between runs. At <code>-O1</code> Clang builds of AXIS-768 and -1024 hang. Builds without AVX2 are correct, and a guard for <code>start_bit == 0</code> removes every mismatch.</p>
+<p>A Clang build with the submitted flags is a mainstream configuration, and there it loses collision resistance entirely. The Makefile's own GCC builds are correct, so the finding is Medium.</p>
+<h3 id="reproducing_6">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh hash-02/reproduce_avx2_shift.sh
+</code></pre>
+<p>The witness needs Clang and an AVX2 CPU, and skips otherwise.</p>
+<h2 class="issue-heading" id="hash-02-8-padding-omits-the-64-specified-zero-bits-when-the-message-length-is-62-modulo-64">hash-02-8: Padding omits the 64 specified zero bits when the message length is 62 modulo 64</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>AXIS-512, -768 and -1024; reference implementation (the optimized implementations use the same count)</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>An implementation that follows the specification computes a different digest for every message whose length is 62 modulo 64; both paddings are injective, and no security consequence was identified</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance, in this candidate's specification notes of 2026-09-21; independently reported by Zhiqiang Yang, Lin Ao, Yue Li, Xin Yi, Ling Song and Lei Wang, using the CryptVerify tool (Cryptol and SAW)</td></tr>
+<tr><th>Date</th><td>2026-11-19</td></tr>
+</table></div>
+<p>Follow-up source: <a href="https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/7RGEIZ5TI5BTESVHWRVJMTQHX5CMYUB5/attachment/4/FormalVerificationReportonNGCCHashCandidates.pdf">Yang et al.'s formal verification report, finding 17</a></p>
+<p>Section 2.2 (physical p. 8) and Algorithm 1 line 2 pad M as M ‖ 1 ‖ 0^(s+1) ‖ 1 ‖ Binary64(len(M)) with s = (−len(M) − 3) mod 64, so 1 to 64 zero bits. The reference <code>axis_core.c</code> (identical in the three instances) uses <code>zero_count = (64 − ((len + 2) &amp; 63)) &amp; 63</code>, 0 to 63 zero bits, at all five sites (<code>:1050,1096,1306,1401,1465</code>). The two counts differ only when len(M) mod 64 = 62, where the specification inserts 64 zero bits and the code none.</p>
+<p>As shipped, each instance reproduces all 4,097 KAT_2_12 vectors. With the zero count set to s + 1 at the five sites, each fails exactly the 64 vectors with Msg_Len mod 64 = 62.</p>
+<h3 id="reproducing_7">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh hash-02/reproduce_spec_mismatch.sh
+</code></pre>
+<p>The witness regenerates each KAT_2_12 file with the shipped NGCC generator and uses it only if its canonical SHA-256 equals the official file's entry in <code>hash-02/kat.sha256</code>.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

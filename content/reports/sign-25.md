@@ -8,15 +8,15 @@ Archive: [SQIsign2D2.zip](https://www.niccs.org.cn/niccs/Proposal/Public-Key%20C
 Severity: Critical
 Status: Confirmed
 Layer: Implementation
-Affected: Level2-eff uncompressed reference implementation
+Affected: Reference implementation, Level 1, 2 and 3 efficiency and security variants: uncompressed instances accept signatures for other messages, compressed ones accept modified signatures; which instances accept depends on the build's stack layout; Level 5 not observed
 Discovery: Trivial
 Exploitation: Trivial
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-09-21
 
-The Level2-eff uncompressed verifier accepts a full-length all-zero signature, and
-accepts a valid signature after the message is changed, when either is verified after
-another verification in the same process. The same all-zero signature is rejected when
+The uncompressed verifiers accept a full-length all-zero signature, and accept a valid
+signature after the message is changed, when either is verified after another
+verification in the same process. The same all-zero signature is rejected when
 the stack below the verifier is overwritten first. The verdict is therefore not a
 function of the signature.
 
@@ -36,13 +36,18 @@ A verifier normally processes signatures one after another, so the accepting sta
 the ordinary one: an attacker can submit an all-zero signature for a message of their
 choice without making any signing query. Acceptance depends on process state rather
 than on the attacker's input, which makes the behaviour unpredictable rather than safe.
-The compressed instance built from the same tree is unaffected.
 
-All eight uncompressed submitted instances were tested with the same primed-versus-
-scrubbed witness. Only Level2-eff uncompressed accepted the forged input; the other
-seven rejected it in both states, as did the compressed Level2-eff control. The unsafe
-assert-as-validation pattern is shared source, but demonstrated acceptance is therefore
-scoped to Level2-eff uncompressed.
+Which instances accept depends on the build's stack layout. In the harness's shared
+libraries, all eight uncompressed instances were tested with the primed-versus-scrubbed
+witness, and only Level2-eff uncompressed accepted the all-zero signature; the compressed
+Level2-eff control rejected it. Static executables built with the candidate's release
+flags (GCC 15, `-O2 -DNDEBUG`) show more. After an honest verification of an unrelated
+signature, all six uncompressed Level 1, 2 and 3 instances accept a signature on another
+message and an all-zero signature. In all twelve Level 1, 2 and 3 instances, compressed
+ones included, a valid signature with one bit flipped is accepted right after the
+unmodified signature was verified, which breaks strong unforgeability. Every one of these
+verdicts is a rejection in a fresh process or after the stack is overwritten. The Level 5
+instances rejected every input in both builds.
 
 The verifier must initialise every value its decision reads, enforce the specified point,
 order and codomain conditions unconditionally rather than through `assert`, and reject
@@ -61,6 +66,13 @@ The check verifies one all-zero signature twice, once after a genuine verificati
 once after overwriting the stack, and reports the two verdicts. The compressed instance
 is run as a control and rejects both. `tools/reproduce.sh` runs this together with the
 other supported runtime witnesses and their controls. See `tools/README.md`.
+
+```sh
+sh sign-25/reproduce_stale_verdict.sh
+```
+
+This witness builds all sixteen instances as static executables with the release flags,
+prints each one's fresh, primed and scrubbed verdicts, and takes about 20 seconds.
 
 ## sign-25-2: Isogeny prime sizing relies on the former square-root attack cost
 
@@ -144,3 +156,23 @@ python3 sign-25/reproduce_encoding_aliases.py
 ```
 
 For each of the 16 libraries the script makes one key pair and signature, builds the aliases above and verifies every alias and control in a fresh child process. It takes about one minute. Public keys whose curve coefficient is edited by `+1` are not used as controls, because the compressed verifiers do not return on such a key.
+
+## sign-25-5: Key generation, signing and verification leak hundreds of kilobytes per call
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: All sixteen instances, reference and optimized, by source; measured on Level1-eff uncompressed
+Discovery: Trivial
+Exploitation: Unbounded memory growth in a long-running process; verification leaks the same amount whether it accepts or rejects; no disclosure or corruption
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
+Date: 2026-11-19
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/IYHNEW5TKVL2WYXZDRZL5CSRBBBE77BU/)
+
+Three routines allocate without freeing: `ibz_rand_interval` (`intbig.c`), `fp2_batched_inv` (`fp2.c` contains no `free`) and `theta_chain_comput_strategy` (`theta_isogenies.c:1620,1661–1664`). Built with the candidate's `-O2 -DNDEBUG`, each Level1-eff uncompressed call after a warm-up call left a fixed amount live: 234,212 bytes per key generation, 971,348 per signature and 473,426 in 16 blocks per verification, the same for an accepted and a rejected signature. GMP's own allocations account for at most 200 bytes of this.
+
+### Reproducing
+
+```sh
+sh sign-25/reproduce_leak.sh
+```

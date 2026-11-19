@@ -212,6 +212,46 @@ sed -n '188,193p' &quot;$d/bch_low.c&quot;; sed -n '316,320p' &quot;$d/bch_low.c
 grep -n 'BUCKET_SZ\[r\[ctr\]\]' &quot;$d/poly_invq.c&quot;; sed -n '25,31p' &quot;$d/cbd.c&quot;
 </code></pre>
 <p>This is a source witness for the four sites.</p>
+<h2 class="issue-heading" id="kem-39-8-a-ciphertext-with-exactly-t-errors-in-a-bch-codeword-writes-past-the-decoders-error-location-array">kem-39-8: A ciphertext with exactly t errors in a BCH codeword writes past the decoder&#x27;s error-location array</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>WeaverKEM-128, -256 and -512 reference and optimized implementations (identical decoders by source; the witness runs the reference)</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Unauthenticated stack write of 4 bytes from a crafted ciphertext; the value written is a fixed constant; a Clang <code>-O2</code> build of WeaverKEM-128 crashes, while GCC builds place a dead slot there</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-19</td></tr>
+</table></div>
+
+<p><code>chien_search</code> stores <code>roots[count] = n − i</code> on every step, before it knows whether the step found a root, into the caller's <code>unsigned int errloc[BCH_T]</code> (<code>bch_low.c:260</code>, <code>:388</code> in the nibble variant, <code>bch_high.c:257</code>). <code>count</code> reaches <code>t</code> when the codeword holds exactly <code>t</code> errors, and the store then writes <code>errloc[BCH_T]</code>, one element past the array. The last value written is the constant <code>ecc_bits</code>; the ciphertext decides only whether the write happens.</p>
+<p>A ciphertext with <code>u = 0</code> and <code>v</code> chosen to put exactly <code>t</code> errors into one BCH codeword gave an AddressSanitizer stack-buffer-overflow WRITE of size 4 in the low-layer decoder at all three levels, and in the high-layer decoder at WeaverKEM-128 and -512 (WeaverKEM-256 has no high-layer decoder); <code>t − 1</code> errors gave none. Honest ciphertexts never reach it, but about one in three random WeaverKEM-128 ciphertexts do, in the high-layer decoder. With Clang 21 at <code>-O2</code> the slot past <code>errloc</code> in <code>decode_bch_high</code> holds the spilled <code>data</code> pointer, and WeaverKEM-128 decapsulation of such a ciphertext dies with SIGSEGV; with one error, or with <code>errloc[BCH_T + 1]</code>, it returns 0. GCC at <code>-O0</code> to <code>-O3</code>, including the submitted <code>-O3 -fomit-frame-pointer</code>, places dead storage there, and the decoded messages are unchanged.</p>
+<p>The array needs <code>BCH_T + 1</code> entries, or the store must move inside the root test. An input-triggered stack write from an untrusted ciphertext, with a demonstrated crash, is High.</p>
+<h3 id="reproducing_7">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh kem-39/reproduce_bch_bounds.sh
+</code></pre>
+<p>The witness builds the three reference sets with AddressSanitizer and an observation hook, crafts the t-error ciphertexts, and runs the Clang <code>-O2</code> crash with the one-error and enlarged-array controls (that part is skipped without Clang).</p>
+<h2 class="issue-heading" id="kem-39-9-decapsulation-reads-past-the-error-locator-array-and-past-a-short-ciphertext">kem-39-9: Decapsulation reads past the error-locator array and past a short ciphertext</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>WeaverKEM-256 and -512 for the error-locator read; all three sets for the ciphertext length; reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Out-of-bounds stack reads on every honest WeaverKEM-256 and -512 decapsulation that write back unchanged values, and an out-of-bounds read of a caller-supplied short ciphertext; no disclosure or corruption shown</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
+<tr><th>Date</th><td>2026-11-19</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/SCHPYCDJBS43AXI326FCVKOXSY4TQDJE/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p><code>compute_error_locator_polynomial</code> updates <code>elp-&gt;c[j + k]</code> with indices up to <code>3t − 2</code> in a <code>2t + 1</code>-entry stack array (<code>bch_low.c:184</code>, <code>bch_high.c:181</code>). Under AddressSanitizer every honest WeaverKEM-256 and -512 decapsulation reports a stack-buffer-overflow READ there; WeaverKEM-128 is clean. The value XORed in is nonzero only for indices up to <code>2t − 1</code>, so the out-of-range bytes are rewritten unchanged: an instrumented copy saw no nonzero out-of-range XOR over honest, crafted and random ciphertexts and exhaustive or random sweeps of the decoder inputs, and a symbolic sweep of all discrepancy patterns gives the same bound.</p>
+<p>All six <code>kem_dec</code> wrappers discard <code>ct_len_bytes</code>. An honest ciphertext in a heap buffer one byte short, declared at that length, is read past its end at all three levels; the full-length buffer is clean. Callers that pass complete ciphertexts are unaffected by this part.</p>
+<h3 id="reproducing_8">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh kem-39/reproduce_bch_bounds.sh
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

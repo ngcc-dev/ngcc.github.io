@@ -335,3 +335,25 @@ sh sign-01/reproduce_verify_memory.sh
 ```
 
 The leak count wraps `malloc` and `free`; the short-buffer case runs verification only, under AddressSanitizer.
+
+## sign-01-12: AVX2 signing and verification read past correctly sized keys
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: Aigis-Sig+ I, II and III AVX2 implementation; the NEON tree compiles the same unpacking code (not run); the reference and AArch64 trees are not affected
+Discovery: Moderate
+Exploitation: Every AVX2 signature reads 17 or 19 bytes past the secret key, and every AVX2 verification 1 or 23 bytes past the public key; a fault is possible when a key ends at a page boundary; no disclosure shown
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool; public-key read by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-19
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/FVZYRBA7CCZZPEPX5XK2NAIKKBQMXB64/)
+
+The AVX2 `polyt0_unpack` (`packing.c:255`) decodes each polynomial with 32-byte `_mm256_loadu_si256` loads while advancing by `PARAM_D` bytes (15 at sets I and II, 13 at set III). The `t0` polynomials end the secret key (`:334`), so the last loads run 17 or 19 bytes past it. Verification's `polyt1_unpack` (`:40`) ends the public key the same way and reads 1 byte past it at sets I and II and 23 at set III. The extra bytes do not change the output.
+
+Built with the candidate's AVX2 flags, signing with an exactly sized secret key that ends at an inaccessible page faults at all three sets; with 17 or 19 bytes of slack, or a readable page, signing succeeds and the signature verifies, and one byte less slack still faults. Verification with an exactly sized public key behaves the same with 1 or 23 bytes. This affects ordinary callers that pass correctly sized buffers.
+
+### Reproducing
+
+```sh
+sh sign-01/reproduce_avx2_sk_overread.sh
+```

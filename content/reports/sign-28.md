@@ -179,3 +179,26 @@ python3 sign-28/reproduce_secret_branch.py
 ```
 
 The certificate checks the six byte-identical reference sources for the secret-seed dataflow, signing-time public-key derivation, bit-by-bit position encoding and conditional set/clear operation. It separately checks the six byte-identical optimized `sign.cpp` and `keys.inc` copies for the signing-time `compute_witness` call and its conditional write of each raw witness bit. It does not replay the reporter's callgrind measurements.
+
+## sign-28-7: At λ = 160 the VOLE tapes keep 128 of every 160 PRG bits, unlike Algorithm 8
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: SYDO-160s and SYDO-160f, reference and optimized implementations; λ = 256 and 512 follow Algorithm 8
+Discovery: Moderate
+Exploitation: An implementation that follows the specification produces different λ = 160 signatures and reproduces none of their KATs; every tape row is still a Rijndael-192 output under its own counter, and no security consequence was identified
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-19
+
+Algorithm 20 (§4.2.4, physical p. 27, line 7) sets each leaf's VOLE tape to PRG(sdᵢ, iv, twk; ℓv). Algorithm 8 (§4.2.2, p. 19) builds that string as s₀ ∥ s₁ ∥ …, where sᵢ is the first λ bits of the Rijndael-192 output for counter i. The reference code stores tapes in 128-bit rows and encrypts counter `row / parts` for each row (`src/vole_impl.inc:234,266`). For a 20-byte λ, `prg_output_parts` returns 1 (`:40–46`), so each row is the first 16 bytes of its own block (`:129`), and the tape is t₀[0..127] ∥ t₁[0..127] ∥ …. It departs from Algorithm 8 at bit 128. The 128-bit block size ν (p. 20) belongs to SeedExp, the parity-check expansion, not to this PRG. At λ = 256 and 512 the rows split whole blocks and agree with Algorithm 8.
+
+The shipped reference regenerates both official λ = 160 KAT files, and so do the optimized 160f and 160s builds. With only the row function changed to Algorithm 8's byte stream, keys are unchanged and every signature still verifies, but none of the 20 KAT signatures matches.
+
+### Reproducing
+
+```sh
+sh sign-28/reproduce_vole_prg.sh
+```
+
+The witness regenerates each KAT file with the shipped NGCC generator and uses it only if its canonical SHA-256 equals the official file's entry in `sign-28/kat.sha256`.

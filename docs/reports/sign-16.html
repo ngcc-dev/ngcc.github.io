@@ -64,6 +64,69 @@
 <pre><code class="language-sh">mamba run -n sage python sign-16/reproduce_relaxed_sis.py
 </code></pre>
 <p>The command uses this host's NumPy-equipped Sage environment; elsewhere, any Python with NumPy installed can run the script.</p>
+<h2 class="issue-heading" id="sign-16-3-a-failed-hash-allocation-leaves-the-previous-digest-in-the-verifier">sign-16-3: A failed hash allocation leaves the previous digest in the verifier</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Octarine-128, -256 and -512 SM3 reference and optimized implementations; the SHAKE additional implementations do not allocate there</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>If a hash allocation fails after an earlier verification in the same process, a signature on the earlier message verifies for a new message</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
+<tr><th>Date</th><td>2026-11-19</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XLA3HRWS6XUK4IH2N6ZXU6YQIYOQD65W/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p>Verification hashes the message representative µ and then the challenge seed (Algorithm 3, p. 26, Verify lines 5 and 9). <code>RRLWR_SIGN_HASH_MU</code> checks its own <code>malloc</code> (<code>hash_domain.h:200–203</code>) but ignores the status of the <code>pseudoXOF</code> call it makes (<code>:213</code>), and <code>RRLWR_SIGN_HASH_CH</code> does the same (<code>:255</code>). The outputs <code>mu_w1</code> and <code>ctildep</code> are uninitialised stack buffers (<code>sign.c:308,312</code>), and <code>pseudoXOF</code> returns before writing when its internal copy fails.</p>
+<p>With the reference code at all three levels, a signature on message A was accepted for a different message B when <code>pseudoXOF</code>'s copy of the µ input (for 64- and 5,000-byte messages) or of the challenge input (947, 1,459 or 2,099 bytes) failed during the verification of B, immediately after verifying A. Without the failure, or with the stack scrubbed between the calls, B was rejected. The optimized trees behave the same.</p>
+<p>The µ copy is sized by the message; the checked outer copy of nearly the same size is live at the same time, so only the inner one must fail. The candidate's defect is discarding the hash status and returning success. Demonstrated acceptance of a signature for a different message is High.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh sign-16/reproduce_stale_digest.sh
+</code></pre>
+<p>The witness checks the unchecked calls in the six SM3 trees, then builds each reference level with <code>malloc</code> wrapped so that exactly one allocation of the targeted size fails, and requires the signature on A to verify for B only in that case.</p>
+<h2 class="issue-heading" id="sign-16-4-a-failed-mask-seed-allocation-makes-signing-reuse-the-previous-mask-and-leaks-the-signing-key">sign-16-4: A failed mask-seed allocation makes signing reuse the previous mask and leaks the signing key</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Octarine-128, -256 and -512 SM3 reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>If one fixed 318-byte allocation fails during signing, the call returns a valid signature made with the previous call's ρ″; s1 follows from it and the previous signature, and the rebuilt key signed a fresh message; no remote way to force the failure is shown</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-19</td></tr>
+</table></div>
+
+<p>Signing derives the mask seed ρ″ from K, fresh randomness and µ (Algorithm 3, p. 26, Sign line 4) with <code>RRLWR_SIGN_HASH_RHOPP</code> (<code>sign.c:186</code>), which drops the <code>pseudoXOF</code> status (<code>hash_domain.h:237</code>) and returns nothing to check. When <code>pseudoXOF</code>'s 318-byte copy fails, <code>rhopp</code> keeps the previous call's value, so the masks y repeat under a different message and challenge.</p>
+<p>With the reference code at all three levels, eight rounds of one ordinary signature followed by one faulty signature gave faulty signatures that verify. Solving z₂ − z₁ = (c₂ − c₁)·s1 from each pair, using public data only, gave the key's s1 in 6, 8 and 8 of 8 pairs. A key rebuilt from the public key and s1 signed a fresh message that the unmodified verifier accepted, and rejected for a changed message. Pairs of ordinary signatures gave no solution. The same relation holds in the optimized trees.</p>
+<p>The failing allocation has a fixed size and is not chosen by the attacker; memory pressure or a resource limit is needed. Demonstrated key recovery is High.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh sign-16/reproduce_stale_mask.sh
+</code></pre>
+<p>The witness checks the unchecked hash in the six SM3 trees and wraps <code>malloc</code> to fail that copy once per faulty call.</p>
+<h2 class="issue-heading" id="sign-16-5-a-failed-key-derivation-allocation-makes-key-generation-return-the-previous-key-pair">sign-16-5: A failed key-derivation allocation makes key generation return the previous key pair</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Octarine-128, -256 and -512 SM3 reference and optimized implementations; the SHAKE additional implementations do not allocate there</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>If one fixed 108-byte allocation fails during key generation, the call returns success with the previous call's key pair, whose secret key an earlier key holder already has; no remote way to force the failure is shown</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-19</td></tr>
+</table></div>
+
+<p>Key generation derives (ρ, ρ′, K) from the fresh seed ξ (Algorithm 3, p. 26, KeyGen line 2) with <code>RRLWR_SIGN_HASH_KDF</code> (<code>sign.c:65</code>), which drops the <code>pseudoXOF</code> status (<code>hash_domain.h:168</code>) and returns nothing to check. Its output <code>rho_rhoprime_K</code> is an uninitialised stack array (<code>sign.c:54</code>). When <code>pseudoXOF</code>'s 108-byte copy of the encoded seed fails, the array keeps the previous call's (ρ, ρ′, K), and <code>sig_keygen</code> rebuilds the same key pair from it and returns 0 (<code>:114</code>).</p>
+<p>With the reference code at all three levels, a key generation with that allocation failing, immediately after an ordinary one, returned 0 with public and secret keys byte-identical to the previous ones. A signature made with the first secret key verified under the second public key, and was rejected for a changed message. An ordinary key generation gave a different key pair, and the same failure after the stack had been overwritten gave a key pair equal to neither. The optimized trees, built with their AVX2 flags, gave the same results.</p>
+<p>The failing allocation has a fixed size and is not chosen by the attacker; memory pressure or a resource limit is needed. A key pair returned as new whose secret key an earlier caller already holds is High.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh sign-16/reproduce_stale_keygen.sh
+</code></pre>
+<p>The witness checks the unchecked derivation in the six SM3 trees and wraps <code>malloc</code> to fail that copy once.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

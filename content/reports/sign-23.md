@@ -88,3 +88,23 @@ NGCC_LONG=1 sh sign-23/reproduce_seed_collision.sh
 ```
 
 The script copies the SHUTTLE-128 reference tree to a temporary directory, inserts the seed truncation directly after `seed_y` is squeezed, and builds a 20-bit and an unmodified variant. It runs the collision route on 4,096 signatures, the multi-target enumeration on 256 signatures and the full-width table identity, with the full-width, non-matching-pair, flipped-seed and changed-message controls (about 30 seconds). `NGCC_LONG=1` uses 24 bits and 16,384 signatures. It then builds the SHUTTLE-256 and SHUTTLE-512 reference trees with the same patch and runs the multi-target enumeration at 16 bits on 256 signatures, and the table identity at their shipped widths.
+
+## sign-23-4: Verification ignores the public-key length and over-reads a short key
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: SHUTTLE-128, -256 and -512; reference, AVX2 optimized and AVX-512 additional implementations
+Discovery: Trivial
+Exploitation: A caller-supplied public key shorter than its declared length is read out of bounds; no disclosure shown
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
+Date: 2026-11-19
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/RJJWZ7MBZCXXDMQMUOIUWNPNPA7ENHB7/)
+
+`sig_verify` discards `pk_len_bytes`, and `unpack_pk` (`packing.c:154`) reads the fixed-size public key. Each of the nine trees, built with its own Makefile flags and AddressSanitizer, reads past a valid public key held in a heap buffer one byte short and declared at that length; the full-length buffer verifies cleanly. Callers that pass complete keys are unaffected.
+
+### Reproducing
+
+```sh
+sh sign-23/reproduce_short_pk.sh
+```

@@ -30,16 +30,16 @@
 <tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
 <tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
-<tr><th>Affected</th><td>Level2-eff uncompressed reference implementation</td></tr>
+<tr><th>Affected</th><td>Reference implementation, Level 1, 2 and 3 efficiency and security variants: uncompressed instances accept signatures for other messages, compressed ones accept modified signatures; which instances accept depends on the build's stack layout; Level 5 not observed</td></tr>
 <tr><th>Discovery</th><td>Trivial</td></tr>
 <tr><th>Exploitation</th><td>Trivial</td></tr>
 <tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
 <tr><th>Date</th><td>2026-09-21</td></tr>
 </table></div>
 
-<p>The Level2-eff uncompressed verifier accepts a full-length all-zero signature, and
-accepts a valid signature after the message is changed, when either is verified after
-another verification in the same process. The same all-zero signature is rejected when
+<p>The uncompressed verifiers accept a full-length all-zero signature, and accept a valid
+signature after the message is changed, when either is verified after another
+verification in the same process. The same all-zero signature is rejected when
 the stack below the verifier is overwritten first. The verdict is therefore not a
 function of the signature.</p>
 <p><code>protocols_verif_internal</code> is compiled with <code>-DNDEBUG</code>, which removes the point-order
@@ -55,13 +55,18 @@ that default; it did not introduce the assert removal.</p>
 <p>A verifier normally processes signatures one after another, so the accepting state is
 the ordinary one: an attacker can submit an all-zero signature for a message of their
 choice without making any signing query. Acceptance depends on process state rather
-than on the attacker's input, which makes the behaviour unpredictable rather than safe.
-The compressed instance built from the same tree is unaffected.</p>
-<p>All eight uncompressed submitted instances were tested with the same primed-versus-
-scrubbed witness. Only Level2-eff uncompressed accepted the forged input; the other
-seven rejected it in both states, as did the compressed Level2-eff control. The unsafe
-assert-as-validation pattern is shared source, but demonstrated acceptance is therefore
-scoped to Level2-eff uncompressed.</p>
+than on the attacker's input, which makes the behaviour unpredictable rather than safe.</p>
+<p>Which instances accept depends on the build's stack layout. In the harness's shared
+libraries, all eight uncompressed instances were tested with the primed-versus-scrubbed
+witness, and only Level2-eff uncompressed accepted the all-zero signature; the compressed
+Level2-eff control rejected it. Static executables built with the candidate's release
+flags (GCC 15, <code>-O2 -DNDEBUG</code>) show more. After an honest verification of an unrelated
+signature, all six uncompressed Level 1, 2 and 3 instances accept a signature on another
+message and an all-zero signature. In all twelve Level 1, 2 and 3 instances, compressed
+ones included, a valid signature with one bit flipped is accepted right after the
+unmodified signature was verified, which breaks strong unforgeability. Every one of these
+verdicts is a rejection in a fresh process or after the stack is overwritten. The Level 5
+instances rejected every input in both builds.</p>
 <p>The verifier must initialise every value its decision reads, enforce the specified point,
 order and codomain conditions unconditionally rather than through <code>assert</code>, and reject
 zero or malformed decoded responses before protocol verification.</p>
@@ -75,6 +80,10 @@ tools/ngcc_attack sig-uninit-verdict sign-25/lib/libSQISign2Dsquare-Level2-eff_u
 once after overwriting the stack, and reports the two verdicts. The compressed instance
 is run as a control and rejects both. <code>tools/reproduce.sh</code> runs this together with the
 other supported runtime witnesses and their controls. See <code>tools/README.md</code>.</p>
+<pre><code class="language-sh">sh sign-25/reproduce_stale_verdict.sh
+</code></pre>
+<p>This witness builds all sixteen instances as static executables with the release flags,
+prints each one's fresh, primed and scrubbed verdicts, and takes about 20 seconds.</p>
 <h2 class="issue-heading" id="sign-25-2-isogeny-prime-sizing-relies-on-the-former-square-root-attack-cost">sign-25-2: Isogeny prime sizing relies on the former square-root attack cost</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
@@ -141,6 +150,24 @@ other supported runtime witnesses and their controls. See <code>tools/README.md<
 <pre><code class="language-sh">python3 sign-25/reproduce_encoding_aliases.py
 </code></pre>
 <p>For each of the 16 libraries the script makes one key pair and signature, builds the aliases above and verifies every alias and control in a fresh child process. It takes about one minute. Public keys whose curve coefficient is edited by <code>+1</code> are not used as controls, because the compressed verifiers do not return on such a key.</p>
+<h2 class="issue-heading" id="sign-25-5-key-generation-signing-and-verification-leak-hundreds-of-kilobytes-per-call">sign-25-5: Key generation, signing and verification leak hundreds of kilobytes per call</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All sixteen instances, reference and optimized, by source; measured on Level1-eff uncompressed</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Unbounded memory growth in a long-running process; verification leaks the same amount whether it accepts or rejects; no disclosure or corruption</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
+<tr><th>Date</th><td>2026-11-19</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/IYHNEW5TKVL2WYXZDRZL5CSRBBBE77BU/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p>Three routines allocate without freeing: <code>ibz_rand_interval</code> (<code>intbig.c</code>), <code>fp2_batched_inv</code> (<code>fp2.c</code> contains no <code>free</code>) and <code>theta_chain_comput_strategy</code> (<code>theta_isogenies.c:1620,1661–1664</code>). Built with the candidate's <code>-O2 -DNDEBUG</code>, each Level1-eff uncompressed call after a warm-up call left a fixed amount live: 234,212 bytes per key generation, 971,348 per signature and 473,426 in 16 blocks per verification, the same for an accepted and a rejected signature. GMP's own allocations account for at most 200 bytes of this.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh sign-25/reproduce_leak.sh
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

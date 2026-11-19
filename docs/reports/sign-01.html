@@ -296,6 +296,25 @@ the corresponding reference source constants and message-hash data flow.</p>
 <pre><code class="language-sh">sh sign-01/reproduce_verify_memory.sh
 </code></pre>
 <p>The leak count wraps <code>malloc</code> and <code>free</code>; the short-buffer case runs verification only, under AddressSanitizer.</p>
+<h2 class="issue-heading" id="sign-01-12-avx2-signing-and-verification-read-past-correctly-sized-keys">sign-01-12: AVX2 signing and verification read past correctly sized keys</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Aigis-Sig+ I, II and III AVX2 implementation; the NEON tree compiles the same unpacking code (not run); the reference and AArch64 trees are not affected</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Every AVX2 signature reads 17 or 19 bytes past the secret key, and every AVX2 verification 1 or 23 bytes past the public key; a fault is possible when a key ends at a page boundary; no disclosure shown</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool; public-key read by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-19</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/FVZYRBA7CCZZPEPX5XK2NAIKKBQMXB64/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p>The AVX2 <code>polyt0_unpack</code> (<code>packing.c:255</code>) decodes each polynomial with 32-byte <code>_mm256_loadu_si256</code> loads while advancing by <code>PARAM_D</code> bytes (15 at sets I and II, 13 at set III). The <code>t0</code> polynomials end the secret key (<code>:334</code>), so the last loads run 17 or 19 bytes past it. Verification's <code>polyt1_unpack</code> (<code>:40</code>) ends the public key the same way and reads 1 byte past it at sets I and II and 23 at set III. The extra bytes do not change the output.</p>
+<p>Built with the candidate's AVX2 flags, signing with an exactly sized secret key that ends at an inaccessible page faults at all three sets; with 17 or 19 bytes of slack, or a readable page, signing succeeds and the signature verifies, and one byte less slack still faults. Verification with an exactly sized public key behaves the same with 1 or 23 bytes. This affects ordinary callers that pass correctly sized buffers.</p>
+<h3 id="reproducing_11">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh sign-01/reproduce_avx2_sk_overread.sh
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

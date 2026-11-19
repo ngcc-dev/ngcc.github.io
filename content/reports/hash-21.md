@@ -99,3 +99,23 @@ python3 hash-21/reproduce_long_second_preimage.py
 ```
 
 The submitted-library witness confirms planted modular-reduction mergers at every tier and rejects byte-flipped controls. The second command checks the source dependencies, counts the message-loaded merge positions, and recomputes the long-target probabilities and work factors. It does not allocate or rehash a 12 GB message.
+
+## hash-21-5: Lengths just below 2^64 − 64 return success without writing a digest
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: Neulaser-512, -768 and -1024; reference and optimized implementations
+Discovery: Moderate
+Exploitation: For declared lengths in the last few hundred values below 2^64 − 64 the call returns 0 and leaves the output buffer untouched; such a message needs 2^61 bytes, so the case is not reachable in practice
+Credit: LK-PQC-Hunter (NGCC CryptHash Forum sender), using the LKQ PQC Hunter automated tool
+Date: 2026-11-19
+Original source: [LK-PQC-Hunter's CryptHash Forum post](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/7BQDTODFXUIOLN6JVFZN45OYHVVIAVD5/)
+
+`CryptHash` computes `total_bits = msg_len_bits + 1 + zero_bits + 64` and the block count in 64-bit arithmetic (`CryptHash_AlgorithmInstance.c:362–364` in the reference, `:392–394` in the optimized source), and writes the digest only inside the block loop (`:375–378`, `:405–408`). For lengths from 2^64 − 320, 2^64 − 1,088 and 2^64 − 576 up to 2^64 − 65 at Neulaser-512, -768 and -1024, the sum wraps below one block, no block is processed, and the call returns 0 with the digest untouched and the message unread. The witness passes an inaccessible page as the message and a filled output buffer in all six instance directories; the empty-message control writes the digest.
+
+### Reproducing
+
+```sh
+sh hash-21/reproduce_length_wrap.sh
+```

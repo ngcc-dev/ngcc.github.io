@@ -93,6 +93,24 @@ tools/reproduce.sh sign-23
 NGCC_LONG=1 sh sign-23/reproduce_seed_collision.sh
 </code></pre>
 <p>The script copies the SHUTTLE-128 reference tree to a temporary directory, inserts the seed truncation directly after <code>seed_y</code> is squeezed, and builds a 20-bit and an unmodified variant. It runs the collision route on 4,096 signatures, the multi-target enumeration on 256 signatures and the full-width table identity, with the full-width, non-matching-pair, flipped-seed and changed-message controls (about 30 seconds). <code>NGCC_LONG=1</code> uses 24 bits and 16,384 signatures. It then builds the SHUTTLE-256 and SHUTTLE-512 reference trees with the same patch and runs the multi-target enumeration at 16 bits on 256 signatures, and the table identity at their shipped widths.</p>
+<h2 class="issue-heading" id="sign-23-4-verification-ignores-the-public-key-length-and-over-reads-a-short-key">sign-23-4: Verification ignores the public-key length and over-reads a short key</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>SHUTTLE-128, -256 and -512; reference, AVX2 optimized and AVX-512 additional implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>A caller-supplied public key shorter than its declared length is read out of bounds; no disclosure shown</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
+<tr><th>Date</th><td>2026-11-19</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/RJJWZ7MBZCXXDMQMUOIUWNPNPA7ENHB7/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p><code>sig_verify</code> discards <code>pk_len_bytes</code>, and <code>unpack_pk</code> (<code>packing.c:154</code>) reads the fixed-size public key. Each of the nine trees, built with its own Makefile flags and AddressSanitizer, reads past a valid public key held in a heap buffer one byte short and declared at that length; the full-length buffer verifies cleanly. Callers that pass complete keys are unaffected.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh sign-23/reproduce_short_pk.sh
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -180,6 +180,24 @@ python3 kem-17/reproduce_epcp_fingerprint.py
 <pre><code class="language-sh">python3 kem-17/reproduce_second_syndrome_parity.py
 </code></pre>
 <p>The witness checks the wording of Definition 2.3.15 and the four parameter files, then samples the real second syndrome in <code>F_2[x]/(x^n − 1)</code> 24 times for each parity of <code>s</code> and each parameter set. It requires the predicted constant parity in every sample, and both parities in a uniform control.</p>
+<h2 class="issue-heading" id="kem-17-8-every-encapsulation-and-decapsulation-leaks-the-mask-matrix-and-decapsulation-reads-past-a-short-ciphertext">kem-17-8: Every encapsulation and decapsulation leaks the mask matrix, and decapsulation reads past a short ciphertext</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>HEP-QC-1, -3, -5 and -7; reference and x86-64 implementations (identical by source; the witness runs the reference)</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Unbounded memory growth of 0.28 to 12.6 MB per call in a long-running process, and an out-of-bounds read of a caller-supplied short ciphertext; no disclosure shown</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
+<tr><th>Date</th><td>2026-11-19</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/MHS6ZVBLYEEPUJGGCDSDZ42MPVTCCMMM/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p><code>hep_qc_pke_encrypt</code> allocates <code>G_mask</code> with <code>calloc</code> (<code>PKE_HEP_QC.c:120</code>) and never frees it. Encapsulation encrypts once and decapsulation re-encrypts, so every <code>kem_enc</code> and every <code>kem_dec</code>, honest or tampered, leaks one block of 283,648, 861,696, 1,845,248 or 12,619,776 bytes at the four sets; key generation leaks nothing. <code>kem_dec</code> also discards <code>ct_len_bytes</code>: an honest HEP-QC-1 ciphertext in a heap buffer one byte short, declared at that length, is read past its end in <code>hep_qc_c_kem_from_string</code> (<code>parsing.c:79</code>) under AddressSanitizer, while the full-length buffer is clean.</p>
+<h3 id="reproducing_7">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh kem-17/reproduce_leak_short_ct.sh
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

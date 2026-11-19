@@ -152,3 +152,47 @@ sed -n '746,790p' sign-08/Implementations/Reference_Implementation/DARTS128/poly
 ```
 
 This is a source witness: the decoder has no range check on the discarded quotient. The accepted aliases were observed with a driver against the archived code and are not part of the witness.
+
+## sign-08-7: A 32-bit sum wraps and disables the key-generation norm check at DARTS256 and DARTS512
+
+Severity: Medium
+Status: Confirmed
+Layer: Implementation
+Affected: DARTS256 and DARTS512 in all fifteen trees by source (the witness runs the reference); DARTS128 values stay below 2^31
+Discovery: Moderate
+Exploitation: Key generation returns keys that the specification rejects (24 of 100 at DARTS256 and 62 of 100 at DARTS512 in the run); the bound on ‖cs‖ that the check guarantees no longer holds for them; no signature leakage shown
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool; key-generation consequence by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-19
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/RNPHVDLQBPYLSORO3BAL44W4ZCTBINKQ/)
+
+Key generation resamples the secret until `N(s) ≤ γ²n` (Algorithm 6 line 6, physical p. 8); the specification states that only then is `‖cs‖ ≤ γ√τ` guaranteed for every challenge, and sets γ so that about half of all secrets are rejected. `polyveckl_sqsing_value` returns an `int64_t` but accumulates the sum in `int32_t res` (`polyvec.c:652`), and `sign.c:70` compares the result with the bound. At DARTS256 and DARTS512 the true value often exceeds 2^31, the sum wraps, and the wrapped value passes the test.
+
+For 100 reference keys per set, N(s) recomputed from the unpacked secret in 64-bit arithmetic exceeded the bound for 24 keys at DARTS256 and 62 at DARTS512, while the code's value was below the bound for every key; at DARTS128 no key exceeded it. The results are the same with GCC at `-O0` and `-O3` and with Clang at `-O2`. The sum should be kept in 64 bits.
+
+### Reproducing
+
+```sh
+sh sign-08/reproduce_pk_reads.sh
+```
+
+The witness unpacks each generated secret key and recomputes N(s) with 64-bit integers.
+
+## sign-08-8: Verification ignores the public-key length, and AVX2 verification reads past a correctly sized key
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: All nine `sig_verify` wrappers for the length; the six AVX2 trees for the over-read
+Discovery: Trivial
+Exploitation: Out-of-bounds read of a caller-supplied short public key, and in AVX2 builds a 14- or 15-byte read past every exactly sized public key, which faults when the key ends at a page boundary; no disclosure shown
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
+Date: 2026-11-19
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/RNPHVDLQBPYLSORO3BAL44W4ZCTBINKQ/)
+
+`sig_verify` discards `pk_len_bytes`, and `unpack_pk` reads the fixed-size key: a valid public key in a heap buffer one byte short, declared at that length, is read past its end (`packing.c:46`) under AddressSanitizer at all three sets, while the full-length buffer is clean. Separately, the AVX2 `poly_q_unpack` loads 32 bytes for every 17 (DARTS128 and DARTS256) or 18 (DARTS512) it consumes, so AVX2 verification reads 15 or 14 bytes past an exactly sized public key. Built with the candidate's flags, verification faults when the key ends at an inaccessible page and succeeds with that much slack or a readable page.
+
+### Reproducing
+
+```sh
+sh sign-08/reproduce_pk_reads.sh
+```

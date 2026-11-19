@@ -71,3 +71,47 @@ Fix: return an error unless `digest_len_bits` equals the instance's digest lengt
 ```sh
 sh hash-35/reproduce_digest_length.sh
 ```
+
+## hash-35-4: Aligned SSE loads crash the x86 implementations on unaligned buffers
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: Wish512 and Wish1024 x86 resource- and performance-optimized implementations built with their Makefile flags; the reference, AVX builds and ARM implementations are not affected
+Discovery: Trivial
+Exploitation: Valid calls crash: the resource-optimized builds on short messages and on unaligned ones, the performance-optimized builds on messages not aligned to 16 bytes; no memory corruption
+Credit: LK-PQC-Hunter (NGCC CryptHash Forum sender), using the LKQ PQC Hunter automated tool
+Date: 2026-11-19
+Original source: [LK-PQC-Hunter's CryptHash Forum post](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/3JLPLVQZRQWTWUOYIEKX73LE5OVHXMGE/)
+
+All four x86 `wish.c` files define `LOAD(p)` as `_mm_load_si128` (`wish.c:17`), which requires 16-byte alignment, and apply it to the caller's message blocks and to the stack array `padded_block`, which has no alignment attribute (Wish512 `:157–167`, Wish1024 `:181–191`). Built by GCC 15 with the Makefile flags (`-march=x86-64 -maes`, legacy SSE), the resource-optimized builds crashed on an aligned 24-bit message, because `padded_block` was placed at 8 mod 16, and the performance-optimized builds crashed on one- and two-block messages at offsets 1 and 8 while matching the reference on aligned ones. Clang builds with the same flags also crashed on unaligned messages. The API places no alignment requirement on the message; unaligned loads and an aligned `padded_block` avoid both crashes.
+
+### Reproducing
+
+```sh
+sh hash-35/reproduce_sse_alignment.sh
+```
+
+## hash-35-5: The block-index tweak is encoded little-endian, not big-endian as specified
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: Wish512 and Wish1024; reference implementation (the optimized implementations reproduce the same KATs)
+Discovery: Moderate
+Exploitation: An implementation that follows the specification computes a different digest for every message longer than one block; tweaks stay distinct, and no security consequence was identified
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance, in this candidate's specification notes of 2026-09-21; independently reported by Zhiqiang Yang, Lin Ao, Yue Li, Xin Yi, Ling Song and Lei Wang, using the CryptVerify tool (Cryptol and SAW)
+Date: 2026-11-19
+Follow-up source: [Yang et al.'s formal verification report, finding 8](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/7RGEIZ5TI5BTESVHWRVJMTQHX5CMYUB5/attachment/4/FormalVerificationReportonNGCCHashCandidates.pdf)
+
+Section 3.3.2 (physical p. 6) defines the tweak of block i as τ_i = enc64(i) ‖ 0^64, where enc64 is "the big-endian 64-bit encoding of the block index", and Algorithm 2 line 5 XORs it into the state before every block. The reference `wish.c` (identical in both instances) writes `tweak[b] = (byte)(blk >> (b * 8))` (`:177–179`), which puts the least significant byte first. The two encodings agree only for block 0.
+
+As shipped, both instances reproduce all 4,097 KAT_2_12 vectors. With only that line changed to the big-endian order, every single-block vector still matches and every longer one fails: 512 of 4,097 match for Wish512 and 1,024 for Wish1024.
+
+### Reproducing
+
+```sh
+sh hash-35/reproduce_spec_mismatch.sh
+```
+
+The witness regenerates each KAT_2_12 file with the shipped NGCC generator and uses it only if its canonical SHA-256 equals the official file's entry in `hash-35/kat.sha256`.

@@ -224,3 +224,50 @@ grep -n 'BUCKET_SZ\[r\[ctr\]\]' "$d/poly_invq.c"; sed -n '25,31p' "$d/cbd.c"
 ```
 
 This is a source witness for the four sites.
+
+## kem-39-8: A ciphertext with exactly t errors in a BCH codeword writes past the decoder's error-location array
+
+Severity: High
+Status: Confirmed
+Layer: Implementation
+Affected: WeaverKEM-128, -256 and -512 reference and optimized implementations (identical decoders by source; the witness runs the reference)
+Discovery: Moderate
+Exploitation: Unauthenticated stack write of 4 bytes from a crafted ciphertext; the value written is a fixed constant; a Clang `-O2` build of WeaverKEM-128 crashes, while GCC builds place a dead slot there
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-19
+
+`chien_search` stores `roots[count] = n − i` on every step, before it knows whether the step found a root, into the caller's `unsigned int errloc[BCH_T]` (`bch_low.c:260`, `:388` in the nibble variant, `bch_high.c:257`). `count` reaches `t` when the codeword holds exactly `t` errors, and the store then writes `errloc[BCH_T]`, one element past the array. The last value written is the constant `ecc_bits`; the ciphertext decides only whether the write happens.
+
+A ciphertext with `u = 0` and `v` chosen to put exactly `t` errors into one BCH codeword gave an AddressSanitizer stack-buffer-overflow WRITE of size 4 in the low-layer decoder at all three levels, and in the high-layer decoder at WeaverKEM-128 and -512 (WeaverKEM-256 has no high-layer decoder); `t − 1` errors gave none. Honest ciphertexts never reach it, but about one in three random WeaverKEM-128 ciphertexts do, in the high-layer decoder. With Clang 21 at `-O2` the slot past `errloc` in `decode_bch_high` holds the spilled `data` pointer, and WeaverKEM-128 decapsulation of such a ciphertext dies with SIGSEGV; with one error, or with `errloc[BCH_T + 1]`, it returns 0. GCC at `-O0` to `-O3`, including the submitted `-O3 -fomit-frame-pointer`, places dead storage there, and the decoded messages are unchanged.
+
+The array needs `BCH_T + 1` entries, or the store must move inside the root test. An input-triggered stack write from an untrusted ciphertext, with a demonstrated crash, is High.
+
+### Reproducing
+
+```sh
+sh kem-39/reproduce_bch_bounds.sh
+```
+
+The witness builds the three reference sets with AddressSanitizer and an observation hook, crafts the t-error ciphertexts, and runs the Clang `-O2` crash with the one-error and enlarged-array controls (that part is skipped without Clang).
+
+## kem-39-9: Decapsulation reads past the error-locator array and past a short ciphertext
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: WeaverKEM-256 and -512 for the error-locator read; all three sets for the ciphertext length; reference and optimized implementations
+Discovery: Trivial
+Exploitation: Out-of-bounds stack reads on every honest WeaverKEM-256 and -512 decapsulation that write back unchanged values, and an out-of-bounds read of a caller-supplied short ciphertext; no disclosure or corruption shown
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
+Date: 2026-11-19
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/SCHPYCDJBS43AXI326FCVKOXSY4TQDJE/)
+
+`compute_error_locator_polynomial` updates `elp->c[j + k]` with indices up to `3t − 2` in a `2t + 1`-entry stack array (`bch_low.c:184`, `bch_high.c:181`). Under AddressSanitizer every honest WeaverKEM-256 and -512 decapsulation reports a stack-buffer-overflow READ there; WeaverKEM-128 is clean. The value XORed in is nonzero only for indices up to `2t − 1`, so the out-of-range bytes are rewritten unchanged: an instrumented copy saw no nonzero out-of-range XOR over honest, crafted and random ciphertexts and exhaustive or random sweeps of the decoder inputs, and a symbolic sweep of all discrepancy patterns gives the same bound.
+
+All six `kem_dec` wrappers discard `ct_len_bytes`. An honest ciphertext in a heap buffer one byte short, declared at that length, is read past its end at all three levels; the full-length buffer is clean. Callers that pass complete ciphertexts are unaffected by this part.
+
+### Reproducing
+
+```sh
+sh kem-39/reproduce_bch_bounds.sh
+```

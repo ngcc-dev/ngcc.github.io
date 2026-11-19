@@ -87,6 +87,26 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/crypthashforu
 <pre><code class="language-sh">python3 security/zc1280_issue37.py
 </code></pre>
 <p>The hash-pinned verifier checks the full-schedule three-round family and the reduced hash with padding and merging. The wrapper also checks saved full-round digests against the submitted native C implementation. No check establishes the remaining-round probability or a twelve-round collision.</p>
+<h2 class="issue-heading" id="hash-32-4-six-round-constants-are-applied-in-a-different-order-from-table-11">hash-32-4: Six round constants are applied in a different order from Table 1.1</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All six ZC-EDMC instances (ZC-1280 and ZC-1536 at 512, 768 and 1024 bits); reference implementation and the shared permutation headers</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>An implementation that follows the specification computes a different function and reproduces none of the KATs; the twelve constants stay distinct, and no security consequence was identified</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-19</td></tr>
+</table></div>
+
+<p>Table 1.1 (physical p. 11) lists the twelve round constants, and ι XORs c_i into A0[0] in round i = −11, …, 0 (Algorithms 1 and 2, Figure 1.3). The shared permutation headers (<code>lib/low/ZuD-1280/ZuD1280.h:25–36</code>, <code>ZuD-1536/ZuD1536.h:25–36</code>) define <code>rc8, rc7, rc6</code> = 0x120, 0x14, 0x60 and <code>rc4, rc3, rc2</code> = 0x380, 0xF0, 0x1A0, and the permutation applies <code>rc12</code> down to <code>rc1</code>. So c_−7, c_−6, c_−5 and c_−3, c_−2, c_−1 are each rotated by one position against the table's 0x60, 0x120, 0x14 and 0xF0, 0x1A0, 0x380; the other six constants agree.</p>
+<p>As shipped, every instance reproduces all 4,097 KAT_2_12 vectors. With only those six definitions put in the Table 1.1 order, every instance reproduces none.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh hash-32/reproduce_spec_mismatch.sh
+</code></pre>
+<p>The witness regenerates each KAT_2_12 file with the shipped NGCC generator and uses it only if its canonical SHA-256 equals the official file's entry in <code>hash-32/kat.sha256</code>.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
