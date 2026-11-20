@@ -14,7 +14,7 @@ Exploitation: Trivial
 Credit: Tsinghua Hash Lab <cuihr26@mails.tsinghua.edu.cn>
 Date: 2026-09-22
 Original source: [CryptHashForum report](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/IK33PEQPGZ4WVC4EZPOPK62ITTYN37ZD/)
-Follow-up source: [MoFang team's revision notice](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/MKUGDOEMKQFY4M7UWJT5EF5AMOCUKITQ/)
+Follow-up source: [MoFang team's revision notice](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/MKUGDOEMKQFY4M7UWJT5EF5AMOCUKITQ/); [Zhang and Liu's ePrint 2026/2886](https://eprint.iacr.org/2026/2886)
 
 MoFang uses the two 576-bit halves of each message block as cipher keys. Both key schedules move words 5 and 7 identically, never apply the S-box to them, and rotate them only by odd amounts. Applying the same two-periodic XOR difference to the corresponding words in both halves therefore cancels from every combined round key, for every chaining value and all 16 rounds.
 
@@ -27,6 +27,8 @@ The frozen Round 1 archive above remains the target of this finding.
 ### Proposed fixes
 
 The [MoFang team's revision notice](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/MKUGDOEMKQFY4M7UWJT5EF5AMOCUKITQ/) proposes making the later block's S-box consume the second row rather than the first, regenerating the implementations and KATs, and correcting an Algorithm 4 assignment typo. This section records the proposal without evaluating it.
+
+Zhang Zhihong and Liu Fengyaxuan's [ePrint 2026/2886](https://eprint.iacr.org/2026/2886) (received 2026-11-13) reports that the revised reference implementation keeps the per-round key cancellation, and gives explicit collisions for all six revised variants. The relocated S-box now receives the second half's word-5 difference, so cancellation depends on that half's values. When its words other than 0, 5 and 7 are zero, the difference passes the S-box unchanged, and every input has 16 round-key-equivalent inputs for any common chaining value; outside that domain, classes have at most four. Its colliding 144-byte message pair and digests were checked against the reference C code at commit `bfdc6a89` of the submitters' GitHub repository. The results concern that code rather than the revised specification, whose Algorithm 3 writes the row-1 S-box output into row 0. This entry records the claim without evaluating it.
 
 ### Reproducing
 

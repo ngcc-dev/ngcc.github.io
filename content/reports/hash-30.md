@@ -14,12 +14,15 @@ Exploitation: Conditional 2^288 later-round candidate tests for -768 after affin
 Credit: Qinghe Crypto Group; three-round message-modification extension by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-09-29
 Original source: [Qinghe Crypto Group's CryptHash Forum post](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/FCGYUVDJV4QBMGG64KAK6X2QZOZ6W4QX/)
+Follow-up source: [ZC-DM team's v1.1 notice](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/FD53WOZRD7B4DESDOW563QRPKPC4O6NC/)
 
 For ZC-1536, the input difference `Delta A_0[0] = 0x1111111111111111` survives the linear layer. At each of its 16 active bit positions, the sequential χ mapping preserves the difference exactly when the two other input bits are `0,1`, a probability of `1/4`; the one-round trail therefore has weight 32. If it persists for `t` rounds, Davies–Meyer feed-forward cancels the identical input/output difference and produces a collision at estimated cost `2^(32t)`.
 
 The original post estimates `2^224`, `2^352`, and `2^384` for 7, 11, and all 12 rounds. Further extension to that analysis: rate-only linear message modification can enforce the first three trail rounds. For ZC-DM-1536-768, a prefix satisfying 16 capacity conditions and a collision of the resulting four-round reduced hash were demonstrated using valid padded messages from the zero IV. For -1024, the linear systems are soluble on tested chaining states after imposing 32 capacity conditions, but no prefix reaching such a state was constructed. If each of rounds 4–12 then costs an independent `2^32`, about `2^288` accepted pairs would be needed for a collision. Independence and full-round satisfiability are unproved. For the -768 rate, each prefix costs about `2^16` trials and its affine solution space has 153 free bits; all 300 sampled pairs held the first three rounds. Sampling from that space adds only polynomial work per pair, while fresh prefixes supply further spaces. The conditional `2^288` later-round test estimate is therefore below the 384-bit collision target, hence Critical / Lead. No full-round collision was demonstrated.
 
 Follow-up: [Niu, Peyrin, Zhang, and Zhou's issue #36](https://github.com/ngcc-dev/ngcc-harness/issues/36), posted 2026-11-01, supplies reachable first-three-round certificates for the full-schedule -768 and 11-round -512 DM/DMC cases. Its attached verifier reconstructs them and proves at least `2^415` distinct three-round pairs for each -768 certificate. That is enough candidate supply, but its specified sampler uses at most `2^64` three-round proposals per accepted pair in expectation. For that separate sampler, `2^288` accepted pairs could take up to `2^352` proposals in expectation before full-round tests. This does not price the affine message-modification generator above. The issue's 11-round -512 count of `2^255` accepted candidates likewise is not a below-birthday work bound with that sampler. No full-round collision is shown.
+
+The [ZC-DM team's v1.1 notice](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/FD53WOZRD7B4DESDOW563QRPKPC4O6NC/) (2026-11-20) revises the plane shifts of both ZC permutations in response to the reported trails, including ZC-1536's plane-2 offset and the first θ parity shift. The revision was not evaluated; this entry concerns the Round 1 archive.
 
 ### Reproducing
 
@@ -41,12 +44,15 @@ Discovery: Non-trivial
 Exploitation: Estimated 2^125.1 (-512) and 2^129 (-768) work, conditional on independence over ten probabilistic rounds; collisions executed for three and four rounds only
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-10-31
+Follow-up source: [ZC-DM team's v1.1 notice](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/FD53WOZRD7B4DESDOW563QRPKPC4O6NC/)
 
 Fix a bit position `z` and let `D` have plane 0 active on the odd lanes and plane 2 active on the even lanes, all at `z`. The plane-2 ρ offset `(5, 0)` has no z-rotation, so after the first ρ the active bits share columns, θ sees zero column parity, and the second ρ maps the even lanes back onto themselves: the linear layer fixes `D` exactly. Each active χ column keeps its difference with probability 1/4; consecutive rounds are correlated, and the measured rate is 2^-12 per round from every start round.
 
 In the first block, a rate difference on plane 0 at `z` becomes `W` (planes 0 and 2, all lanes) and then `D`. After a prefix fixes 9 (-512) or 13 (-768) capacity bits, message modification makes the first two rounds free, so the block costs about 2^120. The second block cancels the rate part of `D` and follows `D → D` for all twelve rounds; the Davies–Meyer feed-forward then cancels the identical input and output difference. Its own 5 or 9 capacity conditions repeat the first block 2^5 or 2^9 times, giving about 2^125.1 and 2^129 against collision targets of 2^256 and 2^384.
 
 The 2^-12 rate was measured for single rounds at every start and for windows of up to four rounds; independence across ten consecutive probabilistic rounds is assumed. No full-round collision was attempted.
+
+The [ZC-DM team's v1.1 notice](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/FD53WOZRD7B4DESDOW563QRPKPC4O6NC/) (2026-11-20) changes the ZC-1536 plane-2 offset `(5, 0)`, on which this trail relies, to `(5, 1)` in both shift layers. The revision was not evaluated; this entry concerns the Round 1 archive.
 
 ### Reproducing
 
@@ -67,11 +73,13 @@ Exploitation: Conditional 2^144 candidate trials with polynomial generation and 
 Credit: Zhongfeng Niu, Thomas Peyrin, Liu Zhang, and Chunning Zhou
 Date: 2026-11-02
 Original source: [Niu, Peyrin, Zhang, and Zhou's issue #37](https://github.com/ngcc-dev/ngcc-harness/issues/37)
-Follow-up source: [CryptHash Forum post](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/NVJUXBKSSV4OQU7AZCYH5TGLLUUHH4FR/)
+Follow-up source: [CryptHash Forum post](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/NVJUXBKSSV4OQU7AZCYH5TGLLUUHH4FR/); [ZC-DM team's v1.1 notice](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/FD53WOZRD7B4DESDOW563QRPKPC4O6NC/)
 
 The ZC-1280-512 state has a 704-bit rate. The reported difference occupies eight distinct χ columns wholly in that rate and is fixed by the submitted linear layer. Each column requires two bit conditions for the difference to persist, giving an exact one-round rate of `2^-16` on a uniform state. A common legal prefix from the zero IV fixes eight capacity conditions; the next message block selects the rate bits. An exact affine construction then enforces the first three rounds, leaving a 274-dimensional family, or `2^273` distinct unordered message pairs. Sampling it costs polynomial work per pair.
 
 For ZC-DM, twelve successful rounds make the permutation's output difference equal the input difference. The full-state Davies–Meyer feed-forward cancels both, giving a collision for distinct padded messages. If each of the nine remaining rounds independently passes its 16-bit condition with conditional probability `2^-16` on the constructed family, the expected cost is `2^144` candidates, below the `2^256` digest birthday bound. That tail probability has not been established for this generated distribution; the estimate is therefore a Lead, not a completed full-round attack. The attachment demonstrates a valid four-round collision and confirms that the same messages have different twelve-round digests.
+
+The [ZC-DM team's v1.1 notice](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/FD53WOZRD7B4DESDOW563QRPKPC4O6NC/) (2026-11-20) changes ZC-1280's second plane shift on planes 1, 2 and 4. The revision was not evaluated; this entry concerns the Round 1 archive.
 
 ### Reproducing
 
@@ -91,11 +99,13 @@ Discovery: Moderate
 Exploitation: An implementation that follows the specification computes a different function and reproduces none of the KATs; the twelve constants stay distinct, and no security consequence was identified
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance, in this candidate's specification notes of 2026-09-21; independently reported by Zhiqiang Yang, Lin Ao, Yue Li, Xin Yi, Ling Song and Lei Wang, using the CryptVerify tool (Cryptol and SAW)
 Date: 2026-11-19
-Follow-up source: [Yang et al.'s formal verification report, finding 4](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/7RGEIZ5TI5BTESVHWRVJMTQHX5CMYUB5/attachment/4/FormalVerificationReportonNGCCHashCandidates.pdf)
+Follow-up source: [Yang et al.'s formal verification report, finding 4](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/7RGEIZ5TI5BTESVHWRVJMTQHX5CMYUB5/attachment/4/FormalVerificationReportonNGCCHashCandidates.pdf); [ZC-DM team's v1.1 notice](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/FD53WOZRD7B4DESDOW563QRPKPC4O6NC/)
 
 Table 1.1 (§1.1.1, physical p. 7) lists the twelve round constants, and ι XORs c_i into A0[0] in round i = −11, …, 0 (Algorithms 1 and 2, Figure 1.3). The shared permutation headers (`lib/low/ZuD-1280/ZuD1280.h:25–36`, `ZuD-1536/ZuD1536.h:25–36`) define `rc8, rc7, rc6` = 0x120, 0x14, 0x60 and `rc4, rc3, rc2` = 0x380, 0xF0, 0x1A0, and the permutation applies `rc12` down to `rc1`. So c_−7, c_−6, c_−5 and c_−3, c_−2, c_−1 are each rotated by one position against the table's 0x60, 0x120, 0x14 and 0xF0, 0x1A0, 0x380; the other six constants agree.
 
 As shipped, every instance reproduces all 4,097 KAT_2_12 vectors. With only those six definitions put in the Table 1.1 order, every instance reproduces none.
+
+The [ZC-DM team's v1.1 notice](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/FD53WOZRD7B4DESDOW563QRPKPC4O6NC/) (2026-11-20) corrects Table 1.1 to the order the implementation uses; the implementation is unchanged.
 
 ### Reproducing
 
