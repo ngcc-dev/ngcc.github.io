@@ -87,6 +87,18 @@ table.summary td:not(:first-child) { text-align: right; }
 .status-withdrawn { background: var(--muted-bg); color: var(--muted); }
 .audit-links { display: flex; flex-wrap: wrap; gap: 0.5rem 0.8rem; }
 .report-totals { color: var(--muted); font-size: 0.9rem; }
+.report-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.25rem;
+  margin: 1rem 0; padding: 0.6rem 0.8rem; border: 1px solid var(--line); border-radius: 4px;
+  background: var(--head); font-size: 0.9rem; }
+.report-filter fieldset { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.9rem;
+  border: 0; margin: 0; padding: 0; }
+.report-filter legend { float: left; padding: 0; margin-right: 0.3rem; font-weight: 600; }
+.report-filter label { white-space: nowrap; }
+.report-filter .count { color: var(--muted); font-variant-numeric: tabular-nums; }
+.report-filter select, .report-filter button { font: inherit; }
+.report-filter .filter-count { flex: 1 1 100%; color: var(--muted); font-variant-numeric: tabular-nums; }
+table.reports tr[hidden] { display: none; }
+table.reports tr.filter-empty td { color: var(--muted); font-style: italic; }
 table.reports td.severity, table.reports td.scope, table.reports td.updated {
   white-space: nowrap; padding-left: 0.4rem; padding-right: 0.4rem;
 }

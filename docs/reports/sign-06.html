@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ngcc.dev: COMPASS-SIG (sign-06)</title>
 <link rel="icon" type="image/png" href="../assets/mag-glass.png">
-<link rel="stylesheet" href="../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="../assets/style.css?v=34fb54b0">
 </head>
 <body>
 <header class="site-header">
@@ -231,6 +231,45 @@ python3 sign-06/reproduce_challenge_image.py
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">sh sign-06/reproduce_short_key_read.sh
 </code></pre>
+<h2 class="issue-heading" id="sign-06-10-the-min-entropy-bounds-universal-hash-step-fails-at-256-and-512">sign-06-10: The min-entropy bound&#x27;s universal-hash step fails at 256 and 512</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr>
+<tr><th>Affected</th><td>COMPASS-SIG-256 and COMPASS-SIG-512 min-entropy bound in Theorem 2's reduction loss</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>A stated step in the min-entropy bound is false; no forgery or key recovery demonstrated</td></tr>
+<tr><th>Credit</th><td>Zhinan Wang</td></tr>
+<tr><th>Date</th><td>2026-11-20</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/RV7MXK6O3SAC63KHPBKFU46WUWZNJBUT/">Zhinan Wang's PKC Forum post</a></p>
+<p>To bound the min-entropy of <code>w1</code>, the <code>ϵ</code> in Theorem 2's loss term, §4.1 (physical p. 18) states that because <code>{H_A(y) = Ay}</code> is universal, "it directly follows" that <code>H'_A(y) = w1 = Split(Ay, γ2)</code> is universal, and applies the Leftover Hash Lemma. <code>Split</code> takes <code>x1 = ⌊p·x/q⌉ mod p</code> with <code>p = ⌈q/(2γ2 + 1)⌉</code> (§2.2.4, physical pp. 8–9). At the 256- and 512-bit sets <code>p = 2</code> (Table 1), and then <code>x1 = 1</code> exactly on an interval symmetric under <code>x → q − x</code>, so <code>x1(−x) = x1(x)</code> for every <code>x</code>. Hence <code>y = (1, 0, …, 0)</code> and <code>−y</code>, both valid masks, give the same <code>w1</code> for every <code>A</code>, and the family is not universal. At the 128- and 384-bit sets (<code>p = 8</code> and <code>4</code>) this counterexample does not apply.</p>
+<p>The step is unsupported as written at the affected sets. Table 3's <code>ϵ</code> values there (2^−1790 and 2^−3582) and the resulting losses are far below any security level, and the sign symmetry alone pairs inputs rather than collapsing many. No corrected bound is derived here, and nothing suggests that the loss becomes significant.</p>
+<h3 id="reproducing_9">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-06/reproduce_spec_errata.py
+</code></pre>
+<h2 class="issue-heading" id="sign-06-11-proposition-1s-printed-probability-has-the-wrong-sign-and-exceeds-one">sign-06-11: Proposition 1&#x27;s printed probability has the wrong sign and exceeds one</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>COMPASS-SIG strong-unforgeability estimate (§4.2.3), all levels</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>A printed formula in the concrete security analysis is wrong; no forgery demonstrated, and the correction only strengthens the section's conclusion</td></tr>
+<tr><th>Credit</th><td>Zhinan Wang</td></tr>
+<tr><th>Date</th><td>2026-11-20</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/RV7MXK6O3SAC63KHPBKFU46WUWZNJBUT/">Zhinan Wang's PKC Forum post</a></p>
+<p>Proposition 1 (§4.2.3, physical p. 24) gives the probability that a vector of <code>B^n(x, r)</code> lies in <code>B∞^n(0, a)</code> as approximately <code>(1 − 2Φ(−2a/σ) − (σ/a)(ρ(−2a/σ) − ρ(0)))^n</code> with <code>σ = r/√n</code>. Its proof (physical p. 25) averages <code>Pr_x = 1 − Φ((x − a)/σ) − Φ((−a − x)/σ)</code> over <code>x</code> uniform on <code>[−a, a]</code>. Integrating with <code>∫Φ = xΦ + ρ</code> gives <code>+ (σ/a)(ρ(−2a/σ) − ρ(0))</code> instead. Because <code>ρ(−2a/σ) &lt; ρ(0)</code>, the printed expression exceeds one: for <code>a = 1</code> and <code>σ = 0.5</code> it is 1.1993, against the correct 0.8005.</p>
+<p>The section states its conclusion, that the extra strong-forgery restriction has little effect, without numbers, so which form was evaluated cannot be checked. The corrected probability is smaller, which only strengthens that conclusion.</p>
+<h3 id="reproducing_10">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 sign-06/reproduce_spec_errata.py
+</code></pre>
+<p>The certificate checks the specification text and Table 1, the high-part symmetry at each set, and the proposition against a numerical average of <code>Pr_x</code>.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

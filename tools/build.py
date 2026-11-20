@@ -56,12 +56,13 @@ STATUS_CLASS = {
     "not_tested": "muted", "not_applicable": "muted", "inconclusive": "warn",
 }
 
-def _css_version():
-    p = ASSETS / "style.css"
+def _asset_version(name):
+    p = ASSETS / name
     return hashlib.sha256(p.read_bytes()).hexdigest()[:8] if p.is_file() else "0"
 
 
-CSS_VER = _css_version()
+CSS_VER = _asset_version("style.css")
+FILTER_VER = _asset_version("report-filter.js")
 
 TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
@@ -71,7 +72,7 @@ TEMPLATE = """<!DOCTYPE html>
 <title>{head_title}</title>
 <link rel="icon" type="image/png" href="{prefix}assets/mag-glass.png">
 <link rel="stylesheet" href="{prefix}assets/style.css?v={css_ver}">
-</head>
+{scripts}</head>
 <body>
 <header class="site-header">
 <a class="brand" href="{prefix}index.html"><img class="brand-icon" src="{prefix}assets/mag-glass.png" alt="" width="28" height="28">{site}</a>
@@ -591,8 +592,11 @@ def render(rel, cands, reports):
                   "performance-ranking" if len(rel.parts) == 3
                   and rel.parts[0] == "performance" and rel.stem.startswith("ranking-") else "")
     updated_line = f"Updated {UPDATED_UTC} · " if is_main_page else ""
+    # The security index gets the client-side filter; the page works without it.
+    scripts = (f'<script defer src="{prefix}assets/report-filter.js?v={FILTER_VER}"></script>\n'
+               if rel == Path("reports") / "index.md" else "")
     out.write_text(TEMPLATE.format(head_title=html.escape(head_title), site=SITE, harness=HARNESS,
-                                   css_ver=CSS_VER, prefix=prefix, nav=nav, body=body,
+                                   css_ver=CSS_VER, scripts=scripts, prefix=prefix, nav=nav, body=body,
                                    main_class=main_class,
                                    updated_line=updated_line, maintainer=MAINTAINER), encoding="utf-8")
 

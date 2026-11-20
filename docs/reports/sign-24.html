@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ngcc.dev: Sigurd (sign-24)</title>
 <link rel="icon" type="image/png" href="../assets/mag-glass.png">
-<link rel="stylesheet" href="../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="../assets/style.css?v=34fb54b0">
 </head>
 <body>
 <header class="site-header">
@@ -112,6 +112,25 @@ python3 sign-24/reproduce_natural_zero.py
 sed -n '184,201p' &quot;$d/sig_core.c&quot;; sed -n '116,124p' &quot;$d/rsencode.c&quot;
 </code></pre>
 <p>This is a source witness.</p>
+<h2 class="issue-heading" id="sign-24-5-signature-deserialization-under-checks-the-length-and-over-reads-a-short-signature">sign-24-5: Signature deserialization under-checks the length and over-reads a short signature</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Sigurd-128, -256 and -512; reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Out-of-bounds read of a caller-supplied short signature during verification; no disclosure shown</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
+<tr><th>Date</th><td>2026-11-20</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/66R4HUTQO7P5PO3U52BC4QAHECJVPOUJ/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p><code>sig_verify</code> passes the caller's signature length to <code>sig_deserialize_signature</code> (<code>SIG_AlgorithmInstance.c:571</code> in the reference Sigurd-128). That function first requires only the root hashes, two raw polynomials and 4 bytes (<code>:359</code>): 108, 452 and 1,156 bytes at the three levels. It then unpacks <code>2*SIGMA_REPETITIONS + 6 + N_PRIME_LEN</code> more polynomials and the 4-byte proof-hash count at fixed offsets (<code>:364–392</code>) before it checks the length again (<code>:398</code>). That prefix is 8,468, 22,500 and 84,932 bytes, so any signature length between the two bounds is read out of bounds. The other five trees have the same code.</p>
+<p>Under AddressSanitizer, signatures in heap buffers of exactly the entry bound, and one byte short of the fixed prefix, gave heap-buffer-overflow reads in all six trees. An honest Sigurd-128 signature verified at full length and overflowed when cut to 108 bytes. Lengths below the entry bound and the full prefix were rejected cleanly. Only signature bytes are read out of bounds; the destination arrays are fixed-size. Callers that pass complete signatures are unaffected.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh sign-24/reproduce_short_signature.sh
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

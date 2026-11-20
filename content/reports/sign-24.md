@@ -110,3 +110,25 @@ sed -n '184,201p' "$d/sig_core.c"; sed -n '116,124p' "$d/rsencode.c"
 ```
 
 This is a source witness.
+
+## sign-24-5: Signature deserialization under-checks the length and over-reads a short signature
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: Sigurd-128, -256 and -512; reference and optimized implementations
+Discovery: Trivial
+Exploitation: Out-of-bounds read of a caller-supplied short signature during verification; no disclosure shown
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
+Date: 2026-11-20
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/66R4HUTQO7P5PO3U52BC4QAHECJVPOUJ/)
+
+`sig_verify` passes the caller's signature length to `sig_deserialize_signature` (`SIG_AlgorithmInstance.c:571` in the reference Sigurd-128). That function first requires only the root hashes, two raw polynomials and 4 bytes (`:359`): 108, 452 and 1,156 bytes at the three levels. It then unpacks `2*SIGMA_REPETITIONS + 6 + N_PRIME_LEN` more polynomials and the 4-byte proof-hash count at fixed offsets (`:364–392`) before it checks the length again (`:398`). That prefix is 8,468, 22,500 and 84,932 bytes, so any signature length between the two bounds is read out of bounds. The other five trees have the same code.
+
+Under AddressSanitizer, signatures in heap buffers of exactly the entry bound, and one byte short of the fixed prefix, gave heap-buffer-overflow reads in all six trees. An honest Sigurd-128 signature verified at full length and overflowed when cut to 108 bytes. Lengths below the entry bound and the full prefix were rejected cleanly. Only signature bytes are read out of bounds; the destination arrays are fixed-size. Callers that pass complete signatures are unaffected.
+
+### Reproducing
+
+```sh
+sh sign-24/reproduce_short_signature.sh
+```

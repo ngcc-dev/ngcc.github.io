@@ -246,3 +246,49 @@ Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/arch
 ```sh
 sh sign-06/reproduce_short_key_read.sh
 ```
+
+## sign-06-10: The min-entropy bound's universal-hash step fails at 256 and 512
+
+Severity: Low
+Status: Proof gap
+Layer: Design
+Affected: COMPASS-SIG-256 and COMPASS-SIG-512 min-entropy bound in Theorem 2's reduction loss
+Discovery: Moderate
+Exploitation: A stated step in the min-entropy bound is false; no forgery or key recovery demonstrated
+Credit: Zhinan Wang
+Date: 2026-11-20
+Original source: [Zhinan Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/RV7MXK6O3SAC63KHPBKFU46WUWZNJBUT/)
+
+To bound the min-entropy of `w1`, the `ϵ` in Theorem 2's loss term, §4.1 (physical p. 18) states that because `{H_A(y) = Ay}` is universal, "it directly follows" that `H'_A(y) = w1 = Split(Ay, γ2)` is universal, and applies the Leftover Hash Lemma. `Split` takes `x1 = ⌊p·x/q⌉ mod p` with `p = ⌈q/(2γ2 + 1)⌉` (§2.2.4, physical pp. 8–9). At the 256- and 512-bit sets `p = 2` (Table 1), and then `x1 = 1` exactly on an interval symmetric under `x → q − x`, so `x1(−x) = x1(x)` for every `x`. Hence `y = (1, 0, …, 0)` and `−y`, both valid masks, give the same `w1` for every `A`, and the family is not universal. At the 128- and 384-bit sets (`p = 8` and `4`) this counterexample does not apply.
+
+The step is unsupported as written at the affected sets. Table 3's `ϵ` values there (2^−1790 and 2^−3582) and the resulting losses are far below any security level, and the sign symmetry alone pairs inputs rather than collapsing many. No corrected bound is derived here, and nothing suggests that the loss becomes significant.
+
+### Reproducing
+
+```sh
+python3 sign-06/reproduce_spec_errata.py
+```
+
+## sign-06-11: Proposition 1's printed probability has the wrong sign and exceeds one
+
+Severity: Low
+Status: Confirmed
+Layer: Design
+Affected: COMPASS-SIG strong-unforgeability estimate (§4.2.3), all levels
+Discovery: Moderate
+Exploitation: A printed formula in the concrete security analysis is wrong; no forgery demonstrated, and the correction only strengthens the section's conclusion
+Credit: Zhinan Wang
+Date: 2026-11-20
+Original source: [Zhinan Wang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/RV7MXK6O3SAC63KHPBKFU46WUWZNJBUT/)
+
+Proposition 1 (§4.2.3, physical p. 24) gives the probability that a vector of `B^n(x, r)` lies in `B∞^n(0, a)` as approximately `(1 − 2Φ(−2a/σ) − (σ/a)(ρ(−2a/σ) − ρ(0)))^n` with `σ = r/√n`. Its proof (physical p. 25) averages `Pr_x = 1 − Φ((x − a)/σ) − Φ((−a − x)/σ)` over `x` uniform on `[−a, a]`. Integrating with `∫Φ = xΦ + ρ` gives `+ (σ/a)(ρ(−2a/σ) − ρ(0))` instead. Because `ρ(−2a/σ) < ρ(0)`, the printed expression exceeds one: for `a = 1` and `σ = 0.5` it is 1.1993, against the correct 0.8005.
+
+The section states its conclusion, that the extra strong-forgery restriction has little effect, without numbers, so which form was evaluated cannot be checked. The corrected probability is smaller, which only strengthens that conclusion.
+
+### Reproducing
+
+```sh
+python3 sign-06/reproduce_spec_errata.py
+```
+
+The certificate checks the specification text and Table 1, the high-part symmetry at each set, and the proposition against a numerical average of `Pr_x`.

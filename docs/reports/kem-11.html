@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ngcc.dev: COMPASS-KEM (kem-11)</title>
 <link rel="icon" type="image/png" href="../assets/mag-glass.png">
-<link rel="stylesheet" href="../assets/style.css?v=1bc1b953">
+<link rel="stylesheet" href="../assets/style.css?v=34fb54b0">
 </head>
 <body>
 <header class="site-header">
@@ -65,6 +65,47 @@
 <pre><code class="language-sh">python3 kem-11/reproduce_biased_mlwr_gap.py
 </code></pre>
 <p>The certificate extracts the theorem's condition, checks each implementation's parameters and CBD call, and evaluates the optimistic entropy bound.</p>
+<h2 class="issue-heading" id="kem-11-3-a-failed-hash-allocation-leaves-the-previous-session-key-in-encapsulation">kem-11-3: A failed hash allocation leaves the previous session key in encapsulation</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>COMPASS-KEM-128, -256, -384 and -512, reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>If one hash allocation fails, encapsulation returns success with the previous call's shared secret, which an earlier recipient already holds; no remote way to force the failure is shown</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool; stale-key consequence and witness by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-20</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/QJQS6ALEKKNICEISNLNUZS265O4Y523T/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p><code>crypto_kem_enc_derand</code> keeps the key and coins in an uninitialised stack array <code>kr</code> (<code>kem.c:85</code> in the reference trees, <code>:84</code> in the optimized) and fills it with <code>hash_g</code> (<code>:91</code>), a macro for the contest's <code>pseudohash</code> whose status is not checked (<code>symmetric.h:42–43</code>). When the helper's first allocation fails (<code>auxfunc.c:229</code>) it returns without writing <code>kr</code>. Encapsulation then encrypts with the coins in <code>kr</code> (<code>kem.c:94</code>), copies its first half into the shared secret (<code>:96</code>), and returns 0.</p>
+<p>In the witness one process encapsulates to Mallory and then to Bob with that allocation failing. The stale <code>kr</code> is the previous call's, so the key returned for Bob equals the key Mallory decapsulated, in all eight builds. Without the fault, and when the stack is overwritten between the two calls, Mallory's key does not match. The reused value depends on the call sequence and on the compiler's stack layout.</p>
+<p>The post lists the unchecked statuses of <code>pseudoXOF</code>, <code>sm3hash</code> and <code>pseudohash</code> as a maintenance detail; it does not report this consequence. The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success. A demonstrated session-key exposure under these preconditions is High.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh kem-11/reproduce_stale_encaps_key.sh
+</code></pre>
+<p>The witness wraps <code>malloc</code> to fail the 66-byte allocation of <code>hash_g</code> in the second encapsulation and requires Mallory to predict the Alice–Bob key in that run only.</p>
+<h2 class="issue-heading" id="kem-11-4-the-kem-api-ignores-declared-input-lengths-and-over-reads-short-buffers">kem-11-4: The KEM API ignores declared input lengths and over-reads short buffers</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>COMPASS-KEM-128, -256, -384 and -512, reference and optimized implementations; the sampler over-read affects optimized COMPASS-KEM-128 and -384 only</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Out-of-bounds read from a caller-supplied short ciphertext or public key; no disclosure shown</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool; sampler over-read by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-20</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/QJQS6ALEKKNICEISNLNUZS265O4Y523T/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p><code>kem_enc</code> and <code>kem_dec</code> discard <code>pk_len_bytes</code>, <code>sk_len_bytes</code> and <code>ct_len_bytes</code> (<code>KEM_AlgorithmInstance.c:52,63–64</code> in the reference trees, <code>:49,60–61</code> in the optimized), and the functions they call read their inputs at compile-time sizes. Under AddressSanitizer, an honest ciphertext in a heap buffer of exactly 16 bytes, or one byte short, gave a heap-buffer-overflow read in <code>poly_decompress</code> during decapsulation, and a public key one byte short gave one during encapsulation, in all eight trees. Full-length inputs ran cleanly and decapsulated to the encapsulated key. Callers that pass complete inputs are unaffected.</p>
+<p>The optimized η1 = 3 sampler <code>poly_cbd3_avx</code> loads 16 bytes for every 12 it consumes (<code>cbd.c:189</code>), and the noise buffers in <code>polyvec_getnoise_eta1_avx</code> hold exactly <code>ETA1*N/4</code> bytes (<code>indcpa.c:23</code>). Its last load therefore reads 4 bytes past a stack buffer on honest key generation at COMPASS-KEM-128 and -384. The shuffle discards those bytes, so outputs are unaffected.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh kem-11/reproduce_short_inputs.sh
+</code></pre>
+<p>The optimized AddressSanitizer builds use <code>-mavx2 -mbmi2 -mpopcnt</code> without the Makefile's <code>-march=native</code>.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
