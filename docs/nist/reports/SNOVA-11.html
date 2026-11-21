@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: SNOVA-11</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=34fb54b0">
+<link rel="stylesheet" href="../style.css?v=b626c6ab">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="../index.html">Home</a><a href="../on-ramp.html">Security Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">Official NIST On-Ramp Round 3</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../on-ramp.html">NIST Signature On-Ramp (Round 3)</a> › <code>SNOVA-11</code></p>
+
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-lead">Lead</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>Two On-Ramp Round 3 Table 6 l=2 alternative parameter sets (q16-III-l2 and q16-V-l2); q16-I-l2 stays above target and the nine recommended l=4, 5 sets are unaffected</td></tr><tr><th>Discovery</th><td>Hard</td></tr><tr><th>Exploitation</th><td>Conditional public-key key-recovery cost/model estimate in a free-memory RAM model; no SNOVA experiments or memory-aware category comparison</td></tr><tr><th>Remediation</th><td>Moderate</td></tr><tr><th>Credit</th><td>Multigraded divided-power wedge framework by Peigen Li and Siyong Tao; estimator recomputation, tuple search, and On-Ramp Round 3 evaluation by Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-11-21">2026-11-21</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py SNOVA-11</code><br><small>source: <code>nist/SNOVA/reproduce_snova_11.py</code> · SHA-256 <code class="digest">551bc6aa<wbr>be1bb509<wbr>4277b850<wbr>864f2967<wbr>3705c460<wbr>6ec77846<wbr>4a93f1c1<wbr>2fa2193b</code></small><br><small>recomputation of multigraded Vto and row-density model at printed Table 6 tuples and across a projection/level tuple search (r_i in {0,1}), with r=(0,0,0) controls</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/SNOVA_specifications.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/SNOVA_Round3.zip">submission ZIP</a></td></tr></table>
+
+<h1 id="snova-11-low-multigraded-divided-power-wedge-model-puts-two-l2-snova-alternatives-below-target">SNOVA-11 — Low: multigraded divided-power wedge model puts two l=2 SNOVA alternatives below target</h1>
+<h2 id="result">Result</h2>
+<p>Peigen Li and Siyong Tao's <a href="https://eprint.iacr.org/2026/2272">Attacking UOV-based Signatures over divided power
+algebras</a> (posted 2026-09-30, revised
+2026-11-14) lifts SNOVA <code>l = 2</code> instances over <code>F_{16}</code> to multi-UOV systems
+over <code>F_{256}</code> (<code>o</code> equations of multidegree <code>(2,0)</code>, <code>2o</code> of multidegree
+<code>(1,1)</code>, and <code>o</code> of multidegree <code>(0,2)</code>) and evaluates a multigraded
+divided-power wedge attack in Table 6 (p. 17) on the three <code>q = 16, l = 2</code>
+alternative parameter sets from <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/SNOVA_specifications.pdf">SNOVA-spec.pdf</a> Table 6
+(physical p. 30; extracted in <span class="citation-path">alternative-parameters.csv</span>).</p>
+<p>Recomputing Li and Tao's multigraded Hilbert-series formula (<code>Vto &lt;= 0</code>, §3.4;
+matching <code>Vto</code> in the authors' published
+<a href="https://raw.githubusercontent.com/Yulan24/Extended-Schur-Macaulay/a292e4c74371fd0d6bae3159ac8c257a441fea27/Math.magma"><code>Math.magma</code></a>,
+commit <code>a292e4c7</code>, which does not itself include a SNOVA cost function)
+together with our own row-density implementation following §3.4 (<code>3 * rho *
+H^2 * A(256)</code> with <code>A(256) = 2*8^2 + 8 = 136</code> bit operations, weighting
+<code>(2,0)</code>, <code>(1,1)</code>, <code>(0,2)</code> rows by <code>o</code>, <code>2o</code>, <code>o</code> and ignoring memory access
+cost), which reproduces the paper's three Table 6 values, and searching over
+projection and level tuples <code>(k1, k2, r1, r2, r3)</code> with <code>r_i in {0, 1}</code>,
+confirms that <strong>two of the three <code>l = 2</code> alternatives fall below their claimed
+Category 3 and Category 5 targets while <code>q16-I-l2</code> stays above Category 1</strong>:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Alternative set</th>
+<th><code>(v, o, q, l)</code></th>
+<th style="text-align: right;">Target</th>
+<th style="text-align: right;">Spec Table 6 cost</th>
+<th>Paper Table 6 <code>(k, r, D, bit)</code></th>
+<th style="text-align: right;">At printed tuple</th>
+<th style="text-align: right;">Tuple-search minimum (<code>r_i &lt;= 1</code>)</th>
+<th style="text-align: right;">Margin</th>
+<th style="text-align: right;">Classical <code>r=(0,0,0)</code></th>
+<th style="text-align: right;">Vector <code>log2(H)</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>q16-I-l2</code></td>
+<td><code>(50, 17, 16, 2)</code></td>
+<td style="text-align: right;">143</td>
+<td style="text-align: right;">158</td>
+<td><code>((14,0),(0,1,1),(3,17),156)</code></td>
+<td style="text-align: right;">155.33</td>
+<td style="text-align: right;">154.95 (<code>r=(0,0,1)</code>)</td>
+<td style="text-align: right;">+11.95</td>
+<td style="text-align: right;">155.66</td>
+<td style="text-align: right;">66.10</td>
+</tr>
+<tr>
+<td><code>q16-III-l2</code></td>
+<td><code>(76, 25, 16, 2)</code></td>
+<td style="text-align: right;">207</td>
+<td style="text-align: right;">223</td>
+<td><code>((23,0),(0,1,1),(2,25),205)</code></td>
+<td style="text-align: right;"><strong>204.70</strong></td>
+<td style="text-align: right;"><strong>204.63</strong> (<code>r=(0,0,1)</code>)</td>
+<td style="text-align: right;"><strong>-2.37</strong></td>
+<td style="text-align: right;">no admissible tuple</td>
+<td style="text-align: right;">89.64</td>
+</tr>
+<tr>
+<td><code>q16-V-l2</code></td>
+<td><code>(104, 33, 16, 2)</code></td>
+<td style="text-align: right;">272</td>
+<td style="text-align: right;">287</td>
+<td><code>((31,0),(0,0,1),(2,33),263)</code></td>
+<td style="text-align: right;"><strong>262.96</strong></td>
+<td style="text-align: right;"><strong>262.96</strong> (<code>r=(0,0,1)</code>)</td>
+<td style="text-align: right;"><strong>-9.04</strong></td>
+<td style="text-align: right;">no admissible tuple</td>
+<td style="text-align: right;">117.91</td>
+</tr>
+</tbody>
+</table></div>
+<p>The nine recommended On-Ramp Round 3 sets (<code>l = 4</code> and <code>l = 5</code>) are not
+covered by this <code>l = 2</code> construction.</p>
+<h2 id="modeling-limits-and-classification">Modeling limits and classification</h2>
+<ol>
+<li><strong>Unproven multigraded Hilbert-series conjecture.</strong> As Li and Tao state
+   explicitly in §4 (p. 18), the estimates rest on the unproven multigraded
+   extension of Conjecture 3.6 (§3.4, p. 12). Their small-instance experiments
+   (Table 1, p. 12) cover single-graded UOV systems (<code>n &lt;= 11</code>); no experiment
+   was reported for lifted multigraded SNOVA systems.</li>
+<li><strong>Unaccounted memory cost.</strong> The cost formula charges only field operations
+   in block Wiedemann (<code>3 * rho * H^2 * 136</code>) and ignores memory. Storing a
+   single vector of <code>H</code> <code>GF(256)</code> elements requires <code>2^92.64</code> bits for
+   <code>q16-III-l2</code> and <code>2^120.91</code> bits for <code>q16-V-l2</code>, and storing the sparse
+   Macaulay matrix requires roughly <code>2^109</code> and <code>2^139</code> bits. Even a modest
+   memory-access charge (<code>log2(H)</code> or mesh penalty) pushes <code>q16-III-l2</code> back
+   above 207 and raises <code>q16-V-l2</code> near or above 272.</li>
+<li><strong>Alternative-parameter scope.</strong> Like <a href="SNOVA-7.html">SNOVA-7</a>, this affects
+   only the unimplemented Table 6 <code>l = 2</code> alternative parameter sets, not the
+   nine recommended <code>l = 4</code> and <code>l = 5</code> parameter sets.</li>
+</ol>
+<p>This is classified as <strong>Low / Lead / Design</strong>: a candidate-specific,
+reproducible RAM-gate calculation putting two Table 6 alternatives 2.4 and 9.0
+bits below their claimed categories, conditional on an unproven multigraded
+Hilbert-series conjecture with no SNOVA experiments and omitted exponential
+memory costs.</p>
+<h2 id="reproduction">Reproduction</h2>
+<pre><code class="language-sh">python3 SNOVA/reproduce_snova_11.py
+</code></pre>
+<p>The standard-library script pins <code>SNOVA/SNOVA-spec.pdf</code> and
+<code>SNOVA/alternative-parameters.csv</code>, evaluates the exact multigraded <code>Vto</code>
+criterion and row-density cost both at the printed Table 6 tuples and across a
+full projection/level search (<code>r_i in {0, 1}</code>) for all three <code>l = 2</code>
+alternatives, and checks <code>r = (0, 0, 0)</code> classical-wedge controls. It is a
+deterministic cost/model check, not an attack execution.</p>
+<h2 id="harness-reproduction">Harness reproduction</h2>
+<p>From the <code>ngcc-harness</code> checkout, run the pinned source script through the harness-side dispatcher:</p>
+<pre><code class="language-sh">python3 nist/reproduce.py SNOVA-11
+</code></pre>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+</footer>
+</body>
+</html>

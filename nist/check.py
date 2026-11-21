@@ -430,6 +430,9 @@ def main() -> int:
         if '<table class="reports">' not in on_ramp:
             print("on-ramp: missing findings table")
             problems += 1
+        if 'src="report-filter.js?v=' not in on_ramp or not (output / "report-filter.js").is_file():
+            print("on-ramp: missing report-filter.js script or asset")
+            problems += 1
     else:
         print("pages: missing on-ramp.html")
         problems += 1

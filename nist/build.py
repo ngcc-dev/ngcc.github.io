@@ -28,6 +28,7 @@ DEFAULT_SOURCE = SITE_ROOT.parent / "ngcc-harness" / "nist"
 DEFAULT_OUTPUT = SITE_ROOT / "docs" / "nist"
 ASSETS = SITE_ROOT / "assets"
 NIST_STYLESHEET = HERE / "style.css"
+NIST_FILTER_SCRIPT = HERE / "report-filter.js"
 HARNESS_REPOSITORY = "https://github.com/ngcc-dev/ngcc-harness"
 NIST_CALL = "https://csrc.nist.gov/Projects/pqc-dig-sig/standardization/call-for-proposals"
 NIST_ROUND3 = "https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures"
@@ -63,7 +64,7 @@ TEMPLATE = """<!DOCTYPE html>
 <link rel="icon" type="image/png" href="{prefix}assets/mag-glass.png">
 <link rel="stylesheet" href="{prefix}assets/style.css?v={css_version}">
 <link rel="stylesheet" href="{subroot}style.css?v={nist_css_version}">
-</head>
+{scripts}</head>
 <body class="nist-site">
 <header class="site-header">
 <a class="brand" href="{subroot}index.html"><img class="brand-icon" src="{prefix}assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
@@ -497,7 +498,7 @@ def classification_badges(text: str) -> str:
 
 
 def render_page(output: Path, relative: Path, title: str, body: str, css_version: str,
-                nist_css_version: str, source_reference: str) -> None:
+                nist_css_version: str, source_reference: str, scripts: str = "") -> None:
     validator = LinkRewriter(lambda target: target)
     validator.feed(body)
     validator.close()
@@ -507,6 +508,7 @@ def render_page(output: Path, relative: Path, title: str, body: str, css_version
     subroot = "../" * (depth - 1)
     page = TEMPLATE.format(title=html.escape(f"ngcc.dev: {title}"), prefix=prefix, subroot=subroot,
                            css_version=css_version, nist_css_version=nist_css_version,
+                           scripts=scripts,
                            body=body, source_reference=source_reference,
                            footer=REPORT_FOOTER if relative.parts and relative.parts[0] == "reports" else DATED_FOOTER,
                            nist_round3=NIST_ROUND3)
@@ -613,7 +615,9 @@ def _build_into(source: Path, output: Path, harness_rev: str | None) -> tuple[in
     output.mkdir(parents=True, exist_ok=False)
     css_version = hashlib.sha256((ASSETS / "style.css").read_bytes()).hexdigest()[:8]
     nist_css_version = hashlib.sha256(NIST_STYLESHEET.read_bytes()).hexdigest()[:8]
+    filter_version = hashlib.sha256(NIST_FILTER_SCRIPT.read_bytes()).hexdigest()[:8]
     shutil.copy2(NIST_STYLESHEET, output / "style.css")
+    shutil.copy2(NIST_FILTER_SCRIPT, output / "report-filter.js")
 
     grouped = {scheme: [f for f in findings if f["scheme"] == scheme] for scheme in SCHEME_ORDER}
     rows = []
@@ -626,8 +630,8 @@ def _build_into(source: Path, output: Path, harness_rev: str | None) -> tuple[in
             status = (f'<span class="issue-status status-withdrawn">Withdrawn</span><br>'
                       f'<small>NIST package: Round {html.escape(candidate["round"])}</small>')
         if not records:
-            rows.append(f'<tr><td><strong>{html.escape(scheme)}</strong></td><td>{html.escape(candidate["family"])}</td>'
-                        f'<td>{links}<br><small>{status}</small></td><td><span class="sev sev-none">No finding</span></td><td>—</td></tr>')
+            rows.append(f'<tr><td class="candidate"><strong>{html.escape(scheme)}</strong></td><td class="family">{html.escape(candidate["family"])}</td>'
+                        f'<td>{links}<br><small>{status}</small></td><td class="severity"><span class="sev sev-none">No finding</span></td><td class="layer">—</td><td class="updated">—</td><td class="finding">—</td></tr>')
             continue
         for index, finding in enumerate(records):
             report_link = f'reports/{quote(str(finding["id"]))}.html'
@@ -638,10 +642,10 @@ def _build_into(source: Path, output: Path, harness_rev: str | None) -> tuple[in
             date = (f'<time datetime="{html.escape(str(finding["date"]))}">{html.escape(str(finding["date"]))}</time>'
                     if finding["date"] else "—")
             issue = (f'<td class="severity">{badge(finding)}</td><td class="layer">{html.escape(str(finding["layer"]))}</td>'
-                     f'<td class="updated">{date}</td><td>{finding_cell}</td>')
+                     f'<td class="updated">{date}</td><td class="finding">{finding_cell}</td>')
             if index == 0:
                 rowspan = len(records)
-                rows.append(f'<tr><td rowspan="{rowspan}"><strong>{html.escape(scheme)}</strong></td>'
+                rows.append(f'<tr><td class="candidate" rowspan="{rowspan}"><strong>{html.escape(scheme)}</strong></td>'
                             f'<td rowspan="{rowspan}" class="family">{html.escape(candidate["family"])}</td>'
                             f'<td rowspan="{rowspan}">{links}<br><small>{status}</small></td>{issue}</tr>')
             else:
@@ -695,7 +699,7 @@ Severity is color-coded: <span class="sev sev-critical">Critical</span>
 <span class="issue-status status-lead">Lead</span>, and
 <span class="issue-status status-proof-gap">Proof gap</span>.
 
-<p class="report-totals">{len(active)} active findings across {sum(bool(v) for v in grouped.values())} candidates: {count_text}.</p>
+<p class="report-totals">{len(active)} active findings across {sum(any(f["status"] != "withdrawn" for f in v) for v in grouped.values())} candidates: {count_text}.</p>
 
 <table class="reports">
 <thead><tr><th>candidate</th><th>family</th><th>NIST files</th><th>severity</th><th>layer</th><th>updated</th><th>finding</th></tr></thead>
@@ -708,9 +712,10 @@ not a security endorsement. Reproducers, compact KAT material, source hashes,
 and harvesting records are maintained in
 {harness_markdown}.
 """
+    on_ramp_scripts = f'<script defer src="report-filter.js?v={filter_version}"></script>\n'
     render_page(output, Path("on-ramp.html"), "NIST Signature On-Ramp (Round 3)",
                 markdown_body(on_ramp_md, trusted_html=True), css_version, nist_css_version,
-                source_reference)
+                source_reference, scripts=on_ramp_scripts)
 
     classification_path = find_input(source, "classification-public.md")
     classification = classification_path.read_text(encoding="utf-8")

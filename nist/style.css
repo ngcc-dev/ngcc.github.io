@@ -10,3 +10,10 @@ body.nist-site {
     --sev-critical-fg: #ffffff;
   }
 }
+
+body.nist-site table.reports td.layer {
+  white-space: nowrap;
+  padding-left: 0.4rem;
+  padding-right: 0.4rem;
+  font-size: 0.85rem;
+}

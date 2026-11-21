@@ -6,7 +6,7 @@
 <title>ngcc.dev: SNOVA-1</title>
 <link rel="icon" type="image/png" href="../../assets/mag-glass.png">
 <link rel="stylesheet" href="../../assets/style.css?v=34fb54b0">
-<link rel="stylesheet" href="../style.css?v=a38b7088">
+<link rel="stylesheet" href="../style.css?v=b626c6ab">
 </head>
 <body class="nist-site">
 <header class="site-header">
@@ -16,14 +16,19 @@
 <main>
 <p class="crumb"><a href="../on-ramp.html">NIST Signature On-Ramp (Round 3)</a> › <code>SNOVA-1</code></p>
 
-<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr><tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>Six odd-characteristic alternative v3.0 sets; the nine recommended q=16 sets are unaffected by this bias</td></tr><tr><th>Discovery</th><td>Non-trivial</td></tr><tr><th>Exploitation</th><td>Published end-to-end signing-key recovery for alternatives A–D; root-cause and exact-distribution witness reproduced locally; E–F remain estimates</td></tr><tr><th>Remediation</th><td>Moderate</td></tr><tr><th>Credit</th><td>Original cryptanalysis by Ward Beullens and Basil Hess, who disclosed that its first version was independently found by the gpt-5.6-sol AI system; independent local verification by Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py SNOVA-1</code><br><small>source: <code>nist/SNOVA/reproduce_snova_1.py</code> · SHA-256 <code class="digest">1e1fed47<wbr>d71ea354<wbr>211e8414<wbr>f4832f4a<wbr>ea3085f5<wbr>28591b5d<wbr>d4b79aab<wbr>2356070a</code></small><br><small>actual-source root-cause witness; exact distribution and controls; published end-to-end attack</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/SNOVA_specifications.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/SNOVA_Round3.zip">submission ZIP</a></td></tr></table>
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr><tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>Six odd-characteristic alternative v3.0 sets; the nine recommended q=16 sets are unaffected by this bias</td></tr><tr><th>Discovery</th><td>Non-trivial</td></tr><tr><th>Exploitation</th><td>Published end-to-end signing-key recovery for alternatives A–D; root-cause and exact-distribution witness reproduced locally; E–F remain estimates</td></tr><tr><th>Remediation</th><td>Moderate</td></tr><tr><th>Credit</th><td>Original cryptanalysis by Ward Beullens and Basil Hess, who disclosed that its first version was independently found by the gpt-5.6-sol AI system; independent local verification by Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py SNOVA-1</code><br><small>source: <code>nist/SNOVA/reproduce_snova_1.py</code> · SHA-256 <code class="digest">1e1fed47<wbr>d71ea354<wbr>211e8414<wbr>f4832f4a<wbr>ea3085f5<wbr>28591b5d<wbr>d4b79aab<wbr>2356070a</code></small><br><small>actual-source root-cause witness; exact distribution and controls; published end-to-end attack</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/SNOVA_specifications.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/SNOVA_Round3.zip">submission ZIP</a></td></tr></table>
 
-<h1 id="snova-1-critical-biased-vinegar-sampling-in-six-on-ramp-round-3-alternative-parameter-sets">SNOVA-1 — Critical: biased vinegar sampling in six On-Ramp Round 3 alternative parameter sets</h1>
+<h1 id="snova-1-high-biased-vinegar-sampling-in-six-on-ramp-round-3-alternative-parameter-sets">SNOVA-1 — High: biased vinegar sampling in six On-Ramp Round 3 alternative parameter sets</h1>
 <p>The status applies to the exact sampler bias and the published A–D attacks.
 The SNOVA team announced a v3.1 repair on September 28; that repair is not
 pinned or verified here, and the pinned NIST submission remains v3.0.
-Critical applies to the affected alternatives because ordinary signatures
-disclose enough information for signing-key recovery. Obtaining the required
+For the affected alternatives, ordinary signatures disclose enough
+information for signing-key recovery, which would be Critical for a
+recommended parameter set. The finding is rated High because all six affected
+sets are non-recommended alternatives (specification Table 6); the nine
+recommended q=16 sets are unaffected. The rating was Critical until
+2026-11-21, when the classification policy reserved Critical for recommended
+parameter sets. Obtaining the required
 signatures is a material attack cost. No side channel, fault injection,
 malformed signature, or weak RNG is required. These query counts are below
 NIST's allowed chosen-message bound; see <a href="../classification.html">NIST rules</a>.</p>
@@ -149,6 +154,7 @@ count[d] = cycles*width + clamp(remainder - d*width, 0, width)
 </tbody>
 </table></div>
 <p>The q=16 control succeeds because 16²=256. Uniform rejection controls also succeed: rejecting byte-block integers at or above <code>floor(R/Q)*Q</code> gives every tuple the same number of accepted preimages; bytewise rejection before reduction modulo q gives equal counts for each field element. These controls are demonstrations outside the submission tree. Public coefficient expansion and secret vinegar sampling have different security roles; a justification for biased public data does not justify this secret-dependent signing distribution.</p>
+<p>At the per-signature level (<code>v·l·r</code> vinegar elements across alternatives A–F), exact block counts give a vinegar statistical distance of 0.640 to 0.837 from uniform per signature (over full blocks; exceeding 0.96 after eight signatures) and a Rényi divergence <code>R_∞</code> of <code>2^14.3</code> to <code>2^57.5</code> per signature (<code>R_∞ = 1</code>, i.e., <code>log2 R_∞ = 0</code>, for the q=16 control), invalidating any uniform-vinegar simulation from the first signature. Algorithm 12 line 2 (physical p.23) also converts <code>SHAKE256(pkd‖md‖salt)</code> into the message target in <code>F_q^{m2}</code> with the same Algorithm 2, losing 2.52 to 7.19 bits of target min-entropy (0.83 to 1.56 bits of collision entropy) across alternatives A–F; against that target bias alone, Table 6's stated margins remain at least 23 bits and q=16 sets are unaffected. These per-signature and target-bias figures come from separate exact block-count calculations and are not computed by <code>reproduce_snova_1.py</code>.</p>
 <h2 id="reproduction">Reproduction</h2>
 <p>Run from the public harness root:</p>
 <pre><code class="language-sh">python3 SNOVA/reproduce_snova_1.py

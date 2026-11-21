@@ -6,7 +6,7 @@
 <title>ngcc.dev: NIST report classification</title>
 <link rel="icon" type="image/png" href="../assets/mag-glass.png">
 <link rel="stylesheet" href="../assets/style.css?v=34fb54b0">
-<link rel="stylesheet" href="style.css?v=a38b7088">
+<link rel="stylesheet" href="style.css?v=b626c6ab">
 </head>
 <body class="nist-site">
 <header class="site-header">
@@ -41,11 +41,11 @@ NGCC rating is evidence, not a rating that automatically transfers here.</p>
 <tbody>
 <tr>
 <td><span class="sev sev-critical">Critical</span></td>
-<td>Full key recovery or general forgery invalidates the intended security target; state query/work requirements and whether demonstrated or estimated.</td>
+<td>Full key recovery or general forgery invalidates the intended security target of a recommended parameter set; state query/work requirements and whether demonstrated or estimated.</td>
 </tr>
 <tr>
 <td><span class="sev sev-high">High</span></td>
-<td>A serious failure short of a required-property break: for example, a well-supported recovery/forgery path with one material gap, an end-to-end side-channel recovery without an explicit resistance claim, or failure of a claimed SUF-CMA property when EUF-CMA remains intact.</td>
+<td>A serious failure short of a required-property break: for example, a well-supported recovery/forgery path with one material gap, an end-to-end side-channel recovery without an explicit resistance claim, failure of a claimed SUF-CMA property when EUF-CMA remains intact, or a demonstrated break confined to non-recommended alternative parameter sets.</td>
 </tr>
 <tr>
 <td><span class="sev sev-medium">Medium</span></td>
@@ -66,6 +66,13 @@ The result, concrete costs, scope and confidence must accompany the rating.
 These are project assessments under the NIST evaluation baseline, not CVSS
 scores or NIST-issued ratings. Strong-unforgeability, side-channel or fault
 models are distinguished from the required EUF-CMA model.</p>
+<p>Critical is reserved for a break of a parameter set that the submission
+recommends. A demonstrated key recovery or forgery that is confined to
+non-recommended alternative parameter sets listed in the specification is
+High: it is a serious failure of the submitted design, but the required
+property is not shown to fail for the parameter sets the submission proposes.
+The report title and <code>Affected</code> field must state that scope. Estimates, leads
+and proof gaps that concern only alternative sets follow the ordinary rules.</p>
 <p>A candidate-specific proof gap is normally Low when a reproduced calculation
 shows that the submitted reduction becomes ineffective within NIST's stated
 evaluation budget, but no attack follows. Generic looseness without a concrete
@@ -226,7 +233,8 @@ valid signature on the same message is normally Medium even when the
 submission does not claim SUF-CMA: it is an end-to-end break of a commonly
 used additional signature property, while leaving NIST's required EUF-CMA
 target intact. Failure of an explicit SUF-CMA claim is normally High. An EUF-CMA
-forgery is Critical when it defeats the claimed category.</p><h2 id="governing-nist-documents">Governing NIST documents</h2>
+forgery is Critical when it defeats the claimed category of a recommended
+parameter set, and High when it is confined to alternative sets.</p><h2 id="governing-nist-documents">Governing NIST documents</h2>
 <ul>
 <li><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/standardization/call-for-proposals">Call for Proposals</a></li>
 <li><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">On-Ramp Round 3 additional signatures</a></li>

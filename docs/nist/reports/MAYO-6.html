@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ngcc.dev: MAYO-6</title>
+<link rel="icon" type="image/png" href="../../assets/mag-glass.png">
+<link rel="stylesheet" href="../../assets/style.css?v=34fb54b0">
+<link rel="stylesheet" href="../style.css?v=b626c6ab">
+</head>
+<body class="nist-site">
+<header class="site-header">
+<a class="brand" href="../index.html"><img class="brand-icon" src="../../assets/mag-glass.png" alt="" width="28" height="28">ngcc.dev / NIST signatures</a>
+<nav><a href="../index.html">Home</a><a href="../on-ramp.html">Security Findings</a><a href="../classification.html">Classification</a><a href="../reproduction.html">Reproduction</a><a href="https://csrc.nist.gov/Projects/pqc-dig-sig/round-3-additional-signatures">Official NIST On-Ramp Round 3</a></nav>
+</header>
+<main>
+<p class="crumb"><a href="../on-ramp.html">NIST Signature On-Ramp (Round 3)</a> › <code>MAYO-6</code></p>
+
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-lead">Lead</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>Five On-Ramp Round 3 Table 2.2 additional parameter sets at r=1 (two Category 3, three Category 5), plus one Category 1 Table 2.2 set by 0.6 bit at r=0; for the four main implemented sets (MAYO1, MAYO2, MAYO3, MAYO5 in Table 2.1), the estimator finds no admissible tuple or stays above target</td></tr><tr><th>Discovery</th><td>Hard</td></tr><tr><th>Exploitation</th><td>Conditional public-key key-recovery cost/model estimate in a free-memory RAM model; no full-scale attack or memory-aware category comparison</td></tr><tr><th>Remediation</th><td>Moderate</td></tr><tr><th>Credit</th><td>Extended Schur--Macaulay framework and Magma estimator by Peigen Li and Siyong Tao; estimator recomputation, Table 2.2 sweep, and On-Ramp Round 3 evaluation by Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-11-21">2026-11-21</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py MAYO-6</code><br><small>source: <code>nist/MAYO/reproduce_mayo_6.py</code> · SHA-256 <code class="digest">b581c346<wbr>a712ba3c<wbr>dba96d80<wbr>46989fb2<wbr>b0688058<wbr>2278d413<wbr>4785254f<wbr>85e7dfd5</code></small><br><small>port of authors&#x27; published Magma estimator across Table 2.1 main sets and all 28 Table 2.2 sets (o&lt;=33), plus retained GF(16) SageMath toy checks</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/mayo_specification.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/MAYO.zip">submission ZIP</a></td></tr></table>
+
+<h1 id="mayo-6-low-extended-schur-macaulay-model-puts-five-table-22-additional-mayo-sets-below-target">MAYO-6 — Low: extended Schur--Macaulay model puts five Table 2.2 additional MAYO sets below target</h1>
+<h2 id="result">Result</h2>
+<p>Peigen Li and Siyong Tao's <a href="https://eprint.iacr.org/2026/2444">Extending the Schur--Macaulay Framework for UOV
+Attacks via Truncated Polynomial Algebras</a>
+(posted 2026-10-11, revised 2026-11-17) reformulates Merz and Ran's
+<a href="https://eprint.iacr.org/2026/2181">Schur--Macaulay divided-power attack</a> in
+multigraded <code>p</code>-truncated polynomial algebras and applies the characteristic-two
+model (Table 4, p. 25) to seven additional parameter sets from
+<a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/mayo_specification.pdf">MAYO-spec.pdf</a> Table 2.2 (physical p. 20).</p>
+<p>Running a Python port of the authors' published Magma estimator
+(<a href="https://raw.githubusercontent.com/Yulan24/Extended-Schur-Macaulay/a292e4c74371fd0d6bae3159ac8c257a441fea27/Complexity.magma"><code>Complexity.magma</code></a>
+and
+<a href="https://raw.githubusercontent.com/Yulan24/Extended-Schur-Macaulay/a292e4c74371fd0d6bae3159ac8c257a441fea27/Math.magma"><code>Math.magma</code></a>,
+commit <code>a292e4c7</code>) across all four Table 2.1 main sets and all 28 Table 2.2
+additional sets with <code>o &lt;= 33</code> (in the paper's free-memory RAM-gate model,
+<code>3 * rho * H^2 * 36</code> bit operations matching MAYO's 36-bit-operation <code>GF(16)</code>
+convention) shows that <strong>for the four main implemented parameter sets in
+Table 2.1, the estimator finds no admissible tuple (<code>MAYO1</code>, <code>MAYO3</code>, <code>MAYO5</code>)
+or stays above target (<code>MAYO2</code>)</strong>, while <strong>five Table 2.2 sets fall 2.8 to
+41.7 bits below their claimed Category 3 (<code>207</code>) and Category 5 (<code>272</code>) targets
+at <code>r = 1</code></strong> (and one additional Category 1 Table 2.2 set, <code>(77, 66, 11, 6)</code>,
+reaches <code>142.41</code> at <code>r = 0</code>, 0.59 bit below <code>143</code>, versus <code>145.19</code> at <code>r = 1</code>):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Spec table / level</th>
+<th>Parameter set <code>(n, m, o, k, q)</code></th>
+<th style="text-align: right;">Target</th>
+<th>Estimator <code>r=1</code> <code>(k1, k2, d1, d2)</code></th>
+<th>Paper Table 4 <code>(k1, k2, d1, d2, bit)</code></th>
+<th style="text-align: right;">Estimator <code>r=1</code> RAM bits (<code>r=0</code>)</th>
+<th style="text-align: right;">Margin (<code>r=1</code>)</th>
+<th style="text-align: right;">Balanced <code>k1=k2</code> (<code>r=1</code>)</th>
+<th style="text-align: right;">Vector <code>log2(H)</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Table 2.1 (MAYO1, L1)</td>
+<td><code>(88, 80, 8, 10, 16)</code></td>
+<td style="text-align: right;">143</td>
+<td>no tuple (<code>Sto &gt; 0</code>)</td>
+<td>—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+</tr>
+<tr>
+<td>Table 2.1 (MAYO2, L1)</td>
+<td><code>(86, 64, 13, 5, 16)</code></td>
+<td style="text-align: right;">143</td>
+<td><code>(0, 9, 13, 4)</code></td>
+<td>—</td>
+<td style="text-align: right;">161.26 (165.80)</td>
+<td style="text-align: right;">+18.26</td>
+<td style="text-align: right;">196.07</td>
+<td style="text-align: right;">70.00</td>
+</tr>
+<tr>
+<td>Table 2.1 (MAYO3, L3)</td>
+<td><code>(118, 108, 10, 11, 16)</code></td>
+<td style="text-align: right;">207</td>
+<td>no tuple (<code>Sto &gt; 0</code>)</td>
+<td>—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+</tr>
+<tr>
+<td>Table 2.1 (MAYO5, L5)</td>
+<td><code>(154, 142, 12, 12, 16)</code></td>
+<td style="text-align: right;">272</td>
+<td>no tuple (<code>Sto &gt; 0</code>)</td>
+<td>—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">—</td>
+</tr>
+<tr>
+<td>Table 2.2 (L1, sweep)</td>
+<td><code>(77, 66, 11, 6, 16)</code></td>
+<td style="text-align: right;">143</td>
+<td><code>(0, 5, 11, 6)</code></td>
+<td>—</td>
+<td style="text-align: right;">145.19 (<strong>142.41</strong>)</td>
+<td style="text-align: right;">+2.19 (-0.59 at <code>r=0</code>)</td>
+<td style="text-align: right;">166.21</td>
+<td style="text-align: right;">62.55</td>
+</tr>
+<tr>
+<td>Table 2.2 (L3)</td>
+<td><code>(113, 100, 13, 8, 16)</code></td>
+<td style="text-align: right;">207</td>
+<td><code>(0, 4, 13, 9)</code></td>
+<td><code>(0, 3, 13, 10, 215)</code></td>
+<td style="text-align: right;">215.78 (219.31)</td>
+<td style="text-align: right;">+8.78</td>
+<td style="text-align: right;">228.79</td>
+<td style="text-align: right;">97.05</td>
+</tr>
+<tr>
+<td>Table 2.2 (L3)</td>
+<td><code>(112, 98, 14, 7, 16)</code></td>
+<td style="text-align: right;">207</td>
+<td><code>(0, 8, 14, 6)</code></td>
+<td><code>(0, 7, 17, 10, 198)</code></td>
+<td style="text-align: right;"><strong>198.71</strong> (<strong>202.89</strong>)</td>
+<td style="text-align: right;"><strong>-8.29</strong></td>
+<td style="text-align: right;">227.43</td>
+<td style="text-align: right;">88.24</td>
+</tr>
+<tr>
+<td>Table 2.2 (L3)</td>
+<td><code>(118, 96, 16, 6, 16)</code></td>
+<td style="text-align: right;">207</td>
+<td><code>(0, 12, 16, 4)</code></td>
+<td><code>(0, 11, 16, 5, 196)</code></td>
+<td style="text-align: right;"><strong>196.13</strong> (209.21)</td>
+<td style="text-align: right;"><strong>-10.87</strong></td>
+<td style="text-align: right;">243.03</td>
+<td style="text-align: right;">86.58</td>
+</tr>
+<tr>
+<td>Table 2.2 (L5)</td>
+<td><code>(152, 136, 16, 9, 16)</code></td>
+<td style="text-align: right;">272</td>
+<td><code>(1, 2, 15, 14)</code> (Magma tie: <code>(0, 3, 16, 13)</code>)</td>
+<td><code>(0, 3, 16, 13, 281)</code></td>
+<td style="text-align: right;">285.17 (281.39)</td>
+<td style="text-align: right;">+13.17</td>
+<td style="text-align: right;">291.74</td>
+<td style="text-align: right;">131.25</td>
+</tr>
+<tr>
+<td>Table 2.2 (L5)</td>
+<td><code>(151, 134, 17, 8, 16)</code></td>
+<td style="text-align: right;">272</td>
+<td><code>(0, 7, 17, 10)</code></td>
+<td><code>(0, 6, 17, 11, 269)</code></td>
+<td style="text-align: right;"><strong>269.24</strong> (272.45)</td>
+<td style="text-align: right;"><strong>-2.76</strong></td>
+<td style="text-align: right;">290.50</td>
+<td style="text-align: right;">122.81</td>
+</tr>
+<tr>
+<td>Table 2.2 (L5)</td>
+<td><code>(152, 132, 19, 7, 16)</code></td>
+<td style="text-align: right;">272</td>
+<td><code>(0, 15, 19, 4)</code></td>
+<td><code>(0, 14, 19, 5, 230)</code></td>
+<td style="text-align: right;"><strong>230.33</strong> (<strong>244.35</strong>)</td>
+<td style="text-align: right;"><strong>-41.67</strong></td>
+<td style="text-align: right;">289.87</td>
+<td style="text-align: right;">103.01</td>
+</tr>
+<tr>
+<td>Table 2.2 (L5)</td>
+<td><code>(168, 132, 22, 6, 16)</code></td>
+<td style="text-align: right;">272</td>
+<td><code>(0, 18, 22, 4)</code></td>
+<td><code>(0, 17, 22, 5, 254)</code></td>
+<td style="text-align: right;"><strong>254.87</strong> (277.84)</td>
+<td style="text-align: right;"><strong>-17.13</strong></td>
+<td style="text-align: right;">324.64</td>
+<td style="text-align: right;">114.90</td>
+</tr>
+</tbody>
+</table></div>
+<p>In the companion paper <a href="https://eprint.iacr.org/2026/2272">Attacking UOV-based Signatures over divided power
+algebras</a> (Li and Tao, revised 2026-11-14,
+Table 4), the single-variable divided-power wedge attack applies only to
+Table 2.2 sets with <code>o &gt;= 30</code> and leaves all evaluated MAYO sets above target
+(214–215 bits at Level III and 278 bits at Level V).</p>
+<h2 id="estimator-discrepancies-unbalanced-regime-and-modeling-limits">Estimator discrepancies, unbalanced regime, and modeling limits</h2>
+<ol>
+<li><strong>Unbalanced projection caveat.</strong> Remark 6.4 (p. 24) states that the authors
+   restrict their analysis to balanced projection down because they have not
+   obtained an effective Hilbert-series estimate for unbalanced projection.
+   Every below-target estimate in Table 4 and in <code>Complexity.magma</code>
+   (<code>schtwocplx</code>) nevertheless uses an unbalanced tuple (<code>k1 = 0 &lt; k2</code>).
+   Restricting <code>schtwocplx</code> to balanced projection <code>k1 = k2</code> (with fixed
+   degrees <code>d1 = d2 = o - k</code>, which is not a search over arbitrary balanced
+   degrees) gives <code>227.43</code>–<code>243.03</code> bits at Level III and <code>289.87</code>–<code>324.64</code>
+   bits at Level V (and <code>166.21</code> for <code>(77, 66, 11, 6)</code>), all above target.</li>
+<li><strong>Discrepancies between Table 4 and the authors' Magma estimator.</strong> Six of
+   the seven Table 4 rows reproduce their printed floored bit costs in
+   <code>Complexity.magma</code> at <code>k2 + 1</code> (and <code>d2 - 1</code>) rather than the printed
+   <code>(k2, d2)</code> (and <code>(112, 98, 14, 7)</code> prints <code>d1 = 17 &gt; o = 14</code>, whereas
+   <code>schtwocplx</code> evaluates <code>(0, 8, 14, 6)</code> at <code>198.71</code>). The seventh row,
+   <code>(152, 136, 16, 9)</code>, reproduces <code>281</code> at its printed tuple <code>(0, 3, 16, 13)</code>
+   only with <code>r = 0</code> (<code>281.39</code>), not the paper's stated <code>r = 1</code> (<code>285.17</code> at
+   <code>(1, 2, 15, 14)</code>, whereas <code>Complexity.magma</code> prints <code>(0, 3, 16, 13)</code> at
+   <code>285</code> because it compares floored costs with <code>&lt;=</code> and keeps the last tie).</li>
+<li><strong>Conjectural rank premise and retained toy checks.</strong> The solving-degree
+   criterion relies on unproven Hilbert-series and structured-rank conjectures
+   (Conjecture 3.11 and Eq. 5.2), with no full-scale experiments. The retained
+   SageMath toy script <span class="citation-path"><code>analysis/unbalanced_schur_toy.sage</code></span>
+   checks small unbalanced <code>GF(16)</code> UOV instances (<code>n = 7..9</code>, <code>o = 4</code>,
+   <code>k2 = 1..3</code>): all ten tested instances with <code>Sto &lt;= 0</code> achieved exact
+   corank one (<code>nullity = 1</code>), while two positive-<code>Sto</code> toys departed from
+   <code>Sto</code> in opposite directions — <code>(n=8, o=4, m=2, k2=2)</code> gave <code>nullity = 72</code>
+   versus <code>Sto = 59</code>, and <code>(n=7, o=4, m=4, k2=1)</code> gave <code>nullity = 1</code> despite
+   <code>Sto = 221 &gt; 0</code>. Thus <code>Sto</code> is not an exact dimension identity in the
+   unbalanced regime, and <code>Sto &gt; 0</code> alone does not prove that the attack fails
+   (so for <code>MAYO1</code>, <code>MAYO3</code>, and <code>MAYO5</code>, the estimator finding no admissible
+   tuple is a negative result of this model rather than a proof of immunity).</li>
+<li><strong>Unaccounted memory cost.</strong> Remark 6.3 explicitly omits memory. One
+   block-Wiedemann vector holds <code>H</code> <code>GF(16)</code> elements (<code>2^88.6</code> to <code>2^124.8</code>
+   bits for the five <code>r = 1</code> below-target sets; storing the sparse matrix
+   requires roughly <code>2^104</code> to <code>2^141</code> bits). For <code>(152, 132, 19, 7)</code> at
+   <code>230.33</code> RAM bits (<code>log2(H) = 103.01</code>), a logarithmic memory factor still
+   leaves roughly a 35-bit shortfall, whereas a 2D-mesh <code>sqrt(memory)</code> penalty
+   pushes the cost above 272 bits. Under <a href="../classification.html">NIST's call §4.B.3</a>,
+   a RAM-only estimate without memory accounting is not a settled category
+   break.</li>
+<li><strong>Scope limited to Table 2.2 showcase sets.</strong> None of the affected tuples is
+   among the four submitted and implemented parameter sets in Table 2.1
+   (<code>MAYO1</code>, <code>MAYO2</code>, <code>MAYO3</code>, <code>MAYO5</code>). Table 2.2 lists them as additional
+   trade-off parameter sets in the pinned Round 3 specification.</li>
+</ol>
+<h2 id="classification">Classification</h2>
+<p><strong>Low / Lead / Design.</strong> The calculation is candidate-specific, reproduces all
+seven Table 4 floored bit costs from the authors' published Magma estimator
+(plus the full Table 2.2 sweep for <code>o &lt;= 33</code>), and puts five Table 2.2
+trade-off sets 2.8 to 41.7 bits below their claimed RAM-gate targets at <code>r = 1</code>
+(plus one Category 1 set by 0.6 bit at <code>r = 0</code>). It remains a <strong>Lead</strong> rather
+than a confirmed category break because every below-target point sits in the
+conjectural unbalanced regime (<code>k1 = 0 &lt; k2</code>), omits <code>2^89</code>–<code>2^141</code>-bit memory
+costs, executes no full-scale attack, and for all four main implemented sets
+the estimator finds no admissible tuple or stays above target.</p>
+<h2 id="reproduction">Reproduction</h2>
+<pre><code class="language-sh">python3 MAYO/reproduce_mayo_6.py
+</code></pre>
+<p>The standard-library script pins <code>MAYO/MAYO-spec.pdf</code> and ports <code>Complexity.magma</code>
+and <code>Math.magma</code> (commit <code>a292e4c7</code>) to sweep all four Table 2.1 main sets and
+all 28 Table 2.2 additional sets with <code>o &lt;= 33</code> (both unbalanced and balanced
+<code>k1 = k2</code> at <code>r = 0, 1</code>), verifying all seven Table 4 floored bit costs, all
+six off-by-one <code>(k2, d2)</code> rows, and the <code>(152, 136, 16, 9)</code> <code>r = 0</code> row. It is
+a deterministic cost/model check, not a key-recovery run. With SageMath, run
+the small <code>GF(16)</code> unbalanced toy checks with:</p>
+<pre><code class="language-sh">sage MAYO/analysis/unbalanced_schur_toy.sage
+</code></pre>
+<h2 id="harness-reproduction">Harness reproduction</h2>
+<p>From the <code>ngcc-harness</code> checkout, run the pinned source script through the harness-side dispatcher:</p>
+<pre><code class="language-sh">python3 nist/reproduce.py MAYO-6
+</code></pre>
+</main>
+<footer class="site-footer">
+<p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+</footer>
+</body>
+</html>

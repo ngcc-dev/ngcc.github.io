@@ -6,7 +6,7 @@
 <title>ngcc.dev: SDitH-1</title>
 <link rel="icon" type="image/png" href="../../assets/mag-glass.png">
 <link rel="stylesheet" href="../../assets/style.css?v=34fb54b0">
-<link rel="stylesheet" href="../style.css?v=a38b7088">
+<link rel="stylesheet" href="../style.css?v=b626c6ab">
 </head>
 <body class="nist-site">
 <header class="site-header">
@@ -25,11 +25,13 @@ with <code>ONLY_REF_IMPLEMENTATION</code> for all 12 libraries. Secret-dependent
 occur in both key generation and signing.</p>
 <p>During key generation, <code>sdith_prng.c:1002-1024</code> (<code>SDitH/submission/submission_package/Reference_Implementation/cat1_fast/src/sdith_prng.c#L1002</code>)
 uses the secret-key seed directly as the AES-128 or Rijndael-256 key for the
-key-generation PRG. The reference cipher's
+key-generation PRG. At Category 1, the reference cipher's
 <code>aes_ansi_littleendian_ref.c:338-385</code> (<code>SDitH/submission/submission_package/Reference_Implementation/cat1_fast/lib/aes/aes_ansi_littleendian_ref.c#L338</code>)
 indexes <code>Te0</code> through <code>Te3</code> with cipher state and also uses <code>Te4</code> during the
-key schedule. Those memory addresses depend on the secret seed on a cacheful
-machine.</p>
+key schedule. At Categories 3 and 5, the reference Rijndael-256 cipher indexes
+its byte S-box with secret state at <code>lib/aes/rijndael256.c:69</code> and with key
+bytes in the key schedule at <code>lib/aes/rijndael256.c:140-145</code>. Those memory
+addresses therefore depend on the secret seed on a cacheful machine.</p>
 <p>Witness positions are derived from the same secret PRG in
 <code>rsd.c:46-64</code> (<code>SDitH/submission/submission_package/Reference_Implementation/cat1_fast/src/rsd.c#L46</code>).
 The accepted 32-bit draw is passed to
@@ -37,7 +39,10 @@ The accepted 32-bit draw is passed to
 whose fixed 32-round loop branches on the secret partial remainder at lines
 33–36. In the current GCC-built <code>cat1_fast.so</code>, <code>objdump</code> confirms a conditional
 <code>jb</code> at the corresponding comparison. This object check shows that the source
-branch survived compilation; it is not a timing measurement.</p>
+branch survived compilation; it is not a timing measurement. A second call site
+in <code>rsd_encode_solution_ref</code> at <code>rsd.c:264</code> passes the witness positions
+themselves to <code>div_rem_u32_ct_ref</code>; its emulated branch-trace witness recovery
+is recorded separately as <a href="SDitH-4.html">SDitH-4</a>.</p>
 <p>Signing reaches the same reference table cipher with ephemeral secret state.
 <code>sdith_signature.c:348-358</code> (<code>SDitH/submission/submission_package/Reference_Implementation/cat1_fast/src/sdith_signature.c#L348</code>)
 copies fresh entropy into the secret GGM root seed and invokes the prover tree

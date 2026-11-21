@@ -6,7 +6,7 @@
 <title>ngcc.dev: FAEST-2</title>
 <link rel="icon" type="image/png" href="../../assets/mag-glass.png">
 <link rel="stylesheet" href="../../assets/style.css?v=34fb54b0">
-<link rel="stylesheet" href="../style.css?v=a38b7088">
+<link rel="stylesheet" href="../style.css?v=b626c6ab">
 </head>
 <body class="nist-site">
 <header class="site-header">
@@ -90,9 +90,9 @@ advantage <code>t/2^lambda</code> for each of its <code>3 + (tau+1) ceil(log2 L)
 PRF/PRP terms, the bound reaches one at <code>t = 2^55.2</code> to <code>2^55.5</code>,
 <code>2^118.6</code> to <code>2^118.9</code> and <code>2^182.2</code> to <code>2^182.5</code> for the 128-, 192- and
 256-bit sets at <code>Qsig = 2^64</code>. This is NIST's primary model (classical
-signing queries), and the shortfall is about 73 bits at every level. The
-design survey recorded this as DS-FAEST-2 (Informational); it has the same
-root cause and is folded into this report. The submission's per-signature IVs
+signing queries), and the shortfall is about 73 bits at every level. This
+classical-ROM shortfall shares the same per-signature hybrid root cause as the
+QROM bound above and is covered in this report. The submission's per-signature IVs
 and per-node tweaks argue against multi-target key search (§10.1.2, physical
 p. 72), so the loss is presumably a proof artifact that an ideal-cipher
 treatment of the PRG would remove.</p>

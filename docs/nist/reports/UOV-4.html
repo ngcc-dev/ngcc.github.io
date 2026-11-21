@@ -6,7 +6,7 @@
 <title>ngcc.dev: UOV-4</title>
 <link rel="icon" type="image/png" href="../../assets/mag-glass.png">
 <link rel="stylesheet" href="../../assets/style.css?v=34fb54b0">
-<link rel="stylesheet" href="../style.css?v=a38b7088">
+<link rel="stylesheet" href="../style.css?v=b626c6ab">
 </head>
 <body class="nist-site">
 <header class="site-header">
@@ -16,7 +16,7 @@
 <main>
 <p class="crumb"><a href="../on-ramp.html">NIST Signature On-Ramp (Round 3)</a> › <code>UOV-4</code></p>
 
-<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-lead">Lead</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>uov-V in classic, PKC and PKC+SKC formats; uov-Ip is not affected by the admissible construction</td></tr><tr><th>Discovery</th><td>Hard</td></tr><tr><th>Exploitation</th><td>Conditional public-key key-recovery cost/model path; the required partial-tower rank is not validated at scale</td></tr><tr><th>Remediation</th><td>Moderate</td></tr><tr><th>Credit</th><td>Original truncated-ring analysis by Hiroki Furue and Yasuhiko Ikematsu; divided-power attack by Simon-Philipp Merz and Lars Ran; sparse-row observation and On-Ramp evaluation by Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py UOV-4</code><br><small>source: <code>nist/UOV/reproduce_uov_4.py</code> · SHA-256 <code class="digest">6d13e214<wbr>c6b318dc<wbr>ebf3c010<wbr>ed3d5414<wbr>ba566c21<wbr>f75e82d9<wbr>595d8687<wbr>9662ed3d</code></small><br><small>exact cost recomputation; odd-dimension correction; finite-field intersection toys and partial-rank counterexamples</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/UOV_Specification_R3.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/UOV-R3.zip">submission ZIP</a></td></tr></table>
+<table class="meta issue-meta"><tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr><tr><th>Status</th><td><span class="issue-status status-lead">Lead</span></td></tr><tr><th>Layer</th><td>design</td></tr><tr><th>Affected</th><td>uov-V in classic, PKC and PKC+SKC formats; uov-Ip is not affected by the admissible construction</td></tr><tr><th>Discovery</th><td>Hard</td></tr><tr><th>Exploitation</th><td>Conditional public-key key-recovery cost/model path; the required partial-tower rank is not validated at scale</td></tr><tr><th>Remediation</th><td>Moderate</td></tr><tr><th>Credit</th><td>Original truncated-ring analysis by Hiroki Furue and Yasuhiko Ikematsu; divided-power attack by Simon-Philipp Merz and Lars Ran; sparse-row observation and On-Ramp evaluation by Markku-Juhani O. Saarinen <a href="mailto:markku-juhani.saarinen@tuni.fi">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr><tr><th>Updated</th><td><time datetime="2026-10-18">2026-10-18</time></td></tr><tr><th>Reproduction</th><td>harness runner: <code>python3 nist/reproduce.py UOV-4</code><br><small>source: <code>nist/UOV/reproduce_uov_4.py</code> · SHA-256 <code class="digest">25fd0a36<wbr>d25fa2b4<wbr>99f307f9<wbr>6ad43c25<wbr>68c7ddbf<wbr>04ba2e28<wbr>a91efc7a<wbr>15826b53</code></small><br><small>exact cost recomputation; odd-dimension correction; finite-field intersection toys and partial-rank counterexamples</small></td></tr><tr><th>NIST files</th><td><a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/UOV_Specification_R3.pdf">specification PDF</a> · <a href="https://csrc.nist.gov/csrc/media/Projects/pqc-dig-sig/documents/UOV-R3.zip">submission ZIP</a></td></tr></table>
 
 <h1 id="uov-4-low-selective-divided-power-rows-conditionally-put-uov-v-below-target">UOV-4 — Low: selective divided-power rows conditionally put uov-V below target</h1>
 <h2 id="result">Result</h2>
@@ -124,7 +124,19 @@ dense rows gives <code>log2(3*nnz*N*136)=267.5751</code>.</p>
 admissible. They apply the characteristic-two intersection directly at odd
 ambient dimension, where the alternating matrices that must be inverted are
 singular. Hyperplane restriction preserves the uov-V lead but eliminates the
-uov-Ip instance. It also moves uov-III to 209.26, above its target.</p>
+uov-Ip instance. It also moves uov-III to 209.26, above its target. The same
+odd-dimension admissibility issue accounts for the <code>uov-Ip = 142</code> and
+<code>uov-V = 270</code> <code>r = 1</code> intersection rows in Li and Tao's
+<a href="https://eprint.iacr.org/2026/2272">ePrint 2026/2272</a> (Table 3, revised
+2026-11-14): their §3.4 intersection writes <code>p_i(x) = x^T M_i x</code> with
+upper-triangular <code>M_i</code> "if <code>2 | q</code>", but for an upper-triangular matrix in
+characteristic two the bilinear orthogonality inclusion <code>L_i O &lt;= O^perp</code>
+(Eq. 3.5) fails; restoring <code>L_i O &lt;= O^perp</code> requires the symmetric/alternating
+polar matrices <code>M_i + M_i^T</code>, which are singular at odd <code>n</code> (<code>119</code>, <code>193</code>,
+<code>259</code>). After the required hyperplane restriction (<code>n -&gt; n - 1</code>, <code>o -&gt; o - 1</code>),
+their <code>r = 1</code> intersection eliminates <code>uov-Ip</code>, gives <code>211.75</code> for <code>uov-III</code>,
+and reproduces the <code>271.32</code> random partial-family value above for <code>uov-V</code>
+(checked in <code>reproduce_uov_4.py</code>).</p>
 <h2 id="unresolved-rank-premise">Unresolved rank premise</h2>
 <p>The calculation assumes the partial divided-power series</p>
 <pre><code class="language-text">(1+t)^n / ((1+t^2)^m (1+t^4)^m)

@@ -6,7 +6,7 @@
 <title>ngcc.dev: SDitH-6</title>
 <link rel="icon" type="image/png" href="../../assets/mag-glass.png">
 <link rel="stylesheet" href="../../assets/style.css?v=34fb54b0">
-<link rel="stylesheet" href="../style.css?v=a38b7088">
+<link rel="stylesheet" href="../style.css?v=b626c6ab">
 </head>
 <body class="nist-site">
 <header class="site-header">
@@ -29,7 +29,7 @@ prefix byte and <code>h_piop</code> only and runs the key schedule once
 (<code>sdith_prng.c:323-347</code> (<code>SDitH/submission/submission_package/Reference_Implementation/cat1_short_cipherpow/src/sdith_prng.c#L323</code>)), and each counter then
 costs two cipher calls and tests <code>w_pow − 1</code> bits.</p>
 <p>The parameters satisfy <code>tau kappa + w_pow − log2 d = lambda</code> exactly in all
-twelve sets (the zero margin of the design survey's DS-SDitH-4), and only
+twelve sets (leaving zero grinding margin), and only
 <code>w_pow − 1</code> bits are tested, so a forger needs <code>2^(lambda−1)</code> counter values.
 Under either reading each counter value costs two cipher calls, so a forger
 needs <code>2^lambda</code> cipher calls; the literal line 1 adds one XOF call and two key
