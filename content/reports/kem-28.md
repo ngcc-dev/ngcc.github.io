@@ -47,3 +47,27 @@ sh kem-28/reproduce_tag_return.sh
 ```
 
 The witness checks the three statements in all nine trees, then builds each reference level and flips each bit of one tag byte of an honest ciphertext. It requires the eight return values 1, 2, …, 64, −128, the honest shared secret in the output buffer each time, and return 0 for the unmodified control. No tag search is run.
+
+## kem-28-3: The KEM API ignores declared input lengths and over-reads short buffers
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: OAEP-NTRU-648, -1296 and -2592; reference, optimized and additional implementations
+Discovery: Trivial
+Exploitation: Out-of-bounds read from a caller-supplied short ciphertext or public key; no disclosure shown
+Credit: Hao Yan, Yuhang Cao, Yao Tong and Qiaosheng Zhang, Shanghai AI Laboratory, with GLM 5.3, Kimi 3.1 Pro and in-house model assistance (ignored ciphertext length); short-buffer reads and witness by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-22
+Original source: [Hao Yan et al.'s PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XDA365CSK2MCI5DXCU44AOODDNHMAKY7/)
+
+`kem_dec` never uses `ct_len_bytes` or `sk_len_bytes`, and `kem_enc` never uses `pk_len_bytes` (`KEM_AlgorithmInstance.c:98–210` in the reference OAEP-NTRU-648). Decapsulation unpacks the ciphertext polynomial at its fixed size (`:170`) and compares the tag up to the full ciphertext length (`:201–203`).
+
+Under AddressSanitizer, an honest ciphertext in a heap buffer of exactly 16 bytes, or one byte short, gave a read 0 bytes past the buffer during decapsulation, reported as a heap-buffer-overflow or, where a vector load straddles the end, an unknown-crash. A public key one byte short gave one during encapsulation, in all nine trees. Full-length inputs ran cleanly and decapsulated to the encapsulated key. Callers that pass complete inputs are unaffected.
+
+The post itself reports that a valid ciphertext with appended bytes decapsulates like the original. Such suffix aliases are not findings; that observation is recorded in the harvest note.
+
+### Reproducing
+
+```sh
+sh kem-28/reproduce_short_inputs.sh
+```

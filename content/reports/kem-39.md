@@ -227,7 +227,7 @@ This is a source witness for the four sites.
 
 ## kem-39-8: A ciphertext with exactly t errors in a BCH codeword writes past the decoder's error-location array
 
-Severity: High
+Severity: Medium
 Status: Confirmed
 Layer: Implementation
 Affected: WeaverKEM-128, -256 and -512 reference and optimized implementations (identical decoders by source; the witness runs the reference)
@@ -240,7 +240,9 @@ Date: 2026-11-19
 
 A ciphertext with `u = 0` and `v` chosen to put exactly `t` errors into one BCH codeword gave an AddressSanitizer stack-buffer-overflow WRITE of size 4 in the low-layer decoder at all three levels, and in the high-layer decoder at WeaverKEM-128 and -512 (WeaverKEM-256 has no high-layer decoder); `t − 1` errors gave none. Honest ciphertexts never reach it, but about one in three random WeaverKEM-128 ciphertexts do, in the high-layer decoder. With Clang 21 at `-O2` the slot past `errloc` in `decode_bch_high` holds the spilled `data` pointer, and WeaverKEM-128 decapsulation of such a ciphertext dies with SIGSEGV; with one error, or with `errloc[BCH_T + 1]`, it returns 0. GCC at `-O0` to `-O3`, including the submitted `-O3 -fomit-frame-pointer`, places dead storage there, and the decoded messages are unchanged.
 
-The array needs `BCH_T + 1` entries, or the store must move inside the root test. An input-triggered stack write from an untrusted ciphertext, with a demonstrated crash, is High.
+The array needs `BCH_T + 1` entries, or the store must move inside the root test.
+
+Reclassified from High to Medium on 2026-11-22. The ciphertext decides only whether the fixed constant is written to the fixed slot, and the demonstrated effect is a crash in a Clang build; the submitted GCC builds are unaffected. High requires attacker-controlled memory corruption with credible impact beyond process termination (`security/REPORT_CLASSIFICATION.md`, High). An unauthenticated stack write that corrupts a live pointer in a mainstream build is more than a plain denial of service, so the finding is Medium.
 
 ### Reproducing
 

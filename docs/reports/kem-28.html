@@ -63,6 +63,26 @@
 <pre><code class="language-sh">sh kem-28/reproduce_tag_return.sh
 </code></pre>
 <p>The witness checks the three statements in all nine trees, then builds each reference level and flips each bit of one tag byte of an honest ciphertext. It requires the eight return values 1, 2, …, 64, −128, the honest shared secret in the output buffer each time, and return 0 for the unmodified control. No tag search is run.</p>
+<h2 class="issue-heading" id="kem-28-3-the-kem-api-ignores-declared-input-lengths-and-over-reads-short-buffers">kem-28-3: The KEM API ignores declared input lengths and over-reads short buffers</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>OAEP-NTRU-648, -1296 and -2592; reference, optimized and additional implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Out-of-bounds read from a caller-supplied short ciphertext or public key; no disclosure shown</td></tr>
+<tr><th>Credit</th><td>Hao Yan, Yuhang Cao, Yao Tong and Qiaosheng Zhang, Shanghai AI Laboratory, with GLM 5.3, Kimi 3.1 Pro and in-house model assistance (ignored ciphertext length); short-buffer reads and witness by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-22</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/XDA365CSK2MCI5DXCU44AOODDNHMAKY7/">Hao Yan et al.'s PKC Forum post</a></p>
+<p><code>kem_dec</code> never uses <code>ct_len_bytes</code> or <code>sk_len_bytes</code>, and <code>kem_enc</code> never uses <code>pk_len_bytes</code> (<code>KEM_AlgorithmInstance.c:98–210</code> in the reference OAEP-NTRU-648). Decapsulation unpacks the ciphertext polynomial at its fixed size (<code>:170</code>) and compares the tag up to the full ciphertext length (<code>:201–203</code>).</p>
+<p>Under AddressSanitizer, an honest ciphertext in a heap buffer of exactly 16 bytes, or one byte short, gave a read 0 bytes past the buffer during decapsulation, reported as a heap-buffer-overflow or, where a vector load straddles the end, an unknown-crash. A public key one byte short gave one during encapsulation, in all nine trees. Full-length inputs ran cleanly and decapsulated to the encapsulated key. Callers that pass complete inputs are unaffected.</p>
+<p>The post itself reports that a valid ciphertext with appended bytes decapsulates like the original. Such suffix aliases are not findings; that observation is recorded in the harvest note.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh kem-28/reproduce_short_inputs.sh
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

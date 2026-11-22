@@ -17,6 +17,7 @@ section is a procedure, not an issue, and gets a link to the harness repo). All 
 """
 import csv
 import datetime
+import fnmatch
 import hashlib
 import html
 import posixpath
@@ -29,7 +30,10 @@ import markdown
 
 ROOT = Path(__file__).resolve().parent.parent
 CONTENT, DOCS, ASSETS = ROOT / "content", ROOT / "docs", ROOT / "assets"
-KEEP = {"CNAME", ".nojekyll", "nist"}          # never removed from docs/
+# Never removed from docs/. PDFs at the top of docs/ are technical reports,
+# placed there by hand and served directly; they have no source under content/.
+KEEP = {"CNAME", ".nojekyll", "nist"}
+KEEP_PATTERNS = ("*.pdf",)
 SITE = "ngcc.dev"
 HARNESS = "https://github.com/ngcc-dev/ngcc-harness"
 HARNESS_REV = "dc66c6cb3c06e75bdea0048e21fa4e13c63f00af"
@@ -603,7 +607,7 @@ def render(rel, cands, reports):
 
 def clean():
     for p in DOCS.iterdir():
-        if p.name in KEEP:
+        if p.name in KEEP or any(fnmatch.fnmatchcase(p.name, k) for k in KEEP_PATTERNS):
             continue
         shutil.rmtree(p) if p.is_dir() else p.unlink()
 

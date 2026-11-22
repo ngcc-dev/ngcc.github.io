@@ -164,10 +164,15 @@ Exploitation: Key generation returns keys that the specification rejects (24 of 
 Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool; key-generation consequence by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-11-19
 Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/RNPHVDLQBPYLSORO3BAL44W4ZCTBINKQ/)
+Follow-up source: [DARTS team's 2026-11-22 reply](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/JBVT46XZ2ZQ2XVNR4UQJGRNQTAZ2Z5H7/)
 
 Key generation resamples the secret until `N(s) ≤ γ²n` (Algorithm 6 line 6, physical p. 8); the specification states that only then is `‖cs‖ ≤ γ√τ` guaranteed for every challenge, and sets γ so that about half of all secrets are rejected. `polyveckl_sqsing_value` returns an `int64_t` but accumulates the sum in `int32_t res` (`polyvec.c:652`), and `sign.c:70` compares the result with the bound. At DARTS256 and DARTS512 the true value often exceeds 2^31, the sum wraps, and the wrapped value passes the test.
 
 For 100 reference keys per set, N(s) recomputed from the unpacked secret in 64-bit arithmetic exceeded the bound for 24 keys at DARTS256 and 62 at DARTS512, while the code's value was below the bound for every key; at DARTS128 no key exceeded it. The results are the same with GCC at `-O0` and `-O3` and with Clang at `-O2`. The sum should be kept in 64 bits.
+
+### Proposed fixes
+
+In a [2026-11-22 reply](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/JBVT46XZ2ZQ2XVNR4UQJGRNQTAZ2Z5H7/) to the original post, the DARTS team says the reported issues are addressed in the reference and AVX2 implementations published at `github.com/MathEternal/DARTS-NGCC`, with the documentation under revision. This records the response; the revised code was not evaluated.
 
 ### Reproducing
 
@@ -188,8 +193,13 @@ Exploitation: Out-of-bounds read of a caller-supplied short public key, and in A
 Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
 Date: 2026-11-19
 Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/RNPHVDLQBPYLSORO3BAL44W4ZCTBINKQ/)
+Follow-up source: [DARTS team's 2026-11-22 reply](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/JBVT46XZ2ZQ2XVNR4UQJGRNQTAZ2Z5H7/)
 
 `sig_verify` discards `pk_len_bytes`, and `unpack_pk` reads the fixed-size key: a valid public key in a heap buffer one byte short, declared at that length, is read past its end (`packing.c:46`) under AddressSanitizer at all three sets, while the full-length buffer is clean. Separately, the AVX2 `poly_q_unpack` loads 32 bytes for every 17 (DARTS128 and DARTS256) or 18 (DARTS512) it consumes, so AVX2 verification reads 15 or 14 bytes past an exactly sized public key. Built with the candidate's flags, verification faults when the key ends at an inaccessible page and succeeds with that much slack or a readable page.
+
+### Proposed fixes
+
+In a [2026-11-22 reply](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/JBVT46XZ2ZQ2XVNR4UQJGRNQTAZ2Z5H7/) to the original post, the DARTS team says the reported issues are addressed in the reference and AVX2 implementations published at `github.com/MathEternal/DARTS-NGCC`, with the documentation under revision. This records the response; the revised code was not evaluated.
 
 ### Reproducing
 

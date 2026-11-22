@@ -5,7 +5,7 @@
 #   make check   verify the rendered site (links, anchors, tag balance)
 #   make sync REPORT_SOURCE=/path/to/source-checkout
 #   make sync-performance PERF_SOURCE=/path/to/harness-checkout
-#   make clean   remove generated output (keeps docs/CNAME and docs/.nojekyll)
+#   make clean   remove generated output (keeps docs/CNAME, docs/.nojekyll and docs/*.pdf)
 
 REPORT_SOURCE ?=
 PERF_SOURCE ?= ../ngcc-harness

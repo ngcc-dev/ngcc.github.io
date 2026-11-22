@@ -95,3 +95,27 @@ python3 kem-30/reproduce_interop.py
 ```
 
 The certificate compares the reference, x86 optimized and ARM KAT values in the SHA-256-pinned official archive. It does not rerun the cross-decapsulation experiment.
+
+## kem-30-4: Reference PolarLAC-Light public-key decoding reads past its selector and the key
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: Reference x86 PolarLAC-Light; every other tree with a zero selector bounds its index, and PolarLAC-512* keys have no selector
+Discovery: Moderate
+Exploitation: A correctly sized malformed public key makes encapsulation read up to 31 bytes past the key; no disclosure shown
+Credit: Hao Yan, Yuhang Cao, Yao Tong and Qiaosheng Zhang, Shanghai AI Laboratory, with GLM 5.3, Kimi 3.1 Pro and in-house model assistance
+Date: 2026-11-22
+Original source: [Hao Yan et al.'s PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/IZOBU627BINPYTDVY6FOYDE6TKNKUFLL/)
+
+The public key packs each coefficient of `b` modulo 257 as its low byte, plus one selector bit for each coefficient whose low byte is zero. Light has one selector byte per polynomial (`params.h:32`). The encoder refuses a ninth such coefficient (`poly.c:85`), but the reference Light decoder reads `selector[candidates >> 3]` for every zero low byte (`poly.c:98–116`, read at `:108`). It lacks the capacity check that the reference PolarLAC-128 decoder of the same format has. `kem_enc` checks only the key's total length (`KEM_AlgorithmInstance.c:156`) before decoding it (`pke.c:163`).
+
+Extra zero low bytes in the first polynomial make the decoder read the second polynomial's bytes as selector bits. In the second polynomial, whose selector byte is the key's last byte, the reads go past the 530-byte key, by up to 31 bytes. Each byte read decides whether a coefficient decodes to 0 or 256, so it affects the ciphertext; recovering it is not shown.
+
+Under AddressSanitizer, an honest key with 9 or 40 zero low bytes in its second polynomial gave a heap-buffer-overflow in `poly_decompress`, 0 bytes after the 530-byte key. The unmodified key and 40 zeros in the first polynomial ran cleanly, and so did the reference PolarLAC-128 build on all of these inputs. Honest keys never have more than eight such coefficients.
+
+### Reproducing
+
+```sh
+sh kem-30/reproduce_light_selector.sh
+```

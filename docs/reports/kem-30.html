@@ -95,6 +95,26 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <pre><code class="language-sh">python3 kem-30/reproduce_interop.py
 </code></pre>
 <p>The certificate compares the reference, x86 optimized and ARM KAT values in the SHA-256-pinned official archive. It does not rerun the cross-decapsulation experiment.</p>
+<h2 class="issue-heading" id="kem-30-4-reference-polarlac-light-public-key-decoding-reads-past-its-selector-and-the-key">kem-30-4: Reference PolarLAC-Light public-key decoding reads past its selector and the key</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Reference x86 PolarLAC-Light; every other tree with a zero selector bounds its index, and PolarLAC-512* keys have no selector</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>A correctly sized malformed public key makes encapsulation read up to 31 bytes past the key; no disclosure shown</td></tr>
+<tr><th>Credit</th><td>Hao Yan, Yuhang Cao, Yao Tong and Qiaosheng Zhang, Shanghai AI Laboratory, with GLM 5.3, Kimi 3.1 Pro and in-house model assistance</td></tr>
+<tr><th>Date</th><td>2026-11-22</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/IZOBU627BINPYTDVY6FOYDE6TKNKUFLL/">Hao Yan et al.'s PKC Forum post</a></p>
+<p>The public key packs each coefficient of <code>b</code> modulo 257 as its low byte, plus one selector bit for each coefficient whose low byte is zero. Light has one selector byte per polynomial (<code>params.h:32</code>). The encoder refuses a ninth such coefficient (<code>poly.c:85</code>), but the reference Light decoder reads <code>selector[candidates &gt;&gt; 3]</code> for every zero low byte (<code>poly.c:98–116</code>, read at <code>:108</code>). It lacks the capacity check that the reference PolarLAC-128 decoder of the same format has. <code>kem_enc</code> checks only the key's total length (<code>KEM_AlgorithmInstance.c:156</code>) before decoding it (<code>pke.c:163</code>).</p>
+<p>Extra zero low bytes in the first polynomial make the decoder read the second polynomial's bytes as selector bits. In the second polynomial, whose selector byte is the key's last byte, the reads go past the 530-byte key, by up to 31 bytes. Each byte read decides whether a coefficient decodes to 0 or 256, so it affects the ciphertext; recovering it is not shown.</p>
+<p>Under AddressSanitizer, an honest key with 9 or 40 zero low bytes in its second polynomial gave a heap-buffer-overflow in <code>poly_decompress</code>, 0 bytes after the 530-byte key. The unmodified key and 40 zeros in the first polynomial ran cleanly, and so did the reference PolarLAC-128 build on all of these inputs. Honest keys never have more than eight such coefficients.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh kem-30/reproduce_light_selector.sh
+</code></pre>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

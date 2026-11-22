@@ -174,9 +174,13 @@ Discovery: Moderate
 Exploitation: Two salts that differ only in their last bytes give the same vinegar and kernel streams with different hash targets; no key recovery or forgery demonstrated
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-11-15
+Follow-up source: [Hao Yan et al.'s PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/MCYELT5NR67TJ7P7ZERR5NPFRSUXE7TC/)
+
 The contest build routes Origami's SHAKE calls through a wrapper that buffers its input and stops absorbing at 208 bytes: `shake_absorb` truncates `inlen` once the buffer is full (`symmetric_iccs.c:42–51`). At the 512-bit level the signing streams exceed that. The `sign-known` stream absorbs 218 bytes and the `kernel-sample` stream 221, with the salt last (`origami_ref.c:545,678`), so the final 10 and 13 salt bytes never reach the generator. The target hash is shorter and uses the whole salt.
 
 With the archived code, two 64-byte salts that differ in their last five bytes produce identical `sign-known` streams and different targets; Origami-384, which absorbs 186 bytes, does not. The vinegar values and kernel samples of a signature are therefore not bound to the full salt, as the specification's derivation has them. At least 51 salt bytes still enter, so a repeat needs a salt-prefix collision and no attack follows; the defect is latent.
+
+Further analysis: [Hao Yan et al.'s PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/MCYELT5NR67TJ7P7ZERR5NPFRSUXE7TC/) (2026-11-22) works out what such a repeat would reveal. Two signatures under one key and message digest whose salts share the absorbed prefix, and whose successful attempts coincide, have the same vinegar values and sampled oil coordinates; only the solved coordinates differ. Their difference therefore exposes part of each zone's partition into sampled and solved coordinates, and further pairs expose more. `sig_sign` chooses its own salt, so this needs salt control or a prefix collision, about 2^216 work for the 54 bytes the `sign-known` stream absorbs.
 
 ### Reproducing
 
@@ -186,3 +190,27 @@ sed -n '42,51p' "$d/symmetric_iccs.c"; grep -n 'SHAKE_BUF_BYTES' "$d"/*.c "$d"/*
 ```
 
 This is a source witness for the truncation. The equal streams were observed with a driver against the archived code and are not part of the witness.
+
+## sign-18-8: A failed allocation in target derivation makes the all-zero signature verify
+
+Severity: High
+Status: Confirmed
+Layer: Implementation
+Affected: Origami-128, -256, -384 and -512; reference and optimized implementations
+Discovery: Moderate
+Exploitation: If the squeeze helper's buffer allocation in the verifier's target derivation fails, the all-zero signature verifies for any message; no remote way to force the failure is shown
+Credit: Hao Yan, Yuhang Cao, Yao Tong and Qiaosheng Zhang, Shanghai AI Laboratory, with GLM 5.3, Kimi 3.1 Pro and in-house model assistance
+Date: 2026-11-22
+Original source: [Hao Yan et al.'s PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/MCYELT5NR67TJ7P7ZERR5NPFRSUXE7TC/)
+
+Verification hashes the message digest and salt into a target vector and compares it with the public map at the signature (`origami_ref.c:860–864`; `origami_opt.c` is identical there). The target comes from `shake_squeeze` (`:526`). Despite their names, Origami's `shake_*` functions are not SHAKE, and the submission contains no Keccak code. Every tree's Makefile builds `symmetric_iccs.c`, the candidate's adapter that buffers the absorbed input and calls the contest's `pseudoXOF`; there is no other build path. Because `pseudoXOF` returns its whole output in one call, the squeeze helper allocates a buffer for it (`symmetric_iccs.c:25`). The helper zero-fills the output and returns nothing when that allocation or `pseudoXOF` fails (`:21–38`), and `pseudoXOF` fails when either of its two internal allocations does. The public map has only quadratic terms (`origami_ref.c:469–514`), so the all-zero vector maps to zero and matches a zeroed target. The API wrapper checks the message hash and the key expansion (`SIG_AlgorithmInstance.c:80–85`) but cannot see this failure.
+
+In the witness, failing any one of the three allocations made the all-zero signature of the correct length verify for a never-signed message and for another message, in all eight trees. Without the fault it was rejected and an honest signature verified; with the fault a nonzero pattern was rejected.
+
+The failing allocations are fixed-size buffers in the candidate's squeeze helper and the contest's `pseudoXOF`. An ideal replacement for `pseudoXOF` need not allocate, so its two failure points depend on the placeholder; the helper's own allocation does not, and it alone gives the forgery. A caller cannot choose the failure, and memory pressure or a resource limit is needed. The candidate's defects are allocating at all and then discarding the failure: in target derivation the buffer is a fixed `BYTES_HASH` bytes (`origami_ref.c:518`), so it can be a local array, and verification should reject whenever target derivation fails. Acceptance of a forged signature for an arbitrary message after one allocation failure is High.
+
+### Reproducing
+
+```sh
+sh sign-18/reproduce_zero_target.sh
+```
