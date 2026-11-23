@@ -38,12 +38,17 @@ Exploitation: Conditional 2^288 later-round candidate tests for -768 after affin
 Credit: Qinghe Crypto Group; three-round message-modification extension by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-09-29
 Original source: [Qinghe Crypto Group's CryptHash Forum post](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/4KRD3W3LRMJDQQNL7TYTBCW66P4UUWOY/)
+Follow-up source: [ZC-DM team's v1.1 notice](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/FD53WOZRD7B4DESDOW563QRPKPC4O6NC/)
 
 For ZC-1536, the input difference `Delta A_0[0] = 0x1111111111111111` survives the linear layer. At each of its 16 active bit positions, the sequential χ mapping preserves the difference exactly when the two other input bits are `0,1`, a probability of `1/4`; the one-round trail therefore has weight 32. The intermediate capacity feed-forward leaves this rate difference unchanged, and later message-block differences can cancel it and merge the states. The same local trail applies to both mappings present in the archived specification and implementation because it is independent of the round constants and of whether the first six-round half is named `g` or `h`.
 
 The original post's independent-round model gives `2^224`, `2^352`, and `2^384` for 7, 11, and 12 rounds. Further extension: rate-only linear message modification enforces the first three trail rounds. For ZC-EDMC-1536-768, a prefix satisfying 16 capacity conditions and a valid-message collision of the reduced two-plus-two-round hash were demonstrated from the zero IV; a later message block merges the states. For -1024, the systems are soluble on tested chaining states after imposing 32 capacity conditions, but no corresponding prefix was constructed. Assuming independent `2^-32` transitions over rounds 4–12 gives about `2^288` accepted pairs needed for a collision. The later-round and full-round steps remain open. For the -768 rate, each prefix costs about `2^16` trials and its affine solution space has 153 free bits; all 300 sampled pairs held the first three rounds. Sampling from that space adds only polynomial work per pair, while fresh prefixes supply further spaces. The conditional `2^288` later-round test estimate is therefore below the 384-bit collision target, hence Critical / Lead. No full-round collision was demonstrated.
 
 Follow-up: [Niu, Peyrin, Zhang, and Zhou's issue #36](https://github.com/ngcc-dev/ngcc-harness/issues/36), posted 2026-11-01, supplies a reachable first-three-round certificate for the submitted -768 EDMC implementation's repeated last-six-round schedule. Its attached verifier reconstructs the certificate and proves at least `2^415` distinct three-round pairs. That is enough candidate supply, but its specified sampler uses at most `2^64` three-round proposals per accepted pair in expectation. For that separate sampler, `2^288` accepted pairs could take up to `2^352` proposals in expectation before full-round tests. This does not price the affine message-modification generator above. It does not cover the specification's alternative `h(g(X) xor ...)` schedule or show a full-round collision.
+
+### Proposed fixes
+
+The [ZC-DM team's v1.1 notice](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/FD53WOZRD7B4DESDOW563QRPKPC4O6NC/) (2026-11-20) revises the shift offsets in the linear layers of the ZC-1280 and ZC-1536 permutations, which ZC-EDMC also uses. It announces a revision of ZC-DM only; no ZC-EDMC revision has been posted. The revision was not evaluated.
 
 ### Reproducing
 
@@ -66,11 +71,15 @@ Exploitation: Conditional 2^144 candidate trials with polynomial generation and 
 Credit: Zhongfeng Niu, Thomas Peyrin, Liu Zhang, and Chunning Zhou
 Date: 2026-11-02
 Original source: [Niu, Peyrin, Zhang, and Zhou's issue #37](https://github.com/ngcc-dev/ngcc-harness/issues/37)
-Follow-up source: [CryptHash Forum post](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/NVJUXBKSSV4OQU7AZCYH5TGLLUUHH4FR/)
+Follow-up source: [CryptHash Forum post](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/NVJUXBKSSV4OQU7AZCYH5TGLLUUHH4FR/); [ZC-DM team's v1.1 notice](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/FD53WOZRD7B4DESDOW563QRPKPC4O6NC/)
 
 The submitted ZC-EDMC-1280-512 implementation uses `h(h(X) XOR cap(X))`, where both `h` calls use the last six submitted round constants. The reported rate-only difference occupies eight distinct χ columns and is fixed by the linear layer. Its exact one-round rate on a uniform state is `2^-16`. A legal common prefix from the zero IV fixes eight capacity conditions; an exact affine construction enforces the first three rounds of the inner half, leaving a 278-dimensional family, or `2^277` distinct unordered pairs. Sampling it costs polynomial work per pair.
 
 The midpoint capacity feed-forward preserves the difference, but changes the absolute condition bits; the attachment includes this adjustment. If each of the nine remaining rounds, across both halves, passes its actual 16-bit condition with conditional probability `2^-16` on the constructed family, the expected cost is `2^144` candidates. A later rate-block difference then merges the states, giving a collision below the `2^256` digest birthday bound. The tail probability is unproved, so this is a Lead without a full-round collision. The attachment shows a collision only for an explicitly defined two-plus-two-round reduction; its saved messages have different full twelve-round digests. This analysis does not resolve the submitted specification's different inner-function mapping.
+
+### Proposed fixes
+
+The [ZC-DM team's v1.1 notice](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/FD53WOZRD7B4DESDOW563QRPKPC4O6NC/) (2026-11-20) revises the shift offsets in the linear layers of the ZC-1280 and ZC-1536 permutations, which ZC-EDMC also uses. It announces a revision of ZC-DM only; no ZC-EDMC revision has been posted. The revision was not evaluated.
 
 ### Reproducing
 

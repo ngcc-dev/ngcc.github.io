@@ -264,6 +264,7 @@ Discovery: Moderate
 Exploitation: 250,000 signatures harvested through the K2S responder API, an equivalent BiT-128 key recovered from public data, and 5/5 fresh responder impersonations in which the attacker knows the honest initiator's session key; S2K and S2S impersonations were not run
 Credit: Martin Feussner, with OpenAI Codex (Daybreak Blue) assistance (BiT-128 shared-sign recovery method and code); CreTAKE signing-oracle application by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-10-17
+Follow-up source: [BiT team's 2026-10-12 PKC Forum update](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/ONSUXJ3MD4PYXHBRPIVGKBXW5CZ7ONIT/)
 
 CreTAKE instantiates its signature credentials with BiT (§3.2.2 and Figure 12, physical pp. 14–15), and its K2S, S2K and S2S security theorems assume that BiT is EUF-CMA (Theorems 1, 2 and 4, physical pp. 21, 23 and 26). The embedded BiT-128 signer draws one bit `b` per signature and negates the whole challenge with it. It then adds the same `±c·s` to every response row, while rejection sampling is applied coefficient by coefficient (`Common/primitives/sig/BiT-128/sign.c:132–149`). The `z0` row has the constant secret 1, so it reveals the shared sign statistically. Weighting the other rows by that posterior and regressing on `c` converges to the secret `s`. [Martin Feussner's public attack](https://github.com/martinfeussner/NGCC-Signature-Audit/tree/91f2ddf0590a24ad39afc2ce2ee4f2627ec54726/BiT) applies this to recover an equivalent BiT-128 signing key from about 200,000 to 250,000 signatures.
 
@@ -272,6 +273,10 @@ CreTAKE supplies those signatures. The K2S responder `kex_generate_pass2_msg_b` 
 With an equivalent key, the attacker impersonates the K2S responder to an honest initiator. It answers with its own `c̃` under the initiator's `p̃k`, an encapsulation `c_i` to the initiator's long-term KEM key, and a valid signature, so it knows `k̃` and `k_i` and hence the session key. This breaks a fresh initiator session in the IND-AA game without a Corrupt query on the responder, contrary to Theorem 1. In the executed run, 250,000 signatures were harvested through the unmodified K2S-PLAC128-BiT128 library. The rounded candidate failed the compressed public-key relation, and Feussner's public low-confidence search over 24 bits completed an equivalent key that differs from the real one. The initiator then accepted all five impersonated sessions with the attacker's key. A fresh, unrelated BiT key in the same position was rejected.
 
 One key was run end to end. Feussner reports that three of four keys succeed at 200,000 signatures and the fourth at 250,000. The other five BiT-128 instances use the same signer, but their impersonations (S2S in either role, S2K initiator) were not executed. The BiT-256 and BiT-512 signers have the same shared-sign structure, but no recovery cost is established for them, so they are not listed as affected.
+
+### Proposed fixes
+
+The [BiT team's 2026-10-12 PKC Forum update](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/ONSUXJ3MD4PYXHBRPIVGKBXW5CZ7ONIT/) reports replacing BiT's coefficientwise rejection with a parabolic rejection sampler over the full response vector, and transmitting the complete public key instead of compressing it. The CreTAKE team has proposed no change to CreTAKE. The revision is recorded without evaluation.
 
 ### Reproducing
 

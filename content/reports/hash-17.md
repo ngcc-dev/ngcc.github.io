@@ -34,7 +34,7 @@ The runtime witness exercises the three reference builds; source inspection conf
 
 ### Proposed fixes
 
-The [MasterCube team's response](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/IG2TAQNA7YHL4JLOOWBTJGKBVVVESWZK/) proposes emitting an additional block when only one bit remains for `10*1` padding and adding that case to the specification. This section records the proposal without evaluating it.
+The [MasterCube team's response](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/IG2TAQNA7YHL4JLOOWBTJGKBVVVESWZK/) proposes emitting an additional block when only one bit remains for `10*1` padding and adding that case to the specification. This section records the proposal without evaluating it. The response attaches an erratum and a revised package, `MasterCubeV2.1.zip`, which were not evaluated.
 
 ### Reproducing
 
@@ -69,7 +69,7 @@ The MasterCube team confirmed that the old Algorithm 2 was not a genuine inverse
 
 ### Proposed fixes
 
-The [MasterCube team's response](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/IG2TAQNA7YHL4JLOOWBTJGKBVVVESWZK/) proposes adding the missing slice swap to Algorithm 2 and explaining how to reuse `MixColumns` for the inverse. This section records the proposal without evaluating the team's further claims about its effect on proofs, design rationale, or performance.
+The [MasterCube team's response](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/IG2TAQNA7YHL4JLOOWBTJGKBVVVESWZK/) proposes adding the missing slice swap to Algorithm 2 and explaining how to reuse `MixColumns` for the inverse. This section records the proposal without evaluating the team's further claims about its effect on proofs, design rationale, or performance. The response attaches an erratum and a revised package, `MasterCubeV2.1.zip`, which were not evaluated.
 
 ### Reproducing
 

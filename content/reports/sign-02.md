@@ -56,7 +56,7 @@ Follow-up analysis: the [BiT team's 2026-09-29 response](https://list.niccs.org.
 
 ### Proposed fixes
 
-The team reports replacing coefficientwise rejection with a parabolic rejection sampler over the full response vector, and transmitting the complete public key instead of compressing it. It presents these as responses to the shared-sign and compression routes, respectively. The revision is recorded without evaluation.
+The team reports replacing coefficientwise rejection with a parabolic rejection sampler over the full response vector, and transmitting the complete public key instead of compressing it. It presents these as responses to the shared-sign and compression routes, respectively. The revision is recorded without evaluation. The team's [page for the revised scheme](https://light-lattice.org/bit/), read on 2026-11-23, names it "BiT: Bimodal Parabolic distribution based lattice signatures" and describes parabolic masking vectors and a separately parameterized parabolic target distribution. It also lists public-key compression and signature hints among the scheme's features.
 
 ### Reproducing
 

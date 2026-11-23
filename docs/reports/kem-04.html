@@ -86,6 +86,26 @@ sh kem-04/reproduce_key_recovery.sh     # NGCC_LONG=1 adds BAG-Piglet-256
 <pre><code class="language-sh">python3 security/rank_mm_costs.py --report-id kem-04-3
 </code></pre>
 <p>The witness finds the block-removing guess by its own search and recomputes the paper's ordinary-MM and ZD-MM key-recovery exponents for all four sets to three decimals.</p>
+<h2 class="issue-heading" id="kem-04-4-the-coded-bag-piglet-128-parameters-have-a-2-822-failure-rate-not-the-claimed-2-130">kem-04-4: The coded BAG-Piglet-128 parameters have a 2^-82.2 failure rate, not the claimed 2^-130</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr>
+<tr><th>Affected</th><td>BAG-Piglet-128 as defined by Table 2 and the submitted reference and optimized implementations; BAG-Piglet-256, -384 and -512 are not affected</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>None demonstrated; about 0.2 decryption failures are expected among 2^80 honest ciphertexts, and no failure-based key recovery is shown</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-23</td></tr>
+</table></div>
+
+<p>The specification gives BAG-Piglet-128 two shapes. Table 1 (physical p. 8) lists <code>n = 47</code> and <code>m = 43</code>. Table 2 on the same page defines the ring by <code>P(X)</code> of degree 43 and the field by <code>f(X)</code> of degree 47, and <code>src/scheme/parameters.h:13–18</code> in both trees has <code>n = 43</code>, <code>m = 47</code>, <code>n′ = 43</code>, <code>n1 = 2</code> and <code>ε = 30</code>. The sizes are the same either way. The failure rate of physical p. 4 depends on <code>n</code> through the length <code>n·n1 − n′</code> of the augmented tail. With <code>δ = 35</code>, Table 1's <code>n = 47</code> gives 2^-130.2, the 2^-130 of Table 5 (physical p. 21). The coded <code>n = 43</code> gives 2^-82.2. The other three levels are stated consistently and reproduce Table 5.</p>
+<p>The IND-CCA argument (physical p. 14) assumes a failure probability bounded by 2^-λ. At the coded rate, 2^80 decapsulations of honest ciphertexts contain about 0.2 failures, so the Fujisaki–Okamoto bound loses its meaning near the evaluation budget of 2^80 queries. At 2^64 the expected number is 2^-18. No attack that uses failures has been shown. A failure depends on the secret key, but finding one costs about 2^82 decapsulations.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 kem-04/reproduce_failure_rate.py
+</code></pre>
+<p>The script reads the parameters of all four levels from <code>parameters.h</code> in both trees and evaluates the specification's failure-rate formula. For BAG-Piglet-128 it also evaluates Table 1's <code>n = 47</code> and prints the expected failures at 2^64 and 2^80 ciphertexts. It runs in under a second.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

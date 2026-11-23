@@ -75,3 +75,26 @@ python3 security/rank_mm_costs.py --report-id kem-04-3
 ```
 
 The witness finds the block-removing guess by its own search and recomputes the paper's ordinary-MM and ZD-MM key-recovery exponents for all four sets to three decimals.
+
+## kem-04-4: The coded BAG-Piglet-128 parameters have a 2^-82.2 failure rate, not the claimed 2^-130
+
+Severity: High
+Status: Proof gap
+Layer: Design
+Affected: BAG-Piglet-128 as defined by Table 2 and the submitted reference and optimized implementations; BAG-Piglet-256, -384 and -512 are not affected
+Discovery: Moderate
+Exploitation: None demonstrated; about 0.2 decryption failures are expected among 2^80 honest ciphertexts, and no failure-based key recovery is shown
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-23
+
+The specification gives BAG-Piglet-128 two shapes. Table 1 (physical p. 8) lists `n = 47` and `m = 43`. Table 2 on the same page defines the ring by `P(X)` of degree 43 and the field by `f(X)` of degree 47, and `src/scheme/parameters.h:13–18` in both trees has `n = 43`, `m = 47`, `n′ = 43`, `n1 = 2` and `ε = 30`. The sizes are the same either way. The failure rate of physical p. 4 depends on `n` through the length `n·n1 − n′` of the augmented tail. With `δ = 35`, Table 1's `n = 47` gives 2^-130.2, the 2^-130 of Table 5 (physical p. 21). The coded `n = 43` gives 2^-82.2. The other three levels are stated consistently and reproduce Table 5.
+
+The IND-CCA argument (physical p. 14) assumes a failure probability bounded by 2^-λ. At the coded rate, 2^80 decapsulations of honest ciphertexts contain about 0.2 failures, so the Fujisaki–Okamoto bound loses its meaning near the evaluation budget of 2^80 queries. At 2^64 the expected number is 2^-18. No attack that uses failures has been shown. A failure depends on the secret key, but finding one costs about 2^82 decapsulations.
+
+### Reproducing
+
+```sh
+python3 kem-04/reproduce_failure_rate.py
+```
+
+The script reads the parameters of all four levels from `parameters.h` in both trees and evaluates the specification's failure-rate formula. For BAG-Piglet-128 it also evaluates Table 1's `n = 47` and prints the expected failures at 2^64 and 2^80 ciphertexts. It runs in under a second.

@@ -22,7 +22,7 @@ The Sigurd team confirms that Guoxiao Liu first disclosed the issue privately an
 
 ### Proposed fixes
 
-The [Sigurd team's response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/5DEREMB3PTPDFONWGHOJ4MQR4OP3V3AQ/) proposes replacing the 32 short codes with one global Reed–Solomon code in every parameter set, regenerating the KATs, and making the evaluation domain explicit. This section records the proposal without evaluating it.
+The [Sigurd team's response](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/5DEREMB3PTPDFONWGHOJ4MQR4OP3V3AQ/) proposes replacing the 32 short codes with one global Reed–Solomon code in every parameter set, regenerating the KATs, and making the evaluation domain explicit. This section records the proposal without evaluating it. The post gives the updated code at `github.com/QinLangT/Sigurd`, which was not evaluated.
 
 ### Reproducing
 
@@ -51,7 +51,7 @@ In a natural run, the unmodified Sigurd-128 signer reached `zeta=0` on the 3,458
 
 ### Proposed fixes
 
-The [Sigurd team's 2026-10-10 reply](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/KZ6F7H6D7SFO6KUFF2E4UH3YKACH3AE4/) says its revised implementations take the first nonzero challenge word and make that rule explicit in the revised specification. It reports unchanged test vectors. The revision is recorded without evaluation.
+The [Sigurd team's 2026-10-10 reply](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/KZ6F7H6D7SFO6KUFF2E4UH3YKACH3AE4/) says its revised implementations take the first nonzero challenge word and make that rule explicit in the revised specification. It reports unchanged test vectors. The revision is recorded without evaluation. The reply gives the updated code at `github.com/QinLangT/Sigurd`, which was not evaluated.
 
 ### Reproducing
 
