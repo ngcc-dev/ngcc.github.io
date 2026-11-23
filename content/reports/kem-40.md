@@ -117,7 +117,7 @@ The source certificate verifies the seed cap, 55-byte DRBG state, first-output d
 
 ## kem-40-6: A failed hash makes the encryption coins public
 
-Severity: High
+Severity: Medium
 Status: Confirmed
 Layer: Implementation
 Affected: yuanyang-512, -1024 and -2048, reference and optimized implementations
@@ -131,7 +131,9 @@ Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/arch
 
 In all six trees the witness fails that allocation once. An attacker holding only the public key and the ciphertext derives the coins from the public key, strips the encryption mask to recover `msg`, re-encrypts to reproduce the ciphertext byte for byte, and computes the returned shared secret. The receiver's decapsulation disagrees. Unfaulted controls fail the attacker's check.
 
-The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success. A demonstrated session-key exposure under these preconditions is High.
+The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success.
+
+Reclassified from High to Medium on 2026-11-23. Anyone can exploit the faulted result from public data, but the failing allocation is a fixed-size buffer inside the contest's provisional helper, which a replacement need not have, and the attacker cannot cause the failure.
 
 ### Reproducing
 

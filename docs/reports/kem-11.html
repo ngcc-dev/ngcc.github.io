@@ -68,7 +68,7 @@
 <h2 class="issue-heading" id="kem-11-3-a-failed-hash-allocation-leaves-the-previous-session-key-in-encapsulation">kem-11-3: A failed hash allocation leaves the previous session key in encapsulation</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
 <tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>COMPASS-KEM-128, -256, -384 and -512, reference and optimized implementations</td></tr>
@@ -80,7 +80,8 @@
 <p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/QJQS6ALEKKNICEISNLNUZS265O4Y523T/">LK-PQC-Hunter's PKC Forum post</a></p>
 <p><code>crypto_kem_enc_derand</code> keeps the key and coins in an uninitialised stack array <code>kr</code> (<code>kem.c:85</code> in the reference trees, <code>:84</code> in the optimized) and fills it with <code>hash_g</code> (<code>:91</code>), a macro for the contest's <code>pseudohash</code> whose status is not checked (<code>symmetric.h:42–43</code>). When the helper's first allocation fails (<code>auxfunc.c:229</code>) it returns without writing <code>kr</code>. Encapsulation then encrypts with the coins in <code>kr</code> (<code>kem.c:94</code>), copies its first half into the shared secret (<code>:96</code>), and returns 0.</p>
 <p>In the witness one process encapsulates to Mallory and then to Bob with that allocation failing. The stale <code>kr</code> is the previous call's, so the key returned for Bob equals the key Mallory decapsulated, in all eight builds. Without the fault, and when the stack is overwritten between the two calls, Mallory's key does not match. The reused value depends on the call sequence and on the compiler's stack layout.</p>
-<p>The post lists the unchecked statuses of <code>pseudoXOF</code>, <code>sm3hash</code> and <code>pseudohash</code> as a maintenance detail; it does not report this consequence. The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success. A demonstrated session-key exposure under these preconditions is High.</p>
+<p>The post lists the unchecked statuses of <code>pseudoXOF</code>, <code>sm3hash</code> and <code>pseudohash</code> as a maintenance detail; it does not report this consequence. The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success.</p>
+<p>Reclassified from High to Low on 2026-11-23. Only the recipient of the previous encapsulation holds the reused key, so the result does not work for an outside attacker, and the attacker cannot cause the failure.</p>
 <h3 id="reproducing_2">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">sh kem-11/reproduce_stale_encaps_key.sh

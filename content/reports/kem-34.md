@@ -151,7 +151,7 @@ The witness checks the two decoders and `poly_sub` in source, then builds the ar
 
 ## kem-34-7: A failed hash leaves the previous session key in encapsulation
 
-Severity: High
+Severity: Low
 Status: Confirmed
 Layer: Implementation
 Affected: Rudraksh2 128, 256 and 512, reference and optimized implementations (Cortex-M4 identical by source)
@@ -165,7 +165,9 @@ Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/arch
 
 In the witness one process encapsulates to Mallory and then to Bob with that allocation failing. The stale `kr` is the previous call's, so the key returned for Bob equals the key Mallory decapsulated, in all six x86 builds. Without the fault, and when the stack is overwritten between the two calls, Mallory's key does not match. The reused value depends on the call sequence and on the compiler's stack layout.
 
-The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success. A demonstrated session-key exposure under these preconditions is High.
+The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success.
+
+Reclassified from High to Low on 2026-11-23. Only the recipient of the previous encapsulation holds the reused key, so the result does not work for an outside attacker, and the attacker cannot cause the failure.
 
 ### Reproducing
 

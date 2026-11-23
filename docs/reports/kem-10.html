@@ -155,7 +155,7 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <h2 class="issue-heading" id="kem-10-7-failed-hash-or-seeding-allocations-give-zero-coins-and-public-derived-keys">kem-10-7: Failed hash or seeding allocations give zero coins and public-derived keys</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
 <tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>All three C-Multi-UR-AG parameter sets, reference and optimized implementations</td></tr>
@@ -167,7 +167,8 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/Y56LKT4PPKGQGN4BJFD5BIGXKDPLLDWW/">LK-PQC-Hunter's PKC Forum post</a></p>
 <p>Encapsulation zero-initialises <code>theta</code> and derives it with <code>pseudohash</code> without checking the status (<code>src/kem.c:94,123</code>). The coin expander is then seeded through <code>random_source_seed_with_len</code>, which drops the status of <code>init_random_number</code> (<code>lib/random_source/random_source.c:30</code>, called at <code>src/cmultiurag.c:152</code>). Key generation seeds its secret-key expander through the same function (<code>src/cmultiurag.c:64</code>). The contest helpers return an error without writing their output when an internal allocation fails. <code>theta</code> then stays zero, or the expander runs from its all-zero initial state, and <code>kem_enc</code> or <code>kem_keygen</code> returns 0.</p>
 <p>In all six trees the witness fails one of these allocations. With the theta hash or the coin seeding failing, an attacker who holds only the public key and the ciphertext runs the public encryptor with the zero-state coins, confirms the result against the ciphertext, decodes the message and computes the returned shared secret. With the secret-key seeding failing, the attacker reproduces the zero-state secret, checks it against the public key and decrypts honest encapsulations. Unfaulted controls fail every check.</p>
-<p>The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success. A demonstrated session-key exposure under these preconditions is High.</p>
+<p>The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success.</p>
+<p>Reclassified from High to Medium on 2026-11-23. Anyone can exploit the faulted result from public data, but the failing allocation is a fixed-size buffer inside the contest's provisional helper, which a replacement need not have, and the attacker cannot cause the failure.</p>
 <h3 id="reproducing_6">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">sh kem-10/reproduce_zero_coins.sh

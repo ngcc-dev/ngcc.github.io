@@ -115,7 +115,7 @@ PDF.</p>
 <h2 class="issue-heading" id="kem-23-5-a-failed-hash-gives-an-all-zero-encapsulated-key">kem-23-5: A failed hash gives an all-zero encapsulated key</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
 <tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>All nine Mito parameter sets, reference and optimized implementations</td></tr>
@@ -127,7 +127,8 @@ PDF.</p>
 <p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/LEER3FLCOUBX4KTTDL73CCQPAZDYHIGI/">LK-PQC-Hunter's PKC Forum post</a></p>
 <p><code>crypto_kem_enc</code> zero-initialises <code>K_theta</code> (<code>mito_kem.c:81</code>) and fills it with <code>hash_g</code> (<code>:89</code>), a <code>void</code> wrapper around the contest's <code>pseudohash</code> (<code>symmetric.c:106</code>). The helper returns an error without writing its output when its internal allocation fails. Encapsulation then encrypts with <code>theta = 0</code> (<code>:90–91</code>), copies the zero key into <code>ss</code> (<code>:94</code>) and returns 0 (<code>:96</code>).</p>
 <p>In all 18 trees, failing that allocation once made encapsulation return 0 with a shared secret equal to the 64 zero bytes an attacker predicts. The receiver's decapsulation disagrees, so the exposure is limited to the encapsulator's copy of the key and anything it protects. A failure of the same hash during decapsulation leads to re-encryption mismatch and implicit rejection, and does not expose a key.</p>
-<p>The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success. A demonstrated session-key exposure under these preconditions is High.</p>
+<p>The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success.</p>
+<p>Reclassified from High to Medium on 2026-11-23. Anyone can exploit the faulted result from public data, but the failing allocation is a fixed-size buffer inside the contest's provisional helper, which a replacement need not have, and the attacker cannot cause the failure.</p>
 <h3 id="reproducing_4">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">sh kem-23/reproduce_zero_encaps_key.sh

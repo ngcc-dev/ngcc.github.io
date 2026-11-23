@@ -193,7 +193,7 @@ This is a source witness for the truncation. The equal streams were observed wit
 
 ## sign-18-8: A failed allocation in target derivation makes the all-zero signature verify
 
-Severity: High
+Severity: Medium
 Status: Confirmed
 Layer: Implementation
 Affected: Origami-128, -256, -384 and -512; reference and optimized implementations
@@ -207,7 +207,9 @@ Verification hashes the message digest and salt into a target vector and compare
 
 In the witness, failing any one of the three allocations made the all-zero signature of the correct length verify for a never-signed message and for another message, in all eight trees. Without the fault it was rejected and an honest signature verified; with the fault a nonzero pattern was rejected.
 
-The failing allocations are fixed-size buffers in the candidate's squeeze helper and the contest's `pseudoXOF`. An ideal replacement for `pseudoXOF` need not allocate, so its two failure points depend on the placeholder; the helper's own allocation does not, and it alone gives the forgery. A caller cannot choose the failure, and memory pressure or a resource limit is needed. The candidate's defects are allocating at all and then discarding the failure: in target derivation the buffer is a fixed `BYTES_HASH` bytes (`origami_ref.c:518`), so it can be a local array, and verification should reject whenever target derivation fails. Acceptance of a forged signature for an arbitrary message after one allocation failure is High.
+The failing allocations are fixed-size buffers in the candidate's squeeze helper and the contest's `pseudoXOF`. An ideal replacement for `pseudoXOF` need not allocate, so its two failure points depend on the placeholder; the helper's own allocation does not, and it alone gives the forgery. A caller cannot choose the failure, and memory pressure or a resource limit is needed. The candidate's defects are allocating at all and then discarding the failure: in target derivation the buffer is a fixed `BYTES_HASH` bytes (`origami_ref.c:518`), so it can be a local array, and verification should reject whenever target derivation fails.
+
+Reclassified from High to Medium on 2026-11-23. The forgery works only in a verification whose allocation fails. That allocation has a fixed size, so the attacker cannot cause the failure, and nothing persists afterwards.
 
 ### Reproducing
 

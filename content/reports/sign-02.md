@@ -148,7 +148,7 @@ The witness checks the `void` helpers in all six trees, then builds each referen
 
 ## sign-02-6: A failed mask-seed allocation makes signing reuse a stale seed and leaks the signing key
 
-Severity: High
+Severity: Medium
 Status: Confirmed
 Layer: Implementation
 Affected: BiT-128, -256 and -512; reference and AVX2 implementations (identical by source; the witness runs the reference)
@@ -161,7 +161,9 @@ Signing derives the mask seed `seed_y` from the secret seed, fresh randomness an
 
 With the reference code at all three levels, sixteen rounds of one ordinary signature followed by one faulty signature gave faulty signatures that verify. From the public key and the faulty signatures alone, s0 was recovered: from a single signature whose mask is the expansion of the all-zero seed (10 of 16 at BiT-128, 13 of 16 at BiT-256), and from pairs of faulty signatures with the same commitment at all three levels. Ordinary signatures gave neither.
 
-The failing allocation has a fixed size and is not chosen by the attacker; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning a signature. Demonstrated key recovery is High.
+The failing allocation has a fixed size and is not chosen by the attacker; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning a signature.
+
+Reclassified from High to Medium on 2026-11-23. Anyone can exploit the faulted result from public data, but the failing allocation is a fixed-size buffer inside the contest's provisional helper, which a replacement need not have, and the attacker cannot cause the failure.
 
 ### Reproducing
 

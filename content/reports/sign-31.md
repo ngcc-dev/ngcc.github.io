@@ -163,7 +163,7 @@ The certificate checks the source salt width, locates the stated proof terms in 
 
 ## sign-31-8: Ignored XOF failures give public-derived oil matrices and vinegars
 
-Severity: High
+Severity: Medium
 Status: Confirmed
 Layer: Implementation
 Affected: TSUOV-128, -256 and -512, reference implementation (Performance_Optimized identical; the six optimized `tsuov.c` files have the same pattern by source)
@@ -178,7 +178,9 @@ Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/arch
 - In key generation, `Expand_S` decodes the secret oil matrix from that buffer (`:493–514`). The stale bytes are the previous key's public `P1` expansion, or zero in a fresh process at 256 and 512. An attacker holding only public keys forged under the new key at all three levels after a previous key generation, and at 256 and 512 in a fresh process.
 - In signing, `Expand_V` draws the vinegar values the same way (`:628–636`). They become zeros followed by public expansion data, and the call returns a valid signature. From that one signature the attacker solved the oil matrix and forged a fresh message at 128 and 256. At 512 the all-zero vinegars make signing loop without returning a signature.
 
-The stale contents depend on the compiler's stack layout and on call history. The failing allocations are fixed-size buffers inside the helper; memory pressure or a resource limit is needed, and no remote method is shown. The candidate's defect is discarding the helper's status and returning success. Demonstrated forgeries under these preconditions are High.
+The stale contents depend on the compiler's stack layout and on call history. The failing allocations are fixed-size buffers inside the helper; memory pressure or a resource limit is needed, and no remote method is shown. The candidate's defect is discarding the helper's status and returning success.
+
+Reclassified from High to Medium on 2026-11-23. Anyone can exploit the faulted result from public data, but the failing allocation is a fixed-size buffer inside the contest's provisional helper, which a replacement need not have, and the attacker cannot cause the failure.
 
 ### Reproducing
 

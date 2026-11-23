@@ -119,7 +119,7 @@ when gcc or AVX2/BMI2 support is missing.</p>
 <h2 class="issue-heading" id="kem-01-5-a-failed-hash-leaves-the-previous-session-key-in-encapsulation">kem-01-5: A failed hash leaves the previous session key in encapsulation</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
 <tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>Aigis-Enc+ II and III, reference and AVX2 (NEON and AArch64 identical by source); set I is not affected</td></tr>
@@ -131,7 +131,8 @@ when gcc or AVX2/BMI2 support is missing.</p>
 <p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/L4BNXVJ4NEK5YNUHLRIRWTJEMUQJ5BPX/">LK-PQC-Hunter's PKC Forum post</a></p>
 <p><code>mkem_enc</code> keeps the shared secret and the encryption coins in an uninitialised stack array <code>kr</code> and fills it with <code>Hash2(kr, buf, 2*SEED_BYTES)</code> (<code>kem.c:25,32,35</code>). At levels II and III <code>Hash2</code> reaches the contest's <code>pseudohash</code> through a <code>void</code> wrapper. When the helper's internal allocation fails it returns an error without writing <code>kr</code>, and <code>mkem_enc</code> encrypts under, and returns as the shared secret, whatever the stack held. At level I <code>Hash2</code> is SM3 directly and does not allocate.</p>
 <p>In the witness one process encapsulates to Mallory and then to Bob with that allocation failing. The stale <code>kr</code> is the previous call's, so the key returned for Bob equals the key Mallory decapsulated, at II and III in the reference and AVX2 builds. Without the fault, and when the stack is overwritten between the two calls, Mallory's key does not match. The reused value depends on the call sequence and on the compiler's stack layout.</p>
-<p>The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success. A demonstrated session-key exposure under these preconditions is High.</p>
+<p>The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success.</p>
+<p>Reclassified from High to Low on 2026-11-23. Only the recipient of the previous encapsulation holds the reused key, so the result does not work for an outside attacker, and the attacker cannot cause the failure.</p>
 <h3 id="reproducing_4">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">sh kem-01/reproduce_stale_encaps_key.sh

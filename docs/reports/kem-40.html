@@ -124,7 +124,7 @@
 <h2 class="issue-heading" id="kem-40-6-a-failed-hash-makes-the-encryption-coins-public">kem-40-6: A failed hash makes the encryption coins public</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
 <tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>yuanyang-512, -1024 and -2048, reference and optimized implementations</td></tr>
@@ -136,7 +136,8 @@
 <p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/R2OTAXCPHOWKSG4O4FCJGYFFQXXSEP5S/">LK-PQC-Hunter's PKC Forum post</a></p>
 <p><code>yy_encapsulate_API</code> builds <code>tmphash = msg ‖ Hash(pk) ‖ 42</code> and overwrites it in place with <code>pseudohash(1024, tmphash, ..., tmphash)</code> to obtain <code>K ‖ seed</code> (<code>kem.c:160–163</code>). It discards the helper's status. When the helper's internal allocation fails it returns without writing, so <code>tmphash</code> keeps <code>msg ‖ Hash(pk)</code>. The coins passed to encryption at <code>tmphash + YY_SEC/8</code> (<code>:165</code>) are then <code>Hash(pk)</code> followed by a constant, and the final key is derived from <code>msg</code> instead of <code>K</code>. The function returns 0.</p>
 <p>In all six trees the witness fails that allocation once. An attacker holding only the public key and the ciphertext derives the coins from the public key, strips the encryption mask to recover <code>msg</code>, re-encrypts to reproduce the ciphertext byte for byte, and computes the returned shared secret. The receiver's decapsulation disagrees. Unfaulted controls fail the attacker's check.</p>
-<p>The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success. A demonstrated session-key exposure under these preconditions is High.</p>
+<p>The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success.</p>
+<p>Reclassified from High to Medium on 2026-11-23. Anyone can exploit the faulted result from public data, but the failing allocation is a fixed-size buffer inside the contest's provisional helper, which a replacement need not have, and the attacker cannot cause the failure.</p>
 <h3 id="reproducing_5">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">sh kem-40/reproduce_public_coins.sh

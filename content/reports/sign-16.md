@@ -53,7 +53,7 @@ The command uses this host's NumPy-equipped Sage environment; elsewhere, any Pyt
 
 ## sign-16-3: A failed hash allocation leaves the previous digest in the verifier
 
-Severity: High
+Severity: Medium
 Status: Confirmed
 Layer: Implementation
 Affected: Octarine-128, -256 and -512 SM3 reference and optimized implementations; the SHAKE additional implementations do not allocate there
@@ -67,7 +67,9 @@ Verification hashes the message representative µ and then the challenge seed (A
 
 With the reference code at all three levels, a signature on message A was accepted for a different message B when `pseudoXOF`'s copy of the µ input (for 64- and 5,000-byte messages) or of the challenge input (947, 1,459 or 2,099 bytes) failed during the verification of B, immediately after verifying A. Without the failure, or with the stack scrubbed between the calls, B was rejected. The optimized trees behave the same.
 
-The µ copy is sized by the message; the checked outer copy of nearly the same size is live at the same time, so only the inner one must fail. The candidate's defect is discarding the hash status and returning success. Demonstrated acceptance of a signature for a different message is High.
+The µ copy is sized by the message; the checked outer copy of nearly the same size is live at the same time, so only the inner one must fail. The candidate's defect is discarding the hash status and returning success.
+
+Reclassified from High to Medium on 2026-11-23. A long attacker-chosen message can cause the failure and the result is an accepted forgery, but the failing allocation is the message copy inside the contest's provisional helper, which a replacement need not make.
 
 ### Reproducing
 
@@ -79,7 +81,7 @@ The witness checks the unchecked calls in the six SM3 trees, then builds each re
 
 ## sign-16-4: A failed mask-seed allocation makes signing reuse the previous mask and leaks the signing key
 
-Severity: High
+Severity: Medium
 Status: Confirmed
 Layer: Implementation
 Affected: Octarine-128, -256 and -512 SM3 reference and optimized implementations
@@ -92,7 +94,9 @@ Signing derives the mask seed ρ″ from K, fresh randomness and µ (Algorithm 3
 
 With the reference code at all three levels, eight rounds of one ordinary signature followed by one faulty signature gave faulty signatures that verify. Solving z₂ − z₁ = (c₂ − c₁)·s1 from each pair, using public data only, gave the key's s1 in 6, 8 and 8 of 8 pairs. A key rebuilt from the public key and s1 signed a fresh message that the unmodified verifier accepted, and rejected for a changed message. Pairs of ordinary signatures gave no solution. The same relation holds in the optimized trees.
 
-The failing allocation has a fixed size and is not chosen by the attacker; memory pressure or a resource limit is needed. Demonstrated key recovery is High.
+The failing allocation has a fixed size and is not chosen by the attacker; memory pressure or a resource limit is needed.
+
+Reclassified from High to Medium on 2026-11-23. Anyone can exploit the faulted result from public data, but the failing allocation is a fixed-size buffer inside the contest's provisional helper, which a replacement need not have, and the attacker cannot cause the failure.
 
 ### Reproducing
 
@@ -104,7 +108,7 @@ The witness checks the unchecked hash in the six SM3 trees and wraps `malloc` to
 
 ## sign-16-5: A failed key-derivation allocation makes key generation return the previous key pair
 
-Severity: High
+Severity: Low
 Status: Confirmed
 Layer: Implementation
 Affected: Octarine-128, -256 and -512 SM3 reference and optimized implementations; the SHAKE additional implementations do not allocate there
@@ -117,7 +121,9 @@ Key generation derives (ρ, ρ′, K) from the fresh seed ξ (Algorithm 3, p. 26
 
 With the reference code at all three levels, a key generation with that allocation failing, immediately after an ordinary one, returned 0 with public and secret keys byte-identical to the previous ones. A signature made with the first secret key verified under the second public key, and was rejected for a changed message. An ordinary key generation gave a different key pair, and the same failure after the stack had been overwritten gave a key pair equal to neither. The optimized trees, built with their AVX2 flags, gave the same results.
 
-The failing allocation has a fixed size and is not chosen by the attacker; memory pressure or a resource limit is needed. A key pair returned as new whose secret key an earlier caller already holds is High.
+The failing allocation has a fixed size and is not chosen by the attacker; memory pressure or a resource limit is needed.
+
+Reclassified from High to Low on 2026-11-23. Only the holder of the previous key pair can use the result, so it does not work for an outside attacker, and the attacker cannot cause the failure.
 
 ### Reproducing
 

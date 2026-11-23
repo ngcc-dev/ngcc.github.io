@@ -47,3 +47,31 @@ sh kem-04/reproduce_key_recovery.sh     # NGCC_LONG=1 adds BAG-Piglet-256
 ```
 
 The second script builds `kem-04/reproduce_key_recovery.c` against the unmodified reference sources. The attack uses only the public key and `ccakem_decaps` outputs; the secret key is read only by the final validation line. BAG-Piglet-128 takes about five minutes; BAG-Piglet-256 takes about an hour.
+
+## kem-04-3: Removing one error block puts maximal-minors key recovery below the BAG-Piglet-128 target
+
+Severity: Critical
+Status: Confirmed
+Layer: Design
+Affected: BAG-Piglet-128 parameters; BAG-Piglet-256 is within about 2 bits of its target and is not claimed
+Discovery: Non-trivial
+Exploitation: Estimated classical key-recovery cost of 2^118.4, or 2^114.6 with the reported refinement, against a 128-bit target; no attack executed
+Credit: Tianrui Wang, Anyu Wang, Yuxuan Li, Qicheng Teng and Bo Pang; cost replay by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-23
+Original source: [Wang et al., *Decoding Cost Lens: Cost Estimation for Code-Based Cryptography*, ePrint 2026/2994](https://eprint.iacr.org/2026/2994), §4.4 and Tables 6–7
+
+The public key is `s = x·h + y` with `h = (h1, h2)`, so the secret `(x, y1, y2)` is three blocks of length `n` and rank 4 under two equations (Equation (1), physical p. 10). Proposition 3.1 (physical p. 19) prices the maximal-minors (MM) attack on this instance with ω = 2.8 (physical p. 16), and Table 5 (physical p. 21) declares 2^148 for BAG-Piglet-128.
+
+The proposition lets the attacker guess coordinates to be zero but not puncture them, and puncturing costs nothing. Guess one coordinate of the first block and five of the third to be zero, with probability 2^-24, and puncture the other 38 coordinates of the third block. The third block is then gone. The remaining two-block system has about 2^33.7 minor variables in place of 2^50.7 and is still overdetermined. Ordinary MM costs 2^118.4 at ω = 2.8 and 2^125.2 at ω = 3.
+
+Wang et al. also give a zero-direction variant (ZD-MM), which leaves the last zero unguessed and tests every direction in one block against a kernel that is computed once. It costs 2^114.6 here. For BAG-Piglet-256 their ZD-MM estimate is 2^254.0, after rewriting the instance over `F_4`, while ordinary MM costs 2^261.8; that margin is too small to claim. BAG-Piglet-384 and -512 stay above their targets (2^394.2 and 2^567.6).
+
+These are cost estimates in the specification's own model: operation counts without constants, and MM equations assumed independent. No decoding was run.
+
+### Reproducing
+
+```sh
+python3 security/rank_mm_costs.py --report-id kem-04-3
+```
+
+The witness finds the block-removing guess by its own search and recomputes the paper's ordinary-MM and ZD-MM key-recovery exponents for all four sets to three decimals.

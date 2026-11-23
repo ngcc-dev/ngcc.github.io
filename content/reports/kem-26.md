@@ -103,6 +103,8 @@ recovers `m`, and the session key follows from the public derivation
 `H_kappa(m || ct_full)`. This breaks the required KEM indistinguishability
 below every affected target, hence Critical.
 
+Follow-up: [Wang et al., *Decoding Cost Lens: Cost Estimation for Code-Based Cryptography*, ePrint 2026/2994](https://eprint.iacr.org/2026/2994), Table 3, independently estimates the same three first-component instances at 2^226.0, 2^332.5 and 2^440.9, taking the cheapest of several information-set decoding algorithms with an explicit multiple-target cost. The figures agree with the discounted column above to within 0.6 bits.
+
 ### Reproducing
 
 Install the pinned estimator in an isolated environment and run:
@@ -211,6 +213,8 @@ The submitted analysis prices key recovery by `1.0969 sqrt(n)` extrapolated from
 | NSS-HQC-512 | `[435802,217901,466]` | **489.799** | 52.200 | 480.933 | 512 |
 
 The 384- and 512-bit raw costs are below target by about 11 and 22 bits without relying on the quasi-cyclic discount. Their memory exponents are also below target. The 256-bit raw margin is only 0.132 bits, so its exact verdict depends on operation-count conventions; the 128-bit control stays above target. This route decodes the *persistent* public-key relation. No full-size search was run, but the public key equation, equivalent-key mapping and finite-size cost establish a below-target static-key route for the two higher sets.
+
+Follow-up: [Tianrui Wang et al., *Decoding Cost Lens: Cost Estimation for Code-Based Cryptography*, ePrint 2026/2994](https://eprint.iacr.org/2026/2994), Table 3, independently estimates key recovery at 2^159.8, 2^247.6, 2^364.2 and 2^480.6 for the four sets, with multiple targets included. The figures agree with the discounted column above to within 0.7 bits.
 
 ### Reproducing
 

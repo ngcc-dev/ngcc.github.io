@@ -284,7 +284,7 @@ The script tests the three prebuilt reference libraries and, when gcc and an AVX
 
 ## sign-01-10: A failed DRBG allocation in challenge expansion leaks the signing key and accepts forgeries
 
-Severity: High
+Severity: Medium
 Status: Confirmed
 Layer: Implementation
 Affected: Aigis-Sig+ I, II and III in the ICCS build, reference and AVX2 (NEON and AArch64 identical by source)
@@ -302,7 +302,9 @@ Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/arch
 
 The witness shows all three effects in the reference and AVX2 builds at all three levels, with unfaulted controls. Forging from the recovered `s1` was not run.
 
-The failing allocation is the DRBG's fixed 55-byte buffer, not sized by the attacker; memory pressure or a resource limit is needed, and no remote method is shown. The candidate's defect is discarding the helper's status and returning success. Demonstrated key recovery and verifier acceptance under these preconditions are High.
+The failing allocation is the DRBG's fixed 55-byte buffer, not sized by the attacker; memory pressure or a resource limit is needed, and no remote method is shown. The candidate's defect is discarding the helper's status and returning success.
+
+Reclassified from High to Medium on 2026-11-23. Anyone can exploit the faulted result from public data, but the failing allocation is a fixed-size buffer inside the contest's provisional helper, which a replacement need not have, and the attacker cannot cause the failure.
 
 ### Reproducing
 

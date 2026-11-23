@@ -135,7 +135,7 @@ make -C kem-13 reproduce-truncated
 
 ## kem-13-5: DKEM-512 returns an unwritten key buffer when its KDF fails
 
-Severity: Medium
+Severity: Low
 Status: Confirmed
 Layer: Implementation
 Affected: DKEM-512, reference implementation (optimized, AArch64 and Cortex-M4 trees identical by source); DKEM-128 and DKEM-256 are not affected
@@ -147,7 +147,9 @@ Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/arch
 
 At DKEM-512 the 64-byte key-derivation function `dke_kem_kdf` calls the contest's `pseudohash` through a `void` path (`dkecca.c:31–38`). When the helper's internal allocation fails, it returns without writing the output. Encapsulation then returns 0 with the shared-secret buffer untouched. Decapsulation writes the rejection key with the same KDF (`dkecca.c:111`) and then substitutes the real key only for a valid ciphertext. If that KDF fails on an invalid ciphertext, the caller receives its own unwritten buffer in place of the pseudorandom rejection key. DKEM-128 and DKEM-256 use a 256-bit SM3 call that does not allocate.
 
-With a zero-filled caller buffer, the witness observed an all-zero shared secret from encapsulation and from decapsulation of an invalid ciphertext, both with return code 0; unfaulted controls returned nonzero keys. The returned value is not produced by the candidate: it is the caller's prior buffer contents, which are predictable only when the caller clears or reuses that buffer. That extra caller dependence is why this is Medium rather than High.
+With a zero-filled caller buffer, the witness observed an all-zero shared secret from encapsulation and from decapsulation of an invalid ciphertext, both with return code 0; unfaulted controls returned nonzero keys. The returned value is not produced by the candidate: it is the caller's prior buffer contents, which are predictable only when the caller clears or reuses that buffer.
+
+Reclassified from Medium to Low on 2026-11-23. The returned value is the caller's own buffer, which an attacker can predict only if the caller cleared or reused it.
 
 ### Reproducing
 

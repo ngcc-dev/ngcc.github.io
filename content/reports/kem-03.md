@@ -115,3 +115,38 @@ A source-level repair that makes the sampler follow all three specified support 
 ```sh
 ./kem-03/reproduce_spec_level.sh
 ```
+
+## kem-03-6: The specification's maximal-minors formula gives costs below all four targets
+
+Severity: Critical
+Status: Confirmed
+Layer: Design
+Affected: BAG-Loong-128, -256, -384 and -512 parameters
+Discovery: Non-trivial
+Exploitation: Estimated classical costs of 2^120.7, 2^221.8, 2^310.7 and 2^393.9 from the specification's own formula, and 2^113.1, 2^212.3, 2^299.1 and 2^386.7 with the reported refinements; no attack executed
+Credit: Tianrui Wang, Anyu Wang, Yuxuan Li, Qicheng Teng and Bo Pang; evaluation of Theorem 3.4 and cost replay by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-23
+Original source: [Wang et al., *Decoding Cost Lens: Cost Estimation for Code-Based Cryptography*, ePrint 2026/2994](https://eprint.iacr.org/2026/2994), §4 and Tables 6–7
+
+Theorem 3.4 (physical p. 22) prices the maximal-minors (MM) attack on a two-block instance with ranks `t1`, `t2` and support intersection `g`. After `a` coordinates are guessed to be zero, the cost is `2^(a·t) · m·N2 · T2^(ω−1)`, minimized over the guesses that leave `m·N2 ≥ T2 − 1`. Table 5 on the same page declares the MM costs below for key and message recovery. Evaluating the theorem for the submitted parameters gives much less. With ω = 2.807, as exponents of 2:
+
+| Set | Key | Message | Declared key, message | Target |
+|---|---:|---:|---:|---:|
+| BAG-Loong-128 | 122.4 | 120.7 | 158, 139 | 128 |
+| BAG-Loong-256 | 221.8 | 235.0 | 286, 292 | 256 |
+| BAG-Loong-384 | 310.7 | 349.4 | 403, 469 | 384 |
+| BAG-Loong-512 | 451.2 | 393.9 | 626, 534 | 512 |
+
+Each set's cheaper route is below its target, by 7 to 118 bits. With ω = 3 the four minima are 2^127.0, 2^229.2, 2^319.2 and 2^404.1: still below target, but by only one bit at BAG-Loong-128.
+
+Wang et al. report lower costs from two refinements. Key generation fixes `1 ∈ Supp(Y)` (Algorithm 1, physical p. 6), which gives the key instance one more known coordinate, and they count the equations of the two overlapping blocks after each guess. Ordinary MM then costs 2^117.9, 2^217.1 and 2^304.9 for key recovery at the first three sets, and 2^393.5 for message recovery at BAG-Loong-512, all at ω = 2.8. Their zero-direction variant (ZD-MM) leaves the last zero unguessed and tests every direction in one block against a kernel that is computed once. It gives 2^113.1, 2^212.3 and 2^299.1 for those key recoveries and 2^386.7 for that message recovery.
+
+These are cost estimates in the specification's own model: operation counts without constants, and MM equations assumed independent. No decoding was run.
+
+### Reproducing
+
+```sh
+python3 security/rank_mm_costs.py --report-id kem-03-6
+```
+
+The witness evaluates Theorem 3.4 for all four sets and recomputes the paper's sixteen ordinary-MM and ZD-MM exponents to three decimals, the ordinary-MM ones by its own search over guesses and punctures.

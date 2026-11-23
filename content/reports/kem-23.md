@@ -110,7 +110,7 @@ The witness checks `hash_j` in all 18 trees and, for each reference set, require
 
 ## kem-23-5: A failed hash gives an all-zero encapsulated key
 
-Severity: High
+Severity: Medium
 Status: Confirmed
 Layer: Implementation
 Affected: All nine Mito parameter sets, reference and optimized implementations
@@ -124,7 +124,9 @@ Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/arch
 
 In all 18 trees, failing that allocation once made encapsulation return 0 with a shared secret equal to the 64 zero bytes an attacker predicts. The receiver's decapsulation disagrees, so the exposure is limited to the encapsulator's copy of the key and anything it protects. A failure of the same hash during decapsulation leads to re-encryption mismatch and implicit rejection, and does not expose a key.
 
-The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success. A demonstrated session-key exposure under these preconditions is High.
+The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success.
+
+Reclassified from High to Medium on 2026-11-23. Anyone can exploit the faulted result from public data, but the failing allocation is a fixed-size buffer inside the contest's provisional helper, which a replacement need not have, and the attacker cannot cause the failure.
 
 ### Reproducing
 

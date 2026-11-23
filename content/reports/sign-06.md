@@ -202,7 +202,7 @@ The certificate checks the frozen specification's parameter rows and theorem pre
 
 ## sign-06-8: Ignored XOF failures give public-derived signing keys and key-leaking signatures
 
-Severity: High
+Severity: Medium
 Status: Confirmed
 Layer: Implementation
 Affected: COMPASS-SIG-128, -256, -384 and -512 (all eight trees identical)
@@ -217,7 +217,9 @@ The contest's `pseudoXOF` returns before writing its output when an internal all
 - In key generation, `shake256(seedbuf, 128, seed, 32)` (`sign.c:37`) then leaves `seedbuf`, which holds `rho`, `rho′` and `key`, with the previous contents of the reallocated squeeze buffer. In a fresh process these are zero, and after an earlier key generation they are that key's public XOF output. At all four levels, different seeds gave the same public key under the fault, and the attacker rebuilt the secret key byte for byte and forged.
 - In signing, a failure during matrix expansion (`sign.c:131`) produces a wrong challenge with the same deterministic mask. One faulted and one honest signature on the same message give `s1` exactly, and a forgery from `s1` verified at all four levels.
 
-Predicting the stale contents relies on the glibc allocator's reuse of the freed buffer. The failing allocations are fixed-size buffers inside the helper; memory pressure or a resource limit is needed, and no remote method is shown. Demonstrated key recovery under these preconditions is High.
+Predicting the stale contents relies on the glibc allocator's reuse of the freed buffer. The failing allocations are fixed-size buffers inside the helper; memory pressure or a resource limit is needed, and no remote method is shown.
+
+Reclassified from High to Medium on 2026-11-23. Anyone can exploit the faulted result from public data, but the failing allocation is a fixed-size buffer inside the contest's provisional helper, which a replacement need not have, and the attacker cannot cause the failure.
 
 ### Reproducing
 

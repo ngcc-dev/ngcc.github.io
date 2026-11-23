@@ -251,7 +251,7 @@ The witness checks all three first crossings, preceding controls and the TRIKE-2
 
 ## kem-36-10: Failed helper allocations give zero or public-derived keys
 
-Severity: High
+Severity: Medium
 Status: Confirmed
 Layer: Implementation
 Affected: TRIKE-2, -5, -7 and -9, reference and optimized implementations
@@ -270,7 +270,9 @@ TRIKE ignores the status of every contest helper and returns 0 from `kem_keygen`
 
 The witness confirms each case in all eight trees against unfaulted controls.
 
-The failing allocations are fixed-size buffers inside the helpers or the error-vector `calloc`, and no remote way to force them is shown. The key-generation case persists for the key's lifetime. A demonstrated key exposure under these preconditions is High.
+The failing allocations are fixed-size buffers inside the helpers or the error-vector `calloc`, and no remote way to force them is shown. The key-generation case persists for the key's lifetime.
+
+Reclassified from High to Medium on 2026-11-23. Anyone can exploit the faulted results from public data. The lasting key-generation case fails inside the contest's provisional helper, which a replacement need not have. The candidate's own error-vector allocation has a fixed size and affects only the call in which it fails. The attacker cannot cause either failure.
 
 ### Reproducing
 

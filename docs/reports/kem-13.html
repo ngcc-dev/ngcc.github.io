@@ -137,7 +137,7 @@ or a failure-oracle key-recovery attack.</p>
 <h2 class="issue-heading" id="kem-13-5-dkem-512-returns-an-unwritten-key-buffer-when-its-kdf-fails">kem-13-5: DKEM-512 returns an unwritten key buffer when its KDF fails</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
 <tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>DKEM-512, reference implementation (optimized, AArch64 and Cortex-M4 trees identical by source); DKEM-128 and DKEM-256 are not affected</td></tr>
@@ -148,7 +148,8 @@ or a failure-oracle key-recovery attack.</p>
 </table></div>
 <p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/LZTZZMTHFMSIZEDJ63DMV2PP2F7AK4OK/">LK-PQC-Hunter's PKC Forum post</a></p>
 <p>At DKEM-512 the 64-byte key-derivation function <code>dke_kem_kdf</code> calls the contest's <code>pseudohash</code> through a <code>void</code> path (<code>dkecca.c:31–38</code>). When the helper's internal allocation fails, it returns without writing the output. Encapsulation then returns 0 with the shared-secret buffer untouched. Decapsulation writes the rejection key with the same KDF (<code>dkecca.c:111</code>) and then substitutes the real key only for a valid ciphertext. If that KDF fails on an invalid ciphertext, the caller receives its own unwritten buffer in place of the pseudorandom rejection key. DKEM-128 and DKEM-256 use a 256-bit SM3 call that does not allocate.</p>
-<p>With a zero-filled caller buffer, the witness observed an all-zero shared secret from encapsulation and from decapsulation of an invalid ciphertext, both with return code 0; unfaulted controls returned nonzero keys. The returned value is not produced by the candidate: it is the caller's prior buffer contents, which are predictable only when the caller clears or reuses that buffer. That extra caller dependence is why this is Medium rather than High.</p>
+<p>With a zero-filled caller buffer, the witness observed an all-zero shared secret from encapsulation and from decapsulation of an invalid ciphertext, both with return code 0; unfaulted controls returned nonzero keys. The returned value is not produced by the candidate: it is the caller's prior buffer contents, which are predictable only when the caller clears or reuses that buffer.</p>
+<p>Reclassified from Medium to Low on 2026-11-23. The returned value is the caller's own buffer, which an attacker can predict only if the caller cleared or reused it.</p>
 <h3 id="reproducing_4">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">sh kem-13/reproduce_unwritten_kdf.sh

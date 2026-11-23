@@ -150,7 +150,7 @@ This source certificate checks the missing length guard and fixed-offset reads. 
 
 ## kem-06-7: Failed hash or seeding allocations give zero coins and public-derived keys
 
-Severity: High
+Severity: Medium
 Status: Confirmed
 Layer: Implementation
 Affected: All three BRA parameter sets, reference and optimized implementations
@@ -164,7 +164,9 @@ Encapsulation zero-initialises `theta` and derives it with `pseudohash` without 
 
 In all six trees the witness fails one of these allocations. With the theta hash or the coin seeding failing, an attacker who holds only the public key and the ciphertext runs the public encryptor with the zero-state coins, confirms the result against the ciphertext, decodes the message and computes the returned shared secret. With the secret-key seeding failing, the attacker reproduces the zero-state secret, checks it against the public key and decrypts honest encapsulations. Unfaulted controls fail every check.
 
-The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success. A demonstrated session-key exposure under these preconditions is High.
+The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success.
+
+Reclassified from High to Medium on 2026-11-23. Anyone can exploit the faulted result from public data, but the failing allocation is a fixed-size buffer inside the contest's provisional helper, which a replacement need not have, and the attacker cannot cause the failure.
 
 ### Reproducing
 
@@ -173,3 +175,37 @@ sh kem-06/reproduce_zero_coins.sh
 ```
 
 The witness wraps `malloc` to fail exactly the targeted allocation and runs each case with an unfaulted control.
+
+## kem-06-8: Transposing the ideal code puts maximal-minors key recovery below the BRA targets
+
+Severity: Critical
+Status: Confirmed
+Layer: Design
+Affected: BRA-128, -256 and -512 parameters in the specification's cost model (ω = 2); BRA-256 and -512 for every ω up to 3
+Discovery: Non-trivial
+Exploitation: Estimated classical key-recovery costs of 2^116.0, 2^166.5 and 2^321.8 at the specification's ω = 2, and 2^149.9, 2^205.4 and 2^371.7 at ω = 2.807; no attack executed
+Credit: Tianrui Wang, Anyu Wang, Yuxuan Li, Qicheng Teng and Bo Pang; exponent sensitivity and cost replay by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-23
+Original source: [Wang et al., *Decoding Cost Lens: Cost Estimation for Code-Based Cryptography*, ePrint 2026/2994](https://eprint.iacr.org/2026/2994), §4.4 and Tables 6–7
+
+The public key gives `s = x + h·y` in `R = F_(2^m)[X]/⟨P(X)⟩`, where the secrets `x` and `y` have ranks `w_x` and `w_y` (Algorithm 3). The specification treats this as a rank-decoding instance over `F_(2^m)` with two blocks of length `n`, and prices the maximal-minors (MM) attack on it at 2^194, 2^304 and 2^556 with ω = 2 (Table 6, "Attack-2n", physical p. 30). In all three sets `n` is nearly twice `m`.
+
+`P(X)` has coefficients in `F_2` and is irreducible (physical pp. 8, 14 and 16), so `F_2[X]/⟨P⟩` is a copy of `F_(2^n)` inside `R`. Multiplication by `h` is linear over that field too. The same relation is therefore a rank-decoding instance over `F_(2^n)` with two blocks of length `m`. If an element of `R` is written as an m × n binary matrix, this is the transposed matrix, and transposition keeps the rank. The transposed instance has shorter blocks and a larger extension degree, so MM has fewer unknowns and more equations for each minor. As exponents of 2:
+
+| Set | Specification's instance, ω = 2 | Transposed, ω = 2 | ω = 2.807 | ω = 3 | Target |
+|---|---:|---:|---:|---:|---:|
+| BRA-128 | 194.6 | 116.0 | 149.9 | 158.0 | 128 |
+| BRA-256 | 304.7 | 166.5 | 205.4 | 214.7 | 256 |
+| BRA-512 | 555.9 | 321.8 | 371.7 | 383.6 | 512 |
+
+The first column reproduces Table 6 with the same search, so the drop comes from the transposition alone. The specification sets ω = 2 as its conservative choice (physical p. 29), and under it all three sets are below target. BRA-256 and BRA-512 stay below target for every ω up to 3. BRA-128 is above its target from ω = 2.807. Wang et al.'s zero-direction variant (ZD-MM) lowers the ω = 2 costs to 2^112.1, 2^161.8 and 2^316.8.
+
+These are cost estimates in the specification's own model: operation counts without constants, and MM equations assumed independent. No decoding was run.
+
+### Reproducing
+
+```sh
+python3 security/rank_mm_costs.py --report-id kem-06-8
+```
+
+The witness tests each `P(X)` for irreducibility, reproduces Table 6 on the specification's instance, and recomputes the transposed ordinary-MM and ZD-MM exponents to the paper's three decimals.

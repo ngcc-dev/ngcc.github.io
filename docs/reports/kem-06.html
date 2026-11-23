@@ -149,7 +149,7 @@ sh kem-06/reproduce_ciphertext_crash.sh
 <h2 class="issue-heading" id="kem-06-7-failed-hash-or-seeding-allocations-give-zero-coins-and-public-derived-keys">kem-06-7: Failed hash or seeding allocations give zero coins and public-derived keys</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
 <tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>All three BRA parameter sets, reference and optimized implementations</td></tr>
@@ -161,12 +161,73 @@ sh kem-06/reproduce_ciphertext_crash.sh
 <p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/5QU7CXJYH4SUXPNMRIM2LQ6Z3LMAXICB/">LK-PQC-Hunter's PKC Forum post</a></p>
 <p>Encapsulation zero-initialises <code>theta</code> and derives it with <code>pseudohash</code> without checking the status (<code>src/kem.c:95,126</code>). The coin expander is then seeded through <code>random_source_seed_with_len</code>, which drops the status of <code>init_random_number</code> (<code>lib/random_source/random_source.c:30</code>, called at <code>src/bra.c:171</code>). Key generation seeds its secret-key expander through the same function (<code>src/bra.c:63</code>). The contest helpers return an error without writing their output when an internal allocation fails. <code>theta</code> then stays zero, or the expander runs from its all-zero initial state, and <code>kem_enc</code> or <code>kem_keygen</code> returns 0.</p>
 <p>In all six trees the witness fails one of these allocations. With the theta hash or the coin seeding failing, an attacker who holds only the public key and the ciphertext runs the public encryptor with the zero-state coins, confirms the result against the ciphertext, decodes the message and computes the returned shared secret. With the secret-key seeding failing, the attacker reproduces the zero-state secret, checks it against the public key and decrypts honest encapsulations. Unfaulted controls fail every check.</p>
-<p>The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success. A demonstrated session-key exposure under these preconditions is High.</p>
+<p>The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success.</p>
+<p>Reclassified from High to Medium on 2026-11-23. Anyone can exploit the faulted result from public data, but the failing allocation is a fixed-size buffer inside the contest's provisional helper, which a replacement need not have, and the attacker cannot cause the failure.</p>
 <h3 id="reproducing_6">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">sh kem-06/reproduce_zero_coins.sh
 </code></pre>
 <p>The witness wraps <code>malloc</code> to fail exactly the targeted allocation and runs each case with an unfaulted control.</p>
+<h2 class="issue-heading" id="kem-06-8-transposing-the-ideal-code-puts-maximal-minors-key-recovery-below-the-bra-targets">kem-06-8: Transposing the ideal code puts maximal-minors key recovery below the BRA targets</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>BRA-128, -256 and -512 parameters in the specification's cost model (ω = 2); BRA-256 and -512 for every ω up to 3</td></tr>
+<tr><th>Discovery</th><td>Non-trivial</td></tr>
+<tr><th>Exploitation</th><td>Estimated classical key-recovery costs of 2^116.0, 2^166.5 and 2^321.8 at the specification's ω = 2, and 2^149.9, 2^205.4 and 2^371.7 at ω = 2.807; no attack executed</td></tr>
+<tr><th>Credit</th><td>Tianrui Wang, Anyu Wang, Yuxuan Li, Qicheng Teng and Bo Pang; exponent sensitivity and cost replay by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-23</td></tr>
+</table></div>
+<p>Original source: <a href="https://eprint.iacr.org/2026/2994">Wang et al., <em>Decoding Cost Lens: Cost Estimation for Code-Based Cryptography</em>, ePrint 2026/2994</a>, §4.4 and Tables 6–7</p>
+<p>The public key gives <code>s = x + h·y</code> in <code>R = F_(2^m)[X]/⟨P(X)⟩</code>, where the secrets <code>x</code> and <code>y</code> have ranks <code>w_x</code> and <code>w_y</code> (Algorithm 3). The specification treats this as a rank-decoding instance over <code>F_(2^m)</code> with two blocks of length <code>n</code>, and prices the maximal-minors (MM) attack on it at 2^194, 2^304 and 2^556 with ω = 2 (Table 6, "Attack-2n", physical p. 30). In all three sets <code>n</code> is nearly twice <code>m</code>.</p>
+<p><code>P(X)</code> has coefficients in <code>F_2</code> and is irreducible (physical pp. 8, 14 and 16), so <code>F_2[X]/⟨P⟩</code> is a copy of <code>F_(2^n)</code> inside <code>R</code>. Multiplication by <code>h</code> is linear over that field too. The same relation is therefore a rank-decoding instance over <code>F_(2^n)</code> with two blocks of length <code>m</code>. If an element of <code>R</code> is written as an m × n binary matrix, this is the transposed matrix, and transposition keeps the rank. The transposed instance has shorter blocks and a larger extension degree, so MM has fewer unknowns and more equations for each minor. As exponents of 2:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Set</th>
+<th style="text-align: right;">Specification's instance, ω = 2</th>
+<th style="text-align: right;">Transposed, ω = 2</th>
+<th style="text-align: right;">ω = 2.807</th>
+<th style="text-align: right;">ω = 3</th>
+<th style="text-align: right;">Target</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BRA-128</td>
+<td style="text-align: right;">194.6</td>
+<td style="text-align: right;">116.0</td>
+<td style="text-align: right;">149.9</td>
+<td style="text-align: right;">158.0</td>
+<td style="text-align: right;">128</td>
+</tr>
+<tr>
+<td>BRA-256</td>
+<td style="text-align: right;">304.7</td>
+<td style="text-align: right;">166.5</td>
+<td style="text-align: right;">205.4</td>
+<td style="text-align: right;">214.7</td>
+<td style="text-align: right;">256</td>
+</tr>
+<tr>
+<td>BRA-512</td>
+<td style="text-align: right;">555.9</td>
+<td style="text-align: right;">321.8</td>
+<td style="text-align: right;">371.7</td>
+<td style="text-align: right;">383.6</td>
+<td style="text-align: right;">512</td>
+</tr>
+</tbody>
+</table></div>
+<p>The first column reproduces Table 6 with the same search, so the drop comes from the transposition alone. The specification sets ω = 2 as its conservative choice (physical p. 29), and under it all three sets are below target. BRA-256 and BRA-512 stay below target for every ω up to 3. BRA-128 is above its target from ω = 2.807. Wang et al.'s zero-direction variant (ZD-MM) lowers the ω = 2 costs to 2^112.1, 2^161.8 and 2^316.8.</p>
+<p>These are cost estimates in the specification's own model: operation counts without constants, and MM equations assumed independent. No decoding was run.</p>
+<h3 id="reproducing_7">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 security/rank_mm_costs.py --report-id kem-06-8
+</code></pre>
+<p>The witness tests each <code>P(X)</code> for irreducibility, reproduces Table 6 on the specification's instance, and recomputes the transposed ordinary-MM and ZD-MM exponents to the paper's three decimals.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

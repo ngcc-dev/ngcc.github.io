@@ -69,7 +69,7 @@ The wrapper transcribes the specified rounding into the otherwise submitted veri
 
 ## sign-17-3: A failed message digest leaves the previous digest in the verifier
 
-Severity: High
+Severity: Medium
 Status: Confirmed
 Layer: Implementation
 Affected: OPSsig-128, -256 and -512; reference and AVX2 implementations
@@ -84,7 +84,9 @@ The verifier computes the message representative `µ` with `crh(mu, CRHBYTES, tm
 
 With the archived reference code at all three levels, a signature on message A was accepted for a different message B when the digest's internal allocation failed during the verification of B, immediately after verifying A in the same process. Without the failure, and with the failure after the stack had been overwritten, B was rejected. The reused value is the previous digest left in the same stack slot, so the outcome depends on the call sequence and the compiler.
 
-The allocation that fails holds a copy of the message, so a long attacker-chosen message can cause it under a memory limit; the outer copy of the same length is checked, and both must be live at once. The candidate's defect is discarding the helper's error. The failure point itself is inside the contest's provisional hash helper, which a replacement may not share. The demonstrated forgery path with these preconditions is High.
+The allocation that fails holds a copy of the message, so a long attacker-chosen message can cause it under a memory limit; the outer copy of the same length is checked, and both must be live at once. The candidate's defect is discarding the helper's error. The failure point itself is inside the contest's provisional hash helper, which a replacement may not share.
+
+Reclassified from High to Medium on 2026-11-23. A long attacker-chosen message can cause the failure and the result is an accepted forgery, but the failing allocation is the message copy inside the contest's provisional helper, which a replacement need not make.
 
 In a [2026-11-19 reply](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/L2GLZ7TNWU3236VSEA6FI2DWM4PPCXSE/), the OPS-SIG team agrees that the `crh` wrapper discarded the status of `pseudohash` and that verification could then accept a modified message under the earlier signature. It says all three parameter sets in the reference and AVX2 implementations now check the status of the public-key, message and challenge digest computations and reject verification on failure, with matching checks in key generation and signing, and that an updated package will follow. This records the response; the revised code was not evaluated.
 

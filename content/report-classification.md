@@ -311,6 +311,36 @@ code wires a specified internal expander to the external RBG, and
 external RBG. Ordinary fresh-randomness calls and KAT seeding are not
 affected.
 
+## Ignored allocation failures
+
+These findings share one pattern: an allocation fails, the code ignores it, and
+the call returns success with a wrong result. Rate them by how exploitable the
+resulting attack is, not by the worst result that fault injection can produce.
+Answer these questions in order:
+
+1. **Does the wrong result work against honest parties from public data?**
+   Examples are a forged signature that is accepted, or a session key, signing
+   key or decryption key that anyone can compute from public values. If not,
+   use Low. That covers a result that only a party from an earlier call can
+   use (the previous recipient's session key, the previous owner's key pair),
+   a result that depends on what the caller's buffer held, and a result that
+   matches nothing honestly computed (a signature that verifies for no message,
+   a false-success digest).
+2. **Is the failing allocation in the candidate's own code?** If every failing
+   allocation is inside the contest's provisional helpers (`auxfunc.c`,
+   `drng.c`), use Medium at most: a replacement helper need not allocate, so
+   the attack exists only in the contest build. The candidate's defect,
+   discarding the helper's status, remains reportable.
+3. **Can the attacker cause the failure, or does the damage last?** Use High
+   when the allocation is sized by attacker-chosen input, so that a long input
+   makes it fail under a memory limit, or when the result permanently exposes a
+   long-term key. Otherwise use Medium: the result is exploitable only in the
+   one call that fails, at a time the attacker does not control.
+
+A failure whose only effect is a crash or an error return is not filed. State
+in the entry whose allocation fails, whether its size is fixed, and who can use
+the result.
+
 ## Side-channel severity
 
 For timing, cache, branch, division, power, or address-trace findings, answer

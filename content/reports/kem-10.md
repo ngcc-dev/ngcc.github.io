@@ -155,7 +155,7 @@ The certificate checks the offending loop and dimensions; it does not rerun the 
 
 ## kem-10-7: Failed hash or seeding allocations give zero coins and public-derived keys
 
-Severity: High
+Severity: Medium
 Status: Confirmed
 Layer: Implementation
 Affected: All three C-Multi-UR-AG parameter sets, reference and optimized implementations
@@ -169,7 +169,9 @@ Encapsulation zero-initialises `theta` and derives it with `pseudohash` without 
 
 In all six trees the witness fails one of these allocations. With the theta hash or the coin seeding failing, an attacker who holds only the public key and the ciphertext runs the public encryptor with the zero-state coins, confirms the result against the ciphertext, decodes the message and computes the returned shared secret. With the secret-key seeding failing, the attacker reproduces the zero-state secret, checks it against the public key and decrypts honest encapsulations. Unfaulted controls fail every check.
 
-The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success. A demonstrated session-key exposure under these preconditions is High.
+The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success.
+
+Reclassified from High to Medium on 2026-11-23. Anyone can exploit the faulted result from public data, but the failing allocation is a fixed-size buffer inside the contest's provisional helper, which a replacement need not have, and the attacker cannot cause the failure.
 
 ### Reproducing
 

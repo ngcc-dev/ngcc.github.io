@@ -162,3 +162,34 @@ sh sign-19/reproduce_h2_exhaustion.sh
 ```
 
 The witness checks the pool, the failure return and the unchecked call in the reference SHAKE and SM3 384s trees. It then builds the archived Phoenix-SHAKE-384s sampler and requires −1 for one concrete digest and 0 for a neighbouring control. The failure probabilities are exact occupancy calculations and are not recomputed by the witness.
+
+## sign-19-8: SM3 fixed points extend any signed message under its own signature
+
+Severity: Critical
+Status: Confirmed
+Layer: Implementation
+Affected: Phoenix-SM3-256s/f, -384s/f and -512s/f, and -192s/f when the signed messages are long; reference and AVX2 implementations
+Discovery: Moderate
+Exploitation: A forgery that reuses one of q collected signatures costs about 2^256/q inverse SM3 compressions, 2^192 at the 2^64 signatures of one key, and about 2^172 if those signatures are on 64 MiB messages; both attacks shown end to end on a 20-bit model, and the full searches were not run
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-23
+
+Reference: [Guo, Cheng, Preneel and Wang, *Provable Security of SHA-256-Based LMS Revisited in the Ideal-Cipher Model*, ePrint 2026/2624](https://eprint.iacr.org/2026/2624), §3.2; [Strenzke, *A Kelsey–Kohno Attack Variant against SHA-2 Message Digests in HSS/LMS and XMSS*, ePrint 2026/2635](https://eprint.iacr.org/2026/2635), §3.2
+
+Phoenix claims its full security level for up to 2^64 signatures per key (physical pp. 4–5). The SM3 sets hash a message as `seed = SM3(R ‖ PK.seed ‖ PK.root ‖ M ‖ counter)` and expand `R ‖ PK.seed ‖ seed` into the digest and indices (reference `hash_sm3.c:141,151,160`; AVX2 `:135,145,154`). The verifier takes `R` and the 4-byte counter from the signature (`sign.c:282–291`). The per-signature `R` is meant to stop one search from serving many signatures.
+
+The candidate's SM3 (`sm3_drng.c`) is a plain Merkle–Damgård hash. Its digest is the last chaining value, and its compression function is `V' = E_B(V) ⊕ V` with `E_B` invertible for every block `B`. So for any chosen `B`, the value `S = E_B^-1(0)` is a fixed point: compressing `B` from `S` gives `S` again.
+
+Collect q signatures and their seeds. Choose a final block `B = D ‖ padding`, where `D` is 51 free bytes followed by a 4-byte counter, and compute `S`. If `S` equals the seed of signature i, then the message `M_i ‖ counter_i ‖ pad ‖ D[0..50]`, with the SM3 padding of the signed input as message bytes and the counter taken from the end of `D`, has the same seed under the same `R_i`. The expansion then has the same inputs, so signature i verifies for the longer message once its counter field is replaced. Shorter signed inputs are reached by repeating `B`, which a fixed point allows. The forged input extends the target's own input, so differing `R` values do not separate the targets, and each trial succeeds with probability q/2^256.
+
+At q = 2^64 the cost is about 2^192 inverse compressions and a table of 2^64 seeds, below the 256-, 384- and 512-bit claims. The 128- and 192-bit sets use the same 32-byte seed, and this attack does not put them below their targets at 2^64 signatures.
+
+Long signed messages lower the cost, because every intermediate chaining state of a signed message is then a target. Strenzke's hourglass attack first uses collisions to merge into one state the states that follow each signature's `R ‖ PK` prefix, with chosen message bytes filling the prefix's last block. A 256-bit state allows this for about 2^164 compressions at 2^64 signatures. An expandable message built from a fixed point then lets one search link into any intermediate state of any signed message, and the rest of that message is copied, so `R`, the length and the counter are unchanged. For 2^k1 signatures on messages of 2^k2 blocks the cost is about `2^(132 + k1/2) + 2^129 + 2^(256 − k1 − k2)` compressions (Equation (4)): 2^172.0 for 2^64 signatures on 64 MiB messages and 2^166.3 on 4 GiB messages. That is also below the 192-bit sets' claim. The paper states these costs for SHA-256, which has the same state width, block size and compression structure as SM3.
+
+### Reproducing
+
+```sh
+python3 sign-19/reproduce_sm3_fixed_point.py
+```
+
+The witness checks the sixteen source trees, checks an independent SM3 against the standard test vectors, and confirms that `E_B^-1(0)` is a fixed point for 64 padding-compatible blocks and that the forged input reduces to one compression call on the seed. It then runs both attacks on a Davies–Meyer hash with a 20-bit state and the same layout. The fixed-point attack forges four of 64 signed inputs with distinct `R` at about the expected 2^20/64 trials each. The hourglass attack merges 16 long signed inputs into one state and forges three of them, each keeping its `R`, public key, length and counter.

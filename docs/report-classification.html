@@ -293,6 +293,34 @@ code wires a specified internal expander to the external RBG, and
 <code>Layer: Design</code> when the specification itself routes the expansion through the
 external RBG. Ordinary fresh-randomness calls and KAT seeding are not
 affected.</p>
+<h2 id="ignored-allocation-failures">Ignored allocation failures</h2>
+<p>These findings share one pattern: an allocation fails, the code ignores it, and
+the call returns success with a wrong result. Rate them by how exploitable the
+resulting attack is, not by the worst result that fault injection can produce.
+Answer these questions in order:</p>
+<ol>
+<li><strong>Does the wrong result work against honest parties from public data?</strong>
+   Examples are a forged signature that is accepted, or a session key, signing
+   key or decryption key that anyone can compute from public values. If not,
+   use Low. That covers a result that only a party from an earlier call can
+   use (the previous recipient's session key, the previous owner's key pair),
+   a result that depends on what the caller's buffer held, and a result that
+   matches nothing honestly computed (a signature that verifies for no message,
+   a false-success digest).</li>
+<li><strong>Is the failing allocation in the candidate's own code?</strong> If every failing
+   allocation is inside the contest's provisional helpers (<code>auxfunc.c</code>,
+   <code>drng.c</code>), use Medium at most: a replacement helper need not allocate, so
+   the attack exists only in the contest build. The candidate's defect,
+   discarding the helper's status, remains reportable.</li>
+<li><strong>Can the attacker cause the failure, or does the damage last?</strong> Use High
+   when the allocation is sized by attacker-chosen input, so that a long input
+   makes it fail under a memory limit, or when the result permanently exposes a
+   long-term key. Otherwise use Medium: the result is exploitable only in the
+   one call that fails, at a time the attacker does not control.</li>
+</ol>
+<p>A failure whose only effect is a crash or an error return is not filed. State
+in the entry whose allocation fails, whether its size is fixed, and who can use
+the result.</p>
 <h2 id="side-channel-severity">Side-channel severity</h2>
 <p>For timing, cache, branch, division, power, or address-trace findings, answer
 these questions in order:</p>
@@ -469,7 +497,7 @@ with the same external dimensions and parameters. A finding that disappears
 solely on that replacement is not publishable.</p>
 </main>
 <footer class="site-footer">
-<p>Updated 2026-11-22 17:31:22 UTC · Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Updated 2026-11-23 14:49:59 UTC · Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
 <p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
 </footer>
 </body>

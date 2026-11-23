@@ -54,7 +54,7 @@ The certificate extracts the theorem's condition, checks each implementation's p
 
 ## kem-11-3: A failed hash allocation leaves the previous session key in encapsulation
 
-Severity: High
+Severity: Low
 Status: Confirmed
 Layer: Implementation
 Affected: COMPASS-KEM-128, -256, -384 and -512, reference and optimized implementations
@@ -68,7 +68,9 @@ Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/arch
 
 In the witness one process encapsulates to Mallory and then to Bob with that allocation failing. The stale `kr` is the previous call's, so the key returned for Bob equals the key Mallory decapsulated, in all eight builds. Without the fault, and when the stack is overwritten between the two calls, Mallory's key does not match. The reused value depends on the call sequence and on the compiler's stack layout.
 
-The post lists the unchecked statuses of `pseudoXOF`, `sm3hash` and `pseudohash` as a maintenance detail; it does not report this consequence. The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success. A demonstrated session-key exposure under these preconditions is High.
+The post lists the unchecked statuses of `pseudoXOF`, `sm3hash` and `pseudohash` as a maintenance detail; it does not report this consequence. The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success.
+
+Reclassified from High to Low on 2026-11-23. Only the recipient of the previous encapsulation holds the reused key, so the result does not work for an outside attacker, and the attacker cannot cause the failure.
 
 ### Reproducing
 

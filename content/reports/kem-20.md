@@ -62,7 +62,7 @@ The output shows the test of the coefficient's sign bit followed by a conditiona
 
 ## kem-20-3: A failed XOF makes the encapsulated key computable from the ciphertext
 
-Severity: High
+Severity: Medium
 Status: Confirmed
 Layer: Implementation
 Affected: All ten MAMBA-Frost and MAMBA-Frost-CC instances, reference and optimized implementations; the native SHAKE implementation is not affected
@@ -80,7 +80,9 @@ Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/arch
 
 In every case the function returns 0. In all 20 trees, failing each of these allocations once gave a shared secret that the attacker recomputed from the ciphertext alone, while the honest party's key disagreed. Unfaulted controls round-trip.
 
-These paths are separate from the key-generation `calloc` in this report and also affect the optimized trees. The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success. A demonstrated session-key exposure under these preconditions is High.
+These paths are separate from the key-generation `calloc` in this report and also affect the optimized trees. The failing allocation is a fixed-size buffer inside the contest helper. KEM input sizes are fixed, so a caller cannot choose it, and no remote way to force the failure is shown; memory pressure or a resource limit is needed. The candidate's defect is discarding the helper's status and returning success.
+
+Reclassified from High to Medium on 2026-11-23. Anyone can exploit the faulted result from public data, but the failing allocation is a fixed-size buffer inside the contest's provisional helper, which a replacement need not have, and the attacker cannot cause the failure.
 
 ### Reproducing
 

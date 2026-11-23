@@ -144,6 +144,7 @@ RS correction radii <code>19,26,33</code>. The public concatenated-code decoder 
 recovers <code>m</code>, and the session key follows from the public derivation
 <code>H_kappa(m || ct_full)</code>. This breaks the required KEM indistinguishability
 below every affected target, hence Critical.</p>
+<p>Follow-up: <a href="https://eprint.iacr.org/2026/2994">Wang et al., <em>Decoding Cost Lens: Cost Estimation for Code-Based Cryptography</em>, ePrint 2026/2994</a>, Table 3, independently estimates the same three first-component instances at 2^226.0, 2^332.5 and 2^440.9, taking the cheapest of several information-set decoding algorithms with an explicit multiple-target cost. The figures agree with the discounted column above to within 0.6 bits.</p>
 <h3 id="reproducing_2">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <p>Install the pinned estimator in an isolated environment and run:</p>
@@ -275,6 +276,7 @@ fixed-weight solutions.</p>
 </tbody>
 </table></div>
 <p>The 384- and 512-bit raw costs are below target by about 11 and 22 bits without relying on the quasi-cyclic discount. Their memory exponents are also below target. The 256-bit raw margin is only 0.132 bits, so its exact verdict depends on operation-count conventions; the 128-bit control stays above target. This route decodes the <em>persistent</em> public-key relation. No full-size search was run, but the public key equation, equivalent-key mapping and finite-size cost establish a below-target static-key route for the two higher sets.</p>
+<p>Follow-up: <a href="https://eprint.iacr.org/2026/2994">Tianrui Wang et al., <em>Decoding Cost Lens: Cost Estimation for Code-Based Cryptography</em>, ePrint 2026/2994</a>, Table 3, independently estimates key recovery at 2^159.8, 2^247.6, 2^364.2 and 2^480.6 for the four sets, with multiple targets included. The figures agree with the discounted column above to within 0.7 bits.</p>
 <h3 id="reproducing_6">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">NGCC_ESTIMATOR_PYTHON=/path/to/python-with-cryptographic-estimators-2.1.1 python3 kem-26/reproduce_key_isd_estimate.py

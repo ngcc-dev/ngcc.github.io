@@ -62,7 +62,7 @@ NumPy is required; the calculation is CPU intensive.
 
 ## kem-41-2: Key generation ignores XOF failure and can return decryption keys sampled from stale stack data
 
-Severity: High
+Severity: Medium
 Status: Confirmed
 Layer: Implementation
 Affected: ZEN-128, ZEN-256 and ZEN-512 reference implementations; optimized variants have the same error-discarding path by source inspection but were not run
@@ -78,6 +78,8 @@ The supplied `pseudoXOF` returns an error without writing its output when an all
 In an independent `-O2` reference build, a 64 MiB `RLIMIT_AS` and retained allocations caused real XOF allocation failures without interposition or candidate-code changes. The witness generates the preceding public key and the faulted key in one process and thread, with a public-key encryption in between to exercise the stack-reuse path. At all three levels, `kem_keygen` nevertheless returned success. A scan using only the preceding public key and the newly returned public key selected the decryption polynomial through the public relation `h·f = g` with small `g`. A key assembled from that polynomial, the returned public key, and a recomputed `H(pk)` decapsulated a fresh honest ciphertext to the sender's shared secret. The true decryption-secret prefix matched only as a final control; a wrong preceding public key and a normal key generation yielded no selected candidates. At ZEN-512, an additional failed allocation left the holder's stored `H(pk)` unwritten, so the returned holder key itself did **not** match the sender, while the publicly reconstructed key did. In a separate 24-seed ZEN-128 sweep, a counting-only allocation wrapper delegated every request to real `malloc`: 11 key generations returned vulnerable keys and 13 entered a retry loop. Smaller 256/512 sweeps also observed both outcomes. These are build- and memory-state-dependent observations, not a demonstrated way to exhaust a remote service.
 
 The same unchecked wrapper also makes encapsulation return success after an XOF failure. We independently observed seed-independent faulted ZEN-128 PKE ciphertexts and a KEM shared-secret mismatch, but did **not** independently attempt the forum's plaintext or sender-session-key recovery from faulted encapsulations. The key-generation witness covers the primary consequence at all three levels.
+
+Reclassified from High to Medium on 2026-11-23. In the demonstrated call sequence anyone can recover the faulted key from public data, but the failing allocation is inside the contest's provisional `pseudoXOF`, which a replacement need not have, and the attacker cannot cause the failure.
 
 ### Proposed fixes
 

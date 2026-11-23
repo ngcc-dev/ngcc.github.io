@@ -192,7 +192,7 @@ python3 sign-06/reproduce_challenge_image.py
 <h2 class="issue-heading" id="sign-06-8-ignored-xof-failures-give-public-derived-signing-keys-and-key-leaking-signatures">sign-06-8: Ignored XOF failures give public-derived signing keys and key-leaking signatures</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
-<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Severity</th><td><span class="sev sev-medium">Medium</span></td></tr>
 <tr><th>Scope</th><td>implementation</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
 <tr><th>Affected</th><td>COMPASS-SIG-128, -256, -384 and -512 (all eight trees identical)</td></tr>
@@ -207,7 +207,8 @@ python3 sign-06/reproduce_challenge_image.py
 <li>In key generation, <code>shake256(seedbuf, 128, seed, 32)</code> (<code>sign.c:37</code>) then leaves <code>seedbuf</code>, which holds <code>rho</code>, <code>rho′</code> and <code>key</code>, with the previous contents of the reallocated squeeze buffer. In a fresh process these are zero, and after an earlier key generation they are that key's public XOF output. At all four levels, different seeds gave the same public key under the fault, and the attacker rebuilt the secret key byte for byte and forged.</li>
 <li>In signing, a failure during matrix expansion (<code>sign.c:131</code>) produces a wrong challenge with the same deterministic mask. One faulted and one honest signature on the same message give <code>s1</code> exactly, and a forgery from <code>s1</code> verified at all four levels.</li>
 </ul>
-<p>Predicting the stale contents relies on the glibc allocator's reuse of the freed buffer. The failing allocations are fixed-size buffers inside the helper; memory pressure or a resource limit is needed, and no remote method is shown. Demonstrated key recovery under these preconditions is High.</p>
+<p>Predicting the stale contents relies on the glibc allocator's reuse of the freed buffer. The failing allocations are fixed-size buffers inside the helper; memory pressure or a resource limit is needed, and no remote method is shown.</p>
+<p>Reclassified from High to Medium on 2026-11-23. Anyone can exploit the faulted result from public data, but the failing allocation is a fixed-size buffer inside the contest's provisional helper, which a replacement need not have, and the attacker cannot cause the failure.</p>
 <h3 id="reproducing_7">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">sh sign-06/reproduce_fault_key_recovery.sh
