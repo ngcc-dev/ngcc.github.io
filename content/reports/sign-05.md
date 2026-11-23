@@ -186,3 +186,27 @@ python3 sign-05/reproduce_sm4th_em_spec_relation.py
 ```
 
 The certificate checks the PDF's slice and prepend operations, the four parameter rows, the window boundary that excludes `out`, the invertibility of the four-word system, and both corrected prover/verifier calls in all eight SM4th-EM source copies. It does not replay the reported 0.34-second patched-build forgery.
+
+## sign-05-7: Verification keeps per-call scratch buffers in file-scope caches and fails under concurrent calls
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: All 14 SM4th, uBlockith and Vistrutith parameter sets, reference and optimized implementations (source); run for sm4th_em_d2_128f_loose and sm4th_d3_128f_loose
+Discovery: Trivial
+Exploitation: Honest signatures are rejected when two or more threads verify at once; no memory corruption shown
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool
+Date: 2026-11-23
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/BR2JNQGEYZO5DSN73ZTQMX6TMP2EKZ7Q/)
+
+`bavc.c` and `vole.c` keep verification scratch memory in the file-scope caches `g_bavc_scratch` and `g_vole_scratch` (`sm4th_d3_128f_loose/bavc.c:221`, `vole.c:26`). `reconstruct_keys` and `bavc_reconstruct_em` take the opening-path map, the reconstructed tree keys and the leaf commitments from the first (`bavc.c:537,640`), and zero the key buffer on every call (`:265`). `vole_reconstruct` takes its row workspace from the second. Nothing locks them, so concurrent calls overwrite each other's intermediate values. The ICCS API does not promise thread safety.
+
+With four threads each verifying its own honest signature, 3,910–3,989 of 4,000 verifications failed in the two reference instances and 3,971–3,982 in their optimized trees, with the submitted flags and with GCC 15.2 and Clang 21.1. Every single-thread control passed. Each call site requests a size fixed by the parameter set and the caches are never freed, so after first use the effect is wrong values, not invalid memory; no crash was seen. While threads verified one honest signature, altered copies of that signature on the same message were accepted 35 times in 15,600 calls; all were rejected on single-threaded replay. No other message was accepted.
+
+### Reproducing
+
+```sh
+sh sign-05/reproduce_thread_race.sh
+```
+
+The witness checks the two declarations in all 28 trees, builds two reference instances in a temporary directory with their Makefile flags, and prints failed and total honest verifications for one thread and for four threads. The count varies between runs. It does not replay the altered-signature acceptances.

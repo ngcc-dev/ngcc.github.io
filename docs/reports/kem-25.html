@@ -148,6 +148,27 @@ repaired reduction or estimate security at the real parameters.</p>
 gcc -O3 -DPARAMS=6 -DUSE_ICCS -w -I&quot;$d&quot; -S &quot;$d/sample.c&quot; -o - | grep -c 'cmpb   \$-14'
 </code></pre>
 <p>A nonzero count shows the compiled comparison of a coin byte with 242. This is a compiled-branch witness; no timing was measured.</p>
+<h2 class="issue-heading" id="kem-25-4-the-ind-cca-proofs-overstate-ciphertext-spreadness-and-omit-h3-queries-from-a-qrom-bound">kem-25-4: The IND-CCA proofs overstate ciphertext spreadness and omit H3 queries from a QROM bound</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-proof-gap">Proof gap</span></td></tr>
+<tr><th>Affected</th><td>Lemma 4 and Theorems 7–10, all parameter sets; Lemma 14 and Theorem 10 (NEV-PKE-CCA in the QROM)</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>None; two stated proof bounds are false, and the corrected terms are generic losses of size about <code>q/2^(κ/2)</code></td></tr>
+<tr><th>Credit</th><td>Hao Yan, Yuhang Cao, Yao Tong and Qiaosheng Zhang, Shanghai AI Laboratory, with GLM 5.3, Kimi 3.1 Pro and in-house model assistance</td></tr>
+<tr><th>Date</th><td>2026-11-23</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/TMVI4BERLRLJTQI3SRYLY5KCX3WCOEMQ/">Hao Yan, Yuhang Cao, Yao Tong and Qiaosheng Zhang's PKC Forum post</a></p>
+<p>Encryption expands a <code>κ</code>-bit seed <code>ρ</code> through a PRG into <code>r</code> and the message encoding (§3.2, physical p. 16; Algorithms 16–17). For a fixed key and message there are therefore at most <code>2^κ</code> ciphertexts, and one of them has probability at least <code>2^-κ</code>. Lemma 4 (physical pp. 47–48) bounds that probability by <code>ϵ = max Pr[r = r0 : r ← χr]</code>, which is <code>(5/16)^512 ≈ 2^-859</code> for NEV-R1 with <code>κ = 128</code>; the proof replaces the PRG output by <code>χr</code>. Lemma 4 supplies the terms <code>qD·ϵ</code> of Theorems 7 and 9 and <code>6qD·√ϵ</code> of Theorems 8 and 10. With <code>ϵ ≥ 2^-κ</code> the QROM term reaches 1 at <code>2^61.4</code> decapsulation queries for the 128-bit sets.</p>
+<p>Theorem 10 (physical p. 49) depends on <code>qH3</code> only through <code>(3/2)√((qH3+1)/2^(n/k))</code>. Game G11 removes the programming <code>H3(M*) = y*</code>, but Lemma 14 (physical p. 98, proof omitted) bounds that step by <code>(24qH2 + 8qD)·√Adv</code>, which is zero for an adversary that queries only <code>H3</code>. The challenge contains <code>d* = H3(M*) ⊕ m_b</code> with 128-bit <code>M*</code> in the 128-bit sets. A Grover search for an <code>H3</code> preimage of <code>d* ⊕ m_0</code>, with about <code>2^68</code> queries, finds one with probability at least <code>1 − (3/4)^8</code> when <code>b = 0</code>, while for <code>b = 1</code> no preimage exists with probability above <code>1/e</code>. Its advantage exceeds <code>1/16</code>, against a stated bound of <code>2^-29.4</code> at the specified failure rate. The last coefficient of the bound is 8 in the theorem and 10 in its derivation.</p>
+<p>No attack follows. The adversary is a generic search of the 128-bit message space counted in oracle queries, and corrected versions of both terms have the form <code>q/2^(κ/2)</code>. That form is already present in the theorems' first term, because the sspRLWE advantage is the probability of guessing <code>n/k = κ</code> bits. The defects are errors in the stated bounds, not a candidate-specific loss of security.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">python3 -c &quot;from math import log2,sqrt,e; print(512*log2(5/16), 64-log2(6), log2(1.5*sqrt((2**68+1)/2**128)), (1/e-(3/4)**8)/2)&quot;
+</code></pre>
+<p>The values are <code>log2 ϵ</code> for NEV-R1 (−859.17), the <code>log2 qD</code> at which <code>6qD·2^-64</code> reaches 1 (61.42), <code>log2</code> of Theorem 10's <code>H3</code> term at <code>2^68</code> queries (−29.42), and a lower bound on the adversary's advantage (0.134). The statements are on the physical pages cited; nothing is run against the implementation.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

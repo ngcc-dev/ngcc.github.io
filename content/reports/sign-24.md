@@ -132,3 +132,27 @@ Under AddressSanitizer, signatures in heap buffers of exactly the entry bound, a
 ```sh
 sh sign-24/reproduce_short_signature.sh
 ```
+
+## sign-24-6: Verification uses static workspaces and fails, crashes or accepts an altered message under concurrent calls
+
+Severity: High
+Status: Confirmed
+Layer: Implementation
+Affected: Sigurd-128, -256 and -512, reference and optimized implementations (source); run for Sigurd-128; altered-message acceptance and crashes in the optimized implementation only
+Discovery: Moderate
+Exploitation: In the optimized implementation, while other threads verify a genuine signature, a concurrent verification of that signature on a one-bit-altered message returned success in 0.1% to 0.6% of calls, depending on the test driver; honest signatures are rejected in both implementations
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool; optimized-tree crashes and altered-message acceptance by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-23
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/5BVPSZDVXABUO5JUUZF6RAK76OPLE5A3/)
+
+The reference `RS_encode` copies its input into one static workspace, encodes in place and copies the result out (`g_rs_workspace`, `Sigurd-128/sig_core.c:55,640–745`); the verifier calls it on the signature's `w` polynomial (`:1071`). The optimized `sig_verify` runs the whole verifier on a static `g_cached_verifier_workspace` and reads a static per-key cache (`SIG_AlgorithmInstance.c:70–74,622,664,679`). Nothing locks this state. The ICCS API does not promise thread safety.
+
+With four threads each verifying its own honest signature, about 77% of verifications failed in the reference Sigurd-128 and about 90% in the optimized tree, with the submitted flags and with GCC 15.2 and Clang 21.1. Every single-thread control passed. The optimized tree also terminated: `sig_hash_ctx_update` aborts on its capacity check (`sig_core.c:193–197`), and a worker thread segfaulted in `raw_collect_nonzero_terms` (`:347`). When all threads shared one key and genuine signature, the optimized tree accepted that signature for a message with one bit flipped 27 times in 28,000 such calls; single-threaded, all 27 were rejected. With different keys in the threads, and in the reference tree, no altered input was accepted. Whether other messages can be accepted the same way was not tested.
+
+### Reproducing
+
+```sh
+sh sign-24/reproduce_thread_race.sh
+```
+
+The witness checks the static workspaces in all six trees, builds the reference Sigurd-128 in a temporary directory with the Makefile's `CFLAGS`, and prints failed and total honest verifications for one thread and for four threads. The count varies between runs. It then builds the optimized Sigurd-128 with the Makefile's `OPT_CFLAGS` (skipped without AVX2) and runs 32 child processes in which, for 500 rounds, three threads verify the genuine message and a fourth verifies the same signature on the message with one bit flipped; it prints how often the altered message was accepted, the single-thread controls and how many children aborted or segfaulted. In one run, 89 of 15,565 altered verifications were accepted and 2 of the 32 children aborted. The whole witness takes under a minute.

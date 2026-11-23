@@ -166,6 +166,26 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <pre><code class="language-sh">python3 sign-05/reproduce_sm4th_em_spec_relation.py
 </code></pre>
 <p>The certificate checks the PDF's slice and prepend operations, the four parameter rows, the window boundary that excludes <code>out</code>, the invertibility of the four-word system, and both corrected prover/verifier calls in all eight SM4th-EM source copies. It does not replay the reported 0.34-second patched-build forgery.</p>
+<h2 class="issue-heading" id="sign-05-7-verification-keeps-per-call-scratch-buffers-in-file-scope-caches-and-fails-under-concurrent-calls">sign-05-7: Verification keeps per-call scratch buffers in file-scope caches and fails under concurrent calls</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All 14 SM4th, uBlockith and Vistrutith parameter sets, reference and optimized implementations (source); run for sm4th_em_d2_128f_loose and sm4th_d3_128f_loose</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Honest signatures are rejected when two or more threads verify at once; no memory corruption shown</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
+<tr><th>Date</th><td>2026-11-23</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/BR2JNQGEYZO5DSN73ZTQMX6TMP2EKZ7Q/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p><code>bavc.c</code> and <code>vole.c</code> keep verification scratch memory in the file-scope caches <code>g_bavc_scratch</code> and <code>g_vole_scratch</code> (<code>sm4th_d3_128f_loose/bavc.c:221</code>, <code>vole.c:26</code>). <code>reconstruct_keys</code> and <code>bavc_reconstruct_em</code> take the opening-path map, the reconstructed tree keys and the leaf commitments from the first (<code>bavc.c:537,640</code>), and zero the key buffer on every call (<code>:265</code>). <code>vole_reconstruct</code> takes its row workspace from the second. Nothing locks them, so concurrent calls overwrite each other's intermediate values. The ICCS API does not promise thread safety.</p>
+<p>With four threads each verifying its own honest signature, 3,910–3,989 of 4,000 verifications failed in the two reference instances and 3,971–3,982 in their optimized trees, with the submitted flags and with GCC 15.2 and Clang 21.1. Every single-thread control passed. Each call site requests a size fixed by the parameter set and the caches are never freed, so after first use the effect is wrong values, not invalid memory; no crash was seen. While threads verified one honest signature, altered copies of that signature on the same message were accepted 35 times in 15,600 calls; all were rejected on single-threaded replay. No other message was accepted.</p>
+<h3 id="reproducing_6">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh sign-05/reproduce_thread_race.sh
+</code></pre>
+<p>The witness checks the two declarations in all 28 trees, builds two reference instances in a temporary directory with their Makefile flags, and prints failed and total honest verifications for one thread and for four threads. The count varies between runs. It does not replay the altered-signature acceptances.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

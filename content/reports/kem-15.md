@@ -165,3 +165,25 @@ gcc -O3 -march=native -w -I"$d" -S "$d/decode.c" -o - | grep -c 'testb	$1, (%r'
 ```
 
 A nonzero count shows the per-bit test in the compiled decoder. No timing was measured.
+
+## kem-15-7: The KEM API ignores declared input lengths and over-reads short buffers
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: All ten submitted trees: reference and AVX2 FLIT128, FLIT256 and FLIT512, and the FIPS202 REF/OPT128 and REF/OPT256 variants
+Discovery: Trivial
+Exploitation: Out-of-bounds read from a caller-supplied short ciphertext or public key; no disclosure shown
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool; public-key over-read by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-23
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/WBZXDKPNPVKCUDIP25S2T6JPEO3F4LQT/)
+
+`kem_enc` and `kem_dec` discard `pk_len_bytes`, `sk_len_bytes` and `ct_len_bytes` (`KEM_AlgorithmInstance.c:60,73–74`, identical in all ten trees), and the functions they call read their inputs at compile-time sizes. Under AddressSanitizer, an honest ciphertext in a heap buffer of one byte, or one byte short, gave an out-of-bounds read in `poly_unpack_and_decompress` during decapsulation (`poly.c:260–271` in the reference trees, a 16-byte load at `poly.c:376` in the AVX2 FLIT128 and FLIT256 trees, `:393–400` at FLIT512). A public key one byte short gave an out-of-bounds read in the public-key hash during encapsulation (`kem.c:65`; `:64` in the FIPS202 trees). All ten trees behaved this way. Full-length inputs ran cleanly and decapsulated to the encapsulated key. Callers that pass complete inputs are unaffected.
+
+### Reproducing
+
+```sh
+sh kem-15/reproduce_short_ciphertext.sh
+```
+
+The AVX2 AddressSanitizer builds use `-mavx2 -mbmi2 -mpopcnt -mpclmul` without the Makefile's `-march=native`. The FLIT512 AVX2 build leaves `basemul_avx.c` uninstrumented, because a stack overflow in that file would otherwise stop key generation first.

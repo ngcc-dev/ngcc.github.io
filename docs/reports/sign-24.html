@@ -131,6 +131,26 @@ sed -n '184,201p' &quot;$d/sig_core.c&quot;; sed -n '116,124p' &quot;$d/rsencode
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">sh sign-24/reproduce_short_signature.sh
 </code></pre>
+<h2 class="issue-heading" id="sign-24-6-verification-uses-static-workspaces-and-fails-crashes-or-accepts-an-altered-message-under-concurrent-calls">sign-24-6: Verification uses static workspaces and fails, crashes or accepts an altered message under concurrent calls</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Sigurd-128, -256 and -512, reference and optimized implementations (source); run for Sigurd-128; altered-message acceptance and crashes in the optimized implementation only</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>In the optimized implementation, while other threads verify a genuine signature, a concurrent verification of that signature on a one-bit-altered message returned success in 0.1% to 0.6% of calls, depending on the test driver; honest signatures are rejected in both implementations</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool; optimized-tree crashes and altered-message acceptance by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-23</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/5BVPSZDVXABUO5JUUZF6RAK76OPLE5A3/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p>The reference <code>RS_encode</code> copies its input into one static workspace, encodes in place and copies the result out (<code>g_rs_workspace</code>, <code>Sigurd-128/sig_core.c:55,640–745</code>); the verifier calls it on the signature's <code>w</code> polynomial (<code>:1071</code>). The optimized <code>sig_verify</code> runs the whole verifier on a static <code>g_cached_verifier_workspace</code> and reads a static per-key cache (<code>SIG_AlgorithmInstance.c:70–74,622,664,679</code>). Nothing locks this state. The ICCS API does not promise thread safety.</p>
+<p>With four threads each verifying its own honest signature, about 77% of verifications failed in the reference Sigurd-128 and about 90% in the optimized tree, with the submitted flags and with GCC 15.2 and Clang 21.1. Every single-thread control passed. The optimized tree also terminated: <code>sig_hash_ctx_update</code> aborts on its capacity check (<code>sig_core.c:193–197</code>), and a worker thread segfaulted in <code>raw_collect_nonzero_terms</code> (<code>:347</code>). When all threads shared one key and genuine signature, the optimized tree accepted that signature for a message with one bit flipped 27 times in 28,000 such calls; single-threaded, all 27 were rejected. With different keys in the threads, and in the reference tree, no altered input was accepted. Whether other messages can be accepted the same way was not tested.</p>
+<h3 id="reproducing_5">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh sign-24/reproduce_thread_race.sh
+</code></pre>
+<p>The witness checks the static workspaces in all six trees, builds the reference Sigurd-128 in a temporary directory with the Makefile's <code>CFLAGS</code>, and prints failed and total honest verifications for one thread and for four threads. The count varies between runs. It then builds the optimized Sigurd-128 with the Makefile's <code>OPT_CFLAGS</code> (skipped without AVX2) and runs 32 child processes in which, for 500 rounds, three threads verify the genuine message and a fourth verifies the same signature on the message with one bit flipped; it prints how often the altered message was accepted, the single-thread controls and how many children aborted or segfaulted. In one run, 89 of 15,565 altered verifications were accepted and 2 of the 32 children aborted. The whole witness takes under a minute.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -190,3 +190,29 @@ sh sign-31/reproduce_stale_vinegar.sh
 ```
 
 Each witness wraps `malloc` to fail exactly the targeted allocation, with unfaulted controls.
+
+## sign-31-9: Concurrent verification shares the public key's P3 block, so an attacker's public key can make a forged signature verify
+
+Severity: High
+Status: Confirmed
+Layer: Implementation
+Affected: All three reference and optimized TSUOV implementations; forgery demonstrated for the TSUOV-128 reference implementation
+Discovery: Moderate
+Exploitation: In a process that also verifies under an attacker-supplied public key on other threads, a signature made without the victim's secret key verified under the victim's public key in 1.4–43% of attempts; single-threaded verification is unaffected
+Credit: LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool; cross-key forgery by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-23
+Original source: [LK-PQC-Hunter's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/DF3QHFXTXB5CPEAYRPT5ANOAKKPQ7NS3/)
+
+`sig_verify` decodes the public key's explicit `P3` block into a function-level `static TSUOV_P3 P3` (`SIG_AlgorithmInstance.c:109` reference, `:101` optimized, where the source comments "(but problematic in mult-thread environment)"). `TSUOV_Verify` then reads it while expanding each public matrix (`tsuov_core.c:1012`). Every call in a process shares that buffer, so a concurrent verification under another public key overwrites it mid-check. With four threads verifying honest signatures under two keys, built with the submitted `-O2` flags, 368–395 of 400 verifications failed at TSUOV-128, and most failed at the other levels and in the optimized tree. One thread, or four threads under one key, never failed.
+
+The overwrite can also make a forgery verify. `Expand_PK` copies `P3[i]` into the oil block of each public matrix (`tsuov_core.c:570–572`), so for a fixed message, signature and public seed the verifier's output is affine in the `P3` entries. Knowing only the victim's public key, the attacker picks a message and a random signature, solves the resulting 88 equations over F31 in the 1,220 entries of `P3` (rank 88), and encodes the solution in its own public key. Verified alone, the signature is rejected under the victim's key. While other threads in the same process verify anything under the attacker's key, `sig_verify` with the victim's key accepted it in 14 to 426 of 1,000 attempts per run, with GCC 15.2 and Clang 21.1. With an honest second key in the other threads it was never accepted.
+
+The ICCS API does not promise thread safety, and the single-threaded security game is unaffected. A verifier that checks signatures under attacker-supplied public keys in parallel threads nevertheless accepts forgeries on any message. Fix: decode `P3` into per-call storage. `sig_keygen` has the same static buffer (`:45` reference, `:46` optimized).
+
+### Reproducing
+
+```sh
+sh sign-31/reproduce_thread_race.sh
+```
+
+The witness builds each reference level with the submission's flags and no sanitizer and counts honest rejections. It then constructs the TSUOV-128 forgery from the public key alone and counts acceptances with no other thread, with honest-key threads, and with attacker-key threads. Counts depend on thread scheduling; a run takes about 30 seconds.

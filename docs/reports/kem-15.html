@@ -157,6 +157,25 @@ NGCC_LONG=1 sh kem-15/reproduce_avx2_invntt.sh
 gcc -O3 -march=native -w -I&quot;$d&quot; -S &quot;$d/decode.c&quot; -o - | grep -c 'testb  $1, (%r'
 </code></pre>
 <p>A nonzero count shows the per-bit test in the compiled decoder. No timing was measured.</p>
+<h2 class="issue-heading" id="kem-15-7-the-kem-api-ignores-declared-input-lengths-and-over-reads-short-buffers">kem-15-7: The KEM API ignores declared input lengths and over-reads short buffers</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All ten submitted trees: reference and AVX2 FLIT128, FLIT256 and FLIT512, and the FIPS202 REF/OPT128 and REF/OPT256 variants</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Out-of-bounds read from a caller-supplied short ciphertext or public key; no disclosure shown</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool; public-key over-read by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-23</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/WBZXDKPNPVKCUDIP25S2T6JPEO3F4LQT/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p><code>kem_enc</code> and <code>kem_dec</code> discard <code>pk_len_bytes</code>, <code>sk_len_bytes</code> and <code>ct_len_bytes</code> (<code>KEM_AlgorithmInstance.c:60,73–74</code>, identical in all ten trees), and the functions they call read their inputs at compile-time sizes. Under AddressSanitizer, an honest ciphertext in a heap buffer of one byte, or one byte short, gave an out-of-bounds read in <code>poly_unpack_and_decompress</code> during decapsulation (<code>poly.c:260–271</code> in the reference trees, a 16-byte load at <code>poly.c:376</code> in the AVX2 FLIT128 and FLIT256 trees, <code>:393–400</code> at FLIT512). A public key one byte short gave an out-of-bounds read in the public-key hash during encapsulation (<code>kem.c:65</code>; <code>:64</code> in the FIPS202 trees). All ten trees behaved this way. Full-length inputs ran cleanly and decapsulated to the encapsulated key. Callers that pass complete inputs are unaffected.</p>
+<h3 id="reproducing_6">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh kem-15/reproduce_short_ciphertext.sh
+</code></pre>
+<p>The AVX2 AddressSanitizer builds use <code>-mavx2 -mbmi2 -mpopcnt -mpclmul</code> without the Makefile's <code>-march=native</code>. The FLIT512 AVX2 build leaves <code>basemul_avx.c</code> uninstrumented, because a stack overflow in that file would otherwise stop key generation first.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

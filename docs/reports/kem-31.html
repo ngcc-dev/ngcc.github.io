@@ -137,6 +137,48 @@ security/ngcc_security kem-31/lib/libNGCC-3.so kem-zero
 grep -rn 'lucas_sequence(' kem-31/Implementations/Implementations/src/pike/ref/pikex_compressed/pike_compressed.c
 </code></pre>
 <p>This is a source witness.</p>
+<h2 class="issue-heading" id="kem-31-6-optimized-key-generation-writes-one-element-past-the-isogeny-degree-array">kem-31-6: Optimized key generation writes one element past the isogeny degree array</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Optimized implementation, NGCC-1, NGCC-2 and NGCC-3; the reference implementation is not affected</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>None shown; a fixed two-byte zero write into structure padding in every key generation, independent of any input, with keys, ciphertexts and shared secrets unchanged</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool</td></tr>
+<tr><th>Date</th><td>2026-11-23</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/A4FNTSCHPPZZFJGKEZT3DDCKX4SAABTO/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p>In the optimized tree, <code>TORSION_ODD_PRIMEPOWERS</code> has four entries at every level, the last equal to 1 (<code>src/precomp/ref/NGCC_{1,2,3}/torsion_constants.c:18,39,60</code>). <code>ec_degree_odd_t</code> is <code>uint16_t[P_LEN + M_LEN]</code>, three elements (<code>src/ec/ref/include/ec.h:105</code>). <code>id2iso_ideal_to_kernel_dlogs_odd</code> zeroes one degree per table entry (<code>src/id2iso/ref/id2isox/id2iso.c:158–161</code>), so every key generation executes <code>(*deg)[3] = 0</code>. The reference tree's table has three entries. The optimized tree's generator lacks the <code>[:-1]</code> that trims the list in the reference tree (<code>scripts/precompute_torsion_constants.sage:58</code>).</p>
+<p>The array is the last member of <code>ec_isog_odd_t</code>, and the only caller passes the <code>degree</code> member of key generation's stack object (<code>id2iso.c:262</code>, <code>pike_compressed.c:93,193</code>). The two bytes therefore fall in the structure's tail padding (bytes 1038–1039 of 1040 at NGCC-1), which nothing reads. The fourth iteration has no other effect because the gcd with 1 is 1. Built with the tree's Release flags under GCC 15.2, the optimized tree reproduces the official KATs at all three levels. <code>-fsanitize=bounds</code> reports the write; AddressSanitizer does not.</p>
+<p>The tree's own check at <code>id2iso.c:268</code> asserts that the two sizes are equal. The optimized tree therefore aborts in every key generation unless assertions are compiled out, as its documented Release build does.</p>
+<h3 id="reproducing_5">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh kem-31/reproduce_torsion_oob.sh
+</code></pre>
+<p>The witness checks the dimensions in both trees, then builds each level of each tree in a temporary directory with <code>-fsanitize=bounds</code>; the reference tree is the control. It needs x86-64 with BMI2 and ADX, GCC and GMP, and takes about 15 seconds.</p>
+<h2 class="issue-heading" id="kem-31-7-every-key-generation-and-decapsulation-leaks-a-theta-chain-array">kem-31-7: Every key generation and decapsulation leaks a theta-chain array</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>NGCC-1, NGCC-2 and NGCC-3; reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Unbounded memory growth in a long-running process; each decapsulation query, accepted or implicitly rejected, adds 0.7–7.7 MB; no disclosure or corruption</td></tr>
+<tr><th>Credit</th><td>LK-PQC-Hunter (NGCC PKC Forum sender), using the LKQ PQC Hunter automated tool, noted the leak; sites and measurement by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-23</td></tr>
+</table></div>
+<p>Original source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/A4FNTSCHPPZZFJGKEZT3DDCKX4SAABTO/">LK-PQC-Hunter's PKC Forum post</a></p>
+<p><code>theta_chain_comput_strategy</code> allocates the steps of each dimension-two isogeny chain with <code>out-&gt;steps = malloc((n - 1) * sizeof(theta_isogeny_t))</code> (<code>src/hd/ref/hdx/theta_isogenies.c:1472</code>; optimized tree <code>:1486</code>), and neither tree frees it. Key generation computes two chains (<code>pike_compressed.c:215,253</code>), decryption one (<code>:968</code>) and encryption none. The array has a fixed size: 736,488 bytes at NGCC-1, 1,930,584 at NGCC-2 and 7,665,000 at NGCC-3.</p>
+<p>With <code>malloc</code> and <code>free</code> wrapped, each <code>kem_keygen</code> left two more arrays live, each <code>kem_dec</code> one and each <code>kem_enc</code> none, at every level. Over 20 calls of each at NGCC-1 the growth was exactly linear. Decapsulation decrypts before its re-encryption check, so an implicitly rejected ciphertext leaks the same array. Key generation also leaks one GMP integer of about 100–330 bytes (<code>tmp</code> in <code>endomorphism_application_even_basis</code>, <code>id2iso.c:67</code>).</p>
+<p>Fix: free <code>hd_isog.steps</code> before the second chain and at the end of <code>keygen</code> and <code>decrypt</code>.</p>
+<h3 id="reproducing_6">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh kem-31/reproduce_keygen_leak.sh
+</code></pre>
+<p>The witness builds each level of the reference tree with the uniform build's flags and no sanitizer, wraps <code>malloc</code> and <code>free</code> at link time, and counts live blocks after two calls of each operation and one decapsulation of a ciphertext with a flipped byte. A build with the fix leaves nothing live. It also runs the optimized tree at NGCC-1 and takes about 30 seconds.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

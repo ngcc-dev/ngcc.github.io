@@ -142,3 +142,29 @@ gcc -O3 -DPARAMS=6 -DUSE_ICCS -w -I"$d" -S "$d/sample.c" -o - | grep -c 'cmpb	\$
 ```
 
 A nonzero count shows the compiled comparison of a coin byte with 242. This is a compiled-branch witness; no timing was measured.
+
+## kem-25-4: The IND-CCA proofs overstate ciphertext spreadness and omit H3 queries from a QROM bound
+
+Severity: Low
+Status: Proof gap
+Layer: Design
+Affected: Lemma 4 and Theorems 7–10, all parameter sets; Lemma 14 and Theorem 10 (NEV-PKE-CCA in the QROM)
+Discovery: Moderate
+Exploitation: None; two stated proof bounds are false, and the corrected terms are generic losses of size about `q/2^(κ/2)`
+Credit: Hao Yan, Yuhang Cao, Yao Tong and Qiaosheng Zhang, Shanghai AI Laboratory, with GLM 5.3, Kimi 3.1 Pro and in-house model assistance
+Date: 2026-11-23
+Original source: [Hao Yan, Yuhang Cao, Yao Tong and Qiaosheng Zhang's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/TMVI4BERLRLJTQI3SRYLY5KCX3WCOEMQ/)
+
+Encryption expands a `κ`-bit seed `ρ` through a PRG into `r` and the message encoding (§3.2, physical p. 16; Algorithms 16–17). For a fixed key and message there are therefore at most `2^κ` ciphertexts, and one of them has probability at least `2^-κ`. Lemma 4 (physical pp. 47–48) bounds that probability by `ϵ = max Pr[r = r0 : r ← χr]`, which is `(5/16)^512 ≈ 2^-859` for NEV-R1 with `κ = 128`; the proof replaces the PRG output by `χr`. Lemma 4 supplies the terms `qD·ϵ` of Theorems 7 and 9 and `6qD·√ϵ` of Theorems 8 and 10. With `ϵ ≥ 2^-κ` the QROM term reaches 1 at `2^61.4` decapsulation queries for the 128-bit sets.
+
+Theorem 10 (physical p. 49) depends on `qH3` only through `(3/2)√((qH3+1)/2^(n/k))`. Game G11 removes the programming `H3(M*) = y*`, but Lemma 14 (physical p. 98, proof omitted) bounds that step by `(24qH2 + 8qD)·√Adv`, which is zero for an adversary that queries only `H3`. The challenge contains `d* = H3(M*) ⊕ m_b` with 128-bit `M*` in the 128-bit sets. A Grover search for an `H3` preimage of `d* ⊕ m_0`, with about `2^68` queries, finds one with probability at least `1 − (3/4)^8` when `b = 0`, while for `b = 1` no preimage exists with probability above `1/e`. Its advantage exceeds `1/16`, against a stated bound of `2^-29.4` at the specified failure rate. The last coefficient of the bound is 8 in the theorem and 10 in its derivation.
+
+No attack follows. The adversary is a generic search of the 128-bit message space counted in oracle queries, and corrected versions of both terms have the form `q/2^(κ/2)`. That form is already present in the theorems' first term, because the sspRLWE advantage is the probability of guessing `n/k = κ` bits. The defects are errors in the stated bounds, not a candidate-specific loss of security.
+
+### Reproducing
+
+```sh
+python3 -c "from math import log2,sqrt,e; print(512*log2(5/16), 64-log2(6), log2(1.5*sqrt((2**68+1)/2**128)), (1/e-(3/4)**8)/2)"
+```
+
+The values are `log2 ϵ` for NEV-R1 (−859.17), the `log2 qD` at which `6qD·2^-64` reaches 1 (61.42), `log2` of Theorem 10's `H3` term at `2^68` queries (−29.42), and a lower bound on the adversary's advantage (0.134). The statements are on the physical pages cited; nothing is run against the implementation.

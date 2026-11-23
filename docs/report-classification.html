@@ -321,6 +321,28 @@ Answer these questions in order:</p>
 <p>A failure whose only effect is a crash or an error return is not filed. State
 in the entry whose allocation fails, whether its size is fixed, and who can use
 the result.</p>
+<h2 id="concurrent-calls">Concurrent calls</h2>
+<p>The ICCS API does not promise that its functions can be called from several
+threads at once, and the security games are single-threaded. Some
+implementations nevertheless keep per-call state in static or global storage,
+so concurrent calls in one process interfere. Rate what concurrent calls through
+the unmodified API do at the shipped flags, without a sanitizer:</p>
+<ul>
+<li>No finding when every thread writes identical values and results stay
+  correct, such as a constant table rebuilt on every call.</li>
+<li>Low when honest calls give wrong results, crash or abort, or when another
+  signature on an already signed message is accepted and the candidate claims
+  only EUF-CMA. A crash stays Low unless the corruption behind it is shown to
+  give one of the High consequences.</li>
+<li>High when verification accepts a message that the key's owner never signed,
+  or the race otherwise gives a forgery or exposes a secret key, plaintext or
+  shared secret. It is not Critical on this basis alone, because the
+  single-threaded security game is unaffected.</li>
+</ul>
+<p>A same-message signature accepted by a candidate that claims SUF-CMA has not yet
+arisen under concurrency; rate it when it does.</p>
+<p>State in the entry which calls must run at the same time, which inputs the
+attacker supplies, the measured rate, and the single-thread control.</p>
 <h2 id="side-channel-severity">Side-channel severity</h2>
 <p>For timing, cache, branch, division, power, or address-trace findings, answer
 these questions in order:</p>
@@ -497,7 +519,7 @@ with the same external dimensions and parameters. A finding that disappears
 solely on that replacement is not publishable.</p>
 </main>
 <footer class="site-footer">
-<p>Updated 2026-11-23 14:49:59 UTC · Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Updated 2026-11-23 19:23:16 UTC · Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
 <p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
 </footer>
 </body>

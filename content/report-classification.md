@@ -341,6 +341,31 @@ A failure whose only effect is a crash or an error return is not filed. State
 in the entry whose allocation fails, whether its size is fixed, and who can use
 the result.
 
+## Concurrent calls
+
+The ICCS API does not promise that its functions can be called from several
+threads at once, and the security games are single-threaded. Some
+implementations nevertheless keep per-call state in static or global storage,
+so concurrent calls in one process interfere. Rate what concurrent calls through
+the unmodified API do at the shipped flags, without a sanitizer:
+
+- No finding when every thread writes identical values and results stay
+  correct, such as a constant table rebuilt on every call.
+- Low when honest calls give wrong results, crash or abort, or when another
+  signature on an already signed message is accepted and the candidate claims
+  only EUF-CMA. A crash stays Low unless the corruption behind it is shown to
+  give one of the High consequences.
+- High when verification accepts a message that the key's owner never signed,
+  or the race otherwise gives a forgery or exposes a secret key, plaintext or
+  shared secret. It is not Critical on this basis alone, because the
+  single-threaded security game is unaffected.
+
+A same-message signature accepted by a candidate that claims SUF-CMA has not yet
+arisen under concurrency; rate it when it does.
+
+State in the entry which calls must run at the same time, which inputs the
+attacker supplies, the measured rate, and the single-thread control.
+
 ## Side-channel severity
 
 For timing, cache, branch, division, power, or address-trace findings, answer
