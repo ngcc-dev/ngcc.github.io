@@ -22,7 +22,7 @@ For the fixed public-key prefix, a birthday search over one controlled rate bloc
 
 ### Proposed fixes
 
-The team acknowledges the SHAKE256 strength limit in its submitted, provisional hash instantiation and says it will clarify the hash requirements for each parameter set and instantiation. This proposed clarification is recorded without evaluating a revised candidate.
+The team acknowledges the SHAKE256 strength limit in its submitted, provisional hash instantiation and says it will clarify the hash requirements for each parameter set and instantiation. This proposed clarification is recorded without evaluating a revised candidate. The team's [updated source](https://github.com/GreatWall-Crypto/NGCC-GreatWall) of 2026-10-12 (commit `4732e16`) adds a build option, selected by default, that routes every hash through the contest's placeholder `pseudoXOF`; its v2 specification still instantiates every hash above λ = 128 with SHAKE256 (§2.3.4). This revision is recorded without evaluation.
 
 ### Reproducing
 

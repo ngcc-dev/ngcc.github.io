@@ -31,7 +31,7 @@ Constant-time fix (moderate): use fixed-work, message-independent sampling in th
 
 ### Proposed fixes
 
-The team's response proposes removing data-dependent rejection sampling. This records the proposal without assessing it.
+The [PolarLAC team's confirmation](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/JPI7NMTEE2PZMSUYOVCYC7YFVCRZQJQC/) (2026-10-04) says the team will make encryption constant-time by removing the data-dependent rejection sampling procedure. It names no replacement sampler or parameters. This records the proposal without assessing it.
 
 ### Reproducing
 

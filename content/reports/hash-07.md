@@ -14,6 +14,7 @@ Exploitation: Running time depends on the Hamming weight of the secret output, m
 Credit: aimir (GitHub @aimir); timing measurement by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-11-16
 Original source: [GitHub issue #40](https://github.com/ngcc-dev/ngcc-harness/issues/40)
+Follow-up source: [Dragon team's 2026-11-24 response](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/MZGRNYSEX6NDIXNGY4KML4ULM2FXMKX3/)
 
 The XOF squeezes each block into a buffer and copies it bit by bit into the output with `copy_bits_msb` (`CryptHash_AlgorithmInstance.c:94–107`, called at `:228`). The helper writes each bit with `if (src_bit) dst |= mask; else dst &= ~mask;` (`:101`), so the control flow follows the value of every output bit. The specification lists key derivation among the family's uses, where the XOF output is secret.
 
@@ -27,6 +28,10 @@ The channel is measurable. On reference Dragon-XOF-256 with one 1280-bit output 
 The timing figures vary with the host and the code layout. They expose the Hamming weight of each output block, not individual bits; an observer of branch directions would see the bits themselves. No output was recovered.
 
 Constant-time fix (easy): insert the bit arithmetically, for example `dst[i] = (dst[i] & ~mask) | (mask & -src_bit)`, or copy whole bytes when the offset is byte-aligned. The repair is local; the rating is Medium because the channel is measured.
+
+### Proposed fixes
+
+The [Dragon team's 2026-11-24 response](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/MZGRNYSEX6NDIXNGY4KML4ULM2FXMKX3/) replaces the conditional bit assignment in the reference XOF implementations with an arithmetic one, and recommends the optimized implementations, or the revised reference implementations, for deployment. This section records the proposal without evaluating it. The response attaches a revised package, `Dragon_Implementations_Update.zip`, which was not evaluated.
 
 ### Reproducing
 
@@ -46,13 +51,17 @@ Discovery: Trivial
 Exploitation: A caller that sizes the output buffer from a shorter requested length receives a write beyond it; no secret disclosure or cryptographic break shown
 Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance; independently reported by LK-PQC-Hunter (NGCC CryptHash Forum sender), using the LKQ PQC Hunter automated tool
 Date: 2026-11-17
-Follow-up source: [LK-PQC-Hunter's CryptHash Forum post](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/IMWDGRNB2DU7SUEW75S4AJTJILCGQFFW/), posted after this entry was published
+Follow-up source: [LK-PQC-Hunter's CryptHash Forum post](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/IMWDGRNB2DU7SUEW75S4AJTJILCGQFFW/), posted after this entry was published; [Dragon team's 2026-11-24 response](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/MZGRNYSEX6NDIXNGY4KML4ULM2FXMKX3/)
 
 `CryptHash` takes `digest_len_bits`, but the fixed-output implementations never read it. They return 0 and always write the instance's full 64-, 96- or 128-byte digest. A request for 256 bits from Dragon-512, with a 32-byte buffer, is therefore written 64 bytes. The three XOF instances honour the requested length, so the behaviour differs within the same submission.
 
 The witness builds all 18 fixed-output trees and calls each with requests for 256 bits and for 8 bits, in a large sentinel-filled buffer. Every call returns 0, writes the full digest, and the bytes equal those of a full-length request. The XOF builds write exactly the 32 requested bytes.
 
 Fix: return an error unless `digest_len_bits` equals `DIGEST_BIT_LENGTH`.
+
+### Proposed fixes
+
+The [Dragon team's 2026-11-24 response](https://list.niccs.org.cn/archives/list/crypthashforum@list.niccs.org.cn/message/MZGRNYSEX6NDIXNGY4KML4ULM2FXMKX3/) adds an entry check to all 18 fixed-output implementations of Dragon-512, -768 and -1024, in the reference, optimized and additional trees of both the x86 and ARM directories: `CryptHash` returns −1 when `digest_len_bits` differs from `DIGEST_BIT_LENGTH`, before it reads the message or writes any output. This is the fix given above. The response attaches a revised package, `Dragon_Implementations_Update.zip`, which was not evaluated.
 
 ### Reproducing
 

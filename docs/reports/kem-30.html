@@ -45,7 +45,7 @@
 <p>The PolarLAC team first confirmed the rejection-count channel while noting the earlier negative recovery result. It subsequently acknowledged the practical timing attack. Complete key recovery contradicts the explicit control-flow claim and is Critical under the classification policy. We validated the pinned source and both recorded recovery transcripts but have not independently rerun the 66-minute physical acquisition, so the status is Probable.</p>
 <p>Constant-time fix (moderate): use fixed-work, message-independent sampling in the re-encryption path. The complete decapsulation, including reconstruction of its coins, must have a trace independent of the decrypted message and long-term key. This gives a Medium remediation floor; the demonstrated recovery and contradicted control-flow claim determine the higher Critical severity.</p>
 <h3 id="proposed-fixes">Proposed fixes</h3>
-<p>The team's response proposes removing data-dependent rejection sampling. This records the proposal without assessing it.</p>
+<p>The <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/JPI7NMTEE2PZMSUYOVCYC7YFVCRZQJQC/">PolarLAC team's confirmation</a> (2026-10-04) says the team will make encryption constant-time by removing the data-dependent rejection sampling procedure. It names no replacement sampler or parameters. This records the proposal without assessing it.</p>
 <h3 id="reproducing">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">sh kem-30/reproduce_full_timing_recovery.sh

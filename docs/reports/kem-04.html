@@ -64,28 +64,31 @@
 sh kem-04/reproduce_key_recovery.sh     # NGCC_LONG=1 adds BAG-Piglet-256
 </code></pre>
 <p>The second script builds <code>kem-04/reproduce_key_recovery.c</code> against the unmodified reference sources. The attack uses only the public key and <code>ccakem_decaps</code> outputs; the secret key is read only by the final validation line. BAG-Piglet-128 takes about five minutes; BAG-Piglet-256 takes about an hour.</p>
-<h2 class="issue-heading" id="kem-04-3-removing-one-error-block-puts-maximal-minors-key-recovery-below-the-bag-piglet-128-target">kem-04-3: Removing one error block puts maximal-minors key recovery below the BAG-Piglet-128 target</h2>
+<h2 class="issue-heading" id="kem-04-3-maximal-minors-key-recovery-estimates-fall-below-the-bag-piglet-128-and-bag-piglet-256-targets">kem-04-3: Maximal-minors key-recovery estimates fall below the BAG-Piglet-128 and BAG-Piglet-256 targets</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
 <tr><th>Severity</th><td><span class="sev sev-critical">Critical</span></td></tr>
 <tr><th>Scope</th><td>design</td></tr>
 <tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
-<tr><th>Affected</th><td>BAG-Piglet-128 parameters; BAG-Piglet-256 is within about 2 bits of its target and is not claimed</td></tr>
+<tr><th>Affected</th><td>BAG-Piglet-128 parameters; BAG-Piglet-256 parameters by the ZD-MM estimate alone; BAG-Piglet-384 and -512 are not affected</td></tr>
 <tr><th>Discovery</th><td>Non-trivial</td></tr>
-<tr><th>Exploitation</th><td>Estimated classical key-recovery cost of 2^118.4, or 2^114.6 with the reported refinement, against a 128-bit target; no attack executed</td></tr>
+<tr><th>Exploitation</th><td>Estimated classical key-recovery cost of 2^118.4, or 2^114.6 with the reported refinement, against a 128-bit target, and 2^254.0 with that refinement against a 256-bit target; no attack executed</td></tr>
 <tr><th>Credit</th><td>Tianrui Wang, Anyu Wang, Yuxuan Li, Qicheng Teng and Bo Pang; cost replay by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
 <tr><th>Date</th><td>2026-11-23</td></tr>
 </table></div>
-<p>Original source: <a href="https://eprint.iacr.org/2026/2994">Wang et al., <em>Decoding Cost Lens: Cost Estimation for Code-Based Cryptography</em>, ePrint 2026/2994</a>, §4.4 and Tables 6–7</p>
+<p>Original source: <a href="https://eprint.iacr.org/2026/2994">Wang et al., <em>Decoding Cost Lens: Cost Estimation for Code-Based Cryptography</em>, ePrint 2026/2994</a>, §4.4 and Tables 6–7
+Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/MJW5ZUNQTBEOZZALFR7ADNALFE23OUYP/">the authors' 2026-11-24 PKC Forum announcement</a></p>
 <p>The public key is <code>s = x·h + y</code> with <code>h = (h1, h2)</code>, so the secret <code>(x, y1, y2)</code> is three blocks of length <code>n</code> and rank 4 under two equations (Equation (1), physical p. 10). Proposition 3.1 (physical p. 19) prices the maximal-minors (MM) attack on this instance with ω = 2.8 (physical p. 16), and Table 5 (physical p. 21) declares 2^148 for BAG-Piglet-128.</p>
 <p>The proposition lets the attacker guess coordinates to be zero but not puncture them, and puncturing costs nothing. Guess one coordinate of the first block and five of the third to be zero, with probability 2^-24, and puncture the other 38 coordinates of the third block. The third block is then gone. The remaining two-block system has about 2^33.7 minor variables in place of 2^50.7 and is still overdetermined. Ordinary MM costs 2^118.4 at ω = 2.8 and 2^125.2 at ω = 3.</p>
-<p>Wang et al. also give a zero-direction variant (ZD-MM), which leaves the last zero unguessed and tests every direction in one block against a kernel that is computed once. It costs 2^114.6 here. For BAG-Piglet-256 their ZD-MM estimate is 2^254.0, after rewriting the instance over <code>F_4</code>, while ordinary MM costs 2^261.8; that margin is too small to claim. BAG-Piglet-384 and -512 stay above their targets (2^394.2 and 2^567.6).</p>
+<p>Wang et al. also give a zero-direction variant (ZD-MM), which leaves the last zero unguessed and tests every direction in one block against a kernel that is computed once. It costs 2^114.6 here.</p>
+<p>BAG-Piglet-256 falls below its target by ZD-MM alone. The paper packs pairs of coordinates over <code>F_4</code>, which gives three blocks of length 39 and rank 6 with extension degree 79 (Table 1: <code>n = 78</code>, <code>m = 79</code>, key weights 6). Six guessed zeros in the first block and contraction of the second give 2^254.0 at the specification's ω = 2.8 (Table 5 declares 2^269). The estimate is 2^254.5 at ω = 2.807 and reaches 2^256 at ω = 2.833. Ordinary MM costs 2^261.8. BAG-Piglet-384 and -512 stay above their targets (2^394.2 and 2^567.6).</p>
+<p>BAG-Piglet-256 was added to this entry on 2026-11-24, after the authors' <a href="https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/MJW5ZUNQTBEOZZALFR7ADNALFE23OUYP/">PKC Forum announcement</a> listed it with BAG-Piglet-128 as below target by ZD-MM. The margin is 2 bits in the same cost model. The announcement links the estimator's source code at <code>github.com/ISYRHH/CodeBasedEstimator</code>, which was not evaluated.</p>
 <p>These are cost estimates in the specification's own model: operation counts without constants, and MM equations assumed independent. No decoding was run.</p>
 <h3 id="reproducing_2">Reproducing</h3>
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 security/rank_mm_costs.py --report-id kem-04-3
 </code></pre>
-<p>The witness finds the block-removing guess by its own search and recomputes the paper's ordinary-MM and ZD-MM key-recovery exponents for all four sets to three decimals.</p>
+<p>The witness finds the block-removing guess by its own search and recomputes the paper's ordinary-MM and ZD-MM key-recovery exponents for all four sets to three decimals. It confirms that ordinary MM is below the BAG-Piglet-128 target and that ZD-MM alone is below the BAG-Piglet-256 target.</p>
 <h2 class="issue-heading" id="kem-04-4-the-coded-bag-piglet-128-parameters-have-a-2-822-failure-rate-not-the-claimed-2-130">kem-04-4: The coded BAG-Piglet-128 parameters have a 2^-82.2 failure rate, not the claimed 2^-130</h2>
 
 <div class="table-wrap"><table class="meta issue-meta">
