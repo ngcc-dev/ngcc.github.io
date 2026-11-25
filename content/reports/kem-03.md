@@ -127,6 +127,7 @@ Exploitation: Estimated classical costs of 2^120.7, 2^221.8, 2^310.7 and 2^393.9
 Credit: Tianrui Wang, Anyu Wang, Yuxuan Li, Qicheng Teng and Bo Pang; evaluation of Theorem 3.4 and cost replay by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-11-23
 Original source: [Wang et al., *Decoding Cost Lens: Cost Estimation for Code-Based Cryptography*, ePrint 2026/2994](https://eprint.iacr.org/2026/2994), §4 and Tables 6–7
+Follow-up source: [the BRQC, BRA and C-Multi-UR-AG teams' 2026-11-25 reply](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/75FDLOEPQAYGUJS4KFKKZPTMLJPOSKST/)
 
 Theorem 3.4 (physical p. 22) prices the maximal-minors (MM) attack on a two-block instance with ranks `t1`, `t2` and support intersection `g`. After `a` coordinates are guessed to be zero, the cost is `2^(a·t) · m·N2 · T2^(ω−1)`, minimized over the guesses that leave `m·N2 ≥ T2 − 1`. Table 5 on the same page declares the MM costs below for key and message recovery. Evaluating the theorem for the submitted parameters gives much less. With ω = 2.807, as exponents of 2:
 
@@ -142,6 +143,8 @@ Each set's cheaper route is below its target, by 7 to 118 bits. With ω = 3 the 
 Wang et al. report lower costs from two refinements. Key generation fixes `1 ∈ Supp(Y)` (Algorithm 1, physical p. 6), which gives the key instance one more known coordinate, and they count the equations of the two overlapping blocks after each guess. Ordinary MM then costs 2^117.9, 2^217.1 and 2^304.9 for key recovery at the first three sets, and 2^393.5 for message recovery at BAG-Loong-512, all at ω = 2.8. Their zero-direction variant (ZD-MM) leaves the last zero unguessed and tests every direction in one block against a kernel that is computed once. It gives 2^113.1, 2^212.3 and 2^299.1 for those key recoveries and 2^386.7 for that message recovery.
 
 These are cost estimates in the specification's own model: operation counts without constants, and MM equations assumed independent. No decoding was run.
+
+In a [2026-11-25 reply](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/75FDLOEPQAYGUJS4KFKKZPTMLJPOSKST/), the BRQC, BRA and C-Multi-UR-AG teams dispute the paper's ZD-MM model. They say its equation counts do not show that the matrices have the ranks it needs, and that it has not been run on an instance. They also say that the paper's coefficient matrix for BAG-Loong's merged errors is not fully reduced. The costs claimed here come from Theorem 3.4 itself, with the specification's own equation count, and do not use ZD-MM. The ZD-MM figures above are the paper's and have not been validated.
 
 ### Reproducing
 

@@ -187,6 +187,7 @@ Exploitation: Estimated classical key-recovery costs of 2^116.0, 2^166.5 and 2^3
 Credit: Tianrui Wang, Anyu Wang, Yuxuan Li, Qicheng Teng and Bo Pang; exponent sensitivity and cost replay by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
 Date: 2026-11-23
 Original source: [Wang et al., *Decoding Cost Lens: Cost Estimation for Code-Based Cryptography*, ePrint 2026/2994](https://eprint.iacr.org/2026/2994), §4.4 and Tables 6–7
+Follow-up source: [the BRQC, BRA and C-Multi-UR-AG teams' 2026-11-25 reply](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/75FDLOEPQAYGUJS4KFKKZPTMLJPOSKST/)
 
 The public key gives `s = x + h·y` in `R = F_(2^m)[X]/⟨P(X)⟩`, where the secrets `x` and `y` have ranks `w_x` and `w_y` (Algorithm 3). The specification treats this as a rank-decoding instance over `F_(2^m)` with two blocks of length `n`, and prices the maximal-minors (MM) attack on it at 2^194, 2^304 and 2^556 with ω = 2 (Table 6, "Attack-2n", physical p. 30). In all three sets `n` is nearly twice `m`.
 
@@ -201,6 +202,8 @@ The public key gives `s = x + h·y` in `R = F_(2^m)[X]/⟨P(X)⟩`, where the se
 The first column reproduces Table 6 with the same search, so the drop comes from the transposition alone. The specification sets ω = 2 as its conservative choice (physical p. 29), and under it all three sets are below target. BRA-256 and BRA-512 stay below target for every ω up to 3. BRA-128 is above its target from ω = 2.807. Wang et al.'s zero-direction variant (ZD-MM) lowers the ω = 2 costs to 2^112.1, 2^161.8 and 2^316.8.
 
 These are cost estimates in the specification's own model: operation counts without constants, and MM equations assumed independent. No decoding was run.
+
+In a [2026-11-25 reply](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/75FDLOEPQAYGUJS4KFKKZPTMLJPOSKST/), the BRA team, with the BRQC and C-Multi-UR-AG teams, disputes the paper's ZD-MM model. They say its equation counts do not show that the matrices have the ranks it needs, and that it has not been run on an instance. They also say that the number of independent equations depends on the order of the blocks and is the minimum over all orders, as in their ePrint 2025/668. The costs claimed here are ordinary MM on overdetermined systems, the case the reply accepts, and their counts are already that minimum. At the cheapest configurations the equations outnumber the unknowns by 1.9%, 5.5% and 1.1% at BRA-128, -256 and -512, so the estimates need those equations to be independent, as the specification's Table 6 assumes. The reply does not address the transposition. The ZD-MM figures above are the paper's and have not been validated.
 
 ### Reproducing
 
