@@ -49,7 +49,7 @@ and reproduction steps.</p>
 </ul>
 <p>Separate <a href="../constant-time/index.html">constant-time reviews</a> cover all candidates
 at source level; a review without a finding is not a security certification.</p>
-<p class="report-totals">579 active findings across 119 reports: 306 implementation, 216 design, 57 side-channel; 5 withdrawn records.</p>
+<p class="report-totals">580 active findings across 119 reports: 306 implementation, 217 design, 57 side-channel; 5 withdrawn records.</p>
 
 <h2 id="sign">Signatures</h2>
 <div class="table-wrap"><table class="reports">
@@ -489,9 +489,10 @@ at source level; a review without a finding is not a security certification.</p>
 <tr><td class="severity"><span class="sev sev-critical">Critical</span></td><td class="scope">implementation</td><td class="updated"><time datetime="2026-10-06">2026-10-06</time></td><td><span class="issue-status status-confirmed">Confirmed</span> <a href="../reports/kem-40.html#kem-40-5-truncated-encryption-seed-permits-a-2440-challenge-key-distinguisher-at-the-512-bit-level"><code>kem-40-5</code> Truncated encryption seed permits a 2^440 challenge-key distinguisher at the 512-bit level</a></td></tr>
 <tr><td class="severity"><span class="sev sev-medium">Medium</span></td><td class="scope">implementation</td><td class="updated"><time datetime="2026-11-16">2026-11-16</time></td><td><span class="issue-status status-confirmed">Confirmed</span> <a href="../reports/kem-40.html#kem-40-6-a-failed-hash-makes-the-encryption-coins-public"><code>kem-40-6</code> A failed hash makes the encryption coins public</a></td></tr>
 <tr><td class="severity"><span class="sev sev-low">Low</span></td><td class="scope">implementation</td><td class="updated"><time datetime="2026-11-16">2026-11-16</time></td><td><span class="issue-status status-confirmed">Confirmed</span> <a href="../reports/kem-40.html#kem-40-7-encapsulation-ignores-the-declared-public-key-length"><code>kem-40-7</code> Encapsulation ignores the declared public-key length</a></td></tr>
-<tr><td rowspan="3" class="report-id"><a href="../reports/kem-41.html"><code>kem-41</code></a></td><td rowspan="3"><a href="../reports/kem-41.html">ZEN</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kem-41/kem-41-spec.pdf" title="Open the kem-41 specification PDF">PDF</a></td><td rowspan="3" class="family">Lattice (NTRU)</td><td class="severity"><span class="sev sev-medium">Medium</span></td><td class="scope">design</td><td class="updated"><time datetime="2026-10-03">2026-10-03</time></td><td><span class="issue-status status-proof-gap">Proof gap</span> <a href="../reports/kem-41.html#kem-41-1-the-numerical-dfr-model-averages-over-messages-while-the-proof-assumes-worst-case-correctness"><code>kem-41-1</code> The numerical DFR model averages over messages while the proof assumes worst-case correctness</a></td></tr>
+<tr><td rowspan="4" class="report-id"><a href="../reports/kem-41.html"><code>kem-41</code></a></td><td rowspan="4"><a href="../reports/kem-41.html">ZEN</a> <a class="pdf-link" href="https://cdn.jsdelivr.net/gh/ngcc-dev/ngcc-harness@dc66c6cb3c06e75bdea0048e21fa4e13c63f00af/kem-41/kem-41-spec.pdf" title="Open the kem-41 specification PDF">PDF</a></td><td rowspan="4" class="family">Lattice (NTRU)</td><td class="severity"><span class="sev sev-medium">Medium</span></td><td class="scope">design</td><td class="updated"><time datetime="2026-10-03">2026-10-03</time></td><td><span class="issue-status status-proof-gap">Proof gap</span> <a href="../reports/kem-41.html#kem-41-1-the-numerical-dfr-model-averages-over-messages-while-the-proof-assumes-worst-case-correctness"><code>kem-41-1</code> The numerical DFR model averages over messages while the proof assumes worst-case correctness</a></td></tr>
 <tr><td class="severity"><span class="sev sev-medium">Medium</span></td><td class="scope">implementation</td><td class="updated"><time datetime="2026-10-22">2026-10-22</time></td><td><span class="issue-status status-confirmed">Confirmed</span> <a href="../reports/kem-41.html#kem-41-2-key-generation-ignores-xof-failure-and-can-return-decryption-keys-sampled-from-stale-stack-data"><code>kem-41-2</code> Key generation ignores XOF failure and can return decryption keys sampled from stale stack data</a></td></tr>
 <tr><td class="severity"><span class="sev sev-low">Low</span></td><td class="scope">side-channel</td><td class="updated"><time datetime="2026-11-15">2026-11-15</time></td><td><span class="issue-status status-confirmed">Confirmed</span> <a href="../reports/kem-41.html#kem-41-3-decoding-stores-each-bit-at-a-secret-selected-address"><code>kem-41-3</code> Decoding stores each bit at a secret-selected address</a></td></tr>
+<tr><td class="severity"><span class="sev sev-high">High</span></td><td class="scope">design</td><td class="updated"><time datetime="2026-11-26">2026-11-26</time></td><td><span class="issue-status status-lead">Lead</span> <a href="../reports/kem-41.html#kem-41-4-a-weak-key-failure-search-over-280-zen-512-public-keys-is-estimated-at-2354"><code>kem-41-4</code> A weak-key failure search over 2^80 ZEN-512 public keys is estimated at 2^354</a></td></tr>
 </tbody></table></div>
 <h2 id="kex">Key exchange</h2>
 <div class="table-wrap"><table class="reports">
@@ -653,7 +654,7 @@ at source level; a review without a finding is not a security certification.</p>
 </tbody></table></div>
 </main>
 <footer class="site-footer">
-<p>Updated 2026-11-25 20:49:23 UTC · Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
+<p>Updated 2026-11-27 08:39:29 UTC · Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>
 <p>Submissions are welcome via <a href="https://github.com/ngcc-dev/ngcc-harness/issues">GitHub issues</a>.</p>
 </footer>
 </body>

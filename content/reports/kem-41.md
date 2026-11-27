@@ -116,3 +116,36 @@ sed -n '183,186p' kem-41/Implementations/Reference_Implementation/ZEN_128/pke.c
 ```
 
 This is a source witness.
+
+## kem-41-4: A weak-key failure search over 2^80 ZEN-512 public keys is estimated at 2^354
+
+Severity: High
+Status: Lead
+Layer: Design
+Affected: ZEN-512 parameters; the other rows were not analysed
+Discovery: Non-trivial
+Exploitation: Estimated 2^354.5 work for one decryption failure among 2^80 public keys, with 2^80 decapsulations per key; no failure was produced and no key recovery is shown
+Credit: Chenyi Li, with GPT assistance
+Date: 2026-11-26
+Original source: [Chenyi Li's PKC Forum post](https://list.niccs.org.cn/archives/list/pkcforum@list.niccs.org.cn/message/YSXCHC7DBSV436HRPINO5YL2UHOOUCJY/)
+
+Table 2 (physical p. 24) prices a decryption-failure attack on ZEN-512 at 2^748.4 classical operations within 2^80 queries, counting one failure as success, for one key and uniform messages. Decryption works on `τ(g·s + f·U) + κ·f·m` before reduction modulo `q`, where `U` is the encryption error plus the compression error and, in blocks of four coefficients, `τ = 1 + Y²` and `κ = Y² + Y³` (§5.3). A message bit set to one thus adds `f2 + 2·f3 + f4` of its paired block of `f` to a sum that the failure bound of §5.3 compares with `q = 769`.
+
+The post fixes 212 message bits to one and draws the other 300 at random. A key is weak when at least 34 of the 212 paired blocks have `f2 + 2·f3 + f4 ≥ 3`, which adds at least 102 to that sum; this has probability 2^-78.5. The attacker keeps a candidate ciphertext only if two squared norms of its own randomness, compression error and message pass thresholds. A fraction 2^-194.5 pass, and a kept candidate fails with probability 2^-80.0 on average over weak keys: one expected failure for 2^274.5 candidate encryptions and 2^80 decapsulations. Weak keys cannot be recognised, so the search runs on each of 2^80 public keys, about 2.8 of them weak, for 2^354.5 work against the 512-bit target. The post's quantum figure, 2^257.2, is above the 256-bit target.
+
+The witness recomputes the post's figures to six decimals with its own enumeration. With the exact law of the `g·s` term in place of the post's Gaussian approximation, the failure probability is 2^-79.85. The limits are:
+
+- **Query count.** The search makes 2^160 decapsulations, against an evaluation budget of 2^80. On a key drawn at random the same search fails with probability 2^-123.9, and a screen that 2^-843 of candidates pass still gives 2^-83.7, so the figure needs the key pool.
+- **Average rate.** The failure probability is an average over weak keys; its spread over single keys was not computed.
+- **Model.** Compression errors are taken as independent, with the law of a uniform input. The tested event is one that the specification's bound counts as a failure; the decoder was not run.
+- **Outcome.** No failure was produced. One failure is the specification's own success criterion (§5.5), and no key recovery from failures is shown.
+
+Hence High / Lead: the figure is not a below-target attack within the evaluation budget.
+
+### Reproducing
+
+```sh
+python3 kem-41/reproduce_failure_search.py
+```
+
+The script needs NumPy and about 1 GB of memory and runs in about two minutes. It is an independent implementation that confirms the post's arithmetic in the post's model. The post's archive, `Zen-computation.zip`, was not downloaded or run.
