@@ -168,6 +168,29 @@ python3 kem-34/reproduce_parameters.py
 <pre><code class="language-sh">sh kem-34/reproduce_stale_encaps_key.sh
 </code></pre>
 <p>The witness wraps <code>malloc</code> to fail the third allocation of the encapsulation and requires Mallory to predict the Alice–Bob key in that run only.</p>
+<h2 class="issue-heading" id="kem-34-8-the-specified-minal-decoder-does-not-recover-noise-free-codewords">kem-34-8: The specified Minal decoder does not recover noise-free codewords</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>The written decoders, Algorithms 7 and 9, for all six parameter sets; the submitted reference and optimized code uses a different rule and is not affected</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>A decoder written from the specification returns the value 2 for an outer bit on 12 of the 16 exact codewords, and Algorithm 9 as printed discards its input; no failure of the submitted code and no security consequence is shown</td></tr>
+<tr><th>Credit</th><td>Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, with MechCrypto assistance; Algorithm 7 defect by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-28</td></tr>
+</table></div>
+<p>Reference: <a href="https://eprint.iacr.org/2026/3050">Wang, Cao, Wu, Li and Gao, <em>MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates</em>, ePrint 2026/3050</a>; <a href="https://github.com/MechMath/NGCC-results/tree/main/key-encapsulation/kem-34_Rudraksh2">result for this candidate</a></p>
+<p>Algorithm 9, <code>Rudraksh2.Decode</code> (physical p. 8), opens with <code>c ← 0</code>, which overwrites the noisy codeword it receives, and ends with <code>return c</code> instead of the message. Both lines repeat Algorithm 8, the encoder. Read as printed, the decoder returns the zero vector for every input.</p>
+<p>Algorithm 7, <code>MinalB2.Decode</code> (physical p. 7), has a separate defect in the outer bits. Lines 11–13 set <code>(δx, δy) ← c − c_best mod± q</code>, <code>m0 ← ⌊|δx|/⌊q/4⌉⌋</code> and <code>m1 ← ⌊|δy|/⌊q/4⌉⌋</code>. An outer bit equal to one adds <code>⌊q/2⌉</code> to its coordinate (Algorithm 6), and the centred residue of that value has absolute value <code>(q − 1)/2</code>. The three moduli 3329, 4001 and 7681 (Table 1, physical p. 10) are all 1 modulo 4, so <code>(q − 1)/2 = 2·⌊q/4⌉</code> and the quotient is 2, outside the declared output <code>Z_2^4</code>. On exact codewords, lines 12–13 therefore return the right bits only for the four symbols with <code>m0 = m1 = 0</code>. The text before the algorithm describes the intended rule, the nearest of the four candidates for <code>(m0, m1)</code>, which the quotient does not implement at this point.</p>
+<p>The submitted code does neither. <code>poly_tomsg</code> reads the input polynomial and returns the message (<code>Implementations/Reference_Implementation/lwekem128/poly.c:222–240</code>), and <code>minal_b2_code_decode</code> sets each outer bit with the comparison <code>abs(dx) &gt; B2_MINAL_HALF_Q / 2</code> (<code>minal.c:139–144</code>). The 256 and 512 levels and the optimized tree use the same comparison. A literal transcription of Algorithms 6 and 7 recovers 4 of the 16 noise-free symbols for every <code>(q, β)</code> of Table 1; the submitted codec recovers all 16.</p>
+<p>The defect is confined to the written specification. An implementation that follows Algorithms 7 and 9 literally does not decode ciphertexts that the submitted code decodes. The reporters identified the Algorithm 9 lines.</p>
+<h3 id="reproducing_7">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">pdftotext -f 7 -l 8 -layout kem-34/kem-34-spec.pdf - | grep -nE 'm0 ←|m1 ←|c ← 0|return c|Algorithm (7|9)'
+sed -n '139,144p' kem-34/Implementations/Reference_Implementation/lwekem128/minal.c
+</code></pre>
+<p>This is a source witness.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

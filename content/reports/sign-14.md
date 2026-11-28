@@ -115,3 +115,57 @@ Ignoring the hidden constant, this contributes about `2 Q_sig D/2^(lambda-n)` to
 ```sh
 python3 sign-14/reproduce_quantum_tccr_bound.py
 ```
+
+## sign-14-5: The 160-bit sets add the first Lynx constant to both S-box inputs
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: Lynxer-160s and Lynxer-160f; reference and optimized implementations
+Discovery: Trivial
+Exploitation: The implemented one-way function differs from the specified one, and a signer or verifier written from the specification does not interoperate; no attack shown
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance, in this candidate's specification notes of 2026-09-21; independently reported by Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, using MechCrypto
+Date: 2026-11-28
+Reference: [Wang, Cao, Wu, Li and Gao, *MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates*, ePrint 2026/3050](https://eprint.iacr.org/2026/3050); [result for this candidate](https://github.com/MechMath/NGCC-results/tree/main/digital-signature/sign-14_Lynxer)
+
+Lynx is specified as `v1 = S1(k + c1)` and `v2 = S2(L0(k) + c2)` (Eq. 5 and 6, physical p. 22). `Lynx.SampleMatVec` derives `c1` and `c2` as two separate slices of the expanded `iv_owf` (§5.5.1, physical p. 39), and `Lynx.ExtendWitness` adds `c2` to `L0·k` for λ = 160 (§5.5.2 line 4, physical p. 40).
+
+The 160-bit code never uses the second constant. `owf_lynx_160` loads only `mats.C0` and computes `v1 = S1(k + c0)` and `v2 = S2(L0k + c0)` (`owf.c:600–605`). The witness extension does the same (`owf.c:763–766`), and the QuickSilver prover and verifier for λ = 160 load only `C0` (`quicksilver.c:335,396`). `lynx_init` still squeezes both constants (`lynx_matrices.c:484–485`), so `C1` is generated and discarded. The paths for 256, 384 and 512 bits use `C0` for the first S-box and `C1` for the second (`owf.c:654–661`). The optimized tree makes the same choice and says so in a comment, "160-bit: S2 uses c0 (same as S1)" (`lynx_owf.hpp:50–51`).
+
+Key generation, signing and verification in the submitted code agree with each other, and the KATs were produced by this function. An implementation of the specified Lynx-160 computes a different public value `t` from the same `(iv_owf, k)` and cannot verify the submitted signatures. The two S-box inputs share one constant where the design has two independent ones; no consequence for one-wayness was derived. The specification states `c2` in three places, so this is a conflict and not a misprint.
+
+### Reproducing
+
+```sh
+sed -n '600,605p' sign-14/Implementations/Reference_Implementation/Lynxer-160f/owf.c
+grep -n -A1 '160-bit: S2 uses c0' sign-14/Implementations/Optimized_Implementation/Lynxer-160f/lynx_owf.hpp
+```
+
+This is a source witness.
+
+## sign-14-6: The sampled linear layers are read with the wrong row stride, which puts Lynxer-160 key recovery at about 2^141.5
+
+Severity: High
+Status: Confirmed
+Layer: Implementation
+Affected: Lynxer-160s/f (key recovery below the design level); Lynxer-256s/f and Lynxer-384s/f (rank loss, no attack below target); reference and optimized implementations; Lynxer-512s/f are unaffected
+Discovery: Non-trivial
+Exploitation: Key recovery from the public key in about 2^141.5 bit operations at Lynxer-160: 2^100 guesses, each solved by degree-3 XL, run at full size for the correct guess on two keys; below the specified 160-bit level, above the 128-bit NGCC target; no route below target at 256 or 384 bits
+Credit: Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, with MechCrypto assistance; rank measurement and key-recovery route by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-28
+Reference: [Wang, Cao, Wu, Li and Gao, *MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates*, ePrint 2026/3050](https://eprint.iacr.org/2026/3050); [result for this candidate](https://github.com/MechMath/NGCC-results/tree/main/digital-signature/sign-14_Lynxer)
+
+The specification samples `L0`, `L1` and `L2` as invertible λ×λ binary matrices (footnote 4, physical p. 23; physical p. 60). `lynx_init` stores them in `uint64_t L[512][8]`, eight words per row (`lynx_matrices.h:15–23`), but the one-way function and the QuickSilver constraints read them with ⌈λ/64⌉ words per row (`owf.c:595–597,648–650,678–680`; `quicksilver.c:325–327,786–788,1038–1040`). Only λ = 512 is read as stored; `L3` is copied in contiguously. The optimized tree and the KATs share the behaviour (`owf_proof.inc:169–182`). As read, the matrices have rank 100 of 160, 128 of 256 and 382 to 384 of 384, and adding a kernel vector of `L0` to the key leaves the second S-box output `v2` unchanged.
+
+At λ = 160 this gives a key-recovery route. Guessing `u = L0(k)`, one of 2^100 values, fixes `v2 = S2(u + c0)` and `L2(v2)`, so the output `y = L1(v1)·L2(v2) + L3(k + v1 + v2)` is linear in `(k, v1)` and leaves 60 unknowns. The inverse S-box `v1 = (k + c0)^-1` gives the relations `x·v1 = 1`, `x²v1 = x`, `xv1² = v1`, `x⁴v1 = x³` and `xv1⁴ = v1³` with `x = k + c0`: 800 quadratic equations, which plain XL solves at degree 3. On two keys from the submitted code, the correct guess solved to the secret key in 2^35.5 word operations, about 14 seconds, and a wrong guess was inconsistent. The total is about 2^141.5 bit operations, against the specified 160-bit level and the 2^184.6 of Table 14 (physical p. 63). The guess-and-determine argument (physical p. 64) assumes that guessing an S-box input costs 2^λ.
+
+The route stays above the NGCC target for this set, 128 bits classical; a Grover search over the guesses with a degree-2 oracle is estimated at about 2^85.6 gates, against 80 bits quantum. At λ = 256 the 2^128 guesses leave 384 unknowns because of the `(k + c2)^-1` factor, and no per-guess solver below 2^128 was found. The 2^100 enumeration was not run.
+
+### Reproducing
+
+```sh
+sh sign-14/reproduce_matrix_stride.sh
+sh sign-14/reproduce_lynx160_key_recovery.sh
+```
+
+The first script measures the ranks in Lynxer-160f, -256f, -384f and -512f built from the unmodified sources, and checks the invariance of `v2` through the exported `lynx_extend_witness` (about 30 seconds). The second builds the submitted Lynxer-160f code and the XL solver `sign-14/reproduce_lynx160_xl.c`, solves the system for the correct guess from the public key, and requires the secret key, the same `y`, and rejection of a wrong guess (about 35 seconds per seed; OpenMP and BMI2).

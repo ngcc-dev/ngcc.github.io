@@ -121,6 +121,29 @@
 <pre><code class="language-sh">sh hash-35/reproduce_spec_mismatch.sh
 </code></pre>
 <p>The witness regenerates each KAT_2_12 file with the shipped NGCC generator and uses it only if its canonical SHA-256 equals the official file's entry in <code>hash-35/kat.sha256</code>.</p>
+<h2 class="issue-heading" id="hash-35-6-algorithm-2-sets-the-final-block-constant-to-1c-while-section-34-and-the-code-use-0c11">hash-35-6: Algorithm 2 sets the final-block constant to 1^c, while Section 3.4 and the code use 0^(c−1)1</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Specification Algorithm 2, Wish512 and Wish1024; all submitted implementations follow Section 3.4</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>An implementation written from Algorithm 2 feeds a different value into the final permutation call of every message; shown for the empty message of Wish512; no security consequence was identified</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance, in this candidate's specification notes of 2026-09-21; independently reported by Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, using MechCrypto</td></tr>
+<tr><th>Date</th><td>2026-11-28</td></tr>
+</table></div>
+<p>Reference: <a href="https://eprint.iacr.org/2026/3050">Wang, Cao, Wu, Li and Gao, <em>MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates</em>, ePrint 2026/3050</a>; <a href="https://github.com/MechMath/NGCC-results/tree/main/hash-function/hash-35_Wish">result for this candidate</a></p>
+<p>Section 3.4 (physical p. 7) defines the separation constant as <code>θ = 0^(c−1)1</code> and XORs it into the capacity part of the final block. Algorithm 2, which Section 3.5 presents as the pseudo-code of the hash function, sets <code>θ = 1^c</code> on line 3 and applies it on line 8 (physical p. 9). The exponent is typeset as a superscript, like <code>0^c</code> on the same line, so the line reads as the all-ones string of <code>c</code> bits. The two values differ in <code>c − 1</code> bits.</p>
+<p>The reference implementation uses the Section 3.4 value: <code>theta[15] = 0x01</code> is XORed into the last lane when the last block is processed (<code>Wish512_reference/wish.c:185–190</code>; <code>Wish1024_reference/wish.c</code> is the same file). The eight trees under <code>Optimized_Implementation</code> and <code>Additional_Implementation</code> define the same constant.</p>
+<p>θ enters every hash computation, because every message has a final block. For the empty message the Wish512 reference returns a digest beginning <code>91981d2518ab20a5</code>. A copy of the reference in which only the constant is changed, to all-ones over the four capacity lanes, returns a digest beginning <code>faad7e6c551e40fb</code>. An implementation written from Algorithm 2 therefore does not interoperate with the submitted code.</p>
+<p>Either value puts a non-zero constant into the capacity of the final block only, which is what the length-extension argument of the specification uses (physical p. 15). The prose definition and all submitted code agree, and only the one assignment in Algorithm 2 differs; the specification contains no test vectors.</p>
+<h3 id="reproducing_5">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sed -n '185,190p' &quot;hash-35/Wish/Implementations/Reference_Implementation/Wish512_reference/wish.c&quot;
+pdftotext -f 7 -l 9 -layout hash-35/hash-35-spec.pdf - | grep -e 'Separation constant' -e 'θ = 1c'
+</code></pre>
+<p>This is a source witness.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

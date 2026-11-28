@@ -168,6 +168,27 @@ prints each one's fresh, primed and scrubbed verdicts, and takes about 20 second
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">sh sign-25/reproduce_leak.sh
 </code></pre>
+<h2 class="issue-heading" id="sign-25-6-verification-ignores-the-declared-signature-length-and-reads-past-a-short-signature">sign-25-6: Verification ignores the declared signature length and reads past a short signature</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All sixteen instances (Levels 1, 2, 3 and 5; eff and sec; compressed and uncompressed), reference and optimized implementations, by source</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>A signature declared one byte short, or as one byte, makes Level1-eff verification read past it and fault at a guard page; no disclosure, forgery or key recovery</td></tr>
+<tr><th>Credit</th><td>Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, with MechCrypto assistance</td></tr>
+<tr><th>Date</th><td>2026-11-28</td></tr>
+</table></div>
+<p>Reference: <a href="https://eprint.iacr.org/2026/3050">Wang, Cao, Wu, Li and Gao, <em>MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates</em>, ePrint 2026/3050</a>; <a href="https://github.com/MechMath/NGCC-results/tree/main/digital-signature/sign-25_SQIsign2D2">result for this candidate</a></p>
+<p><code>sig_verify</code> casts <code>pk_len_bytes</code> and <code>sn_len_bytes</code> to <code>void</code> and calls <code>protocols_verif(sn, pk, m, m_len_bytes)</code> (<code>sqisign/SIG_AlgorithmInstance.c:58–67</code>). <code>protocols_verif</code> passes the two pointers to <code>public_key_from_bytes</code> and <code>signature_from_bytes</code> (<code>sqisign/sign.c:1290–1300</code>), and neither takes a length. In both the compressed and the uncompressed branch, <code>signature_from_bytes</code> first decodes a curve coefficient (<code>pack.c:295–333</code>) through <code>fp2_decode</code>, which calls <code>fp_decode</code> at offsets 0 and <code>FP_ENCODED_BYTES</code> (<code>fp2.c:82–88</code>). <code>fp_decode</code> copies <code>FP_ENCODED_BYTES</code> bytes from the source pointer (<code>fp.c:169–173</code>). That constant is 32 at Level1-eff and between 34 and 134 at the other levels (<code>ec_arithmetic/include/encoded_sizes.h:7</code>). The remaining fields are read at fixed offsets up to <code>SIGNATURE_BYTES</code>.</p>
+<p>A caller that holds a signature shorter than <code>SIGNATURE_BYTES</code> and declares its true length therefore has the verifier read beyond the buffer before any validity check. If the memory after the buffer is unmapped, the process terminates instead of returning the invalid-signature result. A short public key is read the same way. All eight reference and all eight optimized source directories contain the same wrapper and decoder.</p>
+<p>Only reads are involved, and the bytes read are not returned to the caller. With Level1-eff built from the unmodified sources, uncompressed and compressed, an honest signature whose bytes end at an inaccessible page verifies. Declared one byte short or as a single byte, the same placement terminates the verifier with a segmentation fault, as the reporters describe for the one-byte case. Callers that always pass full-length buffers are unaffected.</p>
+<h3 id="reproducing_5">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh sign-25/reproduce_short_signature.sh
+</code></pre>
+<p>The script checks the wrapper and <code>fp_decode</code> in all 16 source directories, then builds Level1-eff in both variants with <code>sign-25/reproduce_short_signature.c</code> and verifies a full-length, a one-byte-short and a one-byte signature placed before a <code>PROT_NONE</code> page. It needs GMP and runs in about 20 seconds.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

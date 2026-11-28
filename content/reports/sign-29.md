@@ -189,3 +189,36 @@ grep -n 'define TAU\|define Omega' sign-29/Implementations/Reference_Implementat
 ```
 
 This is a source witness: the same expression with τ = 12, 24 and 47. The acceptance rates came from calling the archived `ExpandChallengePoint` on 200,000 counters per set and are not part of the witness.
+
+## sign-29-9: Algorithms 16 and 17 hash different Hash2 transcripts, so a verifier written from the specification rejects honest signatures
+
+Severity: Low
+Status: Confirmed
+Layer: Design
+Affected: Tins128, Tins256 and Tins512 specification; the nine submitted implementation trees all use the Algorithm 16 order
+Discovery: Trivial
+Exploitation: A verifier that follows Algorithm 17 as printed rejects signatures from Algorithm 16 and from the submitted code; no forgery or key recovery
+Credit: Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, with MechCrypto assistance
+Date: 2026-11-28
+Reference: [Wang, Cao, Wu, Li and Gao, *MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates*, ePrint 2026/3050](https://eprint.iacr.org/2026/3050); [result for this candidate](https://github.com/MechMath/NGCC-results/tree/main/digital-signature/sign-29_Tins)
+
+Algorithm 16 (Sign, physical p. 16, line 8) computes
+
+`h_piop = Hash2(seed_pk, salt, msg, h_sh, p_mid[0], …, p_mid[τ−1], p_base[0], …, p_base[τ−1], v_{n−1})`.
+
+Algorithm 17 (Verify, physical p. 17, line 6) recomputes
+
+`h'_piop = Hash2(seed_pk, v_{n−1}, salt, msg, h_sh, p_mid[0], p_base[0], …, p_mid[τ−1], p_base[τ−1])`
+
+and accepts when the two digests are equal. The two inputs place `v_{n−1}` at different positions and order the `p_mid` and `p_base` values differently. For an honest signature they are different strings, so the comparison fails except on a hash collision. The protocol description gives a third form, with interleaved pairs after `h_sh`, in both its signing and its verification step (physical pp. 8–9). The specification therefore does not fix one transcript.
+
+The submitted code uses the Algorithm 16 order on both sides. In Tins256 the signer builds `0x02 ‖ seed_pk ‖ salt ‖ msg ‖ h_sh ‖ p_mid ‖ p_base ‖ v_{n−1}` (`SIG_TINS256.c:273–287`) and the verifier builds the same string (`:416–430`). Tins128 (`SIG_TINS128.c:277–288,419–430`) and Tins512 (`SIG_TINS512.c:274–292,426–439`) do the same, and so do the optimized and additional trees. A verifier written independently from Algorithm 17 would reject every signature the submitted signer produces, and the choice between the printed orders can only be settled from the source. No security consequence follows.
+
+### Reproducing
+
+```sh
+d="sign-29/Implementations/Reference_Implementation/Tins256"
+sed -n '273,287p' "$d/SIG_TINS256.c"; sed -n '416,430p' "$d/SIG_TINS256.c"
+```
+
+This is a source witness.

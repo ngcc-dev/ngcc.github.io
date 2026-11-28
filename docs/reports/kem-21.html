@@ -111,6 +111,29 @@ objdump -dl --no-show-raw-insn /tmp/viper_e8.o |
 <pre><code class="language-sh">sh kem-21/reproduce_mu_unchecked.sh
 </code></pre>
 <p>The witness checks the self-comparison in all ten trees, then builds each reference level and decapsulates 50 ciphertexts with an arbitrary <code>µ</code>. All must return the valid-path key; the same ciphertexts with one flipped bit of <code>u</code> must not.</p>
+<h2 class="issue-heading" id="kem-21-5-the-submitted-e8-codec-labels-message-blocks-differently-from-the-specified-labelling">kem-21-5: The submitted E8 codec labels message blocks differently from the specified labelling</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All five MAMBA-Viper levels, reference and optimized implementations; Algorithms 1, 2, 9 and 10 of the specification</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>An implementation written from the specified labelling does not interoperate with the submitted code; the two maps were compared over every block value; no security consequence</td></tr>
+<tr><th>Credit</th><td>Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, with MechCrypto assistance; labelling comparison by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-28</td></tr>
+</table></div>
+<p>Reference: <a href="https://eprint.iacr.org/2026/3050">Wang, Cao, Wu, Li and Gao, <em>MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates</em>, ePrint 2026/3050</a>; <a href="https://github.com/MechMath/NGCC-results/tree/main/key-encapsulation/kem-21_MAMBA-Viper">result for this candidate</a></p>
+<p>Algorithm 1 (physical p. 7) splits each message block into integers <code>a_0, …, a_7</code> of widths <code>β = (b−1, b, b, b, b, b, b, b+1)</code> and stores <code>Label_E8(a)</code>. Algorithm 9 (physical p. 26) defines the label as <code>λ = B_E8·a mod M·Z^8</code> for a displayed basis <code>B_E8</code>, with <code>M = 2^b</code>, and the text below it stores <code>α·λ mod q</code> with <code>α = q/M</code>. Algorithm 10 inverts the map with <code>B_E8^-1</code>.</p>
+<p>The submitted code uses another bijection. <code>viper_e8_encode</code> reads the block as one integer <code>label</code> and stores <code>d[j]·(α/2)</code>, where <code>d = e8_unrank(label)</code> is the <code>label</code>-th vector, in lexicographic order, of <code>{0, …, 2M−1}^8</code> with equal parities and coordinate sum divisible by 4 (<code>viper_e8.c:49–70,91–96,176–188</code>). Decoding inverts it with <code>e8_rank</code> (<code>:72–89,190–203</code>). The file is identical in all ten trees.</p>
+<p>Both maps reach the same <code>2^(8b)</code> cosets but assign them to different messages. Evaluated over every block value, they agree on 4 of 256 at <code>b = 1</code> (Viper-128, -192, -256) and on 4 of 65,536 at <code>b = 2</code> (Viper-384, -512). For the Viper-128 block with only message bit 0 set, Algorithm 9 gives <code>(2048, 2048, 0, 0, 0, 0, 0, 0)</code> and the code gives <code>(0, 0, 0, 0, 0, 0, 2048, 2048)</code>.</p>
+<p>An implementation written from Algorithms 1, 2, 9 and 10 therefore produces different ciphertexts from the same message and coins, and each side decodes the other's ciphertexts to a different message and rejects them. Section 8.11 (physical p. 27) requires message encoding to match the reference output, so the written labelling cannot be followed. The reporters noted that the numbered Algorithms 1 and 2 omit the scaling by <code>α</code> and its inverse, which only the text of Section 8.8 supplies. There is no security consequence.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">pdftotext -f 26 -l 26 -layout kem-21/kem-21-spec.pdf - | grep -A6 'Algorithm 9'
+sed -n '49,70p;176,188p' kem-21/Implementations/Reference_Implementation/MAMBA-Viper-128/viper_e8.c
+</code></pre>
+<p>This is a source witness. The comparison of the two maps was run with a driver around the archived <code>viper_e8.c</code> and is not part of it.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

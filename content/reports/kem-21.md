@@ -104,3 +104,32 @@ sh kem-21/reproduce_mu_unchecked.sh
 ```
 
 The witness checks the self-comparison in all ten trees, then builds each reference level and decapsulates 50 ciphertexts with an arbitrary `µ`. All must return the valid-path key; the same ciphertexts with one flipped bit of `u` must not.
+
+## kem-21-5: The submitted E8 codec labels message blocks differently from the specified labelling
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: All five MAMBA-Viper levels, reference and optimized implementations; Algorithms 1, 2, 9 and 10 of the specification
+Discovery: Moderate
+Exploitation: An implementation written from the specified labelling does not interoperate with the submitted code; the two maps were compared over every block value; no security consequence
+Credit: Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, with MechCrypto assistance; labelling comparison by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-28
+Reference: [Wang, Cao, Wu, Li and Gao, *MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates*, ePrint 2026/3050](https://eprint.iacr.org/2026/3050); [result for this candidate](https://github.com/MechMath/NGCC-results/tree/main/key-encapsulation/kem-21_MAMBA-Viper)
+
+Algorithm 1 (physical p. 7) splits each message block into integers `a_0, …, a_7` of widths `β = (b−1, b, b, b, b, b, b, b+1)` and stores `Label_E8(a)`. Algorithm 9 (physical p. 26) defines the label as `λ = B_E8·a mod M·Z^8` for a displayed basis `B_E8`, with `M = 2^b`, and the text below it stores `α·λ mod q` with `α = q/M`. Algorithm 10 inverts the map with `B_E8^-1`.
+
+The submitted code uses another bijection. `viper_e8_encode` reads the block as one integer `label` and stores `d[j]·(α/2)`, where `d = e8_unrank(label)` is the `label`-th vector, in lexicographic order, of `{0, …, 2M−1}^8` with equal parities and coordinate sum divisible by 4 (`viper_e8.c:49–70,91–96,176–188`). Decoding inverts it with `e8_rank` (`:72–89,190–203`). The file is identical in all ten trees.
+
+Both maps reach the same `2^(8b)` cosets but assign them to different messages. Evaluated over every block value, they agree on 4 of 256 at `b = 1` (Viper-128, -192, -256) and on 4 of 65,536 at `b = 2` (Viper-384, -512). For the Viper-128 block with only message bit 0 set, Algorithm 9 gives `(2048, 2048, 0, 0, 0, 0, 0, 0)` and the code gives `(0, 0, 0, 0, 0, 0, 2048, 2048)`.
+
+An implementation written from Algorithms 1, 2, 9 and 10 therefore produces different ciphertexts from the same message and coins, and each side decodes the other's ciphertexts to a different message and rejects them. Section 8.11 (physical p. 27) requires message encoding to match the reference output, so the written labelling cannot be followed. The reporters noted that the numbered Algorithms 1 and 2 omit the scaling by `α` and its inverse, which only the text of Section 8.8 supplies. There is no security consequence.
+
+### Reproducing
+
+```sh
+pdftotext -f 26 -l 26 -layout kem-21/kem-21-spec.pdf - | grep -A6 'Algorithm 9'
+sed -n '49,70p;176,188p' kem-21/Implementations/Reference_Implementation/MAMBA-Viper-128/viper_e8.c
+```
+
+This is a source witness. The comparison of the two maps was run with a driver around the archived `viper_e8.c` and is not part of it.

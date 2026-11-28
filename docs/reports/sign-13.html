@@ -137,6 +137,28 @@ sed -n '70,95p' &quot;$d/block_impl.h&quot;; grep -n 'mersenne_inverse' &quot;$d
 grep -c ref_gf_mul sign-13/Implementations/Optimized_Implementation/GreatWall128s/block_impl.h
 </code></pre>
 <p>This is a source witness; the last command prints 0 for the optimized tree. The instruction counts above came from a callgrind run of <code>faest_pubkey</code> on fixed keys and are not part of the witness.</p>
+<h2 class="issue-heading" id="sign-13-6-verification-leaks-the-commitment-tree-when-a-signature-sets-a-grinding-bit-of-the-challenge">sign-13-6: Verification leaks the commitment tree when a signature sets a grinding bit of the challenge</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>GreatWall128s/f, GreatWall192s/f and GreatWall256s/f, reference and optimized implementations; GreatWall512s/f are unaffected</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>Each rejected byte string of signature length with one of those bits set leaks 98 kB to 3.9 MB, measured in all six affected reference sets; repeated calls exhaust memory; no forgery or disclosure</td></tr>
+<tr><th>Credit</th><td>Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, with MechCrypto assistance</td></tr>
+<tr><th>Date</th><td>2026-11-28</td></tr>
+</table></div>
+<p>Reference: <a href="https://eprint.iacr.org/2026/3050">Wang, Cao, Wu, Li and Gao, <em>MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates</em>, ePrint 2026/3050</a>; <a href="https://github.com/MechMath/NGCC-results/tree/main/digital-signature/sign-13_GreatWall-Signature-Algorithm">result for this candidate</a></p>
+<p><code>batch_vector_verify</code> allocates the GGM tree of the vector commitment, <code>BATCH_VECTOR_COMMIT_NODES</code> blocks (<code>vector_com.c:766–767</code>). It then checks that the last <code>ZERO_BITS_IN_CHALLENGE_3</code> bits of the challenge <code>delta</code> are zero and returns 0 directly if one is set (<code>:772–775</code>). Every later exit goes through the <code>end:</code> label, which frees the tree (<code>:835–836</code>); this one does not. The optimized trees have the same sequence (<code>vector_com.c:741–750,810–811</code>).</p>
+<p>The check runs before anything in the signature is authenticated. <code>sig_verify</code> tests only the two lengths (<code>SIG_AlgorithmInstance.c:75–81</code>), and <code>faest_verify</code> reads <code>delta</code> from its fixed offset in the signature and calls <code>vole_reconstruct</code> at once (<code>faest.c:552–567</code>). The sender needs no valid signature and no key: any byte string of the signature length with one of those bits set takes the leaking exit.</p>
+<p>The zero-bit count is 7 or 8 at 128 bits, 8 at 192 and 6 or 7 at 256 (<code>config.h:10</code>), so six parameter sets are affected. It is 0 for GreatWall512s/f, where the loop body never runs. At GreatWall128s the tree has 45,055 blocks of 16 bytes, 720,880 bytes. The same macros with the reference block sizes give 98,288 bytes (128f), 245,736 (192f), 2,359,272 (192s), 466,912 (256f) and 3,932,128 (256s).</p>
+<p>With each affected reference set built from its unmodified sources, heap use grew by the tree size plus allocator overhead per <code>sig_verify</code> call, 720,896 bytes at GreatWall128s, both for a valid signature with the top bit of the last <code>delta</code> byte set and for a signature-length string of <code>0xFF</code> bytes. It did not grow for an accepted signature, for a signature rejected after a flipped first byte, or for an all-zero string, and GreatWall512f leaked on no input. A long-running verifier that receives such inputs runs out of memory.</p>
+<h3 id="reproducing_5">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh sign-13/reproduce_verify_leak.sh
+</code></pre>
+<p>The script checks the early return in all 16 trees, then builds the six affected reference sets and GreatWall512f with <code>sign-13/reproduce_verify_leak.c</code> and measures the heap growth per call with <code>mallinfo2</code> for the five inputs. It needs libcrypto and runs in about 3 minutes, so <code>tools/reproduce.sh</code> runs it only for <code>sign-13</code> or with <code>NGCC_SLOW=1</code>. GreatWall512s signs too slowly for a routine run and is checked by source only.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

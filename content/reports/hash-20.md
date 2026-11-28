@@ -99,3 +99,30 @@ Fix: free the buffer before returning.
 ```sh
 sh hash-20/reproduce_leak.sh
 ```
+
+## hash-20-4: The α matrix of Section 2.4.2 and the MUL step of Algorithm 4 define different MixColumn maps
+
+Severity: Low
+Status: Confirmed
+Layer: Design
+Affected: Specification §2.4.2, all Mozi instances; the reference and optimized implementations follow Algorithm 4
+Discovery: Moderate
+Exploitation: An implementation that uses the displayed α matrix computes a MixColumn that differs from the submitted code on 65,280 of 65,536 column inputs; both maps have branch number 5, and no security consequence was identified
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance, in this candidate's specification notes of 2026-09-21; independently reported by Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, using MechCrypto
+Date: 2026-11-28
+Reference: [Wang, Cao, Wu, Li and Gao, *MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates*, ePrint 2026/3050](https://eprint.iacr.org/2026/3050); [result for this candidate](https://github.com/MechMath/NGCC-results/tree/main/hash-function/hash-20_MOZI)
+
+Section 2.4.2 (physical p. 8) writes MixColumn as a product `M·(a, b, c, d)` whose entries are built from α and α², and defines α by a 4 × 4 binary matrix that maps a nibble `(x0, x1, x2, x3)` to `(x1, x2, x3, x0⊕x1)`. The same section says that the operation "is given formally in Algorithm 4". Algorithm 4 (physical p. 9) and Listing 1 (physical p. 18) use `MUL` instead, which maps `(x0, x1, x2, x3)` to `(x3, x0⊕x3, x1, x2)`. The reference code implements `MUL` (`MOZI-512/CryptHash_AlgorithmInstance.c:34–38`, called from `bitSliceMDS` at `:41–60`), and so does `mul_row` in the optimized code (`Optimized_Implementation/MOZI-384/CryptHash_AlgorithmInstance.c:73–79`).
+
+The displayed product and the twelve steps of Algorithm 4 are the same circuit: with `MUL` in place of α they agree on all 65,536 column inputs. With α as displayed they differ on 65,280 of them. `MUL` is the transpose of the displayed matrix. The two maps are conjugate under a relabelling of the nibble bits, so both give a matrix of branch number 5, but the nibble bits are the state rows that the S-box also uses, so the relabelling is not available to an implementer and the two readings give different round functions.
+
+The conflict is inside the specification. Algorithm 4, Listing 1 and all submitted code agree, and the text names Algorithm 4 as the formal definition; only the α matrix in the prose disagrees. The specification contains no test vectors that would show which is meant.
+
+### Reproducing
+
+```sh
+sed -n '34,38p' "hash-20/Mozi/Implementations/Reference_Implementation/MOZI-512/CryptHash_AlgorithmInstance.c"
+pdftotext -f 8 -l 9 -layout hash-20/hash-20-spec.pdf - | grep -A8 -e 'where α transforms' -e 'Function MUL'
+```
+
+This is a source witness.

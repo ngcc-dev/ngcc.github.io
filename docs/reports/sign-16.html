@@ -130,6 +130,29 @@
 <pre><code class="language-sh">sh sign-16/reproduce_stale_keygen.sh
 </code></pre>
 <p>The witness checks the unchecked derivation in the six SM3 trees and wraps <code>malloc</code> to fail that copy once.</p>
+<h2 class="issue-heading" id="sign-16-6-the-challenge-sign-stream-is-requested-with-length-11-at-every-level-instead-of-the-specified-8">sign-16-6: The challenge sign stream is requested with length 11 at every level instead of the specified ⌈τ/8⌉</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Octarine-128 and Octarine-256; reference, optimized and additional implementations; Octarine-512 is unaffected</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>A signer or verifier written from the specification derives different challenge signs and does not interoperate; no forgery</td></tr>
+<tr><th>Credit</th><td>Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, with MechCrypto assistance</td></tr>
+<tr><th>Date</th><td>2026-11-28</td></tr>
+</table></div>
+<p>Reference: <a href="https://eprint.iacr.org/2026/3050">Wang, Cao, Wu, Li and Gao, <em>MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates</em>, ePrint 2026/3050</a>; <a href="https://github.com/MechMath/NGCC-results/tree/main/digital-signature/sign-16_Octarine">result for this candidate</a></p>
+<p>Every hash and XOF input in Octarine starts with a header that contains the requested output length <code>o</code> as a four-byte field (<code>Head(L, o, t)</code>, physical p. 18), and the challenge-expansion XOF <code>XOF_C</code> uses that encoding (physical p. 19). <code>SampleInBall</code> requests the sign bits as <code>XOF_C(c̃, 0, 0; ⌈τ/8⌉)</code> (Algorithm 2 line 3, physical p. 24). With τ = 16, 36 and 87 the specified lengths are 2, 5 and 11 bytes.</p>
+<p>The code requests 11 bytes at every level. <code>poly_sampleInBall</code> calls <code>RRLWR_SIGN_HASH_SAMPLE_C_DOMAIN(signs_buffer, RRLWR_SIGN_MAX_TAU_BYTES, ctilde, 0, 0)</code> (<code>sign_ring.c:93</code>), and <code>RRLWR_SIGN_MAX_TAU_BYTES</code> is 11, with the comment "tau = 87 is maximum number of bits" (<code>parameters.h:87</code>; <code>:85</code> in the optimized trees). The length is passed on unchanged and written into the header by <code>rrlwr_domain_begin</code> (<code>hash_domain.h:93,299–309</code>). The same lines are in all nine trees.</p>
+<p>Because the length is part of the hashed input, the Octarine-128 and Octarine-256 sign streams are outputs for a different input than the specified one. The index stream is requested with 80 bytes in both, so the challenge positions agree and the τ signs differ. A signer that follows Algorithm 2 produces signatures that the submitted verifier rejects, and the reverse, unless all τ sign bits happen to coincide. At Octarine-512 both lengths are 11 and nothing differs.</p>
+<p>The submitted trees agree with each other and with the KATs, so the code resolves the reading in one way. The constant is one buffer size reused for all levels, and the specification's formula is explicit, so this is a conflict and not a misprint.</p>
+<h3 id="reproducing_5">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">d=sign-16/Implementations/Reference_Implementation/Octarine-128
+sed -n '93p' &quot;$d/sign_ring.c&quot;; sed -n '87p' &quot;$d/parameters.h&quot;; sed -n '93p' &quot;$d/hash_domain.h&quot;
+</code></pre>
+<p>This is a source witness.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -115,3 +115,32 @@ sh hash-35/reproduce_spec_mismatch.sh
 ```
 
 The witness regenerates each KAT_2_12 file with the shipped NGCC generator and uses it only if its canonical SHA-256 equals the official file's entry in `hash-35/kat.sha256`.
+
+## hash-35-6: Algorithm 2 sets the final-block constant to 1^c, while Section 3.4 and the code use 0^(c−1)1
+
+Severity: Low
+Status: Confirmed
+Layer: Design
+Affected: Specification Algorithm 2, Wish512 and Wish1024; all submitted implementations follow Section 3.4
+Discovery: Trivial
+Exploitation: An implementation written from Algorithm 2 feeds a different value into the final permutation call of every message; shown for the empty message of Wish512; no security consequence was identified
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance, in this candidate's specification notes of 2026-09-21; independently reported by Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, using MechCrypto
+Date: 2026-11-28
+Reference: [Wang, Cao, Wu, Li and Gao, *MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates*, ePrint 2026/3050](https://eprint.iacr.org/2026/3050); [result for this candidate](https://github.com/MechMath/NGCC-results/tree/main/hash-function/hash-35_Wish)
+
+Section 3.4 (physical p. 7) defines the separation constant as `θ = 0^(c−1)1` and XORs it into the capacity part of the final block. Algorithm 2, which Section 3.5 presents as the pseudo-code of the hash function, sets `θ = 1^c` on line 3 and applies it on line 8 (physical p. 9). The exponent is typeset as a superscript, like `0^c` on the same line, so the line reads as the all-ones string of `c` bits. The two values differ in `c − 1` bits.
+
+The reference implementation uses the Section 3.4 value: `theta[15] = 0x01` is XORed into the last lane when the last block is processed (`Wish512_reference/wish.c:185–190`; `Wish1024_reference/wish.c` is the same file). The eight trees under `Optimized_Implementation` and `Additional_Implementation` define the same constant.
+
+θ enters every hash computation, because every message has a final block. For the empty message the Wish512 reference returns a digest beginning `91981d2518ab20a5`. A copy of the reference in which only the constant is changed, to all-ones over the four capacity lanes, returns a digest beginning `faad7e6c551e40fb`. An implementation written from Algorithm 2 therefore does not interoperate with the submitted code.
+
+Either value puts a non-zero constant into the capacity of the final block only, which is what the length-extension argument of the specification uses (physical p. 15). The prose definition and all submitted code agree, and only the one assignment in Algorithm 2 differs; the specification contains no test vectors.
+
+### Reproducing
+
+```sh
+sed -n '185,190p' "hash-35/Wish/Implementations/Reference_Implementation/Wish512_reference/wish.c"
+pdftotext -f 7 -l 9 -layout hash-35/hash-35-spec.pdf - | grep -e 'Separation constant' -e 'θ = 1c'
+```
+
+This is a source witness.

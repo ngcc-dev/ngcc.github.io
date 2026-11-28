@@ -114,6 +114,27 @@ sign-10/cryptanalysis/build/attack1 7 12 1 12
 <pre><code class="language-sh">python3 sign-10/reproduce_signature_leak.py
 </code></pre>
 <p>The script checks the five source patterns in all nine trees, then signs 2,000, 300 and 60 messages through <code>sign-10/lib/libFacto-DSA-*.so</code> and evaluates the secret forms (about 15 seconds). Its controls are honest verification, rejection of mutated signatures and changed messages, an unrelated key's secret forms and a random public form; <code>NGCC_LONG=1</code> signs 8,000, 1,000 and 300 messages.</p>
+<h2 class="issue-heading" id="sign-10-5-the-hash-to-field-input-uses-a-per-level-label-and-a-block-counter-that-the-specification-does-not-have">sign-10-5: The hash-to-field input uses a per-level label and a block counter that the specification does not have</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Facto-DSA-128, -256 and -512; reference, optimized and resource-constrained implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>A signer or verifier written from the specification computes a different target <code>h</code>; no forgery or key recovery</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance, in this candidate's specification notes of 2026-09-21; independently reported by Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, using MechCrypto</td></tr>
+<tr><th>Date</th><td>2026-11-28</td></tr>
+</table></div>
+<p>Reference: <a href="https://eprint.iacr.org/2026/3050">Wang, Cao, Wu, Li and Gao, <em>MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates</em>, ePrint 2026/3050</a>; <a href="https://github.com/MechMath/NGCC-results/tree/main/digital-signature/sign-10_Facto-DSA">result for this candidate</a></p>
+<p>Section 1.4.2 (physical p. 6) lists one domain label, <code>FDSA-H</code>, and defines the signing target as <code>h = HashToField(FDSA-H || pkh || M)</code>. Algorithm 3 (physical p. 9) reads 16-bit words from one stream <code>B = XOF(label || data)</code>. Sign and Verify call it with the label <code>FDSA-H</code> (Algorithm 10 line 7, physical p. 12; Algorithm 11 line 11, physical p. 14).</p>
+<p>The submitted <code>xof_field</code> hashes a different string in two ways. The label is <code>"FDSA-H-128"</code>, <code>"FDSA-H-256"</code> or <code>"FDSA-H-512"</code> according to the parameter set (<code>SIG_AlgorithmInstance.c:1487</code> in the reference trees, <code>:1521–1522</code> optimized, <code>:1517–1518</code> resource-constrained). The input also ends with a four-byte big-endian block counter that the specification does not mention: the buffer length includes four extra bytes (<code>:1495</code>), and each 128-byte block is <code>pseudoXOF(label || pkh || M || ctr)</code> with <code>ctr</code> starting at zero (<code>:1508–1514</code>). Even the first block therefore differs from <code>XOF(label || data)</code>. Signing and verification both use this function (<code>:1996</code>, <code>:2067</code>).</p>
+<p>An implementation that follows the specification derives a different <code>h</code> for every message, so its signatures do not verify under the submitted code, and the submitted signatures do not verify under it. The nine submitted trees agree with each other and with the KATs, so the code resolves the question in one way. Physical p. 36 says that the hash input carries "parameter set domain separation", which matches the code's labels; the label table does not. The counter is absent from Algorithm 3. This is a conflict between specification and code and not a misprint.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">grep -n '&quot;FDSA-H' &quot;sign-10/Implementations and Test_Vectors/Implementations&quot;/*/*/SIG_AlgorithmInstance.c
+</code></pre>
+<p>This is a source witness.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

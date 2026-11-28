@@ -271,6 +271,29 @@ python3 sign-06/reproduce_challenge_image.py
 <pre><code class="language-sh">python3 sign-06/reproduce_spec_errata.py
 </code></pre>
 <p>The certificate checks the specification text and Table 1, the high-part symmetry at each set, and the proposition against a numerical average of <code>Pr_x</code>.</p>
+<h2 class="issue-heading" id="sign-06-12-the-code-rounds-the-public-key-and-splits-high-bits-differently-from-the-specified-comp-decomp-and-split">sign-06-12: The code rounds the public key and splits high bits differently from the specified Comp, Decomp and Split</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>COMPASS-SIG-128, -256, -384 and -512; reference and optimized implementations (<code>rounding.c</code> and <code>sign.c</code> identical in all eight trees)</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>Public keys and the verification equation differ between the specification and the code; no forgery or key recovery</td></tr>
+<tr><th>Credit</th><td>Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, with MechCrypto assistance</td></tr>
+<tr><th>Date</th><td>2026-11-28</td></tr>
+</table></div>
+<p>Reference: <a href="https://eprint.iacr.org/2026/3050">Wang, Cao, Wu, Li and Gao, <em>MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates</em>, ePrint 2026/3050</a>; <a href="https://github.com/MechMath/NGCC-results/tree/main/digital-signature/sign-06_COMPASS-SIG">result for this candidate</a></p>
+<p>Section 2.2.4 (physical p. 9) defines <code>Comp_d(x) = ⌊(x−1)/2^d⌋</code> for <code>x &gt; 0</code> and <code>⌊x/2^d⌋</code> otherwise, and <code>Decomp_d(x) = x·2^d + 2^(d−1)</code>. KeyGen sets <code>t1 := Comp_d(t)</code> and <code>t0 := t − Decomp_d(t1)</code> (Algorithm 1, physical p. 10), and Verify splits <code>A·z − c'·Decomp_d(t1)</code> (Algorithm 3, physical p. 13).</p>
+<p>The code uses a different pair. <code>power2round</code> computes <code>t1 = (t + 2^(D−1) − 1) &gt;&gt; D</code> and <code>t0 = t − t1·2^D</code> (<code>rounding.c:17–23</code>, called at <code>sign.c:60</code>), and verification multiplies <code>t1</code> by <code>2^D</code> without adding <code>2^(D−1)</code> (<code>sign.c:388–394</code>, <code>poly.c:481–487</code>). The two <code>t1</code> values differ for half of all <code>t</code> in <code>[0, q)</code>, so one key seed gives different public-key bytes. For one public key, the two verifiers' inputs to Split differ by <code>2^(d−1)·c'·(1 + x + … + x^(n−1))</code>, which is nonzero, so a verifier written from Algorithm 3 does not accept every signature of the submitted signer. The rejection rate was not measured.</p>
+<p>Split also differs. The specification takes <code>x1 = ⌊p·x/q⌉ mod p</code> with <code>x0 ∈ [−γ, γ]</code> (physical p. 9), and <code>decompose</code> computes <code>⌊(x + γ2)/(2γ2)⌋</code> with a wrap (<code>rounding.c:56–91</code>). They disagree at the 8, 2, 4 and 2 inputs <code>x = (2j+1)·γ2</code> of the four sets. Table 1 (physical p. 15) prints <code>d = 5</code> for the 512-bit set, while <code>params.h:99</code> uses <code>D = 6</code>, the value that Table 2's key sizes require.</p>
+<p>Signer and verifier in the code agree with each other, and the KATs fix the code's reading. The two conventions are each self-consistent, so this is a conflict and not a misprint.</p>
+<h3 id="reproducing_11">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">d=sign-06/Implementations/Reference_Implementation/COMPASS-SIG-128
+sed -n '17,23p' &quot;$d/rounding.c&quot;; sed -n '388,394p' &quot;$d/sign.c&quot;
+</code></pre>
+<p>This is a source witness.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

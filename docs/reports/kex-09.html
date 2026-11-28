@@ -97,6 +97,29 @@ cc -std=c99 -O3 -ffunction-sections -fdata-sections -Wl,--gc-sections \
 python3 kex-09/reproduce_copied_key_uks.py
 </code></pre>
 <p>On all four prebuilt libraries and with two seeds each, the script runs both copied-key directions. It requires the role labels to appear on the wire and the two keys to be equal. Its controls require an honest exchange to agree and an independently generated key for Eve to produce different keys. When the sources are present, it also checks the <code>ST</code> layout. It runs in about 8 seconds.</p>
+<h2 class="issue-heading" id="kex-09-4-session-state-is-not-erased-after-the-session-key-is-derived-although-the-specification-requires-it">kex-09-4: Session state is not erased after the session key is derived, although the specification requires it</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>TriQ-KEX-128, TriQ-KEX-256, TriQ-KEX-384 and TriQ-KEX-512; reference and optimized wrappers</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>The retained bytes are available only to a party that can read the caller's memory; no disclosure channel is shown</td></tr>
+<tr><th>Credit</th><td>Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, with MechCrypto assistance</td></tr>
+<tr><th>Date</th><td>2026-11-28</td></tr>
+</table></div>
+<p>Reference: <a href="https://eprint.iacr.org/2026/3050">Wang, Cao, Wu, Li and Gao, <em>MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates</em>, ePrint 2026/3050</a>; <a href="https://github.com/MechMath/NGCC-results/tree/main/key-exchange/kex-09_TriQ-KEX">result for this candidate</a></p>
+<p>Section III-G ends: "After outputting SK, each party erases its local state and the intermediate values used only for the final derivation" (physical p. 8). The forward-secrecy statement is made "under the CK+ freshness conditions and erasure of non-public per-session values after session completion" (physical p. 3).</p>
+<p>The submitted wrappers erase nothing on that path. <code>kex_derive_ss_a</code> and <code>kex_derive_ss_b</code> receive <code>sta</code> and <code>stb</code> as writable buffers, read them only through <code>const</code> pointers, and return without clearing them (<code>KEX_AlgorithmInstance.c:435–487</code> in TriQ-KEX-128). After a successful derivation <code>sta</code> still holds the ephemeral decapsulation key and <code>K_A</code> (layout at <code>:44–47</code>, written at <code>:352–353, 365, 369</code>), and <code>stb</code> still holds <code>K_A</code>, <code>K_B</code> and <code>K_T</code> (layout at <code>:56–60</code>, written at <code>:404–412</code>). <code>kex_derive_ss_a</code> also leaves its local copies of <code>K_B</code> and <code>K_T</code> on the stack (<code>:448–449</code>). Only the helper <code>triq_fsxy_final_key</code> clears its own temporaries (<code>:294–301</code>). The text of the two functions is byte-identical in all eight wrappers and contains no clearing call. The interface has no other function that releases the state.</p>
+<p>The retained responder state is sufficient to recompute the session key. <code>kex_derive_ss_b</code> reads only the public-key prefix of the static key (<code>:470</code>) and takes every secret input from <code>stb</code> (<code>:473–477, 484</code>). A later disclosure of a completed session's state buffer therefore gives that session's key, which is the case the erasure requirement excludes.</p>
+<p>This is a deviation of the code from a stated requirement. It gives a network attacker nothing, and a caller that clears <code>sta</code> and <code>stb</code> itself after derivation is not affected.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sed -n '435,487p' kex-09/TriQ-KEX/Implementations/Reference_Implementation/TriQ-KEX-128/KEX_AlgorithmInstance.c
+pdftotext -f 8 -l 8 -layout kex-09/kex-09-spec.pdf - | grep -n -A1 'After outputting SK'
+</code></pre>
+<p>This is a source witness.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

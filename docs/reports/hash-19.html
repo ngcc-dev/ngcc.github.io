@@ -113,6 +113,29 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/crypthashforu
 <pre><code class="language-sh">sh hash-19/reproduce_spec_mismatch.sh
 </code></pre>
 <p>The witness regenerates each KAT_2_12 file with the shipped NGCC generator and uses it only if its canonical SHA-256 equals the official file's entry in <code>hash-19/kat.sha256</code>.</p>
+<h2 class="issue-heading" id="hash-19-5-mofang-768-xof-output-beyond-768-bits-does-not-follow-algorithm-6">hash-19-5: MoFang-768-XOF output beyond 768 bits does not follow Algorithm 6</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>MoFang-768-XOF for requested lengths above 768 bits; reference and optimized implementations; specification Algorithm 6, lines 17–22</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>A request for more than 768 bits returns output that differs from Algorithm 6 from bit 768 onward, and Algorithm 6 itself returns the requested length only for multiples of 768; the 768-bit KATs are unaffected; no security consequence identified</td></tr>
+<tr><th>Credit</th><td>Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, with MechCrypto assistance; comparison with the code by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-28</td></tr>
+</table></div>
+<p>Reference: <a href="https://eprint.iacr.org/2026/3050">Wang, Cao, Wu, Li and Gao, <em>MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates</em>, ePrint 2026/3050</a>; <a href="https://github.com/MechMath/NGCC-results/tree/main/hash-function/hash-19_MoFang-Hash-Function">result for this candidate</a></p>
+<p>Algorithm 6 (physical p. 18) extends MoFang-768-XOF beyond 768 bits by repeating <code>(L, R) ← CF(L ⊕ 2_n, R, 0)</code> (line 20) and appending <code>MSB_t(L) ‖ MSB_t(R)</code>. Here <code>t</code> is 384, except in the last of <code>λ = ⌊ℓ/768⌋</code> iterations, where <code>t = ℓ mod 384</code> (lines 18–22). Each iteration appends <code>2t</code> bits. For <code>ℓ = 768λ + r</code> the algorithm returns <code>768λ + 2(r mod 384)</code> bits, which equals <code>ℓ</code> only when <code>r = 0</code>. For <code>ℓ = 1000</code> it returns 1,232 bits.</p>
+<p>The submitted code returns exactly <code>⌈ℓ/8⌉</code> bytes. It emits 96-byte blocks, 48 bytes of L followed by 48 bytes of R, and cuts the last block at the requested length (<code>MoFang-768-XOF/CryptHash_AlgorithmInstance.c:292–321</code>). A partial last block therefore comes from L first, not from equal parts of L and R. Before each further compression the code XORs the constant 2 into <code>in_h</code>, the R half (<code>:297</code>), while line 20 and the code's own absorbing loop (<code>:267</code>) apply it to L. The optimized source does the same (<code>:312</code>).</p>
+<p>With the reference source built unchanged, a 1,000-bit request for "abc" writes 125 bytes, equal to the first 125 bytes of a 1,536-bit request. Moving the constant at line 297 to the L half, as line 20 specifies, changes the 1,536-bit output from byte 96 onward and leaves the first 96 bytes unchanged.</p>
+<p>The instance's digest length is 768 bits, so the submitted KATs do not exercise the continuation, and the call does not require an XOF. The reporters identified the output-length error of Algorithm 6.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">pdftotext -f 18 -l 18 -layout hash-19/hash-19-spec.pdf - | grep -n &quot;mod 384\|CF(L ⊕ 2n , R, 0)&quot;
+sed -n '292,321p' &quot;hash-19/MoFang/Implementations/Reference_Implementation/MoFang-768-XOF/CryptHash_AlgorithmInstance.c&quot;
+</code></pre>
+<p>This is a source witness.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -176,3 +176,32 @@ sh kem-34/reproduce_stale_encaps_key.sh
 ```
 
 The witness wraps `malloc` to fail the third allocation of the encapsulation and requires Mallory to predict the Alice–Bob key in that run only.
+
+## kem-34-8: The specified Minal decoder does not recover noise-free codewords
+
+Severity: Low
+Status: Confirmed
+Layer: Design
+Affected: The written decoders, Algorithms 7 and 9, for all six parameter sets; the submitted reference and optimized code uses a different rule and is not affected
+Discovery: Moderate
+Exploitation: A decoder written from the specification returns the value 2 for an outer bit on 12 of the 16 exact codewords, and Algorithm 9 as printed discards its input; no failure of the submitted code and no security consequence is shown
+Credit: Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, with MechCrypto assistance; Algorithm 7 defect by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-28
+Reference: [Wang, Cao, Wu, Li and Gao, *MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates*, ePrint 2026/3050](https://eprint.iacr.org/2026/3050); [result for this candidate](https://github.com/MechMath/NGCC-results/tree/main/key-encapsulation/kem-34_Rudraksh2)
+
+Algorithm 9, `Rudraksh2.Decode` (physical p. 8), opens with `c ← 0`, which overwrites the noisy codeword it receives, and ends with `return c` instead of the message. Both lines repeat Algorithm 8, the encoder. Read as printed, the decoder returns the zero vector for every input.
+
+Algorithm 7, `MinalB2.Decode` (physical p. 7), has a separate defect in the outer bits. Lines 11–13 set `(δx, δy) ← c − c_best mod± q`, `m0 ← ⌊|δx|/⌊q/4⌉⌋` and `m1 ← ⌊|δy|/⌊q/4⌉⌋`. An outer bit equal to one adds `⌊q/2⌉` to its coordinate (Algorithm 6), and the centred residue of that value has absolute value `(q − 1)/2`. The three moduli 3329, 4001 and 7681 (Table 1, physical p. 10) are all 1 modulo 4, so `(q − 1)/2 = 2·⌊q/4⌉` and the quotient is 2, outside the declared output `Z_2^4`. On exact codewords, lines 12–13 therefore return the right bits only for the four symbols with `m0 = m1 = 0`. The text before the algorithm describes the intended rule, the nearest of the four candidates for `(m0, m1)`, which the quotient does not implement at this point.
+
+The submitted code does neither. `poly_tomsg` reads the input polynomial and returns the message (`Implementations/Reference_Implementation/lwekem128/poly.c:222–240`), and `minal_b2_code_decode` sets each outer bit with the comparison `abs(dx) > B2_MINAL_HALF_Q / 2` (`minal.c:139–144`). The 256 and 512 levels and the optimized tree use the same comparison. A literal transcription of Algorithms 6 and 7 recovers 4 of the 16 noise-free symbols for every `(q, β)` of Table 1; the submitted codec recovers all 16.
+
+The defect is confined to the written specification. An implementation that follows Algorithms 7 and 9 literally does not decode ciphertexts that the submitted code decodes. The reporters identified the Algorithm 9 lines.
+
+### Reproducing
+
+```sh
+pdftotext -f 7 -l 8 -layout kem-34/kem-34-spec.pdf - | grep -nE 'm0 ←|m1 ←|c ← 0|return c|Algorithm (7|9)'
+sed -n '139,144p' kem-34/Implementations/Reference_Implementation/lwekem128/minal.c
+```
+
+This is a source witness.

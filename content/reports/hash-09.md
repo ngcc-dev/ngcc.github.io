@@ -72,3 +72,30 @@ The [Eijen Algorithm Group's response](https://list.niccs.org.cn/archives/list/c
 make -C hash-09 lib/libEijen-512.so lib/libEijen-768.so lib/libEijen-1024.so
 python3 hash-09/reproduce_cross_instance_suffix.py
 ```
+
+## hash-09-3: The specified final-block feed-forward includes the constant 1_c, but the code and the specification's own test vectors omit it
+
+Severity: Low
+Status: Confirmed
+Layer: Design
+Affected: Eijen-256, -384, -512, -768 and -1024; specification §2.3 against Appendix B, the reference and optimized implementations and the KATs
+Discovery: Moderate
+Exploitation: An implementation of the §2.3 formulas computes, for every message, a digest that differs in exactly one bit from the submitted code and from the Appendix B vectors; the difference is a constant and has no security consequence
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance, in this candidate's specification notes of 2026-09-21; independently reported by Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, using MechCrypto
+Date: 2026-11-28
+Reference: [Wang, Cao, Wu, Li and Gao, *MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates*, ePrint 2026/3050](https://eprint.iacr.org/2026/3050); [result for this candidate](https://github.com/MechMath/NGCC-results/tree/main/hash-function/hash-09_Eijen)
+
+Section 2.3 (physical p. 6) defines the last absorption as `S = X ⊕ (M ‖ 1_c)` followed by `X' = Π(S) ⊕ (0^r ‖ right_c(S))`. The capacity that is fed forward therefore contains the constant `1_c`.
+
+The reference `eijen_absorb_block` saves the capacity first (`eijen_ref.c:105–107`), then adds the constant as bit 63 of the last state word (`:111–113`), and XORs the saved capacity after the permutation (`:117–119`). The value fed forward lacks `1_c`. The last state word is part of every digest, so the code returns the specified digest with one bit flipped: the top bit of the last 64-bit word. The file is identical in the five instance directories, and `eijen_avx2.c:178–190` has the same order.
+
+An independent model of §2.3 and §2.4 was compared with the five reference libraries on 90 byte-aligned messages of 0 to 1,000 bytes. With the code's order of operations it reproduces every digest. With the formula of §2.3 it differs in exactly that bit each time. For "abc", the Appendix B vectors (physical pp. 24–29) for Eijen-256, -384, -512 and -1024 equal the library output and end in byte `86`; the formula gives `06`. The formula therefore contradicts the specification's own vectors, and the code follows the vectors.
+
+### Reproducing
+
+```sh
+pdftotext -f 6 -l 6 -layout hash-09/hash-09-spec.pdf - | grep -n "rightc (S"
+sed -n '99,120p' hash-09/Eijen/Implementations/Reference_Implementation/Eijen-512/eijen_ref.c
+```
+
+This is a source witness. The model comparison is not part of it.

@@ -141,3 +141,31 @@ grep -c ref_gf_mul sign-13/Implementations/Optimized_Implementation/GreatWall128
 ```
 
 This is a source witness; the last command prints 0 for the optimized tree. The instruction counts above came from a callgrind run of `faest_pubkey` on fixed keys and are not part of the witness.
+
+## sign-13-6: Verification leaks the commitment tree when a signature sets a grinding bit of the challenge
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: GreatWall128s/f, GreatWall192s/f and GreatWall256s/f, reference and optimized implementations; GreatWall512s/f are unaffected
+Discovery: Trivial
+Exploitation: Each rejected byte string of signature length with one of those bits set leaks 98 kB to 3.9 MB, measured in all six affected reference sets; repeated calls exhaust memory; no forgery or disclosure
+Credit: Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, with MechCrypto assistance
+Date: 2026-11-28
+Reference: [Wang, Cao, Wu, Li and Gao, *MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates*, ePrint 2026/3050](https://eprint.iacr.org/2026/3050); [result for this candidate](https://github.com/MechMath/NGCC-results/tree/main/digital-signature/sign-13_GreatWall-Signature-Algorithm)
+
+`batch_vector_verify` allocates the GGM tree of the vector commitment, `BATCH_VECTOR_COMMIT_NODES` blocks (`vector_com.c:766–767`). It then checks that the last `ZERO_BITS_IN_CHALLENGE_3` bits of the challenge `delta` are zero and returns 0 directly if one is set (`:772–775`). Every later exit goes through the `end:` label, which frees the tree (`:835–836`); this one does not. The optimized trees have the same sequence (`vector_com.c:741–750,810–811`).
+
+The check runs before anything in the signature is authenticated. `sig_verify` tests only the two lengths (`SIG_AlgorithmInstance.c:75–81`), and `faest_verify` reads `delta` from its fixed offset in the signature and calls `vole_reconstruct` at once (`faest.c:552–567`). The sender needs no valid signature and no key: any byte string of the signature length with one of those bits set takes the leaking exit.
+
+The zero-bit count is 7 or 8 at 128 bits, 8 at 192 and 6 or 7 at 256 (`config.h:10`), so six parameter sets are affected. It is 0 for GreatWall512s/f, where the loop body never runs. At GreatWall128s the tree has 45,055 blocks of 16 bytes, 720,880 bytes. The same macros with the reference block sizes give 98,288 bytes (128f), 245,736 (192f), 2,359,272 (192s), 466,912 (256f) and 3,932,128 (256s).
+
+With each affected reference set built from its unmodified sources, heap use grew by the tree size plus allocator overhead per `sig_verify` call, 720,896 bytes at GreatWall128s, both for a valid signature with the top bit of the last `delta` byte set and for a signature-length string of `0xFF` bytes. It did not grow for an accepted signature, for a signature rejected after a flipped first byte, or for an all-zero string, and GreatWall512f leaked on no input. A long-running verifier that receives such inputs runs out of memory.
+
+### Reproducing
+
+```sh
+sh sign-13/reproduce_verify_leak.sh
+```
+
+The script checks the early return in all 16 trees, then builds the six affected reference sets and GreatWall512f with `sign-13/reproduce_verify_leak.c` and measures the heap growth per call with `mallinfo2` for the five inputs. It needs libcrypto and runs in about 3 minutes, so `tools/reproduce.sh` runs it only for `sign-13` or with `NGCC_SLOW=1`. GreatWall512s signs too slowly for a routine run and is checked by source only.

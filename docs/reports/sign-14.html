@@ -114,6 +114,50 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">python3 sign-14/reproduce_quantum_tccr_bound.py
 </code></pre>
+<h2 class="issue-heading" id="sign-14-5-the-160-bit-sets-add-the-first-lynx-constant-to-both-s-box-inputs">sign-14-5: The 160-bit sets add the first Lynx constant to both S-box inputs</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Lynxer-160s and Lynxer-160f; reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>The implemented one-way function differs from the specified one, and a signer or verifier written from the specification does not interoperate; no attack shown</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance, in this candidate's specification notes of 2026-09-21; independently reported by Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, using MechCrypto</td></tr>
+<tr><th>Date</th><td>2026-11-28</td></tr>
+</table></div>
+<p>Reference: <a href="https://eprint.iacr.org/2026/3050">Wang, Cao, Wu, Li and Gao, <em>MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates</em>, ePrint 2026/3050</a>; <a href="https://github.com/MechMath/NGCC-results/tree/main/digital-signature/sign-14_Lynxer">result for this candidate</a></p>
+<p>Lynx is specified as <code>v1 = S1(k + c1)</code> and <code>v2 = S2(L0(k) + c2)</code> (Eq. 5 and 6, physical p. 22). <code>Lynx.SampleMatVec</code> derives <code>c1</code> and <code>c2</code> as two separate slices of the expanded <code>iv_owf</code> (§5.5.1, physical p. 39), and <code>Lynx.ExtendWitness</code> adds <code>c2</code> to <code>L0·k</code> for λ = 160 (§5.5.2 line 4, physical p. 40).</p>
+<p>The 160-bit code never uses the second constant. <code>owf_lynx_160</code> loads only <code>mats.C0</code> and computes <code>v1 = S1(k + c0)</code> and <code>v2 = S2(L0k + c0)</code> (<code>owf.c:600–605</code>). The witness extension does the same (<code>owf.c:763–766</code>), and the QuickSilver prover and verifier for λ = 160 load only <code>C0</code> (<code>quicksilver.c:335,396</code>). <code>lynx_init</code> still squeezes both constants (<code>lynx_matrices.c:484–485</code>), so <code>C1</code> is generated and discarded. The paths for 256, 384 and 512 bits use <code>C0</code> for the first S-box and <code>C1</code> for the second (<code>owf.c:654–661</code>). The optimized tree makes the same choice and says so in a comment, "160-bit: S2 uses c0 (same as S1)" (<code>lynx_owf.hpp:50–51</code>).</p>
+<p>Key generation, signing and verification in the submitted code agree with each other, and the KATs were produced by this function. An implementation of the specified Lynx-160 computes a different public value <code>t</code> from the same <code>(iv_owf, k)</code> and cannot verify the submitted signatures. The two S-box inputs share one constant where the design has two independent ones; no consequence for one-wayness was derived. The specification states <code>c2</code> in three places, so this is a conflict and not a misprint.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sed -n '600,605p' sign-14/Implementations/Reference_Implementation/Lynxer-160f/owf.c
+grep -n -A1 '160-bit: S2 uses c0' sign-14/Implementations/Optimized_Implementation/Lynxer-160f/lynx_owf.hpp
+</code></pre>
+<p>This is a source witness.</p>
+<h2 class="issue-heading" id="sign-14-6-the-sampled-linear-layers-are-read-with-the-wrong-row-stride-which-puts-lynxer-160-key-recovery-at-about-21415">sign-14-6: The sampled linear layers are read with the wrong row stride, which puts Lynxer-160 key recovery at about 2^141.5</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-high">High</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Lynxer-160s/f (key recovery below the design level); Lynxer-256s/f and Lynxer-384s/f (rank loss, no attack below target); reference and optimized implementations; Lynxer-512s/f are unaffected</td></tr>
+<tr><th>Discovery</th><td>Non-trivial</td></tr>
+<tr><th>Exploitation</th><td>Key recovery from the public key in about 2^141.5 bit operations at Lynxer-160: 2^100 guesses, each solved by degree-3 XL, run at full size for the correct guess on two keys; below the specified 160-bit level, above the 128-bit NGCC target; no route below target at 256 or 384 bits</td></tr>
+<tr><th>Credit</th><td>Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, with MechCrypto assistance; rank measurement and key-recovery route by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-28</td></tr>
+</table></div>
+<p>Reference: <a href="https://eprint.iacr.org/2026/3050">Wang, Cao, Wu, Li and Gao, <em>MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates</em>, ePrint 2026/3050</a>; <a href="https://github.com/MechMath/NGCC-results/tree/main/digital-signature/sign-14_Lynxer">result for this candidate</a></p>
+<p>The specification samples <code>L0</code>, <code>L1</code> and <code>L2</code> as invertible λ×λ binary matrices (footnote 4, physical p. 23; physical p. 60). <code>lynx_init</code> stores them in <code>uint64_t L[512][8]</code>, eight words per row (<code>lynx_matrices.h:15–23</code>), but the one-way function and the QuickSilver constraints read them with ⌈λ/64⌉ words per row (<code>owf.c:595–597,648–650,678–680</code>; <code>quicksilver.c:325–327,786–788,1038–1040</code>). Only λ = 512 is read as stored; <code>L3</code> is copied in contiguously. The optimized tree and the KATs share the behaviour (<code>owf_proof.inc:169–182</code>). As read, the matrices have rank 100 of 160, 128 of 256 and 382 to 384 of 384, and adding a kernel vector of <code>L0</code> to the key leaves the second S-box output <code>v2</code> unchanged.</p>
+<p>At λ = 160 this gives a key-recovery route. Guessing <code>u = L0(k)</code>, one of 2^100 values, fixes <code>v2 = S2(u + c0)</code> and <code>L2(v2)</code>, so the output <code>y = L1(v1)·L2(v2) + L3(k + v1 + v2)</code> is linear in <code>(k, v1)</code> and leaves 60 unknowns. The inverse S-box <code>v1 = (k + c0)^-1</code> gives the relations <code>x·v1 = 1</code>, <code>x²v1 = x</code>, <code>xv1² = v1</code>, <code>x⁴v1 = x³</code> and <code>xv1⁴ = v1³</code> with <code>x = k + c0</code>: 800 quadratic equations, which plain XL solves at degree 3. On two keys from the submitted code, the correct guess solved to the secret key in 2^35.5 word operations, about 14 seconds, and a wrong guess was inconsistent. The total is about 2^141.5 bit operations, against the specified 160-bit level and the 2^184.6 of Table 14 (physical p. 63). The guess-and-determine argument (physical p. 64) assumes that guessing an S-box input costs 2^λ.</p>
+<p>The route stays above the NGCC target for this set, 128 bits classical; a Grover search over the guesses with a degree-2 oracle is estimated at about 2^85.6 gates, against 80 bits quantum. At λ = 256 the 2^128 guesses leave 384 unknowns because of the <code>(k + c2)^-1</code> factor, and no per-guess solver below 2^128 was found. The 2^100 enumeration was not run.</p>
+<h3 id="reproducing_5">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh sign-14/reproduce_matrix_stride.sh
+sh sign-14/reproduce_lynx160_key_recovery.sh
+</code></pre>
+<p>The first script measures the ranks in Lynxer-160f, -256f, -384f and -512f built from the unmodified sources, and checks the invariance of <code>v2</code> through the exported <code>lynx_extend_witness</code> (about 30 seconds). The second builds the submitted Lynxer-160f code and the XL solver <code>sign-14/reproduce_lynx160_xl.c</code>, solves the system for the correct guess from the public key, and requires the secret key, the same <code>y</code>, and rejection of a wrong guess (about 35 seconds per seed; OpenMP and BMI2).</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

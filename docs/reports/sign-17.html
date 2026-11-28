@@ -97,6 +97,28 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <pre><code class="language-sh">sh sign-17/reproduce_stale_digest.sh
 </code></pre>
 <p>The witness checks the <code>void</code> wrapper in all six trees, then builds each reference level with <code>malloc</code> wrapped so that one allocation of the size the digest helper requests can be made to fail. It requires the signature on A to verify for B in that case only, and to be rejected for B without the failure and after the stack is scrubbed.</p>
+<h2 class="issue-heading" id="sign-17-4-a-failed-transcript-allocation-makes-reference-signing-return-success-with-an-empty-signature">sign-17-4: A failed transcript allocation makes reference signing return success with an empty signature</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>OPSsig-128, -256 and -512 reference implementations; the AVX2 implementations return an error</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>If the signer's message-sized allocation fails, <code>sig_sign</code> returns 0 with signature length 0 and writes no signature; nobody can use the result, and no forgery follows</td></tr>
+<tr><th>Credit</th><td>Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, with MechCrypto assistance</td></tr>
+<tr><th>Date</th><td>2026-11-28</td></tr>
+</table></div>
+<p>Reference: <a href="https://eprint.iacr.org/2026/3050">Wang, Cao, Wu, Li and Gao, <em>MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates</em>, ePrint 2026/3050</a>; <a href="https://github.com/MechMath/NGCC-results/tree/main/digital-signature/sign-17_OPS-Digital-Signature-Algorithm">result for this candidate</a></p>
+<p>The reference signer copies <code>tr</code>, the context prefix and the whole message into a heap buffer before hashing them: <code>tmp = malloc(CRHBYTES + prelen + mlen)</code>, followed by <code>if(tmp == NULL) return -1</code> (<code>sign.c:104–106</code> in OPSsig-128, <code>:92–94</code> in OPSsig-256, <code>:94–96</code> in OPSsig-512). Its caller <code>crypto_sign_signature</code> discards that status and returns 0 (<code>sign.c:189–190</code>; <code>:173–174</code>; <code>:171–172</code>). The contest wrapper <code>sig_sign</code> initialises <code>outlen</code> to 0, treats the zero return as success, stores <code>outlen</code> in <code>*sn_len_bytes</code> and returns 0 (<code>SIG_AlgorithmInstance.c:55,62–66</code>).</p>
+<p>When that allocation fails, the caller therefore gets a success status, a signature length of 0 and a signature buffer that was never written. The internal signer sets the length only at its normal exit (<code>sign.c:166</code>), and the allocation check is its only early return, so no secret-dependent value is released.</p>
+<p>The failing allocation is in the candidate's own code, and its size is the message length plus a small constant. A party that chooses the message can make it fail under a memory limit. The result matches nothing honestly computed: <code>sig_verify</code> rejects a zero-length signature (<code>sign.c:213–214</code>), and no other party can use it. The harm is to a caller that trusts the status and stores or sends an empty or stale buffer as a signature.</p>
+<p>The AVX2 trees return the internal status (<code>sign.c:219</code> in OPSsig-128-avx2, <code>:224</code> in the other two), so <code>sig_sign</code> there returns −4. The reference and AVX2 implementations disagree on this failure.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh sign-17/reproduce_sign_alloc_false_success.sh
+</code></pre>
+<p>The script checks the discarded status in the three reference trees, then builds each reference set and OPSsig-128-avx2 from the unmodified sources with <code>sign-17/reproduce_sign_alloc_false_success.c</code>. It signs a 64 MiB message normally, and again with the address space capped 32 MiB above its current size, so that the message copy cannot be allocated; there is no allocator interposition. The reference sets return 0 with length 0 and leave the signature buffer unwritten, and the AVX2 build returns −4. It runs in about 25 seconds on Linux.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

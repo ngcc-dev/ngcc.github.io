@@ -90,3 +90,32 @@ python3 kex-09/reproduce_copied_key_uks.py
 ```
 
 On all four prebuilt libraries and with two seeds each, the script runs both copied-key directions. It requires the role labels to appear on the wire and the two keys to be equal. Its controls require an honest exchange to agree and an independently generated key for Eve to produce different keys. When the sources are present, it also checks the `ST` layout. It runs in about 8 seconds.
+
+## kex-09-4: Session state is not erased after the session key is derived, although the specification requires it
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: TriQ-KEX-128, TriQ-KEX-256, TriQ-KEX-384 and TriQ-KEX-512; reference and optimized wrappers
+Discovery: Trivial
+Exploitation: The retained bytes are available only to a party that can read the caller's memory; no disclosure channel is shown
+Credit: Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, with MechCrypto assistance
+Date: 2026-11-28
+Reference: [Wang, Cao, Wu, Li and Gao, *MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates*, ePrint 2026/3050](https://eprint.iacr.org/2026/3050); [result for this candidate](https://github.com/MechMath/NGCC-results/tree/main/key-exchange/kex-09_TriQ-KEX)
+
+Section III-G ends: "After outputting SK, each party erases its local state and the intermediate values used only for the final derivation" (physical p. 8). The forward-secrecy statement is made "under the CK+ freshness conditions and erasure of non-public per-session values after session completion" (physical p. 3).
+
+The submitted wrappers erase nothing on that path. `kex_derive_ss_a` and `kex_derive_ss_b` receive `sta` and `stb` as writable buffers, read them only through `const` pointers, and return without clearing them (`KEX_AlgorithmInstance.c:435–487` in TriQ-KEX-128). After a successful derivation `sta` still holds the ephemeral decapsulation key and `K_A` (layout at `:44–47`, written at `:352–353, 365, 369`), and `stb` still holds `K_A`, `K_B` and `K_T` (layout at `:56–60`, written at `:404–412`). `kex_derive_ss_a` also leaves its local copies of `K_B` and `K_T` on the stack (`:448–449`). Only the helper `triq_fsxy_final_key` clears its own temporaries (`:294–301`). The text of the two functions is byte-identical in all eight wrappers and contains no clearing call. The interface has no other function that releases the state.
+
+The retained responder state is sufficient to recompute the session key. `kex_derive_ss_b` reads only the public-key prefix of the static key (`:470`) and takes every secret input from `stb` (`:473–477, 484`). A later disclosure of a completed session's state buffer therefore gives that session's key, which is the case the erasure requirement excludes.
+
+This is a deviation of the code from a stated requirement. It gives a network attacker nothing, and a caller that clears `sta` and `stb` itself after derivation is not affected.
+
+### Reproducing
+
+```sh
+sed -n '435,487p' kex-09/TriQ-KEX/Implementations/Reference_Implementation/TriQ-KEX-128/KEX_AlgorithmInstance.c
+pdftotext -f 8 -l 8 -layout kex-09/kex-09-spec.pdf - | grep -n -A1 'After outputting SK'
+```
+
+This is a source witness.

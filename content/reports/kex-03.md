@@ -334,3 +334,31 @@ sh kex-03/reproduce_reject_key_prefix.sh
 ```
 
 The witness checks the call in the four affected trees, builds the unmodified reference K2K-PLAC512 sources, and decapsulates an honest ciphertext and three invalid ones. It requires equal rejection keys for two different ciphertexts that agree on bytes 0–583 and a different key after flipping byte 583.
+
+## kex-03-12: Signed strings carry no framework or role tag, so an S2S responder signature verifies as an S2K initiator signature
+
+Severity: Low
+Status: Confirmed
+Layer: Design
+Affected: All six S2K and six S2S instances, reference and optimized trees, when one BiT key is used in both frameworks
+Discovery: Trivial
+Exploitation: Needs one BiT credential used as S2S responder and as S2K initiator with the same KEM family and level; no session key is obtained and neither single-framework theorem is contradicted
+Credit: Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, with MechCrypto assistance
+Date: 2026-11-28
+Reference: [Wang, Cao, Wu, Li and Gao, *MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates*, ePrint 2026/3050](https://eprint.iacr.org/2026/3050); [result for this candidate](https://github.com/MechMath/NGCC-results/tree/main/key-exchange/kex-03_CreTAKE)
+
+The S2K initiator signs `p̃k‖c_j`, the ephemeral wKEM public key followed by a KEM ciphertext for the responder (Figure 2, physical p. 9). The S2S responder signs `p̃k‖c̃`, the received ephemeral public key followed by its wKEM ciphertext (Figure 4, physical p. 11). Neither string contains a framework name, a role or a party identity. In the code the two calls are `sig_sign(ska, …, m1, TPK_LEN + C_R_LEN, …)` (`CreTAKE-S2K-BiT128-PLAC128/KEX_AlgorithmInstance.c:133`) and `sig_sign(skb, …, signmsg, TPK_LEN + C_TILDE_LEN, …)` (`CreTAKE-S2S-BiT128-ePLAC128/KEX_AlgorithmInstance.c:166`). `C_R_LEN` and `C_TILDE_LEN` are the same constant in every PolarLAC instance (`cretake_params.h:14–15`) and in every ZEN instance, and the BiT wrapper hashes the message bytes unchanged. The two signed strings therefore have the same length and layout at each level.
+
+The specification presents the four frameworks as a matrix from which a deployment selects "according to the credentials currently provisioned at its two endpoints" (physical p. 4), so one BiT credential serving both frameworks is the described use. In that setting a signature that a party issues as S2S responder is a valid S2K initiator signature under the same key. The S2K responder's only initiator check is `sig_verify` over the first `TPK_LEN + C_R_LEN` bytes of `m1` (`:159`), so it accepts a first message that the key holder never produced as an S2K initiator.
+
+Theorems 2 and 4 (physical pp. 23 and 26) are stated per framework and make no joint claim. The transplanted second component is not a ciphertext under the S2K responder's key, so the session key still depends on that responder's own decapsulation, and no key recovery is shown. A framework and role prefix in each signed string removes the overlap.
+
+### Reproducing
+
+```sh
+d=kex-03/Implementations/Reference_Implementation/CreTAKE128
+grep -n 'sig_sign(\|sig_verify(' $d/CreTAKE-S2K-BiT128-PLAC128/KEX_AlgorithmInstance.c $d/CreTAKE-S2S-BiT128-ePLAC128/KEX_AlgorithmInstance.c
+grep -n 'C_TILDE_LEN\|C_R_LEN' $d/CreTAKE-S2K-BiT128-PLAC128/cretake_params.h
+```
+
+This is a source witness.

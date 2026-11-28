@@ -122,3 +122,32 @@ NGCC_LONG=1 python3 sign-30/reproduce_response_scaling.py
 ```
 
 The default run checks TRINE-128-ShortSig in about 20 seconds. `NGCC_LONG=1` adds TRINE-128-Balanced and TRINE-256-ShortSig, which takes about 5 minutes. The script does not run the 512-bit profiles.
+
+## sign-30-6: The specification does not define the seed-compressed signature that the submitted code produces
+
+Severity: Low
+Status: Confirmed
+Layer: Design
+Affected: All six TRINE parameter sets; the specification against the reference and optimized implementations
+Discovery: Trivial
+Exploitation: An implementation written from the specification cannot produce or verify the submitted signatures; no forgery or key recovery
+Credit: Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, with MechCrypto assistance
+Date: 2026-11-28
+Reference: [Wang, Cao, Wu, Li and Gao, *MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates*, ePrint 2026/3050](https://eprint.iacr.org/2026/3050); [result for this candidate](https://github.com/MechMath/NGCC-results/tree/main/digital-signature/sign-30_TRINE)
+
+Section 3.4 (physical p. 13) says that a round with challenge `b_i = X` can send a λ-bit seed in place of the vector `a_i`. Section 3.5 (physical p. 14) states that the signature consists of `K` corank-one points, `r − K` seeds of length λ and a 2λ-bit challenge, with `SigSize = (r − K + 2)·λ + K·n·⌈log q⌉` bits. Tables 1 and 2 (physical p. 15) list 3124, 11648 and 46437 bytes for the Balanced sets and 1620, 5904 and 23544 bytes for the ShortSig sets.
+
+The algorithms do not define that format. Algorithm 6 returns `S = (cha, d_0, …, d_{r−1})` and Algorithm 7 takes every `d_i ∈ F_q^n` (physical p. 13). `Corank1Cal` samples its vector uniformly and has no seed input (Algorithm 1, physical p. 9), and no function maps a seed to `a_i`. Algorithm 7 also uses `b_i` on line 2 before `ParseHash(cha)` assigns it on line 5; parsing first is the obvious reading.
+
+The submitted code fills the gap with its own construction. Each round vector is drawn from an XOF over a domain string, a salt, the round seed and the round index (`trine.c:44–66,138–160`). The signature is laid out as responses, base seeds, digest and a 2λ-bit salt (`params.h:173–174,181–188`). Its sizes are 3156, 11712, 46565, 1652, 5968 and 23672 bytes (`params.h:31,49,67,85,103,121`), 2λ bits more than the tables. The word "salt" does not occur in the specification.
+
+The signature format and the seed expansion are thus defined only by the source. No security consequence is claimed.
+
+### Reproducing
+
+```sh
+d="sign-30/Implementations/Reference_Implementation/TRINE-128-ShortSig"
+sed -n '173,188p' "$d/params.h"; sed -n '44,66p' "$d/trine.c"
+```
+
+This is a source witness.

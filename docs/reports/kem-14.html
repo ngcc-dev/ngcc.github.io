@@ -114,6 +114,28 @@
 <pre><code class="language-sh">python3 kem-14/reproduce_dtru_covariance.py
 </code></pre>
 <p>The dependency-free certificate constructs the multiplication rows, checks their paired correlations and spectrum, and evaluates the submitted DFR exponents at <code>2^80</code> queries. It does not reproduce the paper's tail fitting or a key-recovery attack.</p>
+<h2 class="issue-heading" id="kem-14-5-the-printed-doublee8-generator-matrix-and-decoder-input-differ-from-the-submitted-code">kem-14-5: The printed DoubleE8 generator matrix and decoder input differ from the submitted code</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All seven parameter sets (generator matrix and Algorithm 2 line 2); checked in the reference implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>An encoder written from the specification produces ciphertexts that the submitted code rejects; no cryptographic attack shown</td></tr>
+<tr><th>Credit</th><td>Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, with MechCrypto assistance; generator-matrix comparison by Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance</td></tr>
+<tr><th>Date</th><td>2026-11-28</td></tr>
+</table></div>
+<p>Reference: <a href="https://eprint.iacr.org/2026/3050">Wang, Cao, Wu, Li and Gao, <em>MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates</em>, ePrint 2026/3050</a>; <a href="https://github.com/MechMath/NGCC-results/tree/main/key-encapsulation/kem-14_DTRU">result for this candidate</a></p>
+<p>The specification encodes four message bits as <code>(m_4i, …, m_4i+3)·H</code>, with the rows of <code>H</code> printed as 11110000, 00111100, 00001111 and 01010101 (physical p. 3; Algorithm 1, physical p. 4). The submitted <code>encode_e8</code> maps bits 0 to 3 of a nibble to 10101010, 11110000, 00111100 and 00001111 (<code>coding.c:106–113</code>), and coefficient <code>8i + j</code> takes bit <code>j</code> of the result (<code>DTRU-768/poly.c:135</code>). The two maps produce the same sixteen codewords and assign them to different messages. No ordering of the four message bits makes them agree; with bit <code>k</code> of the nibble as <code>m_4i+k</code> they agree on 2 of 16 messages. <code>encode_e8</code> is the same in all 42 <code>coding.c</code> files.</p>
+<p>Algorithm 2 line 2 (physical p. 4) declares a vector <code>v</code> of 16 coordinates and lists 15: <code>t_8i, …, t_8i+7, t_8i+1+n/2, …, t_8i+7+n/2</code>. Line 4 then reads <code>v_15</code>. The code takes <code>t_8i+j</code> and <code>t_8i+j+n/2</code> for <code>j = 0, …, 7</code> (<code>DTRU-768/poly.c:158–159</code>), the reading that matches the factor <code>1 + x^(n/2)</code> of Algorithm 1. This part, which the reporters identified, is a misprint with one obvious correction.</p>
+<p>The message determines the encryption randomness and the shared key. An implementation that encodes with the printed <code>H</code> therefore sends ciphertexts that the submitted code decapsulates to a different message and rejects, and it does not reproduce the test vectors. The code is consistent with itself. No security consequence is shown.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">pdftotext -f 3 -l 4 -layout kem-14/kem-14-spec.pdf - | grep -E '[01]( +[01]){7}|v ←'
+d=&quot;kem-14/Implementations and Test_Vectors/Implementations/Reference_Implementation/DTRU-768&quot;; sed -n '106,113p' &quot;$d/coding.c&quot;; sed -n '154,160p' &quot;$d/poly.c&quot;
+</code></pre>
+<p>This is a source witness.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

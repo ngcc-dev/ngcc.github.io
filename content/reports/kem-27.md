@@ -63,3 +63,30 @@ objdump -dl --no-show-raw-insn /tmp/ntre_poly.o |
 ```
 
 The listing shows a conditional jump attributed to the select at `poly.c:72`. No timing was measured by this witness.
+
+## kem-27-3: The specified component-wise NTT does not exist for any NTRE parameter set
+
+Severity: Low
+Status: Confirmed
+Layer: Design
+Affected: The written specification (§1.1, Algorithms 8–10, §2.2), all three parameter sets; the submitted implementations use a different transform and are self-consistent
+Discovery: Moderate
+Exploitation: Keys and ciphertexts are encodings of a transform that the specification does not define and that cannot exist as described; an implementation written from it cannot interoperate with the submitted code; no security consequence
+Credit: Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, with MechCrypto assistance
+Date: 2026-11-28
+Reference: [Wang, Cao, Wu, Li and Gao, *MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates*, ePrint 2026/3050](https://eprint.iacr.org/2026/3050); [result for this candidate](https://github.com/MechMath/NGCC-results/tree/main/key-encapsulation/kem-27_NTRE)
+
+Section 1.1 (physical p. 4) introduces an NTT that maps a polynomial of `R_q = Z_q[X]/(X^n − X^(n/2) + 1)` to a vector of `n` elements of `Z_q`, and states that multiplication in `R_q` becomes component-wise multiplication of these vectors. Algorithms 8–10 (physical p. 7) compute `ĥ = ĝ ∘ f̂^-1` and `ĉ = ĥ ∘ r̂ + ê` in that domain, and the public key, secret key and ciphertext are the byte encodings of `ĥ`, `f̂` and `ĉ`. The specification gives no roots of unity, ordering or layer structure.
+
+Such a transform does not exist for the three parameter sets. `X^n − X^(n/2) + 1` is the cyclotomic polynomial of index `3n`, which splits into linear factors modulo a prime `q` only if `3n` divides `q − 1`. For `(n, q) = (648, 2593)`, `(1296, 2917)` and `(2304, 3457)` the remainders of `q − 1` modulo `3n` are 648, 2916 and 3456, and the order of `q` modulo `3n` is 3, 4 and 2, so the irreducible factors have those degrees. Section 2.2 (physical p. 12) also requires `q ≡ 1 (mod n)`, which fails for the second and third sets.
+
+The submitted code stops its transform at blocks of 3 coefficients for NTRE-128 and of 4 for NTRE-256 and NTRE-512 (`NTRE_D`, `src/params.h:8`), and multiplies and inverts block by block (`src/poly.c:92–146`). The serialised keys and ciphertexts hold these blocks (`KEM_AlgorithmInstance.c:72,108–109`). The block size, the constants and their order appear only in the code, and NTRE-512 uses blocks of four although quadratic factors exist. The byte formats therefore cannot be derived from the specification. The ring and the scheme are unaffected.
+
+### Reproducing
+
+```sh
+python3 -c "print([((q-1)%(3*n), (q-1)%n) for n,q in ((648,2593),(1296,2917),(2304,3457))])"
+grep -n 'define NTRE_[NQD] ' kem-27/Implementations/Reference_Implementation/NTRE-*/src/params.h
+```
+
+This is a source witness. The first command prints the remainders `(648, 0)`, `(2916, 324)` and `(3456, 1152)`.

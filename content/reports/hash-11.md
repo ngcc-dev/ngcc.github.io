@@ -92,3 +92,32 @@ sh hash-11/reproduce_spec_mismatch.sh
 ```
 
 The witness regenerates each KAT_2_12 file with the shipped NGCC generator and uses it only if its canonical SHA-256 equals the official file's entry in `hash-11/kat.sha256`.
+
+## hash-11-5: The Garnet-768 starting state is computed with digest length 512 instead of 768
+
+Severity: Low
+Status: Confirmed
+Layer: Design
+Affected: Garnet-768 (counter5): specification §2.3 against Appendix A; reference, optimized and additional implementations
+Discovery: Moderate
+Exploitation: An implementation that derives the Garnet-768 starting state from §2.3 computes different digests (checked for the empty message and "abc"); the printed state, the code and the KATs agree with each other; no security consequence identified
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance, in this candidate's specification notes of 2026-11-19; independently reported by Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, using MechCrypto
+Date: 2026-11-28
+Reference: [Wang, Cao, Wu, Li and Gao, *MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates*, ePrint 2026/3050](https://eprint.iacr.org/2026/3050); [result for this candidate](https://github.com/MechMath/NGCC-results/tree/main/hash-function/hash-11_Garnet)
+
+Section 2.3 (physical p. 5) loads the initial state with four constants, `t0` in S11 and the variant counter `t1` in S12, where "t0 is the bit-length of the generated digest". The permutation then gives the starting state of the absorbing phase, which may be precomputed. Appendix A (physical p. 36) prints that state for Garnet-768 with counter5, beginning S0 = `0x900e7220fbc0a2a9a81adffbd7e4ecc5`. The reference code hard-codes the same sixteen words (`Garnet_768.c:762–780`), and the optimized assembly and the additional implementation start with the same word (`Garnet_768.S:930`, `hash_garnet_universal.c:861`).
+
+The printed state belongs to `t0 = 512`. Applying the reference round function 15 times to the §2.3 layout with counter5 and `t0 = 512` gives exactly the printed words. With `t0 = 768` it gives S0 = `0xc08d938c1856beefb44b40d16efb6fe8`, and none of the sixteen words agree. As a control, counter0 with `t0 = 512` and 14 rounds reproduces the Garnet-512 state printed on physical pp. 5–6.
+
+Running the rest of the unmodified `Garnet_768` from the `t0 = 768` state gives `442D8D66…` for the empty message. The shipped code and the first KAT_2_12_Garnet_768 vector give `0940355E…`. The digests of "abc" differ as well.
+
+An implementer who computes the starting state from §2.3, instead of copying Appendix A, does not interoperate with the submitted Garnet-768. Both starting states are images of valid initial layouts under the same permutation, and no weakness of either was identified.
+
+### Reproducing
+
+```sh
+pdftotext -f 5 -l 5 -layout hash-11/hash-11-spec.pdf - | grep -n "bit-length of the generated digest"
+sed -n '762,780p' "hash-11/Garnet/Implementations/API_CryptHash/Implementations/Reference_Implementation/Garnet/Garnet_768.c"
+```
+
+This is a source witness. The recomputation of the two states is not part of it.

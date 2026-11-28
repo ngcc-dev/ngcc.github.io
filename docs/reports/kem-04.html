@@ -109,6 +109,51 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/pkcforum@list
 <pre><code class="language-sh">python3 kem-04/reproduce_failure_rate.py
 </code></pre>
 <p>The script reads the parameters of all four levels from <code>parameters.h</code> in both trees and evaluates the specification's failure-rate formula. For BAG-Piglet-128 it also evaluates Table 1's <code>n = 47</code> and prints the expected failures at 2^64 and 2^80 ciphertexts. It runs in under a second.</p>
+<h2 class="issue-heading" id="kem-04-5-decapsulation-ignores-the-ciphertext-length-and-reads-past-a-short-buffer">kem-04-5: Decapsulation ignores the ciphertext length and reads past a short buffer</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>BAG-Piglet-128, -256, -384 and -512; reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>A ciphertext declared one byte short, or as one byte, makes decapsulation read past it and fault at a guard page in all four reference sets; no disclosure or key recovery shown</td></tr>
+<tr><th>Credit</th><td>Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, with MechCrypto assistance</td></tr>
+<tr><th>Date</th><td>2026-11-28</td></tr>
+</table></div>
+<p>Reference: <a href="https://eprint.iacr.org/2026/3050">Wang, Cao, Wu, Li and Gao, <em>MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates</em>, ePrint 2026/3050</a>; <a href="https://github.com/MechMath/NGCC-results/tree/main/key-encapsulation/kem-04_BAG-Piglet">result for this candidate</a></p>
+<p><code>kem_dec</code> casts <code>sk_len_bytes</code> and <code>ct_len_bytes</code> to void and calls <code>ccakem_decaps(ss, sk, ct)</code> (<code>src/kat/KEM_AlgorithmInstance.c:54–63</code>). <code>kem_enc</code> discards <code>pk_len_bytes</code> in the same way (<code>:43–52</code>). The file is identical in all eight trees.</p>
+<p><code>ccakem_decaps</code> has no length parameter. It passes <code>ct</code> to <code>bag_piglet_pke_decrypt</code>, whose parser unpacks <code>2·m·n·n1</code> bits with <code>ffi_vec_from_string_compact</code> (<code>src/common/parsing.c:74–78</code>, <code>src/ffi/ffi_vec.c:458–469</code>). It takes the 16-byte salt at <code>ct + CPAPKE_CT_SIZE</code> (<code>src/common/ccakem.c:127</code>) and compares <code>CPAPKE_CT_SIZE</code> bytes of <code>ct</code> with the re-encryption (<code>:136–137</code>). In total it reads <code>CCAKEM_CT_SIZE</code> bytes, 1027 for BAG-Piglet-128.</p>
+<p>A caller that holds a shorter ciphertext in a buffer of its declared size therefore causes a read beyond that buffer. The same holds for a short public key in <code>kem_enc</code> and a short secret key in <code>kem_dec</code>.</p>
+<p>In each of the four reference sets, built from the unmodified sources, an honest ciphertext whose bytes end at an inaccessible page decapsulates to the right key. Declared one byte short or as a single byte, the same placement terminates the process with a segmentation fault. The reporters describe the one-byte case under AddressSanitizer. The over-read bytes enter the decoder and the key derivation, and nothing shows that they can be recovered from the returned key. Callers that pass full-length inputs are unaffected.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sh kem-04/reproduce_short_ciphertext.sh
+</code></pre>
+<p>The script checks the discarded length in all eight wrappers, then builds the four reference sets with <code>kem-04/reproduce_short_ciphertext.c</code> and decapsulates a full-length, a one-byte-short and a one-byte ciphertext placed before a <code>PROT_NONE</code> page. It runs in about 20 seconds.</p>
+<h2 class="issue-heading" id="kem-04-6-the-implemented-key-derivation-is-not-the-one-algorithm-2-specifies">kem-04-6: The implemented key derivation is not the one Algorithm 2 specifies</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>BAG-Piglet-128, -256, -384 and -512; reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>An implementation written from the specification derives different ciphertexts and keys; no cryptographic attack shown</td></tr>
+<tr><th>Credit</th><td>Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, with MechCrypto assistance</td></tr>
+<tr><th>Date</th><td>2026-11-28</td></tr>
+</table></div>
+<p>Reference: <a href="https://eprint.iacr.org/2026/3050">Wang, Cao, Wu, Li and Gao, <em>MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates</em>, ePrint 2026/3050</a>; <a href="https://github.com/MechMath/NGCC-results/tree/main/key-encapsulation/kem-04_BAG-Piglet">result for this candidate</a></p>
+<p>Algorithm 2 (physical p. 7) derives <code>(k, θ) ← G(ID(pk), m, salt)</code> and the session key <code>K(k, ct)</code>. <code>G</code> and <code>K</code> map to 512 bits and are instantiated by SHA3-512 and SHAKE256 (physical pp. 5 and 7). <code>ID(·)</code> is called a public-key entropy extraction function and is not defined. The rejection value <code>ξ</code> is 512 random bits kept in the secret key.</p>
+<p>The submitted code computes all of these with one function, <code>sm3_xof_domain</code>, which appends a domain byte to its input and calls the contest's <code>pseudoXOF</code> (<code>src/common/ccakem.c:11–32</code>). <code>ID(pk)</code> is <code>λ/8</code> bytes of the XOF of <code>pk‖0x02</code> (<code>:52–55</code>). <code>G</code> hashes <code>ID‖m‖salt‖0x03</code> to <code>2λ/8</code> bytes (<code>:56–60</code>). <code>K</code> hashes <code>k‖ct‖0x04</code> to <code>λ/8</code> bytes (<code>:63–72</code>). <code>ξ</code> is <code>λ/8</code> bytes derived from the secret seed with domain byte <code>0x01</code> (<code>:34–45</code>). The sizes are in <code>src/scheme/parameters.h:36–41</code>. The file is identical in all eight trees.</p>
+<p>The use of <code>pseudoXOF</code> in place of SHA-3 is the contest's placeholder substitution and is not counted here. The remaining differences do not depend on the hash. The domain bytes and the definition of <code>ID</code> appear nowhere in the specification. The code's <code>G</code> returns <code>2λ</code> bits and its <code>K</code> and <code>ξ</code> have <code>λ</code> bits, where the specification states 512 bits for each. At BAG-Piglet-512 the code takes 1024 bits from <code>G</code>; a 512-bit <code>G</code> cannot supply both <code>k</code> and the 64-byte <code>θ</code>.</p>
+<p>An implementation written from the specification, with any hash, therefore cannot reproduce the submitted ciphertexts, keys or test vectors. The code is consistent with itself, and no security consequence is shown.</p>
+<h3 id="reproducing_5">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">pdftotext -f 5 -l 7 -layout kem-04/kem-04-spec.pdf - | grep -E 'SHA3-512|ID\(·\)'
+sed -n '11,72p' kem-04/Implementations/Reference_Implementation/bag_piglet128/src/common/ccakem.c
+</code></pre>
+<p>This is a source witness.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

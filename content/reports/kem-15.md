@@ -187,3 +187,34 @@ sh kem-15/reproduce_short_ciphertext.sh
 ```
 
 The AVX2 AddressSanitizer builds use `-mavx2 -mbmi2 -mpopcnt -mpclmul` without the Makefile's `-march=native`. The FLIT512 AVX2 build leaves `basemul_avx.c` uninstrumented, because a stack overflow in that file would otherwise stop key generation first.
+
+## kem-15-8: Algorithm 1 does not compute the product it specifies for any FLIT block size
+
+Severity: Low
+Status: Confirmed
+Layer: Design
+Affected: The written base multiplication (Algorithm 1) for FLIT128, FLIT256 and FLIT512; the submitted implementations use a different recursion and are unaffected
+Discovery: Trivial
+Exploitation: None; a multiplier written from Algorithm 1 computes wrong ring products
+Credit: Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, with MechCrypto assistance
+Date: 2026-11-28
+Reference: [Wang, Cao, Wu, Li and Gao, *MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates*, ePrint 2026/3050](https://eprint.iacr.org/2026/3050); [result for this candidate](https://github.com/MechMath/NGCC-results/tree/main/key-encapsulation/kem-15_FLIT)
+
+Algorithm 1, `KaratsubaMul(a, b, ζ, k)` (physical p. 4), is specified to return `a·b mod (X^k − ζ)`. It is the base-case product of the NTT, with `k` equal to 4, 8 or 16 depending on the parameter set.
+
+For `k > 2` the algorithm splits `a = a0 + X^(k/2)·a1` and `b = b0 + X^(k/2)·b1`. It calls itself on `(a0, b0)`, `(a1, b1)` and `(a0 + a1, b0 + b1)` with the same `ζ` and size `k/2`, and returns `(D0 + ζ·D1) + X^(k/2)·(D2 − D0 − D1)`. Each recursive call returns a product reduced modulo `X^(k/2) − ζ`. The combination step needs the unreduced products, because `X^(k/2)` is not congruent to `ζ` modulo `X^k − ζ`.
+
+Take `a = b = X` and `k = 4`. Then `a0 = b0 = X` and `a1 = b1 = 0`. The base case gives `D0 = ζ` and `D2 = ζ`, and `D1 = 0`, so the algorithm returns `ζ`. The product is `X^2`. Executed literally, the algorithm matches schoolbook multiplication at `k = 2` and differed on 2,000 of 2,000 random inputs for each of `k = 4, 8, 16`.
+
+The submitted code does not use this recursion. `basemul_K` splits each operand into its even and odd coefficients, so that the sub-products are taken modulo `Y^(k/2) − ζ` with `Y = X^2`, which is valid (`ntt.c:303–359` in the reference FLIT128 directory). The Output line of Algorithm 1 states the intended result, and the code computes it.
+
+An implementation that follows Algorithm 1 literally computes wrong ring products for all three parameter sets and reproduces none of the submitted keys or ciphertexts. No security consequence is shown.
+
+### Reproducing
+
+```sh
+pdftotext -f 4 -l 4 -layout kem-15/kem-15-spec.pdf - | sed -n '/^Algorithm 1 /,/^11:/p'
+sed -n '303,359p' kem-15/Implementations/Reference_Implementation/FLIT128/ntt.c
+```
+
+This is a source witness.

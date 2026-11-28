@@ -114,3 +114,32 @@ sh hash-19/reproduce_spec_mismatch.sh
 ```
 
 The witness regenerates each KAT_2_12 file with the shipped NGCC generator and uses it only if its canonical SHA-256 equals the official file's entry in `hash-19/kat.sha256`.
+
+## hash-19-5: MoFang-768-XOF output beyond 768 bits does not follow Algorithm 6
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: MoFang-768-XOF for requested lengths above 768 bits; reference and optimized implementations; specification Algorithm 6, lines 17–22
+Discovery: Moderate
+Exploitation: A request for more than 768 bits returns output that differs from Algorithm 6 from bit 768 onward, and Algorithm 6 itself returns the requested length only for multiples of 768; the 768-bit KATs are unaffected; no security consequence identified
+Credit: Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, with MechCrypto assistance; comparison with the code by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-28
+Reference: [Wang, Cao, Wu, Li and Gao, *MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates*, ePrint 2026/3050](https://eprint.iacr.org/2026/3050); [result for this candidate](https://github.com/MechMath/NGCC-results/tree/main/hash-function/hash-19_MoFang-Hash-Function)
+
+Algorithm 6 (physical p. 18) extends MoFang-768-XOF beyond 768 bits by repeating `(L, R) ← CF(L ⊕ 2_n, R, 0)` (line 20) and appending `MSB_t(L) ‖ MSB_t(R)`. Here `t` is 384, except in the last of `λ = ⌊ℓ/768⌋` iterations, where `t = ℓ mod 384` (lines 18–22). Each iteration appends `2t` bits. For `ℓ = 768λ + r` the algorithm returns `768λ + 2(r mod 384)` bits, which equals `ℓ` only when `r = 0`. For `ℓ = 1000` it returns 1,232 bits.
+
+The submitted code returns exactly `⌈ℓ/8⌉` bytes. It emits 96-byte blocks, 48 bytes of L followed by 48 bytes of R, and cuts the last block at the requested length (`MoFang-768-XOF/CryptHash_AlgorithmInstance.c:292–321`). A partial last block therefore comes from L first, not from equal parts of L and R. Before each further compression the code XORs the constant 2 into `in_h`, the R half (`:297`), while line 20 and the code's own absorbing loop (`:267`) apply it to L. The optimized source does the same (`:312`).
+
+With the reference source built unchanged, a 1,000-bit request for "abc" writes 125 bytes, equal to the first 125 bytes of a 1,536-bit request. Moving the constant at line 297 to the L half, as line 20 specifies, changes the 1,536-bit output from byte 96 onward and leaves the first 96 bytes unchanged.
+
+The instance's digest length is 768 bits, so the submitted KATs do not exercise the continuation, and the call does not require an XOF. The reporters identified the output-length error of Algorithm 6.
+
+### Reproducing
+
+```sh
+pdftotext -f 18 -l 18 -layout hash-19/hash-19-spec.pdf - | grep -n "mod 384\|CF(L ⊕ 2n , R, 0)"
+sed -n '292,321p' "hash-19/MoFang/Implementations/Reference_Implementation/MoFang-768-XOF/CryptHash_AlgorithmInstance.c"
+```
+
+This is a source witness.

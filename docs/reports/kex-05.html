@@ -240,6 +240,28 @@ python3 kex-05/reproduce_lifting_prf_reuse.py
 grep -n 'BUCKET_SZ\[r\[ctr\]\]' &quot;$d/poly_invq.c&quot;; grep -n 'polyvec_invq' &quot;$d/indcpa.c&quot;
 </code></pre>
 <p>This is a source witness: the rejection test and its call with the encapsulation coins.</p>
+<h2 class="issue-heading" id="kex-05-10-the-code-signs-spi-role-where-the-specification-signs-role-spi">kex-05-10: The code signs `SPI ‖ role ‖ …` where the specification signs `role ‖ SPI ‖ …`</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>implementation</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>LoomKEX-128, LoomKEX-256 and LoomKEX-512; reference and optimized trees</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>An implementation of Algorithms 4–6 and the submitted code reject each other's signatures in messages 3 and 4, while the submitted trees agree with one another; not executed</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance, in this candidate's specification notes of 2026-09-21; independently reported by Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, using MechCrypto</td></tr>
+<tr><th>Date</th><td>2026-11-28</td></tr>
+</table></div>
+<p>Reference: <a href="https://eprint.iacr.org/2026/3050">Wang, Cao, Wu, Li and Gao, <em>MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates</em>, ePrint 2026/3050</a>; <a href="https://github.com/MechMath/NGCC-results/tree/main/key-exchange/kex-05_Loom">result for this candidate</a></p>
+<p>Algorithms 4, 5 and 6 define the signed transcripts as <code>DTBS_I = "0" ‖ (s_I, s_R) ‖ ek ‖ ct_kem</code> and <code>DTBS_R = "1" ‖ (s_I, s_R) ‖ ct_kem ‖ ek</code> (physical pp. 8–9). The role label comes first and the 8-byte SPI second. The security analysis repeats the role-first order (physical pp. 33, 35 and 39).</p>
+<p><code>build_DTBS</code> writes the fields in a different order. It copies the SPI to offset 0 (<code>loom/loom.c:36–37</code>), then writes the one-byte role value (<code>:43</code> when signing, <code>:56</code> when verifying), then the two exchange fields. The comment inside the function states the specified layout, <code>sig_msg = 0 | SPI | (ek, ect)</code> (<code>:40–41</code>), and the MAC input builder in the same file does put the role byte first (<code>:97–100</code>). The same builder serves the signer (<code>:429</code>, <code>:488</code>) and the verifier (<code>:188</code>), so two copies of the submitted code interoperate. <code>loom.c</code> is byte-identical in the six submitted trees.</p>
+<p>An implementation written from Algorithms 4–6 signs and verifies a different byte string. The submitted responder rejects its message 3 at <code>crypto_sign_verify</code> (<code>:189–190</code>), and it rejects the submitted code's signatures in turn, so no mixed session completes. The code resolves the order in one way, but the conflict is between two complete layouts and is not a misprint. The specification also does not say how the labels "0" and "1" are encoded; the code uses the bytes 0x00 and 0x01 (<code>loom/loom.c:43</code>, <code>loom/params.h:11–12</code>).</p>
+<p>The effect is limited to interoperability and conformance. Signer and verifier still bind the same fields, and no forgery or key recovery follows.</p>
+<h3 id="reproducing_9">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sed -n '33,64p' &quot;kex-05/Implementations and Test_Vectors/Implementations/Reference_Implementation/LoomKEX-128/loom/loom.c&quot;
+</code></pre>
+<p>This is a source witness.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -176,3 +176,29 @@ Three routines allocate without freeing: `ibz_rand_interval` (`intbig.c`), `fp2_
 ```sh
 sh sign-25/reproduce_leak.sh
 ```
+
+## sign-25-6: Verification ignores the declared signature length and reads past a short signature
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: All sixteen instances (Levels 1, 2, 3 and 5; eff and sec; compressed and uncompressed), reference and optimized implementations, by source
+Discovery: Trivial
+Exploitation: A signature declared one byte short, or as one byte, makes Level1-eff verification read past it and fault at a guard page; no disclosure, forgery or key recovery
+Credit: Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, with MechCrypto assistance
+Date: 2026-11-28
+Reference: [Wang, Cao, Wu, Li and Gao, *MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates*, ePrint 2026/3050](https://eprint.iacr.org/2026/3050); [result for this candidate](https://github.com/MechMath/NGCC-results/tree/main/digital-signature/sign-25_SQIsign2D2)
+
+`sig_verify` casts `pk_len_bytes` and `sn_len_bytes` to `void` and calls `protocols_verif(sn, pk, m, m_len_bytes)` (`sqisign/SIG_AlgorithmInstance.c:58–67`). `protocols_verif` passes the two pointers to `public_key_from_bytes` and `signature_from_bytes` (`sqisign/sign.c:1290–1300`), and neither takes a length. In both the compressed and the uncompressed branch, `signature_from_bytes` first decodes a curve coefficient (`pack.c:295–333`) through `fp2_decode`, which calls `fp_decode` at offsets 0 and `FP_ENCODED_BYTES` (`fp2.c:82–88`). `fp_decode` copies `FP_ENCODED_BYTES` bytes from the source pointer (`fp.c:169–173`). That constant is 32 at Level1-eff and between 34 and 134 at the other levels (`ec_arithmetic/include/encoded_sizes.h:7`). The remaining fields are read at fixed offsets up to `SIGNATURE_BYTES`.
+
+A caller that holds a signature shorter than `SIGNATURE_BYTES` and declares its true length therefore has the verifier read beyond the buffer before any validity check. If the memory after the buffer is unmapped, the process terminates instead of returning the invalid-signature result. A short public key is read the same way. All eight reference and all eight optimized source directories contain the same wrapper and decoder.
+
+Only reads are involved, and the bytes read are not returned to the caller. With Level1-eff built from the unmodified sources, uncompressed and compressed, an honest signature whose bytes end at an inaccessible page verifies. Declared one byte short or as a single byte, the same placement terminates the verifier with a segmentation fault, as the reporters describe for the one-byte case. Callers that always pass full-length buffers are unaffected.
+
+### Reproducing
+
+```sh
+sh sign-25/reproduce_short_signature.sh
+```
+
+The script checks the wrapper and `fp_decode` in all 16 source directories, then builds Level1-eff in both variants with `sign-25/reproduce_short_signature.c` and verifies a full-length, a one-byte-short and a one-byte signature placed before a `PROT_NONE` page. It needs GMP and runs in about 20 seconds.

@@ -71,3 +71,30 @@ The post itself reports that a valid ciphertext with appended bytes decapsulates
 ```sh
 sh kem-28/reproduce_short_inputs.sh
 ```
+
+## kem-28-4: Encapsulation as specified subtracts the error, so the specified decapsulation rejects honest ciphertexts
+
+Severity: Low
+Status: Confirmed
+Layer: Design
+Affected: Algorithm 2 of the written specification, all three parameter sets; the submitted implementations add the error and are unaffected
+Discovery: Moderate
+Exploitation: An implementation written from Algorithm 2 produces ciphertexts that Algorithm 3 and the submitted code reject, 50 of 50 in a test build; no security consequence
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance, in this candidate's specification notes of 2026-09-21; independently reported by Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, using MechCrypto
+Date: 2026-11-28
+Reference: [Wang, Cao, Wu, Li and Gao, *MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates*, ePrint 2026/3050](https://eprint.iacr.org/2026/3050); [result for this candidate](https://github.com/MechMath/NGCC-results/tree/main/key-encapsulation/kem-28_OAEP-NTRU)
+
+Algorithm 2, line 11 (physical p. 7), computes the ciphertext as `c := ĥ ∘ ŝ − ê`. Algorithm 3 recovers `e := InvNTT(ĉ ∘ f̂) mod 3` and then `ŝ := ĥinv ∘ (ĉ − ê)` (lines 4–6). With `f = 3f′ + 1` and `h = 3g′·f^-1` (Algorithm 1), `c·f = 3g′s − 3f′e − e`, so line 4 returns `−e`. Line 6 still recovers `s`, but line 14 hashes the encoding of `−e` where encapsulation hashed the encoding of `e`, and line 15 derives the mask from `G(−e)`. The recomputed tag differs, and decapsulation returns ⊥ for every honest ciphertext with `e ≠ 0`.
+
+The rest of the specification and the code use a plus sign. The scheme description and the correctness analysis write `c := hs + e` (physical pp. 17, 21 and 24). The reference and additional trees compute `poly_basemul_add(&p_c, &p_h, &p_s, &p_t)` (`KEM_AlgorithmInstance.c:137` in OAEP-NTRU-648, `:180` in -1296, `:144` in -2592).
+
+In a copy of the reference OAEP-NTRU-648 tree with only that sign changed, the unmodified decapsulation rejected 50 of 50 honest ciphertexts; the unmodified tree gave 50 of 50 matching keys. The defect is a one-character error in the normative encapsulation algorithm with a single evident correction, which the code applies. Followed literally, Algorithm 2 gives ciphertexts that neither Algorithm 3 nor the submitted code accepts.
+
+### Reproducing
+
+```sh
+pdftotext -f 7 -l 7 -layout kem-28/kem-28-spec.pdf - | grep -n ' c :=\|mod 3'
+grep -n 'poly_basemul_add(&p_c' kem-28/Implementations/Reference_Implementation/OAEP-NTRU-*/KEM_AlgorithmInstance.c
+```
+
+This is a source witness.

@@ -118,3 +118,30 @@ python3 kem-14/reproduce_dtru_covariance.py
 ```
 
 The dependency-free certificate constructs the multiplication rows, checks their paired correlations and spectrum, and evaluates the submitted DFR exponents at `2^80` queries. It does not reproduce the paper's tail fitting or a key-recovery attack.
+
+## kem-14-5: The printed DoubleE8 generator matrix and decoder input differ from the submitted code
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: All seven parameter sets (generator matrix and Algorithm 2 line 2); checked in the reference implementations
+Discovery: Trivial
+Exploitation: An encoder written from the specification produces ciphertexts that the submitted code rejects; no cryptographic attack shown
+Credit: Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, with MechCrypto assistance; generator-matrix comparison by Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance
+Date: 2026-11-28
+Reference: [Wang, Cao, Wu, Li and Gao, *MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates*, ePrint 2026/3050](https://eprint.iacr.org/2026/3050); [result for this candidate](https://github.com/MechMath/NGCC-results/tree/main/key-encapsulation/kem-14_DTRU)
+
+The specification encodes four message bits as `(m_4i, …, m_4i+3)·H`, with the rows of `H` printed as 11110000, 00111100, 00001111 and 01010101 (physical p. 3; Algorithm 1, physical p. 4). The submitted `encode_e8` maps bits 0 to 3 of a nibble to 10101010, 11110000, 00111100 and 00001111 (`coding.c:106–113`), and coefficient `8i + j` takes bit `j` of the result (`DTRU-768/poly.c:135`). The two maps produce the same sixteen codewords and assign them to different messages. No ordering of the four message bits makes them agree; with bit `k` of the nibble as `m_4i+k` they agree on 2 of 16 messages. `encode_e8` is the same in all 42 `coding.c` files.
+
+Algorithm 2 line 2 (physical p. 4) declares a vector `v` of 16 coordinates and lists 15: `t_8i, …, t_8i+7, t_8i+1+n/2, …, t_8i+7+n/2`. Line 4 then reads `v_15`. The code takes `t_8i+j` and `t_8i+j+n/2` for `j = 0, …, 7` (`DTRU-768/poly.c:158–159`), the reading that matches the factor `1 + x^(n/2)` of Algorithm 1. This part, which the reporters identified, is a misprint with one obvious correction.
+
+The message determines the encryption randomness and the shared key. An implementation that encodes with the printed `H` therefore sends ciphertexts that the submitted code decapsulates to a different message and rejects, and it does not reproduce the test vectors. The code is consistent with itself. No security consequence is shown.
+
+### Reproducing
+
+```sh
+pdftotext -f 3 -l 4 -layout kem-14/kem-14-spec.pdf - | grep -E '[01]( +[01]){7}|v ←'
+d="kem-14/Implementations and Test_Vectors/Implementations/Reference_Implementation/DTRU-768"; sed -n '106,113p' "$d/coding.c"; sed -n '154,160p' "$d/poly.c"
+```
+
+This is a source witness.

@@ -294,3 +294,32 @@ python3 sign-06/reproduce_spec_errata.py
 ```
 
 The certificate checks the specification text and Table 1, the high-part symmetry at each set, and the proposition against a numerical average of `Pr_x`.
+
+## sign-06-12: The code rounds the public key and splits high bits differently from the specified Comp, Decomp and Split
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: COMPASS-SIG-128, -256, -384 and -512; reference and optimized implementations (`rounding.c` and `sign.c` identical in all eight trees)
+Discovery: Moderate
+Exploitation: Public keys and the verification equation differ between the specification and the code; no forgery or key recovery
+Credit: Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, with MechCrypto assistance
+Date: 2026-11-28
+Reference: [Wang, Cao, Wu, Li and Gao, *MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates*, ePrint 2026/3050](https://eprint.iacr.org/2026/3050); [result for this candidate](https://github.com/MechMath/NGCC-results/tree/main/digital-signature/sign-06_COMPASS-SIG)
+
+Section 2.2.4 (physical p. 9) defines `Comp_d(x) = ⌊(x−1)/2^d⌋` for `x > 0` and `⌊x/2^d⌋` otherwise, and `Decomp_d(x) = x·2^d + 2^(d−1)`. KeyGen sets `t1 := Comp_d(t)` and `t0 := t − Decomp_d(t1)` (Algorithm 1, physical p. 10), and Verify splits `A·z − c'·Decomp_d(t1)` (Algorithm 3, physical p. 13).
+
+The code uses a different pair. `power2round` computes `t1 = (t + 2^(D−1) − 1) >> D` and `t0 = t − t1·2^D` (`rounding.c:17–23`, called at `sign.c:60`), and verification multiplies `t1` by `2^D` without adding `2^(D−1)` (`sign.c:388–394`, `poly.c:481–487`). The two `t1` values differ for half of all `t` in `[0, q)`, so one key seed gives different public-key bytes. For one public key, the two verifiers' inputs to Split differ by `2^(d−1)·c'·(1 + x + … + x^(n−1))`, which is nonzero, so a verifier written from Algorithm 3 does not accept every signature of the submitted signer. The rejection rate was not measured.
+
+Split also differs. The specification takes `x1 = ⌊p·x/q⌉ mod p` with `x0 ∈ [−γ, γ]` (physical p. 9), and `decompose` computes `⌊(x + γ2)/(2γ2)⌋` with a wrap (`rounding.c:56–91`). They disagree at the 8, 2, 4 and 2 inputs `x = (2j+1)·γ2` of the four sets. Table 1 (physical p. 15) prints `d = 5` for the 512-bit set, while `params.h:99` uses `D = 6`, the value that Table 2's key sizes require.
+
+Signer and verifier in the code agree with each other, and the KATs fix the code's reading. The two conventions are each self-consistent, so this is a conflict and not a misprint.
+
+### Reproducing
+
+```sh
+d=sign-06/Implementations/Reference_Implementation/COMPASS-SIG-128
+sed -n '17,23p' "$d/rounding.c"; sed -n '388,394p' "$d/sign.c"
+```
+
+This is a source witness.

@@ -126,6 +126,29 @@
 NGCC_LONG=1 python3 sign-30/reproduce_response_scaling.py
 </code></pre>
 <p>The default run checks TRINE-128-ShortSig in about 20 seconds. <code>NGCC_LONG=1</code> adds TRINE-128-Balanced and TRINE-256-ShortSig, which takes about 5 minutes. The script does not run the 512-bit profiles.</p>
+<h2 class="issue-heading" id="sign-30-6-the-specification-does-not-define-the-seed-compressed-signature-that-the-submitted-code-produces">sign-30-6: The specification does not define the seed-compressed signature that the submitted code produces</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>All six TRINE parameter sets; the specification against the reference and optimized implementations</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>An implementation written from the specification cannot produce or verify the submitted signatures; no forgery or key recovery</td></tr>
+<tr><th>Credit</th><td>Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, with MechCrypto assistance</td></tr>
+<tr><th>Date</th><td>2026-11-28</td></tr>
+</table></div>
+<p>Reference: <a href="https://eprint.iacr.org/2026/3050">Wang, Cao, Wu, Li and Gao, <em>MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates</em>, ePrint 2026/3050</a>; <a href="https://github.com/MechMath/NGCC-results/tree/main/digital-signature/sign-30_TRINE">result for this candidate</a></p>
+<p>Section 3.4 (physical p. 13) says that a round with challenge <code>b_i = X</code> can send a λ-bit seed in place of the vector <code>a_i</code>. Section 3.5 (physical p. 14) states that the signature consists of <code>K</code> corank-one points, <code>r − K</code> seeds of length λ and a 2λ-bit challenge, with <code>SigSize = (r − K + 2)·λ + K·n·⌈log q⌉</code> bits. Tables 1 and 2 (physical p. 15) list 3124, 11648 and 46437 bytes for the Balanced sets and 1620, 5904 and 23544 bytes for the ShortSig sets.</p>
+<p>The algorithms do not define that format. Algorithm 6 returns <code>S = (cha, d_0, …, d_{r−1})</code> and Algorithm 7 takes every <code>d_i ∈ F_q^n</code> (physical p. 13). <code>Corank1Cal</code> samples its vector uniformly and has no seed input (Algorithm 1, physical p. 9), and no function maps a seed to <code>a_i</code>. Algorithm 7 also uses <code>b_i</code> on line 2 before <code>ParseHash(cha)</code> assigns it on line 5; parsing first is the obvious reading.</p>
+<p>The submitted code fills the gap with its own construction. Each round vector is drawn from an XOF over a domain string, a salt, the round seed and the round index (<code>trine.c:44–66,138–160</code>). The signature is laid out as responses, base seeds, digest and a 2λ-bit salt (<code>params.h:173–174,181–188</code>). Its sizes are 3156, 11712, 46565, 1652, 5968 and 23672 bytes (<code>params.h:31,49,67,85,103,121</code>), 2λ bits more than the tables. The word "salt" does not occur in the specification.</p>
+<p>The signature format and the seed expansion are thus defined only by the source. No security consequence is claimed.</p>
+<h3 id="reproducing_5">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">d=&quot;sign-30/Implementations/Reference_Implementation/TRINE-128-ShortSig&quot;
+sed -n '173,188p' &quot;$d/params.h&quot;; sed -n '44,66p' &quot;$d/trine.c&quot;
+</code></pre>
+<p>This is a source witness.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

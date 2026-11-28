@@ -97,3 +97,31 @@ sh sign-17/reproduce_stale_digest.sh
 ```
 
 The witness checks the `void` wrapper in all six trees, then builds each reference level with `malloc` wrapped so that one allocation of the size the digest helper requests can be made to fail. It requires the signature on A to verify for B in that case only, and to be rejected for B without the failure and after the stack is scrubbed.
+
+## sign-17-4: A failed transcript allocation makes reference signing return success with an empty signature
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: OPSsig-128, -256 and -512 reference implementations; the AVX2 implementations return an error
+Discovery: Trivial
+Exploitation: If the signer's message-sized allocation fails, `sig_sign` returns 0 with signature length 0 and writes no signature; nobody can use the result, and no forgery follows
+Credit: Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, with MechCrypto assistance
+Date: 2026-11-28
+Reference: [Wang, Cao, Wu, Li and Gao, *MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates*, ePrint 2026/3050](https://eprint.iacr.org/2026/3050); [result for this candidate](https://github.com/MechMath/NGCC-results/tree/main/digital-signature/sign-17_OPS-Digital-Signature-Algorithm)
+
+The reference signer copies `tr`, the context prefix and the whole message into a heap buffer before hashing them: `tmp = malloc(CRHBYTES + prelen + mlen)`, followed by `if(tmp == NULL) return -1` (`sign.c:104–106` in OPSsig-128, `:92–94` in OPSsig-256, `:94–96` in OPSsig-512). Its caller `crypto_sign_signature` discards that status and returns 0 (`sign.c:189–190`; `:173–174`; `:171–172`). The contest wrapper `sig_sign` initialises `outlen` to 0, treats the zero return as success, stores `outlen` in `*sn_len_bytes` and returns 0 (`SIG_AlgorithmInstance.c:55,62–66`).
+
+When that allocation fails, the caller therefore gets a success status, a signature length of 0 and a signature buffer that was never written. The internal signer sets the length only at its normal exit (`sign.c:166`), and the allocation check is its only early return, so no secret-dependent value is released.
+
+The failing allocation is in the candidate's own code, and its size is the message length plus a small constant. A party that chooses the message can make it fail under a memory limit. The result matches nothing honestly computed: `sig_verify` rejects a zero-length signature (`sign.c:213–214`), and no other party can use it. The harm is to a caller that trusts the status and stores or sends an empty or stale buffer as a signature.
+
+The AVX2 trees return the internal status (`sign.c:219` in OPSsig-128-avx2, `:224` in the other two), so `sig_sign` there returns −4. The reference and AVX2 implementations disagree on this failure.
+
+### Reproducing
+
+```sh
+sh sign-17/reproduce_sign_alloc_false_success.sh
+```
+
+The script checks the discarded status in the three reference trees, then builds each reference set and OPSsig-128-avx2 from the unmodified sources with `sign-17/reproduce_sign_alloc_false_success.c`. It signs a 64 MiB message normally, and again with the address space capped 32 MiB above its current size, so that the message copy cannot be allocated; there is no allocator interposition. The reference sets return 0 with length 0 and leave the signature buffer unwritten, and the AVX2 build returns −4. It runs in about 25 seconds on Linux.

@@ -83,6 +83,28 @@
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">sh kem-28/reproduce_short_inputs.sh
 </code></pre>
+<h2 class="issue-heading" id="kem-28-4-encapsulation-as-specified-subtracts-the-error-so-the-specified-decapsulation-rejects-honest-ciphertexts">kem-28-4: Encapsulation as specified subtracts the error, so the specified decapsulation rejects honest ciphertexts</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Algorithm 2 of the written specification, all three parameter sets; the submitted implementations add the error and are unaffected</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>An implementation written from Algorithm 2 produces ciphertexts that Algorithm 3 and the submitted code reject, 50 of 50 in a test build; no security consequence</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance, in this candidate's specification notes of 2026-09-21; independently reported by Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, using MechCrypto</td></tr>
+<tr><th>Date</th><td>2026-11-28</td></tr>
+</table></div>
+<p>Reference: <a href="https://eprint.iacr.org/2026/3050">Wang, Cao, Wu, Li and Gao, <em>MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates</em>, ePrint 2026/3050</a>; <a href="https://github.com/MechMath/NGCC-results/tree/main/key-encapsulation/kem-28_OAEP-NTRU">result for this candidate</a></p>
+<p>Algorithm 2, line 11 (physical p. 7), computes the ciphertext as <code>c := ĥ ∘ ŝ − ê</code>. Algorithm 3 recovers <code>e := InvNTT(ĉ ∘ f̂) mod 3</code> and then <code>ŝ := ĥinv ∘ (ĉ − ê)</code> (lines 4–6). With <code>f = 3f′ + 1</code> and <code>h = 3g′·f^-1</code> (Algorithm 1), <code>c·f = 3g′s − 3f′e − e</code>, so line 4 returns <code>−e</code>. Line 6 still recovers <code>s</code>, but line 14 hashes the encoding of <code>−e</code> where encapsulation hashed the encoding of <code>e</code>, and line 15 derives the mask from <code>G(−e)</code>. The recomputed tag differs, and decapsulation returns ⊥ for every honest ciphertext with <code>e ≠ 0</code>.</p>
+<p>The rest of the specification and the code use a plus sign. The scheme description and the correctness analysis write <code>c := hs + e</code> (physical pp. 17, 21 and 24). The reference and additional trees compute <code>poly_basemul_add(&amp;p_c, &amp;p_h, &amp;p_s, &amp;p_t)</code> (<code>KEM_AlgorithmInstance.c:137</code> in OAEP-NTRU-648, <code>:180</code> in -1296, <code>:144</code> in -2592).</p>
+<p>In a copy of the reference OAEP-NTRU-648 tree with only that sign changed, the unmodified decapsulation rejected 50 of 50 honest ciphertexts; the unmodified tree gave 50 of 50 matching keys. The defect is a one-character error in the normative encapsulation algorithm with a single evident correction, which the code applies. Followed literally, Algorithm 2 gives ciphertexts that neither Algorithm 3 nor the submitted code accepts.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">pdftotext -f 7 -l 7 -layout kem-28/kem-28-spec.pdf - | grep -n ' c :=\|mod 3'
+grep -n 'poly_basemul_add(&amp;p_c' kem-28/Implementations/Reference_Implementation/OAEP-NTRU-*/KEM_AlgorithmInstance.c
+</code></pre>
+<p>This is a source witness.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

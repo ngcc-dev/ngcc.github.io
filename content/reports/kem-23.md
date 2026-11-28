@@ -135,3 +135,30 @@ sh kem-23/reproduce_zero_encaps_key.sh
 ```
 
 The witness wraps `malloc` to fail exactly the allocation of the size `hash_g` requests and runs an unfaulted control for each set.
+
+## kem-23-6: The declared hash output lengths fit neither the encapsulation algorithm nor the submitted code
+
+Severity: Low
+Status: Confirmed
+Layer: Design
+Affected: The written specification of Mito.KEM (§3.1.2, Algorithms 9 and 10), all nine parameter sets; the submitted implementations use different lengths and are self-consistent
+Discovery: Trivial
+Exploitation: An implementation written from the specification cannot derive `(K, θ)` and hashes the encapsulation key to a different length from the submitted code; no security consequence
+Credit: Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, with MechCrypto assistance
+Date: 2026-11-28
+Reference: [Wang, Cao, Wu, Li and Gao, *MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates*, ePrint 2026/3050](https://eprint.iacr.org/2026/3050); [result for this candidate](https://github.com/MechMath/NGCC-results/tree/main/key-encapsulation/kem-23_Mito)
+
+Section 3.1.2 (physical p. 25) declares `H_comp : F_2^∞ → B^(2λ_seed)` and `H_gen : F_2^∞ → B^(λ_seed)`, and Table 3.1 fixes `λ_seed` at 64 bytes (physical p. 23). Algorithm 9, line 3, and Algorithm 10, line 4, set `(K, θ) ← H_gen(H_comp(ek) ‖ m ‖ salt)` (physical pp. 31–32), where Table 3.3 gives `K` and `θ` 64 bytes each (physical p. 24). One 64-byte output cannot supply both values, and the specification states no rule for splitting or extending it. Algorithm 10, line 6, takes the single 64-byte rejection key from the same `H_gen`. `H_mask`, declared on the same page for masking values, is used by no algorithm.
+
+The submitted code uses the opposite lengths. `hash_h`, its `H_comp`, returns 64 bytes, and `hash_g`, its `H_gen`, returns 128 bytes (`symmetric.c:88–90,100–107`). Encapsulation and decapsulation take bytes 0–63 as `K` and bytes 64–127 as `θ` (`mito_kem.c:89–94,138–140`). The rejection key comes from a third function, `hash_j`, with a 64-byte output (`symmetric.c:117–129`). All 18 trees contain the same four calls.
+
+An implementation that follows the declared lengths hashes the encapsulation key to 128 bytes, so its input to `H_gen` differs from the submitted code's, and it then has no defined way to obtain `θ`. Its keys and ciphertexts cannot match the submitted test vectors. Exchanging the two declared lengths and reading line 6 as `H_mask` reproduces the code, so the errors are editorial, but nothing in the specification states that correction. There is no security consequence.
+
+### Reproducing
+
+```sh
+pdftotext -f 25 -l 32 -layout kem-23/kem-23-spec.pdf - | grep -n -B1 -A1 'Hgen\|Hcomp'
+grep -n 'pseudohash(' kem-23/Implementations/Reference_Implementation/Mito-1-128/symmetric.c
+```
+
+This is a source witness.

@@ -98,6 +98,28 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/crypthashforu
 <p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
 <pre><code class="language-sh">sh hash-20/reproduce_leak.sh
 </code></pre>
+<h2 class="issue-heading" id="hash-20-4-the-matrix-of-section-242-and-the-mul-step-of-algorithm-4-define-different-mixcolumn-maps">hash-20-4: The α matrix of Section 2.4.2 and the MUL step of Algorithm 4 define different MixColumn maps</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Specification §2.4.2, all Mozi instances; the reference and optimized implementations follow Algorithm 4</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>An implementation that uses the displayed α matrix computes a MixColumn that differs from the submitted code on 65,280 of 65,536 column inputs; both maps have branch number 5, and no security consequence was identified</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance, in this candidate's specification notes of 2026-09-21; independently reported by Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, using MechCrypto</td></tr>
+<tr><th>Date</th><td>2026-11-28</td></tr>
+</table></div>
+<p>Reference: <a href="https://eprint.iacr.org/2026/3050">Wang, Cao, Wu, Li and Gao, <em>MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates</em>, ePrint 2026/3050</a>; <a href="https://github.com/MechMath/NGCC-results/tree/main/hash-function/hash-20_MOZI">result for this candidate</a></p>
+<p>Section 2.4.2 (physical p. 8) writes MixColumn as a product <code>M·(a, b, c, d)</code> whose entries are built from α and α², and defines α by a 4 × 4 binary matrix that maps a nibble <code>(x0, x1, x2, x3)</code> to <code>(x1, x2, x3, x0⊕x1)</code>. The same section says that the operation "is given formally in Algorithm 4". Algorithm 4 (physical p. 9) and Listing 1 (physical p. 18) use <code>MUL</code> instead, which maps <code>(x0, x1, x2, x3)</code> to <code>(x3, x0⊕x3, x1, x2)</code>. The reference code implements <code>MUL</code> (<code>MOZI-512/CryptHash_AlgorithmInstance.c:34–38</code>, called from <code>bitSliceMDS</code> at <code>:41–60</code>), and so does <code>mul_row</code> in the optimized code (<code>Optimized_Implementation/MOZI-384/CryptHash_AlgorithmInstance.c:73–79</code>).</p>
+<p>The displayed product and the twelve steps of Algorithm 4 are the same circuit: with <code>MUL</code> in place of α they agree on all 65,536 column inputs. With α as displayed they differ on 65,280 of them. <code>MUL</code> is the transpose of the displayed matrix. The two maps are conjugate under a relabelling of the nibble bits, so both give a matrix of branch number 5, but the nibble bits are the state rows that the S-box also uses, so the relabelling is not available to an implementer and the two readings give different round functions.</p>
+<p>The conflict is inside the specification. Algorithm 4, Listing 1 and all submitted code agree, and the text names Algorithm 4 as the formal definition; only the α matrix in the prose disagrees. The specification contains no test vectors that would show which is meant.</p>
+<h3 id="reproducing_3">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">sed -n '34,38p' &quot;hash-20/Mozi/Implementations/Reference_Implementation/MOZI-512/CryptHash_AlgorithmInstance.c&quot;
+pdftotext -f 8 -l 9 -layout hash-20/hash-20-spec.pdf - | grep -A8 -e 'where α transforms' -e 'Function MUL'
+</code></pre>
+<p>This is a source witness.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -265,3 +265,31 @@ grep -n 'BUCKET_SZ\[r\[ctr\]\]' "$d/poly_invq.c"; grep -n 'polyvec_invq' "$d/ind
 ```
 
 This is a source witness: the rejection test and its call with the encapsulation coins.
+
+## kex-05-10: The code signs `SPI ‖ role ‖ …` where the specification signs `role ‖ SPI ‖ …`
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: LoomKEX-128, LoomKEX-256 and LoomKEX-512; reference and optimized trees
+Discovery: Trivial
+Exploitation: An implementation of Algorithms 4–6 and the submitted code reject each other's signatures in messages 3 and 4, while the submitted trees agree with one another; not executed
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance, in this candidate's specification notes of 2026-09-21; independently reported by Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, using MechCrypto
+Date: 2026-11-28
+Reference: [Wang, Cao, Wu, Li and Gao, *MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates*, ePrint 2026/3050](https://eprint.iacr.org/2026/3050); [result for this candidate](https://github.com/MechMath/NGCC-results/tree/main/key-exchange/kex-05_Loom)
+
+Algorithms 4, 5 and 6 define the signed transcripts as `DTBS_I = "0" ‖ (s_I, s_R) ‖ ek ‖ ct_kem` and `DTBS_R = "1" ‖ (s_I, s_R) ‖ ct_kem ‖ ek` (physical pp. 8–9). The role label comes first and the 8-byte SPI second. The security analysis repeats the role-first order (physical pp. 33, 35 and 39).
+
+`build_DTBS` writes the fields in a different order. It copies the SPI to offset 0 (`loom/loom.c:36–37`), then writes the one-byte role value (`:43` when signing, `:56` when verifying), then the two exchange fields. The comment inside the function states the specified layout, `sig_msg = 0 | SPI | (ek, ect)` (`:40–41`), and the MAC input builder in the same file does put the role byte first (`:97–100`). The same builder serves the signer (`:429`, `:488`) and the verifier (`:188`), so two copies of the submitted code interoperate. `loom.c` is byte-identical in the six submitted trees.
+
+An implementation written from Algorithms 4–6 signs and verifies a different byte string. The submitted responder rejects its message 3 at `crypto_sign_verify` (`:189–190`), and it rejects the submitted code's signatures in turn, so no mixed session completes. The code resolves the order in one way, but the conflict is between two complete layouts and is not a misprint. The specification also does not say how the labels "0" and "1" are encoded; the code uses the bytes 0x00 and 0x01 (`loom/loom.c:43`, `loom/params.h:11–12`).
+
+The effect is limited to interoperability and conformance. Signer and verifier still bind the same fields, and no forgery or key recovery follows.
+
+### Reproducing
+
+```sh
+sed -n '33,64p' "kex-05/Implementations and Test_Vectors/Implementations/Reference_Implementation/LoomKEX-128/loom/loom.c"
+```
+
+This is a source witness.

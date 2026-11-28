@@ -176,6 +176,30 @@ gcc -O3 -march=native -w -I&quot;$d&quot; -S &quot;$d/decode.c&quot; -o - | grep
 <pre><code class="language-sh">sh kem-15/reproduce_short_ciphertext.sh
 </code></pre>
 <p>The AVX2 AddressSanitizer builds use <code>-mavx2 -mbmi2 -mpopcnt -mpclmul</code> without the Makefile's <code>-march=native</code>. The FLIT512 AVX2 build leaves <code>basemul_avx.c</code> uninstrumented, because a stack overflow in that file would otherwise stop key generation first.</p>
+<h2 class="issue-heading" id="kem-15-8-algorithm-1-does-not-compute-the-product-it-specifies-for-any-flit-block-size">kem-15-8: Algorithm 1 does not compute the product it specifies for any FLIT block size</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>The written base multiplication (Algorithm 1) for FLIT128, FLIT256 and FLIT512; the submitted implementations use a different recursion and are unaffected</td></tr>
+<tr><th>Discovery</th><td>Trivial</td></tr>
+<tr><th>Exploitation</th><td>None; a multiplier written from Algorithm 1 computes wrong ring products</td></tr>
+<tr><th>Credit</th><td>Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, with MechCrypto assistance</td></tr>
+<tr><th>Date</th><td>2026-11-28</td></tr>
+</table></div>
+<p>Reference: <a href="https://eprint.iacr.org/2026/3050">Wang, Cao, Wu, Li and Gao, <em>MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates</em>, ePrint 2026/3050</a>; <a href="https://github.com/MechMath/NGCC-results/tree/main/key-encapsulation/kem-15_FLIT">result for this candidate</a></p>
+<p>Algorithm 1, <code>KaratsubaMul(a, b, ζ, k)</code> (physical p. 4), is specified to return <code>a·b mod (X^k − ζ)</code>. It is the base-case product of the NTT, with <code>k</code> equal to 4, 8 or 16 depending on the parameter set.</p>
+<p>For <code>k &gt; 2</code> the algorithm splits <code>a = a0 + X^(k/2)·a1</code> and <code>b = b0 + X^(k/2)·b1</code>. It calls itself on <code>(a0, b0)</code>, <code>(a1, b1)</code> and <code>(a0 + a1, b0 + b1)</code> with the same <code>ζ</code> and size <code>k/2</code>, and returns <code>(D0 + ζ·D1) + X^(k/2)·(D2 − D0 − D1)</code>. Each recursive call returns a product reduced modulo <code>X^(k/2) − ζ</code>. The combination step needs the unreduced products, because <code>X^(k/2)</code> is not congruent to <code>ζ</code> modulo <code>X^k − ζ</code>.</p>
+<p>Take <code>a = b = X</code> and <code>k = 4</code>. Then <code>a0 = b0 = X</code> and <code>a1 = b1 = 0</code>. The base case gives <code>D0 = ζ</code> and <code>D2 = ζ</code>, and <code>D1 = 0</code>, so the algorithm returns <code>ζ</code>. The product is <code>X^2</code>. Executed literally, the algorithm matches schoolbook multiplication at <code>k = 2</code> and differed on 2,000 of 2,000 random inputs for each of <code>k = 4, 8, 16</code>.</p>
+<p>The submitted code does not use this recursion. <code>basemul_K</code> splits each operand into its even and odd coefficients, so that the sub-products are taken modulo <code>Y^(k/2) − ζ</code> with <code>Y = X^2</code>, which is valid (<code>ntt.c:303–359</code> in the reference FLIT128 directory). The Output line of Algorithm 1 states the intended result, and the code computes it.</p>
+<p>An implementation that follows Algorithm 1 literally computes wrong ring products for all three parameter sets and reproduces none of the submitted keys or ciphertexts. No security consequence is shown.</p>
+<h3 id="reproducing_7">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">pdftotext -f 4 -l 4 -layout kem-15/kem-15-spec.pdf - | sed -n '/^Algorithm 1 /,/^11:/p'
+sed -n '303,359p' kem-15/Implementations/Reference_Implementation/FLIT128/ntt.c
+</code></pre>
+<p>This is a source witness.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

@@ -80,6 +80,28 @@ Follow-up source: <a href="https://list.niccs.org.cn/archives/list/crypthashforu
 <pre><code class="language-sh">make -C hash-09 lib/libEijen-512.so lib/libEijen-768.so lib/libEijen-1024.so
 python3 hash-09/reproduce_cross_instance_suffix.py
 </code></pre>
+<h2 class="issue-heading" id="hash-09-3-the-specified-final-block-feed-forward-includes-the-constant-1_c-but-the-code-and-the-specifications-own-test-vectors-omit-it">hash-09-3: The specified final-block feed-forward includes the constant 1_c, but the code and the specification&#x27;s own test vectors omit it</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Eijen-256, -384, -512, -768 and -1024; specification §2.3 against Appendix B, the reference and optimized implementations and the KATs</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>An implementation of the §2.3 formulas computes, for every message, a digest that differs in exactly one bit from the submitted code and from the Appendix B vectors; the difference is a constant and has no security consequence</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance, in this candidate's specification notes of 2026-09-21; independently reported by Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, using MechCrypto</td></tr>
+<tr><th>Date</th><td>2026-11-28</td></tr>
+</table></div>
+<p>Reference: <a href="https://eprint.iacr.org/2026/3050">Wang, Cao, Wu, Li and Gao, <em>MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates</em>, ePrint 2026/3050</a>; <a href="https://github.com/MechMath/NGCC-results/tree/main/hash-function/hash-09_Eijen">result for this candidate</a></p>
+<p>Section 2.3 (physical p. 6) defines the last absorption as <code>S = X ⊕ (M ‖ 1_c)</code> followed by <code>X' = Π(S) ⊕ (0^r ‖ right_c(S))</code>. The capacity that is fed forward therefore contains the constant <code>1_c</code>.</p>
+<p>The reference <code>eijen_absorb_block</code> saves the capacity first (<code>eijen_ref.c:105–107</code>), then adds the constant as bit 63 of the last state word (<code>:111–113</code>), and XORs the saved capacity after the permutation (<code>:117–119</code>). The value fed forward lacks <code>1_c</code>. The last state word is part of every digest, so the code returns the specified digest with one bit flipped: the top bit of the last 64-bit word. The file is identical in the five instance directories, and <code>eijen_avx2.c:178–190</code> has the same order.</p>
+<p>An independent model of §2.3 and §2.4 was compared with the five reference libraries on 90 byte-aligned messages of 0 to 1,000 bytes. With the code's order of operations it reproduces every digest. With the formula of §2.3 it differs in exactly that bit each time. For "abc", the Appendix B vectors (physical pp. 24–29) for Eijen-256, -384, -512 and -1024 equal the library output and end in byte <code>86</code>; the formula gives <code>06</code>. The formula therefore contradicts the specification's own vectors, and the code follows the vectors.</p>
+<h3 id="reproducing_2">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">pdftotext -f 6 -l 6 -layout hash-09/hash-09-spec.pdf - | grep -n &quot;rightc (S&quot;
+sed -n '99,120p' hash-09/Eijen/Implementations/Reference_Implementation/Eijen-512/eijen_ref.c
+</code></pre>
+<p>This is a source witness. The model comparison is not part of it.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

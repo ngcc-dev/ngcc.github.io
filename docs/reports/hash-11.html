@@ -102,6 +102,29 @@
 <pre><code class="language-sh">sh hash-11/reproduce_spec_mismatch.sh
 </code></pre>
 <p>The witness regenerates each KAT_2_12 file with the shipped NGCC generator and uses it only if its canonical SHA-256 equals the official file's entry in <code>hash-11/kat.sha256</code>.</p>
+<h2 class="issue-heading" id="hash-11-5-the-garnet-768-starting-state-is-computed-with-digest-length-512-instead-of-768">hash-11-5: The Garnet-768 starting state is computed with digest length 512 instead of 768</h2>
+
+<div class="table-wrap"><table class="meta issue-meta">
+<tr><th>Severity</th><td><span class="sev sev-low">Low</span></td></tr>
+<tr><th>Scope</th><td>design</td></tr>
+<tr><th>Status</th><td><span class="issue-status status-confirmed">Confirmed</span></td></tr>
+<tr><th>Affected</th><td>Garnet-768 (counter5): specification §2.3 against Appendix A; reference, optimized and additional implementations</td></tr>
+<tr><th>Discovery</th><td>Moderate</td></tr>
+<tr><th>Exploitation</th><td>An implementation that derives the Garnet-768 starting state from §2.3 computes different digests (checked for the empty message and "abc"); the printed state, the code and the KATs agree with each other; no security consequence identified</td></tr>
+<tr><th>Credit</th><td>Markku-Juhani O. Saarinen <a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;">&#109;&#97;&#114;&#107;&#107;&#117;&#45;&#106;&#117;&#104;&#97;&#110;&#105;&#46;&#115;&#97;&#97;&#114;&#105;&#110;&#101;&#110;&#64;&#116;&#117;&#110;&#105;&#46;&#102;&#105;</a>, with AI assistance, in this candidate's specification notes of 2026-11-19; independently reported by Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, using MechCrypto</td></tr>
+<tr><th>Date</th><td>2026-11-28</td></tr>
+</table></div>
+<p>Reference: <a href="https://eprint.iacr.org/2026/3050">Wang, Cao, Wu, Li and Gao, <em>MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates</em>, ePrint 2026/3050</a>; <a href="https://github.com/MechMath/NGCC-results/tree/main/hash-function/hash-11_Garnet">result for this candidate</a></p>
+<p>Section 2.3 (physical p. 5) loads the initial state with four constants, <code>t0</code> in S11 and the variant counter <code>t1</code> in S12, where "t0 is the bit-length of the generated digest". The permutation then gives the starting state of the absorbing phase, which may be precomputed. Appendix A (physical p. 36) prints that state for Garnet-768 with counter5, beginning S0 = <code>0x900e7220fbc0a2a9a81adffbd7e4ecc5</code>. The reference code hard-codes the same sixteen words (<code>Garnet_768.c:762–780</code>), and the optimized assembly and the additional implementation start with the same word (<code>Garnet_768.S:930</code>, <code>hash_garnet_universal.c:861</code>).</p>
+<p>The printed state belongs to <code>t0 = 512</code>. Applying the reference round function 15 times to the §2.3 layout with counter5 and <code>t0 = 512</code> gives exactly the printed words. With <code>t0 = 768</code> it gives S0 = <code>0xc08d938c1856beefb44b40d16efb6fe8</code>, and none of the sixteen words agree. As a control, counter0 with <code>t0 = 512</code> and 14 rounds reproduces the Garnet-512 state printed on physical pp. 5–6.</p>
+<p>Running the rest of the unmodified <code>Garnet_768</code> from the <code>t0 = 768</code> state gives <code>442D8D66…</code> for the empty message. The shipped code and the first KAT_2_12_Garnet_768 vector give <code>0940355E…</code>. The digests of "abc" differ as well.</p>
+<p>An implementer who computes the starting state from §2.3, instead of copying Appendix A, does not interoperate with the submitted Garnet-768. Both starting states are images of valid initial layouts under the same permutation, and no weakness of either was identified.</p>
+<h3 id="reproducing_4">Reproducing</h3>
+<p>Commands below run in a checkout of the <a href="https://github.com/ngcc-dev/ngcc-harness">ngcc-harness repository</a> with the candidate built (see its README).</p>
+<pre><code class="language-sh">pdftotext -f 5 -l 5 -layout hash-11/hash-11-spec.pdf - | grep -n &quot;bit-length of the generated digest&quot;
+sed -n '762,780p' &quot;hash-11/Garnet/Implementations/API_CryptHash/Implementations/Reference_Implementation/Garnet/Garnet_768.c&quot;
+</code></pre>
+<p>This is a source witness. The recomputation of the two states is not part of it.</p>
 </main>
 <footer class="site-footer">
 <p>Maintained by: <a href="mailto:markku-juhani.saarinen@tuni.fi">markku-juhani.saarinen@tuni.fi</a></p>

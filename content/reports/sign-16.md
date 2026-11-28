@@ -132,3 +132,32 @@ sh sign-16/reproduce_stale_keygen.sh
 ```
 
 The witness checks the unchecked derivation in the six SM3 trees and wraps `malloc` to fail that copy once.
+
+## sign-16-6: The challenge sign stream is requested with length 11 at every level instead of the specified ⌈τ/8⌉
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: Octarine-128 and Octarine-256; reference, optimized and additional implementations; Octarine-512 is unaffected
+Discovery: Trivial
+Exploitation: A signer or verifier written from the specification derives different challenge signs and does not interoperate; no forgery
+Credit: Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, with MechCrypto assistance
+Date: 2026-11-28
+Reference: [Wang, Cao, Wu, Li and Gao, *MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates*, ePrint 2026/3050](https://eprint.iacr.org/2026/3050); [result for this candidate](https://github.com/MechMath/NGCC-results/tree/main/digital-signature/sign-16_Octarine)
+
+Every hash and XOF input in Octarine starts with a header that contains the requested output length `o` as a four-byte field (`Head(L, o, t)`, physical p. 18), and the challenge-expansion XOF `XOF_C` uses that encoding (physical p. 19). `SampleInBall` requests the sign bits as `XOF_C(c̃, 0, 0; ⌈τ/8⌉)` (Algorithm 2 line 3, physical p. 24). With τ = 16, 36 and 87 the specified lengths are 2, 5 and 11 bytes.
+
+The code requests 11 bytes at every level. `poly_sampleInBall` calls `RRLWR_SIGN_HASH_SAMPLE_C_DOMAIN(signs_buffer, RRLWR_SIGN_MAX_TAU_BYTES, ctilde, 0, 0)` (`sign_ring.c:93`), and `RRLWR_SIGN_MAX_TAU_BYTES` is 11, with the comment "tau = 87 is maximum number of bits" (`parameters.h:87`; `:85` in the optimized trees). The length is passed on unchanged and written into the header by `rrlwr_domain_begin` (`hash_domain.h:93,299–309`). The same lines are in all nine trees.
+
+Because the length is part of the hashed input, the Octarine-128 and Octarine-256 sign streams are outputs for a different input than the specified one. The index stream is requested with 80 bytes in both, so the challenge positions agree and the τ signs differ. A signer that follows Algorithm 2 produces signatures that the submitted verifier rejects, and the reverse, unless all τ sign bits happen to coincide. At Octarine-512 both lengths are 11 and nothing differs.
+
+The submitted trees agree with each other and with the KATs, so the code resolves the reading in one way. The constant is one buffer size reused for all levels, and the specification's formula is explicit, so this is a conflict and not a misprint.
+
+### Reproducing
+
+```sh
+d=sign-16/Implementations/Reference_Implementation/Octarine-128
+sed -n '93p' "$d/sign_ring.c"; sed -n '87p' "$d/parameters.h"; sed -n '93p' "$d/hash_domain.h"
+```
+
+This is a source witness.

@@ -112,3 +112,29 @@ python3 sign-10/reproduce_signature_leak.py
 ```
 
 The script checks the five source patterns in all nine trees, then signs 2,000, 300 and 60 messages through `sign-10/lib/libFacto-DSA-*.so` and evaluates the secret forms (about 15 seconds). Its controls are honest verification, rejection of mutated signatures and changed messages, an unrelated key's secret forms and a random public form; `NGCC_LONG=1` signs 8,000, 1,000 and 300 messages.
+
+## sign-10-5: The hash-to-field input uses a per-level label and a block counter that the specification does not have
+
+Severity: Low
+Status: Confirmed
+Layer: Implementation
+Affected: Facto-DSA-128, -256 and -512; reference, optimized and resource-constrained implementations
+Discovery: Trivial
+Exploitation: A signer or verifier written from the specification computes a different target `h`; no forgery or key recovery
+Credit: Markku-Juhani O. Saarinen <markku-juhani.saarinen@tuni.fi>, with AI assistance, in this candidate's specification notes of 2026-09-21; independently reported by Zhengyang Wang, Yichuan Cao, Kunyu Wu, Hongbo Li and Xiao-Shan Gao, using MechCrypto
+Date: 2026-11-28
+Reference: [Wang, Cao, Wu, Li and Gao, *MechCrypto: Agent-Assisted Cryptanalysis of the First-Round NGCC Candidates*, ePrint 2026/3050](https://eprint.iacr.org/2026/3050); [result for this candidate](https://github.com/MechMath/NGCC-results/tree/main/digital-signature/sign-10_Facto-DSA)
+
+Section 1.4.2 (physical p. 6) lists one domain label, `FDSA-H`, and defines the signing target as `h = HashToField(FDSA-H || pkh || M)`. Algorithm 3 (physical p. 9) reads 16-bit words from one stream `B = XOF(label || data)`. Sign and Verify call it with the label `FDSA-H` (Algorithm 10 line 7, physical p. 12; Algorithm 11 line 11, physical p. 14).
+
+The submitted `xof_field` hashes a different string in two ways. The label is `"FDSA-H-128"`, `"FDSA-H-256"` or `"FDSA-H-512"` according to the parameter set (`SIG_AlgorithmInstance.c:1487` in the reference trees, `:1521–1522` optimized, `:1517–1518` resource-constrained). The input also ends with a four-byte big-endian block counter that the specification does not mention: the buffer length includes four extra bytes (`:1495`), and each 128-byte block is `pseudoXOF(label || pkh || M || ctr)` with `ctr` starting at zero (`:1508–1514`). Even the first block therefore differs from `XOF(label || data)`. Signing and verification both use this function (`:1996`, `:2067`).
+
+An implementation that follows the specification derives a different `h` for every message, so its signatures do not verify under the submitted code, and the submitted signatures do not verify under it. The nine submitted trees agree with each other and with the KATs, so the code resolves the question in one way. Physical p. 36 says that the hash input carries "parameter set domain separation", which matches the code's labels; the label table does not. The counter is absent from Algorithm 3. This is a conflict between specification and code and not a misprint.
+
+### Reproducing
+
+```sh
+grep -n '"FDSA-H' "sign-10/Implementations and Test_Vectors/Implementations"/*/*/SIG_AlgorithmInstance.c
+```
+
+This is a source witness.
